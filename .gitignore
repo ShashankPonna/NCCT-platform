@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.expo/
+apps/web/dist/
+
+# Env files
+.env
+.env.local
+*.env.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor/OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+
+# Claude Code local session config (personal, not shared)
+.claude/settings.local.json

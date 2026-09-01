@@ -1,0 +1,66 @@
+.matching-prompt {
+  margin-bottom: 12px;
+}
+
+.matching-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+
+  ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+.matching-term,
+.matching-option {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.matching-term span {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.matching-term.selected {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.matching-term.correct {
+  border-color: #2a2;
+}
+
+.matching-term.wrong {
+  border-color: #d33;
+}
+
+.matching-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.matching-actions {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.matching-score {
+  font-weight: 600;
+}

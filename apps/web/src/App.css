@@ -1,0 +1,250 @@
+.center-message {
+  margin: auto;
+  padding: 32px;
+}
+
+.verify-panel {
+  max-width: 480px;
+  margin: 48px auto;
+  padding: 24px;
+  text-align: left;
+
+  dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 16px;
+    margin: 16px 0;
+  }
+
+  dt {
+    color: var(--text);
+    font-size: 13px;
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 600;
+  }
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 320px;
+  margin: auto;
+  padding: 32px 20px;
+  text-align: left;
+}
+
+.login-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.app-shell {
+  text-align: left;
+  padding: 24px 32px;
+  flex: 1;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0;
+    font-size: 28px;
+  }
+
+  div {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+.role-badge {
+  text-transform: capitalize;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.form-error {
+  color: #d33;
+  font-size: 14px;
+  margin: 8px 0;
+}
+
+input,
+button {
+  font: inherit;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input:not([type]) {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+}
+
+button {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--code-bg);
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.inline-form {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+  flex-wrap: wrap;
+}
+
+.admin-panel section,
+.student-panel {
+  margin-bottom: 24px;
+}
+
+.admin-panel label,
+.student-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  max-width: 420px;
+  margin-bottom: 8px;
+}
+
+.admin-panel ul,
+.student-panel ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lesson-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lesson-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.lesson-row-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.translation-form {
+  margin: 0;
+}
+
+textarea {
+  font: inherit;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  min-width: 260px;
+}
+
+.locale-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  margin: 8px 0;
+}
+
+.lesson-body {
+  white-space: pre-wrap;
+}
+
+.assessment-builder,
+.quiz-taker {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.question-editor {
+  margin-top: 12px;
+}
+
+.question-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 480px;
+  margin: 12px 0;
+}
+
+.option-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quiz-form fieldset {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.quiz-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.quiz-result {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.student-columns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.lesson-detail {
+  margin-top: 24px;
+  max-width: 720px;
+}
+
+.lesson-progress {
+  margin-top: 12px;
+}
