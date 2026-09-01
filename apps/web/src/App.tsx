@@ -1,9 +1,16 @@
 import { AdminCourseManager } from "./AdminCourseManager.js";
+import { AnalyticsDashboard } from "./AnalyticsDashboard.js";
 import "./App.css";
+import { AttendanceCheckIn } from "./AttendanceCheckIn.js";
+import { AttendanceManager } from "./AttendanceManager.js";
 import { CertificateVerification } from "./CertificateVerification.js";
+import { ChatbotCorpusManager } from "./ChatbotCorpusManager.js";
+import { ChatbotPanel } from "./ChatbotPanel.js";
+import { EmployerDashboard } from "./EmployerDashboard.js";
 import { LoginForm } from "./LoginForm.js";
 import { StudentLessonView } from "./StudentLessonView.js";
 import { supabase } from "./supabaseClient.js";
+import { TraineeJobBoard } from "./TraineeJobBoard.js";
 import { useSession } from "./useSession.js";
 
 function App() {
@@ -22,8 +29,22 @@ function App() {
   }
 
   if (!session) {
-    return <LoginForm />;
+    // A Supabase sign-in can succeed while the follow-up role lookup
+    // (GET /api/profile) still fails — e.g. the API isn't running. Session
+    // stays null in that case, so this error must be shown here, not only
+    // in the post-login shell below (which never mounts without a session).
+    return (
+      <>
+        {error && <p className="form-error">{error}</p>}
+        <LoginForm />
+      </>
+    );
   }
+
+  // Unlike `?verify=` above, a QR check-in genuinely needs an authenticated
+  // trainee, so this is only read once a session exists — see
+  // docs/DECISIONS.md #16's QR-as-URL approach.
+  const checkinSessionId = new URLSearchParams(window.location.search).get("checkin") ?? undefined;
 
   return (
     <div className="app-shell">
@@ -38,9 +59,26 @@ function App() {
       </header>
       {error && <p className="form-error">{error}</p>}
       {session.role === "admin" || session.role === "trainer" ? (
-        <AdminCourseManager accessToken={session.accessToken} />
+        <>
+          <AdminCourseManager accessToken={session.accessToken} />
+          <AttendanceManager accessToken={session.accessToken} />
+          <ChatbotCorpusManager accessToken={session.accessToken} />
+          {/* Admin-only, not trainer — PRD §6.8 frames this specifically as
+              an "Admin view", unlike the content-authoring panels above it. */}
+          {session.role === "admin" && <AnalyticsDashboard accessToken={session.accessToken} />}
+        </>
+      ) : session.role === "employer" ? (
+        <EmployerDashboard accessToken={session.accessToken} />
       ) : (
-        <StudentLessonView accessToken={session.accessToken} />
+        <>
+          <StudentLessonView accessToken={session.accessToken} />
+          <AttendanceCheckIn
+            accessToken={session.accessToken}
+            autoCheckInSessionId={checkinSessionId}
+          />
+          <TraineeJobBoard accessToken={session.accessToken} />
+          <ChatbotPanel accessToken={session.accessToken} />
+        </>
       )}
     </div>
   );

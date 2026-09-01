@@ -15,6 +15,7 @@
     "@ncct/shared-types": "workspace:*",
     "@ncct/validation": "workspace:*",
     "@supabase/supabase-js": "^2.112.4",
+    "@vladmandic/human": "^3.3.6",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

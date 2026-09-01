@@ -248,3 +248,167 @@ textarea {
 .lesson-progress {
   margin-top: 12px;
 }
+
+.attendance-panel {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.attendance-result {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin: 12px 0;
+}
+
+.face-capture-video {
+  display: block;
+  width: 240px;
+  max-width: 100%;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: var(--code-bg);
+}
+
+.face-enrollment {
+  margin: 12px 0;
+}
+
+.chat-log {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 720px;
+}
+
+.chat-turn {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.chat-question {
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.chat-answer {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.stat-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 12px 0 20px;
+}
+
+.stat-tile {
+  min-width: 140px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.stat-tile-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1.2;
+}
+
+.stat-tile-label {
+  font-size: 13px;
+}
+
+.bar-chart {
+  max-width: 640px;
+  margin: 8px 0 20px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 48px;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  font-size: 14px;
+}
+
+.bar-row-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bar-track {
+  height: 14px;
+  border-radius: 4px;
+  background: var(--code-bg);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  min-width: 2px;
+}
+
+.bar-row-value {
+  text-align: right;
+  color: var(--text-h);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+  margin: 4px 0 10px;
+}
+
+.chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.analytics-section {
+  margin-top: 20px;
+}
+
+.analytics-table {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 720px;
+  font-size: 14px;
+}
+
+.analytics-table th,
+.analytics-table td {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+select {
+  font: inherit;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+}

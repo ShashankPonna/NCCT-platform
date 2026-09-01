@@ -10,6 +10,18 @@
   --social-bg: rgba(244, 243, 236, 0.5);
   --shadow: rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
+  /* F8's small fixed categorical set (blue/amber/teal), spread across the
+     hue wheel and away from --accent's purple and from each other, with no
+     red/green-adjacent pair — applied by a fixed lookup order (never cycled
+     per-render), per the dataviz skill. Chosen by eye at app-CSS scope, not
+     run through the skill's automated validator (that script targets a
+     standalone page's own palette, not custom properties in an existing
+     app theme) — every bar is still direct-labeled with its value and name,
+     so identity never depends on color alone regardless. */
+  --chart-1: #2563eb;
+  --chart-2: #d97706;
+  --chart-3: #0d9488;
+
   --sans: system-ui, "Segoe UI", Roboto, sans-serif;
   --heading: system-ui, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
@@ -41,6 +53,12 @@
     --accent-border: rgba(192, 132, 252, 0.5);
     --social-bg: rgba(47, 48, 58, 0.5);
     --shadow: rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+
+    /* Re-stepped for the dark surface, not an automatic flip of the light
+       values — same hues, raised lightness for the dark background. */
+    --chart-1: #60a5fa;
+    --chart-2: #fbbf24;
+    --chart-3: #2dd4bf;
   }
 
   #social .button-icon {

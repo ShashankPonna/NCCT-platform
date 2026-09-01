@@ -26,7 +26,14 @@ export function useSession() {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!res.ok) {
-        throw new Error("Could not load profile/role for the signed-in user");
+        // A cached session (getSession(), on mount) can point at a token
+        // Express no longer accepts — e.g. the underlying auth user or its
+        // profiles row is gone. Left alone, that session just sits in
+        // localStorage and reproduces this same error on every reload with
+        // no way to recover from the UI. Signing out clears it so the next
+        // load starts clean and a fresh sign-in isn't fighting stale state.
+        await supabase.auth.signOut();
+        throw new Error(`Could not load profile/role for the signed-in user (HTTP ${res.status})`);
       }
       const profile = (await res.json()) as { role: Role };
       if (!cancelled) {
