@@ -80,7 +80,7 @@ flowchart TB
 - Express layering: `routes` → `controllers` → `services` → Supabase client / external services.
 - `services` is where face-recognition matching, PDF certificate generation, and chatbot RAG orchestration live — kept out of controllers to stay testable.
 - Auth middleware verifies the Supabase JWT and enforces role checks before a request reaches a controller (in addition to Postgres RLS — defense in depth, not a substitute for it).
-- Face-recognition service: extracts a 512-d embedding from an uploaded image (via Human or InsightFace), compares against the trainee's enrolled embedding using pgvector cosine similarity, returns a match/no-match decision; controller falls back to QR flow when below threshold.
+- Face-recognition service: the browser extracts a **1024-d** descriptor with `@vladmandic/human` (DECISIONS.md #16 — note 1024 is Human's actual output size; InsightFace `buffalo_l`, the documented alternative, is 512-d, so the two are not schema-interchangeable), and Express compares it against the trainee's enrolled descriptor by cosine similarity, returning a match/no-match decision; the controller falls back to the QR flow when below threshold.
 
 ## 7. Database Architecture
 

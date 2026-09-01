@@ -1,5 +1,8 @@
 import {
+  CHATBOT_SOURCE_TYPES,
   CONTENT_TYPES,
+  FACE_EMBEDDING_DIMENSIONS,
+  JOB_INTEREST_STATUSES,
   LOCALE_PATTERN,
   NOMINATION_DECISIONS,
   PROGRAMME_MODES,
@@ -155,4 +158,74 @@ export const updateQuestionSchema = z
 // from the map rather than requiring a placeholder value.
 export const submitAttemptSchema = z.object({
   answers: z.record(z.string(), z.string()),
+});
+
+const faceEmbeddingVectorSchema = z
+  .array(z.number().finite())
+  .length(FACE_EMBEDDING_DIMENSIONS, `Embedding must have exactly ${FACE_EMBEDDING_DIMENSIONS} values`);
+
+// Only "human" is accepted — see FACE_REC_MODELS' comment in
+// packages/constants: "insightface_buffalo_l" is a documented alternative,
+// not something the API actually extracts/accepts yet.
+//
+// `consent` must be the literal `true` — its presence in the request body
+// *is* the recorded consent action (the row's consent_given_at is stamped
+// server-side at insert time), per CLAUDE.md's DPDP Act 2023 rule. A request
+// without it is rejected before any embedding is written.
+export const enrollFaceEmbeddingSchema = z.object({
+  embedding: faceEmbeddingVectorSchema,
+  model: z.literal("human"),
+  consent: z.literal(true),
+});
+
+// Server-side matching always recomputes the score itself (CLAUDE.md: never
+// trust a client-reported face-match result) — the client only ever supplies
+// the raw embedding it extracted locally, never a match score or verdict.
+export const attendanceCheckInSchema = z.discriminatedUnion("method", [
+  z.object({
+    session_id: z.string().uuid(),
+    method: z.literal("qr"),
+  }),
+  z.object({
+    session_id: z.string().uuid(),
+    method: z.literal("face"),
+    embedding: faceEmbeddingVectorSchema,
+  }),
+]);
+
+export const createJobSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  required_skills: z.array(z.string().min(1)).optional(),
+  location: z.string().optional(),
+});
+
+export const updateJobSchema = createJobSchema.partial();
+
+// No `status` field — every interest starts "shortlisted" (the DB column
+// default), same reasoning as nominations starting "pending": the creating
+// action (an employer shortlisting a trainee) only ever produces one
+// meaningful initial state.
+export const createJobInterestSchema = z.object({
+  trainee_id: z.string().uuid(),
+});
+
+export const updateJobInterestStatusSchema = z.object({
+  status: z.enum(JOB_INTEREST_STATUSES),
+});
+
+export const updateVisibilitySettingsSchema = z.object({
+  visible_to_employers: z.boolean(),
+});
+
+export const createCorpusChunkSchema = z.object({
+  source_type: z.enum(CHATBOT_SOURCE_TYPES),
+  source_id: z.string().uuid().nullable().optional(),
+  content: z.string().min(1).max(4000),
+});
+
+// Bounded so a single question can't be used to push an arbitrarily large
+// payload into the model call.
+export const askChatbotSchema = z.object({
+  question: z.string().min(1).max(500),
 });

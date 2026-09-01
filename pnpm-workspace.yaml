@@ -3,4 +3,14 @@ packages:
   - "packages/*"
 allowBuilds:
   esbuild: true
+  # F7's local embedding model (@huggingface/transformers) pulls these in.
+  # Their build scripts download native binaries (onnxruntime-node's are
+  # ~100MB, sharp's are platform-specific); transformers.js falls back to its
+  # WASM backend without them, which is verified working and fast enough for
+  # this corpus size — and it sidesteps exactly the native-binary install
+  # failures that forced DECISIONS.md #16's rework of F5. `sharp` is only
+  # needed for image models, which this project doesn't use.
+  onnxruntime-node: false
+  protobufjs: false
+  sharp: false
   unrs-resolver: true

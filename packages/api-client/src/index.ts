@@ -3,15 +3,25 @@ import type {
   AssessmentAttempt,
   AssessmentQuestion,
   AssessmentQuestionForTrainee,
+  AttendanceRecord,
   Certificate,
+  ChatbotAnswer,
+  ChatbotCorpusChunk,
+  ChatbotSourceType,
+  DashboardAnalytics,
   ContentTranslation,
   ContentType,
   Course,
   InteractiveConfig,
+  Job,
+  JobInterest,
+  JobInterestStatus,
   Lesson,
   LessonProgress,
   Module,
   QuestionOption,
+  TraineeSearchResult,
+  VisibilitySettings,
 } from "@ncct/shared-types";
 
 // Vite (web) and Metro (mobile) expose env vars differently and neither reliably
@@ -256,4 +266,151 @@ export function updateLessonProgress(
     method: "PATCH",
     body,
   });
+}
+
+export function getFaceEmbeddingStatus(accessToken: string) {
+  return apiFetch<{ enrolled: boolean }>("/face-embeddings/status", accessToken);
+}
+
+export function enrollFaceEmbedding(accessToken: string, embedding: number[]) {
+  return apiFetch<{ id: string; model: string; consent_given_at: string }>(
+    "/face-embeddings",
+    accessToken,
+    { method: "POST", body: { embedding, model: "human", consent: true } },
+  );
+}
+
+// The server always recomputes the match itself (CLAUDE.md: never trust a
+// client-reported face-match result) — this response shape reflects that: a
+// below-threshold face check-in comes back 200 with `fallbackToQr: true` and
+// no attendance record, not an error.
+export type AttendanceCheckInResult =
+  | (AttendanceRecord & { matched?: true })
+  | { matched: false; match_score: number; fallbackToQr: true };
+
+export function checkInWithQr(accessToken: string, sessionId: string) {
+  return apiFetch<AttendanceCheckInResult>("/attendance", accessToken, {
+    method: "POST",
+    body: { session_id: sessionId, method: "qr" },
+  });
+}
+
+export function checkInWithFace(accessToken: string, sessionId: string, embedding: number[]) {
+  return apiFetch<AttendanceCheckInResult>("/attendance", accessToken, {
+    method: "POST",
+    body: { session_id: sessionId, method: "face", embedding },
+  });
+}
+
+export function getAttendanceRoster(accessToken: string, sessionId: string) {
+  return apiFetch<(AttendanceRecord & { profiles: { full_name: string | null } | null })[]>(
+    `/timetable/${sessionId}/attendance`,
+    accessToken,
+  );
+}
+
+export function getAttendanceQr(accessToken: string, sessionId: string) {
+  return apiFetch<{ qrDataUrl: string; checkInUrl: string }>(
+    `/timetable/${sessionId}/qr`,
+    accessToken,
+  );
+}
+
+// Job listings are public data (no requireAuth on the API side, matching
+// `jobs_public_read`'s RLS design) — this is the one job-board fetch that
+// works with no accessToken, same category as getCertificate.
+export async function getJobs(filters?: { location?: string; skill?: string }): Promise<Job[]> {
+  const params = new URLSearchParams();
+  if (filters?.location) params.set("location", filters.location);
+  if (filters?.skill) params.set("skill", filters.skill);
+  const qs = params.toString();
+  const res = await fetch(`${apiBaseUrl}/api/jobs${qs ? `?${qs}` : ""}`);
+  if (!res.ok) {
+    throw new Error(`Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export function createJob(
+  accessToken: string,
+  body: { title: string; description?: string; required_skills?: string[]; location?: string },
+) {
+  return apiFetch<Job>("/jobs", accessToken, { method: "POST", body });
+}
+
+export function getEmployerTrainees(accessToken: string, filters?: { q?: string; location?: string }) {
+  const params = new URLSearchParams();
+  if (filters?.q) params.set("q", filters.q);
+  if (filters?.location) params.set("location", filters.location);
+  const qs = params.toString();
+  return apiFetch<TraineeSearchResult[]>(`/employer/trainees${qs ? `?${qs}` : ""}`, accessToken);
+}
+
+export function shortlistTrainee(accessToken: string, jobId: string, traineeId: string) {
+  return apiFetch<JobInterest>(`/jobs/${jobId}/interests`, accessToken, {
+    method: "POST",
+    body: { trainee_id: traineeId },
+  });
+}
+
+export function getJobInterests(accessToken: string, jobId: string) {
+  return apiFetch<(JobInterest & { profiles: { full_name: string | null } | null })[]>(
+    `/jobs/${jobId}/interests`,
+    accessToken,
+  );
+}
+
+export function updateJobInterestStatus(
+  accessToken: string,
+  jobId: string,
+  interestId: string,
+  status: JobInterestStatus,
+) {
+  return apiFetch<JobInterest>(`/jobs/${jobId}/interests/${interestId}`, accessToken, {
+    method: "PATCH",
+    body: { status },
+  });
+}
+
+export function getMyJobInterests(accessToken: string) {
+  return apiFetch<
+    (JobInterest & { jobs: { title: string; location: string | null } | null })[]
+  >("/job-interests/mine", accessToken);
+}
+
+export function getVisibilitySettings(accessToken: string) {
+  return apiFetch<VisibilitySettings>("/visibility-settings", accessToken);
+}
+
+export function updateVisibilitySettings(accessToken: string, visibleToEmployers: boolean) {
+  return apiFetch<VisibilitySettings>("/visibility-settings", accessToken, {
+    method: "PUT",
+    body: { visible_to_employers: visibleToEmployers },
+  });
+}
+
+export function askChatbot(accessToken: string, question: string) {
+  return apiFetch<ChatbotAnswer>("/chatbot/ask", accessToken, {
+    method: "POST",
+    body: { question },
+  });
+}
+
+export function getCorpusChunks(accessToken: string) {
+  return apiFetch<ChatbotCorpusChunk[]>("/chatbot/corpus", accessToken);
+}
+
+export function createCorpusChunk(
+  accessToken: string,
+  body: { source_type: ChatbotSourceType; content: string; source_id?: string | null },
+) {
+  return apiFetch<ChatbotCorpusChunk>("/chatbot/corpus", accessToken, { method: "POST", body });
+}
+
+export function deleteCorpusChunk(accessToken: string, id: string) {
+  return apiFetch<void>(`/chatbot/corpus/${id}`, accessToken, { method: "DELETE" });
+}
+
+export function getDashboardAnalytics(accessToken: string) {
+  return apiFetch<DashboardAnalytics>("/analytics/dashboard", accessToken);
 }

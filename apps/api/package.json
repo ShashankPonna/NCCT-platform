@@ -12,6 +12,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.122.0",
+    "@huggingface/transformers": "^4.2.0",
     "@ncct/constants": "workspace:*",
     "@ncct/shared-types": "workspace:*",
     "@ncct/validation": "workspace:*",

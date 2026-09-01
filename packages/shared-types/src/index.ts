@@ -1,6 +1,10 @@
 import type {
+  ATTENDANCE_METHODS,
+  CHATBOT_SOURCE_TYPES,
   CONTENT_TYPES,
+  FACE_REC_MODELS,
   INTERACTIVE_EXERCISE_TYPES,
+  JOB_INTEREST_STATUSES,
   NOMINATION_STATUSES,
   PROGRAMME_MODES,
   ROLES,
@@ -11,6 +15,10 @@ export type ProgrammeMode = (typeof PROGRAMME_MODES)[number];
 export type NominationStatus = (typeof NOMINATION_STATUSES)[number];
 export type ContentType = (typeof CONTENT_TYPES)[number];
 export type InteractiveExerciseType = (typeof INTERACTIVE_EXERCISE_TYPES)[number];
+export type AttendanceMethod = (typeof ATTENDANCE_METHODS)[number];
+export type FaceRecModel = (typeof FACE_REC_MODELS)[number];
+export type JobInterestStatus = (typeof JOB_INTEREST_STATUSES)[number];
+export type ChatbotSourceType = (typeof CHATBOT_SOURCE_TYPES)[number];
 
 export interface Programme {
   id: string;
@@ -151,4 +159,129 @@ export interface Certificate {
   issuing_institution_id: string;
   pdf_storage_path: string;
   issued_at: string;
+}
+
+export interface AttendanceRecord {
+  id: string;
+  session_id: string;
+  trainee_id: string;
+  method: AttendanceMethod;
+  match_score: number | null;
+  recorded_at: string;
+}
+
+// The embedding vector itself is never returned to a client after
+// enrollment — this type is for server-side use (matching) only.
+export interface FaceEmbedding {
+  id: string;
+  trainee_id: string;
+  embedding: number[];
+  model: FaceRecModel;
+  consent_given_at: string;
+  created_at: string;
+}
+
+export interface Job {
+  id: string;
+  employer_id: string;
+  title: string;
+  description: string | null;
+  required_skills: string[] | null;
+  location: string | null;
+  created_at: string;
+}
+
+export interface JobInterest {
+  id: string;
+  job_id: string;
+  trainee_id: string;
+  status: JobInterestStatus;
+  created_at: string;
+}
+
+export interface VisibilitySettings {
+  trainee_id: string;
+  visible_to_employers: boolean;
+  updated_at: string;
+}
+
+// The embedding itself is never returned to a client — it exists only for
+// server-side retrieval, same as FaceEmbedding.
+export interface ChatbotCorpusChunk {
+  id: string;
+  source_type: ChatbotSourceType;
+  source_id: string | null;
+  content: string;
+  created_at: string;
+}
+
+// A retrieved chunk plus how well it matched, as returned by the
+// `match_corpus_chunks` RPC.
+export interface RetrievedChunk {
+  id: string;
+  content: string;
+  source_type: ChatbotSourceType;
+  source_id: string | null;
+  similarity: number;
+}
+
+// `sources` is what the answer was actually grounded in — returned so the UI
+// can show its provenance rather than presenting an unattributable answer.
+// `answered: false` means retrieval found nothing relevant and no model call
+// was made at all (see chatbotService).
+export interface ChatbotAnswer {
+  answered: boolean;
+  answer: string;
+  sources: { id: string; content: string; similarity: number }[];
+}
+
+// F8's single aggregate payload — see docs/IMPLEMENTATION.md for how each
+// dimension is derived (none of them are stored anywhere; all computed at
+// request time from F2/F3/F4/F6's own tables, since F8 has no schema of its
+// own).
+export interface DashboardAnalytics {
+  programmesRun: {
+    total: number;
+    byMode: { mode: ProgrammeMode; count: number }[];
+  };
+  traineesByRegion: { region: string; traineeCount: number }[];
+  completionRates: {
+    overall: { approvedNominations: number; certificatesIssued: number; rate: number };
+    byProgramme: {
+      programmeId: string;
+      programmeTitle: string;
+      approvedNominations: number;
+      certificatesIssued: number;
+      rate: number;
+    }[];
+  };
+  certificatesIssued: {
+    total: number;
+    byMonth: { month: string; count: number }[];
+  };
+  // Shortlist-funnel activity (job_interests grouped by status), not outcome
+  // tracking — real hire/placement analytics is PRD §13's Phase-2 "Employer
+  // Outcome Analysis," out of scope here. See docs/IMPLEMENTATION.md's F8
+  // entry for why "placements" in PRD §6.8 is read this way.
+  placements: {
+    totalJobs: number;
+    byStatus: { status: JobInterestStatus; count: number }[];
+  };
+}
+
+// A trainee's "skill"/"certification" search result — there's no dedicated
+// skills taxonomy in the schema (see docs/DATABASE.md's Open Items), so this
+// is derived by matching a keyword against the titles of programmes/
+// institutions behind a trainee's earned certificates, not a first-class
+// profile field.
+export interface TraineeSearchResult {
+  trainee_id: string;
+  full_name: string;
+  certificates: {
+    certificate_code: string;
+    programme_title: string | null;
+    institution_name: string | null;
+    institution_location: string | null;
+    issued_at: string;
+  }[];
 }

@@ -34,3 +34,50 @@ export const LOCALE_PATTERN = /^[a-z]{2}(-[A-Z]{2})?$/;
 export const SUGGESTED_LOCALES = ["en", "hi", "mr", "gu", "ta", "te", "kn", "bn"] as const;
 
 export const INTERACTIVE_EXERCISE_TYPES = ["matching"] as const;
+
+export const ATTENDANCE_METHODS = ["qr", "face"] as const;
+
+// Matches the `face_embeddings.model` CHECK constraint. Only "human" is
+// actually implemented (extraction runs client-side via @vladmandic/human,
+// see docs/DECISIONS.md #16) — "insightface_buffalo_l" is reserved for the
+// documented swap-in alternative (DECISIONS.md #5) and isn't accepted by the
+// API yet, so validation schemas restrict to "human" specifically rather
+// than this full list.
+export const FACE_REC_MODELS = ["human", "insightface_buffalo_l"] as const;
+
+// 1024-d — @vladmandic/human's faceres descriptor output, measured against
+// real faces in a browser rather than assumed. The initial schema claimed
+// 512 "to match Human / InsightFace buffalo_l", which conflated the two:
+// buffalo_l is 512-d, Human is 1024-d. Swapping to buffalo_l later would
+// need this value, the `face_embeddings.embedding` column, and every
+// enrolled embedding to change together — see DECISIONS.md #5/#16 and
+// migration 20260901000011.
+export const FACE_EMBEDDING_DIMENSIONS = 1024;
+
+// Human's own demos use ~0.6 as a same-person cosine-similarity threshold;
+// adopted here as a starting point, not a tuned value — a judgment call like
+// F4's pass_threshold_percent was, worth revisiting once there's real
+// enrollment/check-in data to tune against.
+export const FACE_MATCH_THRESHOLD = 0.6;
+
+export const JOB_INTEREST_STATUSES = ["shortlisted", "viewed", "contacted"] as const;
+
+// What a corpus chunk was derived from. `programme` chunks can carry the
+// originating programme's id in `source_id`; `faq` chunks are standalone.
+export const CHATBOT_SOURCE_TYPES = ["programme", "faq"] as const;
+
+// Xenova/all-MiniLM-L6-v2 output size — see docs/DECISIONS.md #17 for why
+// embeddings are generated locally rather than through a hosted API. Must
+// stay in sync with `chatbot_corpus_chunks.embedding`'s column dimension and
+// the `match_corpus_chunks` RPC signature.
+export const EMBEDDING_MODEL = "Xenova/all-MiniLM-L6-v2";
+export const EMBEDDING_DIMENSIONS = 384;
+
+// How many corpus chunks to retrieve per question, and how similar a chunk
+// must be to count as relevant at all. The floor matters more than the count
+// here: without it, an unrelated question still retrieves the 5 "closest"
+// chunks and the model is handed irrelevant context to ground an answer in.
+// Both are starting points tuned against a small corpus, not measured
+// optima — same category of judgment call as FACE_MATCH_THRESHOLD.
+export const CHATBOT_RETRIEVAL_COUNT = 5;
+export const CHATBOT_MIN_SIMILARITY = 0.25;
