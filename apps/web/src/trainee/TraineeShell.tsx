@@ -217,7 +217,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
               />
               <div className="hidden flex-col text-left sm:flex">
                 <span className="text-label-md font-bold leading-tight text-on-surface">
-                  {fullName ?? "Trainee"}
+                  {fullName || "Trainee"}
                 </span>
                 <span className="text-[11px] leading-tight text-on-surface-variant">Trainee</span>
               </div>

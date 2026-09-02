@@ -38,7 +38,17 @@ export function useSession() {
       }
       const profile = (await res.json()) as { role: Role; full_name: string | null };
       if (!cancelled) {
-        setSession({ accessToken, userId, role: profile.role, fullName: profile.full_name });
+        setSession({
+          accessToken,
+          userId,
+          role: profile.role,
+          // `profiles.full_name` is a nullable text column, but the signup
+          // trigger writes '' when no name metadata was supplied — so most
+          // real rows hold an empty string, not null. Normalising here keeps
+          // the `string | null` type honest and means every consumer's
+          // `?? "fallback"` actually fires instead of rendering blank.
+          fullName: profile.full_name?.trim() ? profile.full_name : null,
+        });
         setError(null);
       }
     }
