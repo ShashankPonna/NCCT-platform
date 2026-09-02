@@ -26,12 +26,12 @@ export function CertificateVerification({ code }: CertificateVerificationProps) 
   }, [code]);
 
   if (certificate === "loading") {
-    return <p className="center-message">Checking certificate...</p>;
+    return <p className="legacy-ui center-message">Checking certificate...</p>;
   }
 
   if (!certificate) {
     return (
-      <div className="verify-panel">
+      <div className="legacy-ui verify-panel">
         <h1>Certificate not found</h1>
         <p>
           No certificate matches code <strong>{code}</strong>. Check the code and try again.
@@ -41,7 +41,7 @@ export function CertificateVerification({ code }: CertificateVerificationProps) 
   }
 
   return (
-    <div className="verify-panel">
+    <div className="legacy-ui verify-panel">
       <h1>Certificate verified ✓</h1>
       <dl>
         <dt>Trainee</dt>

@@ -86,15 +86,23 @@
   margin: 8px 0;
 }
 
-input,
-button {
+/* Scoped to .legacy-ui (every screen except the Tailwind-based trainee
+   portal — see App.tsx) rather than left as bare element selectors. CSS
+   Cascade Layers gives unlayered rules absolute priority over layered ones
+   regardless of specificity or source order, and Tailwind's entire output
+   (Preflight + utilities) is layered — so an unscoped `button {}` here
+   would silently beat every Tailwind button class in apps/web/src/trainee/,
+   which is exactly what happened before this was scoped (see
+   docs/DECISIONS.md #20's follow-up note). */
+.legacy-ui input,
+.legacy-ui button {
   font: inherit;
 }
 
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input:not([type]) {
+.legacy-ui input[type="text"],
+.legacy-ui input[type="email"],
+.legacy-ui input[type="password"],
+.legacy-ui input:not([type]) {
   padding: 6px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -102,7 +110,7 @@ input:not([type]) {
   color: var(--text-h);
 }
 
-button {
+.legacy-ui button {
   padding: 6px 14px;
   border-radius: 6px;
   border: 1px solid var(--border);
@@ -166,7 +174,7 @@ button {
   margin: 0;
 }
 
-textarea {
+.legacy-ui textarea {
   font: inherit;
   padding: 6px 10px;
   border: 1px solid var(--border);
@@ -404,11 +412,76 @@ textarea {
   border-bottom: 1px solid var(--border);
 }
 
-select {
+.legacy-ui select {
   font: inherit;
   padding: 6px 10px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--bg);
   color: var(--text-h);
+}
+
+/* Skills taxonomy (Phase-2 P1) — grouped multi-select picker and read-only
+   chip display, shared by SkillPicker.tsx wherever a caller needs either. */
+.skill-picker-label {
+  font-size: 14px;
+  margin: 4px 0;
+}
+
+.skill-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 8px 0 16px;
+}
+
+.skill-picker-group {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.skill-picker-empty {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.skill-checkbox {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  margin: 4px 0;
+}
+
+.skill-chip-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 8px;
+}
+
+.skill-chip {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.job-row {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.job-row-main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.job-skill-editor {
+  margin-top: 8px;
 }

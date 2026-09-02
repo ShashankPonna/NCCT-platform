@@ -1,16 +1,13 @@
 import { AdminCourseManager } from "./AdminCourseManager.js";
 import { AnalyticsDashboard } from "./AnalyticsDashboard.js";
 import "./App.css";
-import { AttendanceCheckIn } from "./AttendanceCheckIn.js";
 import { AttendanceManager } from "./AttendanceManager.js";
 import { CertificateVerification } from "./CertificateVerification.js";
 import { ChatbotCorpusManager } from "./ChatbotCorpusManager.js";
-import { ChatbotPanel } from "./ChatbotPanel.js";
 import { EmployerDashboard } from "./EmployerDashboard.js";
 import { LoginForm } from "./LoginForm.js";
-import { StudentLessonView } from "./StudentLessonView.js";
 import { supabase } from "./supabaseClient.js";
-import { TraineeJobBoard } from "./TraineeJobBoard.js";
+import { TraineeApp } from "./trainee/TraineeApp.js";
 import { useSession } from "./useSession.js";
 
 function App() {
@@ -25,7 +22,7 @@ function App() {
   }
 
   if (loading) {
-    return <p className="center-message">Loading...</p>;
+    return <p className="legacy-ui center-message">Loading...</p>;
   }
 
   if (!session) {
@@ -34,10 +31,10 @@ function App() {
     // stays null in that case, so this error must be shown here, not only
     // in the post-login shell below (which never mounts without a session).
     return (
-      <>
+      <div className="legacy-ui">
         {error && <p className="form-error">{error}</p>}
         <LoginForm />
-      </>
+      </div>
     );
   }
 
@@ -46,8 +43,20 @@ function App() {
   // docs/DECISIONS.md #16's QR-as-URL approach.
   const checkinSessionId = new URLSearchParams(window.location.search).get("checkin") ?? undefined;
 
+  // The trainee portal brings its own full-page shell (header + nav —
+  // design/stitch_ncct_trainee_portal) rather than nesting inside the
+  // admin/employer app-shell below, which has no equivalent navigation.
+  if (session.role === "trainee") {
+    return (
+      <>
+        {error && <p className="form-error">{error}</p>}
+        <TraineeApp accessToken={session.accessToken} autoCheckInSessionId={checkinSessionId} />
+      </>
+    );
+  }
+
   return (
-    <div className="app-shell">
+    <div className="legacy-ui app-shell">
       <header className="app-header">
         <h1>NCCT Platform</h1>
         <div>
@@ -67,18 +76,8 @@ function App() {
               an "Admin view", unlike the content-authoring panels above it. */}
           {session.role === "admin" && <AnalyticsDashboard accessToken={session.accessToken} />}
         </>
-      ) : session.role === "employer" ? (
-        <EmployerDashboard accessToken={session.accessToken} />
       ) : (
-        <>
-          <StudentLessonView accessToken={session.accessToken} />
-          <AttendanceCheckIn
-            accessToken={session.accessToken}
-            autoCheckInSessionId={checkinSessionId}
-          />
-          <TraineeJobBoard accessToken={session.accessToken} />
-          <ChatbotPanel accessToken={session.accessToken} />
-        </>
+        <EmployerDashboard accessToken={session.accessToken} />
       )}
     </div>
   );
