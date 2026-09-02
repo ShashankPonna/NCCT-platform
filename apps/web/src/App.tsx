@@ -1,4 +1,5 @@
 import { AdminCourseManager } from "./AdminCourseManager.js";
+import { AdminProgrammeManager } from "./AdminProgrammeManager.js";
 import { AnalyticsDashboard } from "./AnalyticsDashboard.js";
 import "./App.css";
 import { AttendanceManager } from "./AttendanceManager.js";
@@ -73,6 +74,10 @@ function App() {
       {error && <p className="form-error">{error}</p>}
       {session.role === "admin" || session.role === "trainer" ? (
         <>
+          {/* Programme/nomination/timetable writes are all admin-only at the
+              route level (F2), so this panel is too — a trainer would just
+              get 403s from every control in it. */}
+          {session.role === "admin" && <AdminProgrammeManager accessToken={session.accessToken} />}
           <AdminCourseManager accessToken={session.accessToken} />
           <AttendanceManager accessToken={session.accessToken} />
           <ChatbotCorpusManager accessToken={session.accessToken} />

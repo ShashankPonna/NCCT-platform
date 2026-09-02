@@ -12,6 +12,7 @@ import { contentTranslationsRouter } from "./routes/contentTranslations.js";
 import { coursesRouter } from "./routes/courses.js";
 import { employerSearchRouter } from "./routes/employerSearch.js";
 import { faceEmbeddingsRouter } from "./routes/faceEmbeddings.js";
+import { institutionsRouter } from "./routes/institutions.js";
 import { jobInterestsRouter } from "./routes/jobInterests.js";
 import { jobsRouter } from "./routes/jobs.js";
 import { lessonContentRouter } from "./routes/lessonContent.js";
@@ -35,6 +36,7 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api", profileRouter);
+app.use("/api", institutionsRouter);
 app.use("/api", programmesRouter);
 app.use("/api", programmeProgressRouter);
 app.use("/api", nominationsRouter);

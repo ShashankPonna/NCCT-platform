@@ -13,6 +13,7 @@ import type {
   ContentType,
   Course,
   InteractiveConfig,
+  Institution,
   Job,
   JobInterest,
   JobInterestStatus,
@@ -20,7 +21,9 @@ import type {
   LessonProgress,
   Module,
   Nomination,
+  NominationDecision,
   Programme,
+  ProgrammeMode,
   QuestionOption,
   TimetableSession,
   TraineeSearchResult,
@@ -71,8 +74,58 @@ async function apiFetch<T>(
   return res.json();
 }
 
+export function getInstitutions(accessToken: string) {
+  return apiFetch<Institution[]>("/institutions", accessToken);
+}
+
 export function getProgrammes(accessToken: string) {
   return apiFetch<Programme[]>("/programmes", accessToken);
+}
+
+export function createProgramme(
+  accessToken: string,
+  body: {
+    institution_id: string;
+    title: string;
+    mode: ProgrammeMode;
+    description?: string;
+    target_audience?: string;
+    capacity?: number;
+    start_date?: string;
+    end_date?: string;
+  },
+) {
+  return apiFetch<Programme>("/programmes", accessToken, { method: "POST", body });
+}
+
+// Admin review queue for one programme (distinct from getMyNominations,
+// which is a trainee's own list).
+export function getProgrammeNominations(accessToken: string, programmeId: string) {
+  return apiFetch<Nomination[]>(`/programmes/${programmeId}/nominations`, accessToken);
+}
+
+export function decideNomination(
+  accessToken: string,
+  programmeId: string,
+  nominationId: string,
+  status: NominationDecision,
+) {
+  return apiFetch<Nomination>(
+    `/programmes/${programmeId}/nominations/${nominationId}`,
+    accessToken,
+    { method: "PATCH", body: { status } },
+  );
+}
+
+export function createTimetableSession(
+  accessToken: string,
+  programmeId: string,
+  body: { title?: string; starts_at: string; ends_at: string; location?: string },
+) {
+  return apiFetch<TimetableSession>(`/programmes/${programmeId}/timetable`, accessToken, {
+    method: "POST",
+    body,
+  });
 }
 
 export function nominateSelf(accessToken: string, programmeId: string) {

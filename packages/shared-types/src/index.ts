@@ -5,6 +5,7 @@ import type {
   FACE_REC_MODELS,
   INTERACTIVE_EXERCISE_TYPES,
   JOB_INTEREST_STATUSES,
+  NOMINATION_DECISIONS,
   NOMINATION_STATUSES,
   PROGRAMME_MODES,
   ROLES,
@@ -13,12 +14,22 @@ import type {
 export type Role = (typeof ROLES)[number];
 export type ProgrammeMode = (typeof PROGRAMME_MODES)[number];
 export type NominationStatus = (typeof NOMINATION_STATUSES)[number];
+// The subset an admin can decide on — `pending` is the initial state, not a
+// decision, so it is deliberately absent (mirrors NOMINATION_DECISIONS).
+export type NominationDecision = (typeof NOMINATION_DECISIONS)[number];
 export type ContentType = (typeof CONTENT_TYPES)[number];
 export type InteractiveExerciseType = (typeof INTERACTIVE_EXERCISE_TYPES)[number];
 export type AttendanceMethod = (typeof ATTENDANCE_METHODS)[number];
 export type FaceRecModel = (typeof FACE_REC_MODELS)[number];
 export type JobInterestStatus = (typeof JOB_INTEREST_STATUSES)[number];
 export type ChatbotSourceType = (typeof CHATBOT_SOURCE_TYPES)[number];
+
+export interface Institution {
+  id: string;
+  name: string;
+  type: string | null;
+  location: string | null;
+}
 
 export interface Programme {
   id: string;

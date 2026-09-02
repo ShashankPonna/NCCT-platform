@@ -5,14 +5,15 @@ import {
   getCourses,
   getModules,
   getLessons,
+  getProgrammes,
   updateLesson,
   upsertLessonTranslation,
   uploadLessonContent,
 } from "@ncct/api-client";
 import { SUGGESTED_LOCALES } from "@ncct/constants";
-import type { ContentType, Course, Lesson, Module } from "@ncct/shared-types";
+import type { ContentType, Course, Lesson, Module, Programme } from "@ncct/shared-types";
 import { createLessonSchema, localeSchema, youtubeVideoIdSchema } from "@ncct/validation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AssessmentBuilder } from "./AssessmentBuilder.js";
 
 interface AdminCourseManagerProps {
@@ -24,6 +25,7 @@ interface AdminCourseManagerProps {
 // uploaded PDF/slides file to a lesson, not a full content-authoring
 // experience.
 export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
+  const [programmes, setProgrammes] = useState<Programme[]>([]);
   const [programmeId, setProgrammeId] = useState("");
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
@@ -32,8 +34,15 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    getProgrammes(accessToken)
+      .then(setProgrammes)
+      .catch((err: Error) => setError(err.message));
+  }, [accessToken]);
+
   async function loadCourses(id: string) {
     setError(null);
+    setProgrammeId(id);
     try {
       setCourses(await getCourses(accessToken, id));
     } catch (err) {
@@ -186,13 +195,31 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
 
       <section>
         <label>
-          Programme ID
-          <input
-            value={programmeId}
-            onChange={(e) => setProgrammeId(e.target.value)}
-            onBlur={() => programmeId && loadCourses(programmeId)}
-            placeholder="paste an existing programme UUID"
-          />
+          Programme
+          {/* Was a raw-UUID paste box with nothing to paste from until
+              AdminProgrammeManager gave admins a way to create/see
+              programmes. Falls back to the manual field when the list is
+              empty (or a trainer, who can't list programmes' owner data,
+              still needs to reach one directly). */}
+          {programmes.length > 0 ? (
+            <select value={programmeId} onChange={(e) => loadCourses(e.target.value)}>
+              <option value="" disabled>
+                Select a programme…
+              </option>
+              {programmes.map((programme) => (
+                <option key={programme.id} value={programme.id}>
+                  {programme.title}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              value={programmeId}
+              onChange={(e) => setProgrammeId(e.target.value)}
+              onBlur={() => programmeId && loadCourses(programmeId)}
+              placeholder="paste an existing programme UUID"
+            />
+          )}
         </label>
         {programmeId && (
           <form onSubmit={handleCreateCourse} className="inline-form">
