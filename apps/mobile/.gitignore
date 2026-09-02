@@ -1,41 +1,36 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
 # dependencies
 node_modules/
 
-# Expo
-.expo/
+# Vite build output (Capacitor's webDir — rebuilt via `npx cap sync` before each native build)
 dist/
-web-build/
-expo-env.d.ts
 
-# Native
-.kotlin/
-*.orig.*
+# Capacitor
+.capacitor/
+
+# Android — the android/ project itself is committed (Capacitor convention:
+# native plugin config lives there and isn't fully regenerable), only its
+# build/local-machine artifacts are ignored.
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/release/
+
+# Signing material — never commit
 *.jks
+*.keystore
 *.p8
 *.p12
-*.key
 *.mobileprovision
-
-# Metro
-.metro-health-check*
-
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
 
 # macOS
 .DS_Store
-*.pem
 
 # local env files
+.env
 .env*.local
 
 # typescript
 *.tsbuildinfo
-
-# generated native folders
-/ios
-/android

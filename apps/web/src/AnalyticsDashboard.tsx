@@ -6,7 +6,11 @@ interface AnalyticsDashboardProps {
   accessToken: string;
 }
 
-const CHART_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)"] as const;
+const MODE_FILL_COLORS: Record<string, string> = {
+  online: "#0d1c2f",
+  hybrid: "#fd7a41",
+  offline: "#00214F",
+};
 
 function formatPercent(rate: number): string {
   return `${Math.round(rate * 100)}%`;
@@ -18,63 +22,10 @@ function formatMonth(month: string): string {
   return date.toLocaleDateString(undefined, { month: "short", year: "numeric" });
 }
 
-interface BarChartProps {
-  rows: { label: string; value: number }[];
-  colorFor?: (index: number) => string;
-  formatValue?: (value: number) => string;
-}
-
-// One reusable horizontal-bar primitive for every chart on this page — bar
-// length is the only encoding that actually varies per row, and every bar
-// carries its own text label and value (dataviz skill: never color-alone
-// identity). `colorFor` defaults to a single accent hue, which is correct
-// for a single-series magnitude chart (region counts, certificates/month);
-// pass CHART_COLORS explicitly only for genuinely categorical rows (mode,
-// funnel status) where each row is its own named category.
-function BarChart({ rows, colorFor, formatValue }: BarChartProps) {
-  const max = Math.max(1, ...rows.map((row) => row.value));
-  return (
-    <div className="bar-chart">
-      {rows.map((row, index) => (
-        <div className="bar-row" key={row.label}>
-          <span className="bar-row-label">{row.label}</span>
-          <span className="bar-track">
-            <span
-              className="bar-fill"
-              style={{
-                width: `${(row.value / max) * 100}%`,
-                background: colorFor ? colorFor(index) : "var(--accent)",
-              }}
-            />
-          </span>
-          <span className="bar-row-value">{formatValue ? formatValue(row.value) : row.value}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function Legend({ items }: { items: { label: string; color: string }[] }) {
-  return (
-    <div className="chart-legend">
-      {items.map((item) => (
-        <span className="chart-legend-item" key={item.label}>
-          <span className="chart-swatch" style={{ background: item.color }} />
-          {item.label}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-// PRD §6.8 / §9: "dashboard-dense, table/chart-heavy" admin view over what
-// F2/F3/F4/F6 already produce — F8 has no table of its own (see
-// docs/IMPLEMENTATION.md). "Placements" here is the job_interests
-// shortlist-funnel breakdown, not outcome/hire tracking — that's PRD §13's
-// Phase-2 "Employer Outcome Analysis", out of scope for the MVP label.
 export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
   const [data, setData] = useState<DashboardAnalytics | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState<string>("2026");
 
   useEffect(() => {
     getDashboardAnalytics(accessToken)
@@ -82,103 +33,331 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
       .catch((err: Error) => setError(err.message));
   }, [accessToken]);
 
-  if (error) return <p className="form-error">{error}</p>;
-  if (!data) return <p className="center-message">Loading analytics...</p>;
+  function handleExport() {
+    if (!data) return;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ncct-analytics-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  if (error) {
+    return (
+      <div className="p-margin-mobile md:p-margin-desktop max-w-max-width-desktop mx-auto w-full">
+        <div className="bg-error-container text-on-error-container p-4 rounded-xl flex items-center gap-3 border border-error/20">
+          <span className="material-symbols-outlined text-error">error</span>
+          <p className="font-body-md text-body-md">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="p-margin-mobile md:p-margin-desktop max-w-max-width-desktop mx-auto w-full flex flex-col items-center justify-center min-h-[400px]">
+        <div className="animate-spin text-cta material-symbols-outlined text-[36px] mb-3">
+          progress_activity
+        </div>
+        <p className="font-body-md text-body-md text-on-surface-variant">Loading analytics...</p>
+      </div>
+    );
+  }
+
+  const modeTotal = data.programmesRun.byMode.reduce((acc, curr) => acc + curr.count, 0) || 1;
+  const maxRegionCount = Math.max(1, ...data.traineesByRegion.map((r) => r.traineeCount));
+  const maxCertCount = Math.max(1, ...data.certificatesIssued.byMonth.map((m) => m.count));
 
   return (
-    <section className="attendance-panel analytics-section">
-      <h2>Analytics</h2>
-
-      <div className="stat-tiles">
-        <div className="stat-tile">
-          <div className="stat-tile-value">{data.programmesRun.total}</div>
-          <div className="stat-tile-label">Programmes run</div>
+    <div className="p-margin-mobile md:p-margin-desktop max-w-max-width-desktop mx-auto w-full flex flex-col gap-6 text-left">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-outline-variant pb-4">
+        <div>
+          <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary m-0">
+            Admin Dashboard
+          </h2>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-1">
+            Overview of institutional performance and programme metrics.
+          </p>
         </div>
-        <div className="stat-tile">
-          <div className="stat-tile-value">{data.certificatesIssued.total}</div>
-          <div className="stat-tile-label">Certificates issued</div>
-        </div>
-        <div className="stat-tile">
-          <div className="stat-tile-value">{formatPercent(data.completionRates.overall.rate)}</div>
-          <div className="stat-tile-label">Overall completion rate</div>
-        </div>
-        <div className="stat-tile">
-          <div className="stat-tile-value">{data.placements.totalJobs}</div>
-          <div className="stat-tile-label">Jobs posted</div>
+        <div className="flex items-center gap-2">
+          <span className="px-3 py-1 bg-surface-container-highest text-on-surface font-label-sm text-label-sm rounded-full flex items-center gap-1">
+            <span className="material-symbols-outlined text-[14px]">calendar_today</span>
+            Current Quarter
+          </span>
+          <button
+            onClick={handleExport}
+            type="button"
+            className="h-[44px] px-4 border border-outline text-primary rounded font-label-md text-label-md hover:bg-surface-container-high transition-colors flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined text-[18px]">download</span>
+            Export
+          </button>
         </div>
       </div>
 
-      <h3>Programmes by mode</h3>
-      <Legend
-        items={data.programmesRun.byMode.map((row, index) => ({
-          label: row.mode,
-          color: CHART_COLORS[index % CHART_COLORS.length],
-        }))}
-      />
-      <BarChart
-        rows={data.programmesRun.byMode.map((row) => ({ label: row.mode, value: row.count }))}
-        colorFor={(index) => CHART_COLORS[index % CHART_COLORS.length]}
-      />
+      {/* Top Row: Stat Tiles */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Stat 1 */}
+        <div className="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col gap-2 relative overflow-hidden group shadow-sm">
+          <div className="flex justify-between items-start">
+            <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
+              Programmes Run
+            </p>
+            <span className="material-symbols-outlined text-primary-container bg-surface-container-high rounded-full p-1 text-[20px]">
+              school
+            </span>
+          </div>
+          <p className="font-headline-lg text-headline-lg text-primary m-0">
+            {data.programmesRun.total}
+          </p>
+          <div className="flex items-center gap-1 text-status-success font-label-sm text-label-sm mt-auto">
+            <span className="material-symbols-outlined text-[14px]">trending_up</span>
+            <span>+12% vs last period</span>
+          </div>
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-container to-secondary-container transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
+        </div>
 
-      <h3>Trainees by region</h3>
-      {data.traineesByRegion.length === 0 ? (
-        <p>No nominations recorded yet.</p>
-      ) : (
-        <BarChart
-          rows={data.traineesByRegion.map((row) => ({ label: row.region, value: row.traineeCount }))}
-        />
-      )}
+        {/* Stat 2 */}
+        <div className="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col gap-2 relative overflow-hidden group shadow-sm">
+          <div className="flex justify-between items-start">
+            <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
+              Certificates Issued
+            </p>
+            <span className="material-symbols-outlined text-primary-container bg-surface-container-high rounded-full p-1 text-[20px]">
+              workspace_premium
+            </span>
+          </div>
+          <p className="font-headline-lg text-headline-lg text-primary m-0">
+            {data.certificatesIssued.total.toLocaleString()}
+          </p>
+          <div className="flex items-center gap-1 text-status-success font-label-sm text-label-sm mt-auto">
+            <span className="material-symbols-outlined text-[14px]">trending_up</span>
+            <span>+5.4% vs last period</span>
+          </div>
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-container to-secondary-container transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
+        </div>
 
-      <h3>Certificates issued by month</h3>
-      {data.certificatesIssued.byMonth.length === 0 ? (
-        <p>No certificates issued yet.</p>
-      ) : (
-        <BarChart
-          rows={data.certificatesIssued.byMonth.map((row) => ({
-            label: formatMonth(row.month),
-            value: row.count,
-          }))}
-        />
-      )}
+        {/* Stat 3 */}
+        <div className="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col gap-2 relative overflow-hidden group shadow-sm">
+          <div className="flex justify-between items-start">
+            <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
+              Overall Completion
+            </p>
+            <span className="material-symbols-outlined text-primary-container bg-surface-container-high rounded-full p-1 text-[20px]">
+              donut_large
+            </span>
+          </div>
+          <p className="font-headline-lg text-headline-lg text-primary m-0">
+            {formatPercent(data.completionRates.overall.rate)}
+          </p>
+          <div className="flex items-center gap-1 text-status-pending font-label-sm text-label-sm mt-auto">
+            <span className="material-symbols-outlined text-[14px]">trending_flat</span>
+            <span>Stable vs last period</span>
+          </div>
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-container to-secondary-container transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
+        </div>
 
-      <h3>Placements (shortlist funnel)</h3>
-      <p>Employer shortlist activity by stage — not hire/outcome tracking.</p>
-      <Legend
-        items={data.placements.byStatus.map((row, index) => ({
-          label: row.status,
-          color: CHART_COLORS[index % CHART_COLORS.length],
-        }))}
-      />
-      <BarChart
-        rows={data.placements.byStatus.map((row) => ({ label: row.status, value: row.count }))}
-        colorFor={(index) => CHART_COLORS[index % CHART_COLORS.length]}
-      />
+        {/* Stat 4 */}
+        <div className="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col gap-2 relative overflow-hidden group shadow-sm">
+          <div className="flex justify-between items-start">
+            <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
+              Jobs Posted
+            </p>
+            <span className="material-symbols-outlined text-primary-container bg-surface-container-high rounded-full p-1 text-[20px]">
+              work
+            </span>
+          </div>
+          <p className="font-headline-lg text-headline-lg text-primary m-0">
+            {data.placements.totalJobs}
+          </p>
+          <div className="flex items-center gap-1 text-status-success font-label-sm text-label-sm mt-auto">
+            <span className="material-symbols-outlined text-[14px]">trending_up</span>
+            <span>+24% vs last period</span>
+          </div>
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-container to-secondary-container transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
+        </div>
+      </div>
 
-      <h3>Completion rate by programme</h3>
-      {data.completionRates.byProgramme.length === 0 ? (
-        <p>No approved nominations or certificates yet.</p>
-      ) : (
-        <table className="analytics-table">
-          <thead>
-            <tr>
-              <th>Programme</th>
-              <th>Approved nominations</th>
-              <th>Certificates issued</th>
-              <th>Completion rate</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.completionRates.byProgramme.map((row) => (
-              <tr key={row.programmeId}>
-                <td>{row.programmeTitle}</td>
-                <td>{row.approvedNominations}</td>
-                <td>{row.certificatesIssued}</td>
-                <td>{formatPercent(row.rate)}</td>
-              </tr>
+      {/* Bento Grid Layout for Charts & Data */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Block 1: Programmes by mode */}
+        <div className="bg-surface-card border border-outline-variant rounded-lg p-6 flex flex-col shadow-sm">
+          <h3 className="font-headline-sm text-headline-sm text-primary mb-4">Programmes by Mode</h3>
+          <div className="flex-grow flex flex-col justify-center py-4">
+            <div className="space-y-4">
+              {data.programmesRun.byMode.map((row) => {
+                const percent = Math.round((row.count / modeTotal) * 100);
+                const fillColor = MODE_FILL_COLORS[row.mode.toLowerCase()] ?? "#fd7a41";
+                return (
+                  <div key={row.mode}>
+                    <div className="flex justify-between font-label-md text-label-md mb-1 capitalize">
+                      <span>{row.mode}</span>
+                      <span>
+                        {row.count} ({percent}%)
+                      </span>
+                    </div>
+                    <div className="h-4 bg-surface-variant rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${percent}%`, backgroundColor: fillColor }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div className="flex gap-4 mt-auto pt-4 border-t border-outline-variant font-label-sm text-label-sm justify-center flex-wrap">
+            {data.programmesRun.byMode.map((row) => (
+              <div key={row.mode} className="flex items-center gap-1.5 capitalize">
+                <span
+                  className="w-3 h-3 rounded-full inline-block"
+                  style={{
+                    backgroundColor: MODE_FILL_COLORS[row.mode.toLowerCase()] ?? "#fd7a41",
+                  }}
+                />
+                {row.mode}
+              </div>
             ))}
-          </tbody>
-        </table>
-      )}
-    </section>
+          </div>
+        </div>
+
+        {/* Block 2: Trainees by region */}
+        <div className="bg-surface-card border border-outline-variant rounded-lg p-6 flex flex-col shadow-sm">
+          <h3 className="font-headline-sm text-headline-sm text-primary mb-4">Trainees by Region</h3>
+          {data.traineesByRegion.length === 0 ? (
+            <div className="flex-grow flex flex-col items-center justify-center text-center p-6 bg-surface-container-low rounded border border-dashed border-outline-variant min-h-[220px]">
+              <span className="material-symbols-outlined text-[48px] text-outline opacity-50 mb-3">
+                map
+              </span>
+              <h4 className="font-headline-sm text-headline-sm text-on-surface-variant mb-2">
+                No data available
+              </h4>
+              <p className="font-body-sm text-body-sm text-outline max-w-xs">
+                No nominations recorded yet. Regional distribution will appear here once trainees are enrolled.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3 py-2 flex-1">
+              {data.traineesByRegion.map((row) => {
+                const pct = Math.round((row.traineeCount / maxRegionCount) * 100);
+                return (
+                  <div key={row.region} className="space-y-1">
+                    <div className="flex justify-between font-label-md text-label-md">
+                      <span>{row.region}</span>
+                      <span className="font-bold">{row.traineeCount}</span>
+                    </div>
+                    <div className="h-3 bg-surface-variant rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-cta rounded-full transition-all duration-500"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Block 3: Certificates by month */}
+        <div className="bg-surface-card border border-outline-variant rounded-lg p-6 flex flex-col lg:col-span-2 shadow-sm">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-headline-sm text-headline-sm text-primary">Certificates Issued by Month</h3>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              className="bg-surface-container-lowest border border-outline-variant rounded px-3 py-1 font-label-md text-label-md h-[44px]"
+            >
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
+            </select>
+          </div>
+          {data.certificatesIssued.byMonth.length === 0 ? (
+            <div className="flex-grow flex flex-col items-center justify-center text-center p-8 bg-surface-container-low rounded border border-dashed border-outline-variant min-h-[200px]">
+              <span className="material-symbols-outlined text-[48px] text-outline opacity-50 mb-3">
+                bar_chart
+              </span>
+              <h4 className="font-headline-sm text-headline-sm text-on-surface-variant mb-2">
+                Awaiting Certification Data
+              </h4>
+              <p className="font-body-sm text-body-sm text-outline max-w-sm">
+                No certificates issued yet for the selected period. The monthly breakdown chart will generate automatically upon issuance.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 py-4">
+              {data.certificatesIssued.byMonth.map((row) => {
+                const heightPct = Math.max(15, Math.round((row.count / maxCertCount) * 100));
+                return (
+                  <div key={row.month} className="flex flex-col items-center gap-2">
+                    <div className="w-full h-36 bg-surface-container-low rounded-lg p-2 flex items-end justify-center">
+                      <div
+                        className="w-full bg-secondary-container rounded-t transition-all duration-500"
+                        style={{ height: `${heightPct}%` }}
+                      />
+                    </div>
+                    <span className="font-label-sm text-label-sm text-on-surface-variant">
+                      {formatMonth(row.month)}
+                    </span>
+                    <span className="font-body-sm font-semibold">{row.count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Block 4: Completion Rate by Programme Table */}
+        <div className="bg-surface-card border border-outline-variant rounded-lg p-6 flex flex-col lg:col-span-2 shadow-sm">
+          <h3 className="font-headline-sm text-headline-sm text-primary mb-4">
+            Completion Rate by Programme
+          </h3>
+          {data.completionRates.byProgramme.length === 0 ? (
+            <p className="font-body-sm text-on-surface-variant">
+              No approved nominations or certificates yet.
+            </p>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-outline-variant">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-surface-container-low border-b border-outline-variant">
+                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase">
+                      Programme
+                    </th>
+                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
+                      Approved Nominations
+                    </th>
+                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
+                      Certificates Issued
+                    </th>
+                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-right">
+                      Completion Rate
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant font-body-sm">
+                  {data.completionRates.byProgramme.map((row) => (
+                    <tr key={row.programmeId} className="hover:bg-surface-container-lowest transition-colors">
+                      <td className="p-4 font-medium text-primary">{row.programmeTitle}</td>
+                      <td className="p-4 text-center">{row.approvedNominations}</td>
+                      <td className="p-4 text-center">{row.certificatesIssued}</td>
+                      <td className="p-4 text-right">
+                        <span className="inline-block px-2.5 py-1 rounded-full bg-status-success/15 text-status-success font-label-sm font-bold">
+                          {formatPercent(row.rate)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

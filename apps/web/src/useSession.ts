@@ -7,6 +7,7 @@ interface SessionInfo {
   userId: string;
   role: Role;
   fullName: string | null;
+  email: string | null;
 }
 
 // Minimal session hook: Supabase Auth handles login (client-side, per
@@ -21,7 +22,7 @@ export function useSession() {
   useEffect(() => {
     let cancelled = false;
 
-    async function loadRole(accessToken: string, userId: string) {
+    async function loadRole(accessToken: string, userId: string, email: string | null) {
       const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
       const res = await fetch(`${apiUrl}/api/profile`, {
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -48,6 +49,7 @@ export function useSession() {
           // the `string | null` type honest and means every consumer's
           // `?? "fallback"` actually fires instead of rendering blank.
           fullName: profile.full_name?.trim() ? profile.full_name : null,
+          email,
         });
         setError(null);
       }
@@ -56,7 +58,7 @@ export function useSession() {
     supabase.auth.getSession().then(({ data }) => {
       const current = data.session;
       if (current) {
-        loadRole(current.access_token, current.user.id)
+        loadRole(current.access_token, current.user.id, current.user.email ?? null)
           .catch((err: Error) => setError(err.message))
           .finally(() => setLoading(false));
       } else {
@@ -66,8 +68,8 @@ export function useSession() {
 
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, newSession) => {
       if (newSession) {
-        loadRole(newSession.access_token, newSession.user.id).catch((err: Error) =>
-          setError(err.message),
+        loadRole(newSession.access_token, newSession.user.id, newSession.user.email ?? null).catch(
+          (err: Error) => setError(err.message),
         );
       } else {
         setSession(null);

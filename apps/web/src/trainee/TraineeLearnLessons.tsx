@@ -4,6 +4,7 @@ import {
   getLessonProgress,
   getLessons,
   getLessonTranslations,
+  getLessonVideoUrl,
   getModules,
   getMyNominations,
   updateLessonProgress,
@@ -19,6 +20,7 @@ import type {
 import { useEffect, useState } from "react";
 import { MatchingExercise } from "../MatchingExercise.js";
 import { QuizTaker } from "../QuizTaker.js";
+import { SelfHostedVideoPlayer } from "../SelfHostedVideoPlayer.js";
 import { YouTubeVideoPlayer } from "../YouTubeVideoPlayer.js";
 import { ErrorBanner } from "./pieces.js";
 
@@ -47,6 +49,7 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [progress, setProgress] = useState<LessonProgress | null>(null);
   const [translations, setTranslations] = useState<ContentTranslation[]>([]);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [locale, setLocale] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
 
@@ -106,14 +109,21 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
   async function selectLesson(lesson: Lesson) {
     setSelectedLesson(lesson);
     setLocale("");
+    setVideoUrl(null);
     setError(null);
     try {
-      const [lessonProgress, lessonTranslations] = await Promise.all([
+      // Only fetch a playback URL for a video lesson with no YouTube ID —
+      // one with a video_id renders via YouTubeVideoPlayer instead, and the
+      // route itself would just return { url: null } for a non-video lesson.
+      const needsVideoUrl = lesson.content_type === "video" && !lesson.video_id;
+      const [lessonProgress, lessonTranslations, video] = await Promise.all([
         getLessonProgress(accessToken, lesson.id),
         getLessonTranslations(accessToken, lesson.id),
+        needsVideoUrl ? getLessonVideoUrl(accessToken, lesson.id) : Promise.resolve(null),
       ]);
       setProgress(lessonProgress);
       setTranslations(lessonTranslations);
+      setVideoUrl(video?.url ?? null);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -309,9 +319,12 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
             )}
 
             <div className="mb-6 flex-grow">
-              {selectedLesson.content_type === "video" && (
-                <YouTubeVideoPlayer videoId={selectedLesson.video_id} />
-              )}
+              {selectedLesson.content_type === "video" &&
+                (selectedLesson.video_id ? (
+                  <YouTubeVideoPlayer videoId={selectedLesson.video_id} />
+                ) : (
+                  <SelfHostedVideoPlayer url={videoUrl} />
+                ))}
               {(selectedLesson.content_type === "pdf" || selectedLesson.content_type === "slides") &&
                 (selectedLesson.storage_path ? (
                   <button

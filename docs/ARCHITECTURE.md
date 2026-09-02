@@ -4,7 +4,7 @@ Status: **entirely proposed** — no code exists yet. Everything in this documen
 
 ## 1. Overview
 
-Two client apps (React web, React Native mobile) talk to a single Node/Express REST API, which is the only thing allowed to talk to Supabase. Supabase provides Postgres (with pgvector), Auth, and file Storage. The Claude API powers the RAG chatbot; a JS face-recognition library runs inside the Express process for attendance matching.
+Two client apps (React web, and a React/Vite mobile app packaged as a native Android app via Capacitor — see [DECISIONS.md](DECISIONS.md) #19) talk to a single Node/Express REST API, which is the only thing allowed to talk to Supabase. Supabase provides Postgres (with pgvector), Auth, and file Storage. The Claude API powers the RAG chatbot. Face recognition (attendance) and NFC profile reads run on dedicated external hardware (an ESP32-CAM and an NFC reader, respectively) wired into the **web** client, not into either app's own device hardware.
 
 ## 2. Architecture Diagram
 
@@ -12,7 +12,7 @@ Two client apps (React web, React Native mobile) talk to a single Node/Express R
 flowchart TB
     subgraph Clients
         Web["React Web App\n(Admin / Employer / public pages)"]
-        Mobile["React Native App\n(Trainee, offline-capable)"]
+        Mobile["React/Vite App\n(Trainee, Capacitor-packaged, offline-capable)"]
     end
 
     subgraph Backend["Node.js + Express API (single backend)"]
@@ -45,7 +45,7 @@ flowchart TB
 ## 3. Technology Stack
 
 - Web: React + TypeScript
-- Mobile: React Native (Expo) + TypeScript
+- Mobile: React + TypeScript (Vite), packaged as a native Android app via Capacitor — no camera/NFC device access needed (that hardware lives on the web side), so a WebView-wrapped web app covers the actual requirement; see [DECISIONS.md](DECISIONS.md) #19
 - Backend: Node.js + Express + TypeScript
 - Database: Supabase (Postgres, pgvector extension), Auth, Storage
 - Face recognition: `@vladmandic/human` (default) or InsightFace `buffalo_l` via `onnxruntime-node` — see [DECISIONS.md](DECISIONS.md)
@@ -57,7 +57,7 @@ flowchart TB
 ```
 /apps
   /web         React (Vite) — admin dashboards, employer portal, public cert/profile pages
-  /mobile      React Native (Expo) — trainee app: learning, offline, camera, NFC
+  /mobile      React (Vite) + Capacitor — trainee app: learning, offline download/sync
   /api         Node + Express — the one shared backend
 /packages
   /shared-types  TS types for API request/response and DB rows
@@ -70,10 +70,10 @@ flowchart TB
 
 ## 5. Frontend Architecture
 
-- **Web** (React): plain React, not React Native Web. Suited to dashboard-dense admin/employer screens (tables, charts) and public no-login pages (certificate verify, profile).
-- **Mobile** (React Native/Expo): native camera access (face-rec, QR scan), NFC reading, offline storage (`expo-file-system`/`expo-sqlite`), local video playback.
+- **Web** (React): plain React. Suited to dashboard-dense admin/employer screens (tables, charts) and public no-login pages (certificate verify, profile).
+- **Mobile** (React + Vite, Capacitor): trainee-only. Offline storage/downloads via Capacitor plugins (`@capacitor/filesystem`, a SQLite plugin — not yet installed, added when the offline-queue feature is actually built per [DECISIONS.md](DECISIONS.md) #19). No native camera or NFC access is needed — face-recognition attendance and NFC profile reads both run on external hardware (ESP32-CAM, NFC reader) wired into the web client, not the trainee's phone.
 - Both import from `packages/api-client`, `packages/shared-types`, `packages/validation` — no duplicated fetch logic or type definitions between the two.
-- UI components themselves are **not** shared between web and mobile (different render targets); only logic below the UI layer is shared.
+- Unlike the original design, UI components **can** now be shared or ported between web and mobile where it makes sense — `apps/mobile` is expected to reuse/adapt `apps/web/src/trainee/*`'s already-built screens rather than duplicate them from scratch, since both are the same React/Vite stack (see [DECISIONS.md](DECISIONS.md) #19). They remain genuinely separate apps (different audiences, different shells), not a single shared UI package — this is deliberate reuse where convenient, not a merge.
 
 ## 6. Backend Architecture
 

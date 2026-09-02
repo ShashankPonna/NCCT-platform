@@ -1,0 +1,317 @@
+@import "tailwindcss";
+
+/* Shared design tokens with apps/web/src/index.css — same values, kept as a
+   duplicate rather than a shared package for the same reason as
+   useSession.ts (see that file's comment): not enough real sharing surface
+   yet to justify the package-boundary overhead. Keep the two in sync by
+   hand until there's a third consumer. */
+:root,
+[data-theme="light"] {
+  --text: #334155;
+  --text-h: #0f172a;
+  --bg: #f8fafc;
+  --border: #e2e8f0;
+  --code-bg: #f1f5f9;
+  --accent: #1e5fbf;
+  --accent-bg: rgba(30, 95, 191, 0.08);
+  --accent-border: rgba(30, 95, 191, 0.3);
+  --social-bg: rgba(241, 245, 249, 0.8);
+  --shadow: rgba(0, 0, 0, 0.04) 0 4px 6px -1px, rgba(0, 0, 0, 0.02) 0 2px 4px -1px;
+
+  --chart-1: #1e5fbf;
+  --chart-2: #f26522;
+  --chart-3: #0d9488;
+
+  --ncct-primary: #0f172a;
+  --ncct-on-primary: #ffffff;
+  --ncct-primary-container: #1e3a8a;
+  --ncct-on-primary-container: #dbeafe;
+  --ncct-primary-fixed: #e0e7ff;
+  --ncct-primary-fixed-dim: #c7d2fe;
+  --ncct-on-primary-fixed: #1e1b4b;
+  --ncct-inverse-primary: #b2c8ed;
+
+  --ncct-secondary: #ea580c;
+  --ncct-on-secondary: #ffffff;
+  --ncct-secondary-container: #ffedd5;
+  --ncct-on-secondary-container: #9a3412;
+  --ncct-secondary-fixed: #ffedd5;
+  --ncct-secondary-fixed-dim: #fed7aa;
+  --ncct-on-secondary-fixed: #431407;
+
+  --ncct-tertiary: #0284c7;
+  --ncct-on-tertiary: #ffffff;
+  --ncct-tertiary-container: #e0f2fe;
+  --ncct-on-tertiary-container: #0369a1;
+  --ncct-tertiary-fixed: #e0f2fe;
+
+  --ncct-cta: #f26522;
+  --ncct-cta-hover: #d95b1e;
+  --ncct-interactive: #1e5fbf;
+
+  --ncct-background: #f8fafc;
+  --ncct-on-background: #0f172a;
+  --ncct-surface: #ffffff;
+  --ncct-surface-card: #ffffff;
+  --ncct-surface-dim: #f1f5f9;
+  --ncct-surface-bright: #ffffff;
+  --ncct-surface-container-lowest: #ffffff;
+  --ncct-surface-container-low: #f8fafc;
+  --ncct-surface-container: #f1f5f9;
+  --ncct-surface-container-high: #e2e8f0;
+  --ncct-surface-container-highest: #cbd5e1;
+  --ncct-surface-variant: #f8fafc;
+  --ncct-on-surface: #0f172a;
+  --ncct-on-surface-variant: #475569;
+
+  --ncct-outline: #94a3b8;
+  --ncct-outline-variant: #e2e8f0;
+  --ncct-border-low-contrast: #e2e8f0;
+
+  --ncct-status-shortlisted: #059669;
+  --ncct-status-pending: #d97706;
+  --ncct-status-rejected: #dc2626;
+
+  --sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  --heading: system-ui, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+  --ncct-heading-font: "Plus Jakarta Sans", system-ui, "Segoe UI", Roboto, sans-serif;
+  --ncct-body-font: "Noto Sans", system-ui, "Segoe UI", Roboto, sans-serif;
+
+  font: 18px/145% var(--sans);
+  letter-spacing: 0.18px;
+  color-scheme: light;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 1024px) {
+    font-size: 16px;
+  }
+}
+
+.dark,
+[data-theme="dark"] {
+  --text: #94a3b8;
+  --text-h: #f8fafc;
+  --bg: #0b1120;
+  --border: #1e293b;
+  --code-bg: #1e293b;
+  --accent: #3b82f6;
+  --accent-bg: rgba(59, 130, 246, 0.15);
+  --accent-border: rgba(59, 130, 246, 0.4);
+  --social-bg: rgba(30, 41, 59, 0.8);
+  --shadow: rgba(0, 0, 0, 0.4) 0 4px 6px -1px, rgba(0, 0, 0, 0.25) 0 2px 4px -1px;
+
+  --chart-1: #3b82f6;
+  --chart-2: #f97316;
+  --chart-3: #14b8a6;
+
+  --ncct-primary: #93c5fd;
+  --ncct-on-primary: #0f172a;
+  --ncct-primary-container: #1d4ed8;
+  --ncct-on-primary-container: #dbeafe;
+  --ncct-primary-fixed: #1e293b;
+  --ncct-primary-fixed-dim: #334155;
+  --ncct-on-primary-fixed: #93c5fd;
+  --ncct-inverse-primary: #1e3a8a;
+
+  --ncct-secondary: #fb923c;
+  --ncct-on-secondary: #431407;
+  --ncct-secondary-container: #9a3412;
+  --ncct-on-secondary-container: #ffedd5;
+  --ncct-secondary-fixed: #3b2314;
+  --ncct-secondary-fixed-dim: #431407;
+  --ncct-on-secondary-fixed: #fed7aa;
+
+  --ncct-tertiary: #38bdf8;
+  --ncct-on-tertiary: #082f49;
+  --ncct-tertiary-container: #0369a1;
+  --ncct-on-tertiary-container: #e0f2fe;
+  --ncct-tertiary-fixed: #082f49;
+
+  --ncct-cta: #f26522;
+  --ncct-cta-hover: #ea580c;
+  --ncct-interactive: #3b82f6;
+
+  --ncct-background: #0b1120;
+  --ncct-on-background: #f8fafc;
+  --ncct-surface: #131d32;
+  --ncct-surface-card: #131d32;
+  --ncct-surface-dim: #090e1a;
+  --ncct-surface-bright: #1e293b;
+  --ncct-surface-container-lowest: #0b1120;
+  --ncct-surface-container-low: #0f172a;
+  --ncct-surface-container: #17233d;
+  --ncct-surface-container-high: #1e2d4d;
+  --ncct-surface-container-highest: #283a62;
+  --ncct-surface-variant: #17233d;
+  --ncct-on-surface: #f8fafc;
+  --ncct-on-surface-variant: #94a3b8;
+
+  --ncct-outline: #64748b;
+  --ncct-outline-variant: #1e293b;
+  --ncct-border-low-contrast: #1e293b;
+
+  --ncct-status-shortlisted: #34d399;
+  --ncct-status-pending: #fbbf24;
+  --ncct-status-rejected: #f87171;
+
+  color-scheme: dark;
+}
+
+@theme {
+  --color-primary: var(--ncct-primary);
+  --color-on-primary: var(--ncct-on-primary);
+  --color-primary-container: var(--ncct-primary-container);
+  --color-on-primary-container: var(--ncct-on-primary-container);
+  --color-primary-fixed: var(--ncct-primary-fixed);
+  --color-primary-fixed-dim: var(--ncct-primary-fixed-dim);
+  --color-on-primary-fixed: var(--ncct-on-primary-fixed);
+  --color-inverse-primary: var(--ncct-inverse-primary);
+
+  --color-secondary: var(--ncct-secondary);
+  --color-on-secondary: var(--ncct-on-secondary);
+  --color-secondary-container: var(--ncct-secondary-container);
+  --color-on-secondary-container: var(--ncct-on-secondary-container);
+  --color-secondary-fixed: var(--ncct-secondary-fixed);
+  --color-secondary-fixed-dim: var(--ncct-secondary-fixed-dim);
+  --color-on-secondary-fixed: var(--ncct-on-secondary-fixed);
+
+  --color-tertiary: var(--ncct-tertiary);
+  --color-on-tertiary: var(--ncct-on-tertiary);
+  --color-tertiary-container: var(--ncct-tertiary-container);
+  --color-on-tertiary-container: var(--ncct-on-tertiary-container);
+
+  --color-cta: var(--ncct-cta);
+  --color-cta-hover: var(--ncct-cta-hover);
+  --color-interactive: var(--ncct-interactive);
+
+  --color-background: var(--ncct-background);
+  --color-on-background: var(--ncct-on-background);
+  --color-surface: var(--ncct-surface);
+  --color-surface-card: var(--ncct-surface-card);
+  --color-surface-dim: var(--ncct-surface-dim);
+  --color-surface-bright: var(--ncct-surface-bright);
+  --color-surface-container-lowest: var(--ncct-surface-container-lowest);
+  --color-surface-container-low: var(--ncct-surface-container-low);
+  --color-surface-container: var(--ncct-surface-container);
+  --color-surface-container-high: var(--ncct-surface-container-high);
+  --color-surface-container-highest: var(--ncct-surface-container-highest);
+  --color-surface-variant: var(--ncct-surface-variant);
+  --color-on-surface: var(--ncct-on-surface);
+  --color-on-surface-variant: var(--ncct-on-surface-variant);
+
+  --color-outline: var(--ncct-outline);
+  --color-outline-variant: var(--ncct-outline-variant);
+  --color-border-low-contrast: var(--ncct-border-low-contrast);
+
+  --color-status-success: #10b981;
+  --color-status-shortlisted: var(--ncct-status-shortlisted);
+  --color-status-pending: var(--ncct-status-pending);
+  --color-status-rejected: var(--ncct-status-rejected);
+
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  --font-headline: "Hanken Grotesk", var(--ncct-heading-font);
+  --font-body: "Fira Sans", var(--ncct-body-font);
+  --font-headline-lg: "Hanken Grotesk", sans-serif;
+  --font-headline-md: "Hanken Grotesk", sans-serif;
+  --font-headline-sm: "Hanken Grotesk", sans-serif;
+  --font-body-lg: "Fira Sans", sans-serif;
+  --font-body-md: "Fira Sans", sans-serif;
+  --font-body-sm: "Fira Sans", sans-serif;
+  --font-label-md: "Fira Sans", sans-serif;
+  --font-label-sm: "Fira Sans", sans-serif;
+
+  --text-headline-lg: 32px;
+  --text-headline-lg--line-height: 40px;
+  --text-headline-lg--letter-spacing: -0.02em;
+  --text-headline-lg--font-weight: 700;
+  --text-headline-lg-mobile: 24px;
+  --text-headline-lg-mobile--line-height: 32px;
+  --text-headline-lg-mobile--font-weight: 700;
+  --text-headline-md: 24px;
+  --text-headline-md--line-height: 30px;
+  --text-headline-md--font-weight: 600;
+  --text-headline-sm: 20px;
+  --text-headline-sm--line-height: 26px;
+  --text-headline-sm--font-weight: 600;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 28px;
+  --text-body-md: 16px;
+  --text-body-md--line-height: 24px;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 20px;
+  --text-label-md: 12px;
+  --text-label-md--line-height: 16px;
+  --text-label-md--letter-spacing: 0.05em;
+  --text-label-md--font-weight: 600;
+  --text-label-sm: 10px;
+  --text-label-sm--line-height: 14px;
+  --text-label-sm--letter-spacing: 0.08em;
+  --text-label-sm--font-weight: 700;
+
+  --radius-DEFAULT: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+
+  --spacing-base: 8px;
+  --spacing-container-max: 1280px;
+  --spacing-margin-mobile: 16px;
+  --spacing-mobile-width: 390px;
+  --spacing-touch-target: 44px;
+  --spacing-gutter: 16px;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  /* Native app chrome, not a browser tab — don't let the WebView bounce/select
+     text like a web page. */
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+}
+
+.material-symbols-outlined[data-weight="fill"] {
+  font-variation-settings: "FILL" 1;
+}

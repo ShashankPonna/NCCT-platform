@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Dashboard - NCCT Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600;700&amp;family=Hanken+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#fd7a41",
+                        "on-surface": "#1A1C19",
+                        "surface-tint": "#515f76",
+                        "tertiary-container": "#00214F",
+                        "surface-dim": "#DADAD5",
+                        "on-secondary": "#ffffff",
+                        "primary": "#000000",
+                        "surface-container-highest": "#E3E3DE",
+                        "surface-container-lowest": "#ffffff",
+                        "cta": "#F26522",
+                        "on-secondary-fixed-variant": "#7f2b00",
+                        "tertiary-fixed-dim": "#b9c6e7",
+                        "on-background": "#1b1b1d",
+                        "primary-container": "#0d1c2f",
+                        "surface-bright": "#FAFAF5",
+                        "outline-variant": "#C4C6CE",
+                        "on-secondary-fixed": "#370e00",
+                        "status-success": "#10B981",
+                        "on-tertiary-container": "#5288EA",
+                        "status-rejected": "#BA1A1A",
+                        "secondary": "#a63b00",
+                        "surface-container": "#EEEEE9",
+                        "inverse-primary": "#b8c7e1",
+                        "surface": "#FAFAF5",
+                        "surface-variant": "#e4e2e4",
+                        "background": "#fbf9fa",
+                        "on-primary-fixed": "#0d1c2f",
+                        "tertiary": "#000000",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#ffdbce",
+                        "on-secondary-container": "#5A1C00",
+                        "tertiary-fixed": "#d8e2ff",
+                        "status-pending": "#EAB308",
+                        "on-primary-container": "#76859c",
+                        "cta-hover": "#D94E10",
+                        "surface-container-high": "#eae7e9",
+                        "inverse-on-surface": "#f2f0f2",
+                        "on-primary": "#ffffff",
+                        "inverse-surface": "#303032",
+                        "on-tertiary-fixed-variant": "#3a4762",
+                        "on-tertiary-fixed": "#0d1b34",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f5f3f5",
+                        "on-tertiary": "#ffffff",
+                        "outline": "#74777E",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed-variant": "#39485d",
+                        "primary-fixed": "#d4e3fe",
+                        "on-error": "#ffffff",
+                        "primary-fixed-dim": "#b8c7e1",
+                        "on-surface-variant": "#44474c",
+                        "surface-card": "#FFFFFF",
+                        "secondary-fixed-dim": "#ffb599"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "margin-desktop": "32px",
+                        "gutter": "16px",
+                        "touch-target": "44px",
+                        "margin-mobile": "16px",
+                        "max-width-desktop": "1200px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Fira Sans"],
+                        "label-md": ["Fira Sans"],
+                        "label-sm": ["Fira Sans"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "body-md": ["Fira Sans"],
+                        "body-sm": ["Fira Sans"],
+                        "headline-sm": ["Hanken Grotesk"],
+                        "headline-lg-mobile": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "26px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["26px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+        /* Custom scrollbar for data tables */
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f5f3f5;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #C4C6CE;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #74777E;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col bg-surface-container-low dark:bg-inverse-surface border-r border-outline-variant w-64 h-full fixed left-0 top-0 bottom-0 z-40 p-4 transition-all">
+<div class="mb-8 px-4 py-2 flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="A clean, minimalist abstract logo design suitable for a government or institutional education portal. Features subtle geometric shapes in primary colors against a stark white background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4B3V3fHtEPH7u4jx3KWEd9of6KeWDv38KnXJgbGjZcOgY1TrW2IKPrgwEboFalNkmYH7usQx0XZvUS6OIqqNLq3gq48DOa7LTNYh1jq0yyrR6fj3VOmdATnGKlcggQAW5DL9jPjrCEgz5ARrm_5I5H-n6QfIEq_EIqFZqoUzCIpXsWN1tpdX9XHGth0Si7NOusq2DIxd9B6FhaxOllR9rj48gQyNRzBjy_ri6e0LkHqlen98mM1Y9aw"/>
+<div>
+<h1 class="font-headline-md text-headline-md text-primary m-0">NCCT Portal</h1>
+<p class="font-label-md text-label-md text-on-surface-variant m-0">Management Console</p>
+</div>
+</div>
+<ul class="flex flex-col gap-2 flex-grow">
+<!-- Active Tab -->
+<li>
+<a class="flex items-center gap-3 px-4 h-[44px] bg-secondary-container text-on-secondary-container rounded-full font-bold transition-transform translate-x-1" href="#">
+<span class="material-symbols-outlined text-[20px]" data-weight="fill">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+</li>
+<!-- Inactive Tabs -->
+<li>
+<a class="flex items-center gap-3 px-4 h-[44px] text-on-surface-variant hover:bg-surface-container-high hover:bg-surface-container-highest transition-all rounded-full" href="#">
+<span class="material-symbols-outlined text-[20px]">domain</span>
+<span class="font-label-md text-label-md">Users &amp; Institutions</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 h-[44px] text-on-surface-variant hover:bg-surface-container-high hover:bg-surface-container-highest transition-all rounded-full" href="#">
+<span class="material-symbols-outlined text-[20px]">school</span>
+<span class="font-label-md text-label-md">Programmes</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 h-[44px] text-on-surface-variant hover:bg-surface-container-high hover:bg-surface-container-highest transition-all rounded-full" href="#">
+<span class="material-symbols-outlined text-[20px]">description</span>
+<span class="font-label-md text-label-md">Content</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 h-[44px] text-on-surface-variant hover:bg-surface-container-high hover:bg-surface-container-highest transition-all rounded-full" href="#">
+<span class="material-symbols-outlined text-[20px]">event_available</span>
+<span class="font-label-md text-label-md">Attendance</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 h-[44px] text-on-surface-variant hover:bg-surface-container-high hover:bg-surface-container-highest transition-all rounded-full" href="#">
+<span class="material-symbols-outlined text-[20px]">smart_toy</span>
+<span class="font-label-md text-label-md">Chatbot Knowledge Base</span>
+</a>
+</li>
+<li class="my-2 border-t border-outline-variant"></li>
+<li>
+<a class="flex items-center gap-3 px-4 h-[44px] text-on-surface-variant hover:bg-surface-container-high hover:bg-surface-container-highest transition-all rounded-full" href="#">
+<span class="material-symbols-outlined text-[20px]">person</span>
+<span class="font-label-md text-label-md">My Profile</span>
+</a>
+</li>
+</ul>
+<div class="mt-auto">
+<a class="flex items-center gap-3 px-4 h-[44px] text-on-surface-variant hover:bg-surface-container-high hover:bg-surface-container-highest transition-all rounded-full" href="#">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+<span class="font-label-md text-label-md">Sign Out</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-grow md:ml-64 flex flex-col w-full">
+<!-- Mobile Top Nav (visible only on mobile) -->
+<header class="md:hidden flex justify-between items-center w-full px-margin-mobile h-16 bg-primary dark:bg-primary z-50 sticky top-0">
+<div class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-primary">
+                NCCT
+            </div>
+<button class="w-[44px] h-[44px] flex items-center justify-center text-on-primary hover:bg-primary-container transition-colors rounded-full">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</header>
+<!-- Dashboard Content -->
+<div class="p-gutter md:p-margin-desktop max-w-max-width-desktop mx-auto w-full flex flex-col gap-6">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-outline-variant pb-4">
+<div>
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary m-0">Admin Dashboard</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Overview of institutional performance and programme metrics.</p>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface font-label-sm text-label-sm rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+                        Current Quarter
+                    </span>
+<button class="h-[44px] px-4 border border-outline text-primary rounded font-label-md text-label-md hover:bg-surface-container-lowest transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                        Export
+                    </button>
+</div>
+</div>
+<!-- Top Row: Stat Tiles -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Stat 1 -->
+<div class="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col gap-2 relative overflow-hidden group">
+<div class="flex justify-between items-start">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Programmes Run</p>
+<span class="material-symbols-outlined text-primary-container bg-surface-container-high rounded-full p-1 text-[20px]">school</span>
+</div>
+<p class="font-headline-lg text-headline-lg text-primary m-0">42</p>
+<div class="flex items-center gap-1 text-status-success font-label-sm text-label-sm mt-auto">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span>+12% vs last month</span>
+</div>
+<div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-container to-secondary-container transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
+</div>
+<!-- Stat 2 -->
+<div class="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col gap-2 relative overflow-hidden group">
+<div class="flex justify-between items-start">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Certificates Issued</p>
+<span class="material-symbols-outlined text-primary-container bg-surface-container-high rounded-full p-1 text-[20px]">workspace_premium</span>
+</div>
+<p class="font-headline-lg text-headline-lg text-primary m-0">1,204</p>
+<div class="flex items-center gap-1 text-status-success font-label-sm text-label-sm mt-auto">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span>+5.4% vs last month</span>
+</div>
+<div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-container to-secondary-container transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
+</div>
+<!-- Stat 3 -->
+<div class="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col gap-2 relative overflow-hidden group">
+<div class="flex justify-between items-start">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Overall Completion</p>
+<span class="material-symbols-outlined text-primary-container bg-surface-container-high rounded-full p-1 text-[20px]">donut_large</span>
+</div>
+<p class="font-headline-lg text-headline-lg text-primary m-0">87.5%</p>
+<div class="flex items-center gap-1 text-status-pending font-label-sm text-label-sm mt-auto">
+<span class="material-symbols-outlined text-[14px]">trending_flat</span>
+<span>Stable vs last month</span>
+</div>
+<div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-container to-secondary-container transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
+</div>
+<!-- Stat 4 -->
+<div class="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col gap-2 relative overflow-hidden group">
+<div class="flex justify-between items-start">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Jobs Posted</p>
+<span class="material-symbols-outlined text-primary-container bg-surface-container-high rounded-full p-1 text-[20px]">work</span>
+</div>
+<p class="font-headline-lg text-headline-lg text-primary m-0">315</p>
+<div class="flex items-center gap-1 text-status-success font-label-sm text-label-sm mt-auto">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span>+24% vs last month</span>
+</div>
+<div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-container to-secondary-container transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
+</div>
+</div>
+<!-- Bento Grid Layout for Charts & Data -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+<!-- Block 1: Programmes by mode -->
+<div class="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col">
+<h3 class="font-headline-sm text-headline-sm text-primary mb-4">Programmes by Mode</h3>
+<div class="flex-grow flex flex-col justify-center py-4">
+<!-- Simulated Horizontal Bar Chart -->
+<div class="space-y-4">
+<div>
+<div class="flex justify-between font-label-md text-label-md mb-1">
+<span>Online</span>
+<span>24 (57%)</span>
+</div>
+<div class="h-4 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full w-[57%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-label-md text-label-md mb-1">
+<span>Hybrid</span>
+<span>12 (28%)</span>
+</div>
+<div class="h-4 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container rounded-full w-[28%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-label-md text-label-md mb-1">
+<span>Offline</span>
+<span>6 (15%)</span>
+</div>
+<div class="h-4 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-tertiary-container rounded-full w-[15%]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex gap-4 mt-auto pt-4 border-t border-outline-variant font-label-sm text-label-sm justify-center">
+<div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-primary-container block"></span> Online</div>
+<div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-secondary-container block"></span> Hybrid</div>
+<div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-tertiary-container block"></span> Offline</div>
+</div>
+</div>
+<!-- Block 2: Trainees by region (Empty State Example) -->
+<div class="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col">
+<h3 class="font-headline-sm text-headline-sm text-primary mb-4">Trainees by Region</h3>
+<!-- Empty State -->
+<div class="flex-grow flex flex-col items-center justify-center text-center p-6 bg-surface-container-low rounded border border-dashed border-outline-variant">
+<span class="material-symbols-outlined text-[48px] text-outline opacity-50 mb-3">map</span>
+<h4 class="font-headline-sm text-headline-sm text-on-surface-variant mb-2">No data available</h4>
+<p class="font-body-sm text-body-sm text-outline mb-4 max-w-xs">No nominations recorded yet. Regional distribution will appear here once trainees are enrolled.</p>
+<button class="h-[44px] px-6 bg-cta hover:bg-cta-hover text-on-primary rounded font-label-md text-label-md transition-colors">
+                            Import Data
+                        </button>
+</div>
+</div>
+<!-- Block 3: Certificates by month (Empty State Example) -->
+<div class="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col lg:col-span-2">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-headline-sm text-headline-sm text-primary">Certificates Issued by Month</h3>
+<select class="bg-surface-container-lowest border border-outline-variant rounded px-3 py-1 font-label-md text-label-md h-[44px]">
+<option>2023</option>
+<option>2022</option>
+</select>
+</div>
+<!-- Empty State -->
+<div class="flex-grow flex flex-col items-center justify-center text-center p-8 bg-surface-container-low rounded border border-dashed border-outline-variant">
+<span class="material-symbols-outlined text-[48px] text-outline opacity-50 mb-3">bar_chart</span>
+<h4 class="font-headline-sm text-headline-sm text-on-surface-variant mb-2">Awaiting Certification Data</h4>
+<p class="font-body-sm text-body-sm text-outline mb-4 max-w-sm">No certificates issued yet for the selected period. The monthly breakdown chart will generate automatically upon issuance.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

@@ -207,12 +207,25 @@
   --color-outline-variant: var(--ncct-outline-variant);
   --color-border-low-contrast: var(--ncct-border-low-contrast);
 
+  --color-status-success: #10b981;
   --color-status-shortlisted: var(--ncct-status-shortlisted);
   --color-status-pending: var(--ncct-status-pending);
   --color-status-rejected: var(--ncct-status-rejected);
 
-  --font-headline: var(--ncct-heading-font);
-  --font-body: var(--ncct-body-font);
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  --font-headline: "Hanken Grotesk", var(--ncct-heading-font);
+  --font-body: "Fira Sans", var(--ncct-body-font);
+  --font-headline-lg: "Hanken Grotesk", sans-serif;
+  --font-headline-md: "Hanken Grotesk", sans-serif;
+  --font-headline-sm: "Hanken Grotesk", sans-serif;
+  --font-body-lg: "Fira Sans", sans-serif;
+  --font-body-md: "Fira Sans", sans-serif;
+  --font-body-sm: "Fira Sans", sans-serif;
+  --font-label-md: "Fira Sans", sans-serif;
+  --font-label-sm: "Fira Sans", sans-serif;
 
   --text-headline-lg: 32px;
   --text-headline-lg--line-height: 40px;
@@ -221,20 +234,25 @@
   --text-headline-lg-mobile: 24px;
   --text-headline-lg-mobile--line-height: 32px;
   --text-headline-lg-mobile--font-weight: 700;
-  --text-headline-md: 20px;
-  --text-headline-md--line-height: 28px;
-  --text-headline-md--font-weight: 700;
+  --text-headline-md: 24px;
+  --text-headline-md--line-height: 30px;
+  --text-headline-md--font-weight: 600;
+  --text-headline-sm: 20px;
+  --text-headline-sm--line-height: 26px;
+  --text-headline-sm--font-weight: 600;
   --text-body-lg: 18px;
   --text-body-lg--line-height: 28px;
   --text-body-md: 16px;
   --text-body-md--line-height: 24px;
-  --text-label-md: 14px;
-  --text-label-md--line-height: 20px;
-  --text-label-md--letter-spacing: 0.01em;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 20px;
+  --text-label-md: 12px;
+  --text-label-md--line-height: 16px;
+  --text-label-md--letter-spacing: 0.05em;
   --text-label-md--font-weight: 600;
-  --text-label-sm: 12px;
-  --text-label-sm--line-height: 16px;
-  --text-label-sm--letter-spacing: 0.05em;
+  --text-label-sm: 10px;
+  --text-label-sm--line-height: 14px;
+  --text-label-sm--letter-spacing: 0.08em;
   --text-label-sm--font-weight: 700;
 
   --radius-DEFAULT: 0.25rem;
@@ -243,11 +261,12 @@
 
   --spacing-base: 8px;
   --spacing-container-max: 1280px;
+  --spacing-max-width-desktop: 1200px;
   --spacing-margin-mobile: 16px;
-  --spacing-margin-desktop: 64px;
+  --spacing-margin-desktop: 32px;
   --spacing-mobile-width: 390px;
   --spacing-touch-target: 44px;
-  --spacing-gutter: 24px;
+  --spacing-gutter: 16px;
 }
 
 #root {
@@ -326,3 +345,25 @@ body {
   -webkit-font-feature-settings: "liga";
   -webkit-font-smoothing: antialiased;
 }
+
+.material-symbols-outlined[data-weight="fill"] {
+  font-variation-settings: 'FILL' 1;
+}
+
+/* Custom scrollbar matching Stitch Remix designs */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--ncct-surface-container-low);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--ncct-outline-variant);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--ncct-outline);
+}
+

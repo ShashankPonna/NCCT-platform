@@ -1,0 +1,78 @@
+import type { Role } from "@ncct/shared-types";
+import { useEffect, useState } from "react";
+import { supabase } from "./supabaseClient.js";
+
+interface SessionInfo {
+  accessToken: string;
+  userId: string;
+  role: Role;
+  fullName: string | null;
+  email: string | null;
+}
+
+// Same shape and logic as apps/web/src/useSession.ts — Supabase Auth handles
+// login client-side, the role/name come back from GET /api/profile. Kept as
+// a straight duplicate rather than a shared package for now: it's ~60 lines,
+// identical between the two clients only because both currently only need
+// Supabase Auth + one API call, and premature sharing would fight the
+// "web/mobile are separate codebases" boundary before there's a second
+// method's worth of real duplication to justify factoring it out.
+export function useSession() {
+  const [session, setSession] = useState<SessionInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadRole(accessToken: string, userId: string, email: string | null) {
+      const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
+      const res = await fetch(`${apiUrl}/api/profile`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) {
+        await supabase.auth.signOut();
+        throw new Error(`Could not load profile/role for the signed-in user (HTTP ${res.status})`);
+      }
+      const profile = (await res.json()) as { role: Role; full_name: string | null };
+      if (!cancelled) {
+        setSession({
+          accessToken,
+          userId,
+          role: profile.role,
+          fullName: profile.full_name?.trim() ? profile.full_name : null,
+          email,
+        });
+        setError(null);
+      }
+    }
+
+    supabase.auth.getSession().then(({ data }) => {
+      const current = data.session;
+      if (current) {
+        loadRole(current.access_token, current.user.id, current.user.email ?? null)
+          .catch((err: Error) => setError(err.message))
+          .finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
+    });
+
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (newSession) {
+        loadRole(newSession.access_token, newSession.user.id, newSession.user.email ?? null).catch(
+          (err: Error) => setError(err.message),
+        );
+      } else {
+        setSession(null);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.subscription.unsubscribe();
+    };
+  }, []);
+
+  return { session, loading, error };
+}

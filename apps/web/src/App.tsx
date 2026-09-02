@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { AdminCourseManager } from "./AdminCourseManager.js";
 import { AdminProgrammeManager } from "./AdminProgrammeManager.js";
 import { AdminUserManager } from "./AdminUserManager.js";
@@ -7,14 +8,20 @@ import { AttendanceManager } from "./AttendanceManager.js";
 import { CertificateVerification } from "./CertificateVerification.js";
 import { ChatbotCorpusManager } from "./ChatbotCorpusManager.js";
 import { EmployerDashboard } from "./EmployerDashboard.js";
+import { ForgotPasswordForm } from "./ForgotPasswordForm.js";
 import { LoginForm } from "./LoginForm.js";
+import { ManagementShell, type ManagementTab } from "./ManagementShell.js";
 import { ProfileEditor } from "./ProfileEditor.js";
-import { supabase } from "./supabaseClient.js";
+import { ResetPasswordForm } from "./ResetPasswordForm.js";
 import { TraineeApp } from "./trainee/TraineeApp.js";
+import { usePasswordRecovery } from "./usePasswordRecovery.js";
 import { useSession } from "./useSession.js";
 
 function App() {
   const { session, loading, error } = useSession();
+  const { isRecovery, clearRecovery } = usePasswordRecovery();
+  const [activeTab, setActiveTab] = useState<ManagementTab | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   // Checked before the auth gate below, not after: certificate verification
   // is explicitly no-login (PRD §6.4), so it must never depend on — or wait
@@ -24,31 +31,53 @@ function App() {
     return <CertificateVerification code={verifyCode} />;
   }
 
-  if (loading) {
-    return <p className="legacy-ui center-message">Loading...</p>;
-  }
-
-  if (!session) {
-    // A Supabase sign-in can succeed while the follow-up role lookup
-    // (GET /api/profile) still fails — e.g. the API isn't running. Session
-    // stays null in that case, so this error must be shown here, not only
-    // in the post-login shell below (which never mounts without a session).
+  // Also checked ahead of the loading/session gates: a password-reset link
+  // establishes a real (temporary) session, which would otherwise satisfy
+  // `session` below and drop the user straight into their dashboard instead
+  // of letting them set a new password.
+  if (isRecovery) {
     return (
-      <div className="legacy-ui">
-        {error && <p className="form-error">{error}</p>}
-        <LoginForm />
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <ResetPasswordForm onDone={clearRecovery} />
       </div>
     );
   }
 
-  // Unlike `?verify=` above, a QR check-in genuinely needs an authenticated
-  // trainee, so this is only read once a session exists — see
-  // docs/DECISIONS.md #16's QR-as-URL approach.
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin material-symbols-outlined text-[36px] text-cta">
+            progress_activity
+          </div>
+          <p className="font-body-md text-body-md text-on-surface-variant">Loading session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md">
+          {error && (
+            <div className="mb-4 bg-error-container text-on-error-container p-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+          {showForgotPassword ? (
+            <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />
+          ) : (
+            <LoginForm onForgotPassword={() => setShowForgotPassword(true)} />
+          )}
+        </div>
+      </div>
+    );
+  }
+
   const checkinSessionId = new URLSearchParams(window.location.search).get("checkin") ?? undefined;
 
-  // The trainee portal brings its own full-page shell (header + nav —
-  // design/stitch_ncct_trainee_portal) rather than nesting inside the
-  // admin/employer app-shell below, which has no equivalent navigation.
+  // The trainee portal brings its own full-page shell (header + nav)
   if (session.role === "trainee") {
     return (
       <>
@@ -56,47 +85,57 @@ function App() {
         <TraineeApp
           accessToken={session.accessToken}
           fullName={session.fullName}
+          email={session.email}
           autoCheckInSessionId={checkinSessionId}
         />
       </>
     );
   }
 
+  const defaultTab: ManagementTab =
+    session.role === "admin"
+      ? "dashboard"
+      : session.role === "trainer"
+      ? "content"
+      : session.role === "employer"
+      ? "employer"
+      : "profile";
+
+  const currentTab = activeTab ?? defaultTab;
+
   return (
-    <div className="legacy-ui app-shell">
-      <header className="app-header">
-        <h1>NCCT Platform</h1>
-        <div>
-          <span className="role-badge">{session.role}</span>
-          <button type="button" onClick={() => supabase.auth.signOut()}>
-            Sign out
-          </button>
+    <ManagementShell
+      role={session.role}
+      fullName={session.fullName}
+      activeTab={currentTab}
+      onNavigate={(tab) => setActiveTab(tab)}
+    >
+      {error && (
+        <div className="mb-4 p-3 bg-error-container text-on-error-container rounded-lg text-sm text-left">
+          {error}
         </div>
-      </header>
-      {error && <p className="form-error">{error}</p>}
-      <ProfileEditor accessToken={session.accessToken} role={session.role} />
-      {session.role === "admin" || session.role === "trainer" ? (
-        <>
-          {/* Programme/nomination/timetable writes are all admin-only at the
-              route level (F2), so this panel is too — a trainer would just
-              get 403s from every control in it. */}
-          {session.role === "admin" && (
-            <>
-              <AdminUserManager accessToken={session.accessToken} />
-              <AdminProgrammeManager accessToken={session.accessToken} />
-            </>
-          )}
-          <AdminCourseManager accessToken={session.accessToken} />
-          <AttendanceManager accessToken={session.accessToken} />
-          <ChatbotCorpusManager accessToken={session.accessToken} />
-          {/* Admin-only, not trainer — PRD §6.8 frames this specifically as
-              an "Admin view", unlike the content-authoring panels above it. */}
-          {session.role === "admin" && <AnalyticsDashboard accessToken={session.accessToken} />}
-        </>
-      ) : (
-        <EmployerDashboard accessToken={session.accessToken} />
       )}
-    </div>
+
+      {/* Active Tab View */}
+      <div className="w-full">
+        {currentTab === "dashboard" && <AnalyticsDashboard accessToken={session.accessToken} />}
+        {currentTab === "users" && <AdminUserManager accessToken={session.accessToken} />}
+        {currentTab === "programmes" && (
+          <AdminProgrammeManager accessToken={session.accessToken} />
+        )}
+        {currentTab === "content" && <AdminCourseManager accessToken={session.accessToken} />}
+        {currentTab === "attendance" && <AttendanceManager accessToken={session.accessToken} />}
+        {currentTab === "chatbot" && <ChatbotCorpusManager accessToken={session.accessToken} />}
+        {currentTab === "profile" && (
+          <ProfileEditor
+            accessToken={session.accessToken}
+            role={session.role}
+            email={session.email}
+          />
+        )}
+        {currentTab === "employer" && <EmployerDashboard accessToken={session.accessToken} />}
+      </div>
+    </ManagementShell>
   );
 }
 

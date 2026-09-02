@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Attendance - NCCT Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600;700&amp;family=Hanken+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-container": "#fd7a41",
+                      "on-surface": "#1A1C19",
+                      "surface-tint": "#515f76",
+                      "tertiary-container": "#00214F",
+                      "surface-dim": "#DADAD5",
+                      "on-secondary": "#ffffff",
+                      "primary": "#000000",
+                      "surface-container-highest": "#E3E3DE",
+                      "surface-container-lowest": "#ffffff",
+                      "cta": "#F26522",
+                      "on-secondary-fixed-variant": "#7f2b00",
+                      "tertiary-fixed-dim": "#b9c6e7",
+                      "on-background": "#1b1b1d",
+                      "primary-container": "#0d1c2f",
+                      "surface-bright": "#FAFAF5",
+                      "outline-variant": "#C4C6CE",
+                      "on-secondary-fixed": "#370e00",
+                      "status-success": "#10B981",
+                      "on-tertiary-container": "#5288EA",
+                      "status-rejected": "#BA1A1A",
+                      "secondary": "#a63b00",
+                      "surface-container": "#EEEEE9",
+                      "inverse-primary": "#b8c7e1",
+                      "surface": "#FAFAF5",
+                      "surface-variant": "#e4e2e4",
+                      "background": "#fbf9fa",
+                      "on-primary-fixed": "#0d1c2f",
+                      "tertiary": "#000000",
+                      "on-error-container": "#93000a",
+                      "secondary-fixed": "#ffdbce",
+                      "on-secondary-container": "#5A1C00",
+                      "tertiary-fixed": "#d8e2ff",
+                      "status-pending": "#EAB308",
+                      "on-primary-container": "#76859c",
+                      "cta-hover": "#D94E10",
+                      "surface-container-high": "#eae7e9",
+                      "inverse-on-surface": "#f2f0f2",
+                      "on-primary": "#ffffff",
+                      "inverse-surface": "#303032",
+                      "on-tertiary-fixed-variant": "#3a4762",
+                      "on-tertiary-fixed": "#0d1b34",
+                      "error": "#ba1a1a",
+                      "surface-container-low": "#f5f3f5",
+                      "on-tertiary": "#ffffff",
+                      "outline": "#74777E",
+                      "error-container": "#ffdad6",
+                      "on-primary-fixed-variant": "#39485d",
+                      "primary-fixed": "#d4e3fe",
+                      "on-error": "#ffffff",
+                      "primary-fixed-dim": "#b8c7e1",
+                      "on-surface-variant": "#44474c",
+                      "surface-card": "#FFFFFF",
+                      "secondary-fixed-dim": "#ffb599"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "base": "8px",
+                      "margin-desktop": "32px",
+                      "gutter": "16px",
+                      "touch-target": "44px",
+                      "margin-mobile": "16px",
+                      "max-width-desktop": "1200px"
+              },
+              "fontFamily": {
+                      "body-lg": ["Fira Sans"],
+                      "label-md": ["Fira Sans"],
+                      "label-sm": ["Fira Sans"],
+                      "headline-md": ["Hanken Grotesk"],
+                      "body-md": ["Fira Sans"],
+                      "body-sm": ["Fira Sans"],
+                      "headline-sm": ["Hanken Grotesk"],
+                      "headline-lg-mobile": ["Hanken Grotesk"],
+                      "headline-lg": ["Hanken Grotesk"]
+              },
+              "fontSize": {
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "label-sm": ["10px", {"lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "30px", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "headline-sm": ["20px", {"lineHeight": "26px", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["26px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        /* Base typography enforcement for form elements */
+        input, button, select, textarea { font-family: inherit; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        
+        /* Subtle shadow for cards as per guidance */
+        .card-shadow {
+            box-shadow: 0 4px 4px rgba(0,0,0,0.05);
+        }
+        
+        /* Monospace utility for the URL */
+        .font-mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen antialiased flex flex-col md:flex-row">
+<!-- TopNavBar (Mobile & Desktop Header) -->
+<header class="fixed top-0 flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop h-16 z-50 bg-primary">
+<div class="flex items-center gap-4">
+<button aria-label="Open menu" class="md:hidden text-on-primary h-touch-target w-touch-target flex items-center justify-center rounded-full hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<div class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg font-bold text-on-primary">NCCT</div>
+</div>
+<div class="flex items-center">
+<button aria-label="Logout" class="h-touch-target w-touch-target flex items-center justify-center rounded-full text-on-primary hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+</button>
+</div>
+</header>
+<!-- SideNavBar (Desktop) -->
+<nav class="hidden md:flex fixed left-0 top-16 bottom-0 flex-col p-4 z-40 bg-surface-container-low border-r border-outline-variant h-[calc(100vh-4rem)] w-64 overflow-y-auto">
+<div class="mb-6 px-4">
+<h2 class="font-headline-md text-headline-md text-primary">NCCT Portal</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Management Console</p>
+</div>
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 h-touch-target text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="dashboard">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 h-touch-target text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="domain">domain</span>
+<span class="font-label-md text-label-md">Users &amp; Institutions</span>
+</a>
+<a class="flex items-center gap-3 px-4 h-touch-target text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="school">school</span>
+<span class="font-label-md text-label-md">Programmes</span>
+</a>
+<a class="flex items-center gap-3 px-4 h-touch-target text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="description">description</span>
+<span class="font-label-md text-label-md">Content</span>
+</a>
+<!-- ACTIVE TAB: Attendance -->
+<a class="flex items-center gap-3 px-4 h-touch-target bg-secondary-container text-on-secondary-container rounded-full font-bold transition-all translate-x-1 shadow-sm" href="#">
+<span class="material-symbols-outlined" data-icon="event_available" data-weight="fill" style="font-variation-settings: 'FILL' 1;">event_available</span>
+<span class="font-label-md text-label-md">Attendance</span>
+</a>
+<a class="flex items-center gap-3 px-4 h-touch-target text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="smart_toy">smart_toy</span>
+<span class="font-label-md text-label-md">Chatbot Knowledge Base</span>
+</a>
+<div class="h-px bg-outline-variant my-2 mx-4" role="separator"></div>
+<a class="flex items-center gap-3 px-4 h-touch-target text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="person">person</span>
+<span class="font-label-md text-label-md">My Profile</span>
+</a>
+<a class="flex items-center gap-3 px-4 h-touch-target text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors" data-icon="logout">logout</span>
+<span class="font-label-md text-label-md">Sign Out</span>
+</a>
+</div>
+</nav>
+<!-- Main Canvas -->
+<main class="flex-1 w-full pt-16 md:pl-64 min-h-screen">
+<div class="p-margin-mobile md:p-margin-desktop max-w-max-width-desktop mx-auto">
+<!-- Page Header -->
+<header class="mb-8">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Session Attendance</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">Manage live check-ins and verify trainee presence.</p>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter md:gap-margin-desktop items-start">
+<!-- Left Column: Controls (Span 8) -->
+<div class="lg:col-span-8 flex flex-col gap-gutter md:gap-margin-desktop">
+<!-- Session Configuration Card -->
+<section class="bg-surface-card border border-outline-variant rounded-xl p-6 card-shadow">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="settings_suggest">settings_suggest</span>
+                            Session Controls
+                        </h2>
+<div class="flex flex-col md:flex-row gap-6 items-end">
+<div class="flex-1 w-full flex flex-col gap-2">
+<label class="font-label-md text-label-md text-on-surface" for="sessionId">Session ID</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" data-icon="tag">tag</span>
+<input class="w-full h-touch-target bg-surface-container-lowest border border-outline-variant rounded px-3 pl-10 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow" id="sessionId" placeholder="Enter session identifier..." type="text" value="NCCT-24A-789"/>
+</div>
+</div>
+<div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto mt-4 md:mt-0">
+<button class="h-touch-target px-6 bg-cta text-on-primary hover:bg-cta-hover rounded-full font-label-md text-label-md transition-colors flex items-center justify-center gap-2 whitespace-nowrap" id="btnGenerateQR">
+<span class="material-symbols-outlined text-[18px]" data-icon="qr_code">qr_code</span>
+                                    Generate QR
+                                </button>
+<button class="h-touch-target px-6 bg-transparent border border-outline text-primary hover:bg-surface-container-high rounded-full font-label-md text-label-md transition-colors flex items-center justify-center gap-2 whitespace-nowrap" id="btnLoadRoster">
+<span class="material-symbols-outlined text-[18px]" data-icon="group">group</span>
+                                    Load Roster
+                                </button>
+</div>
+</div>
+</section>
+<!-- Attendance Roster Table Card (Hidden by default) -->
+<section class="bg-surface-card border border-outline-variant rounded-xl overflow-hidden card-shadow hidden" id="rosterSection">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="fact_check">fact_check</span>
+                                Live Roster
+                            </h2>
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm">4 Checked In</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="p-4 font-label-md text-label-md text-on-surface-variant font-medium">Trainee Name</th>
+<th class="p-4 font-label-md text-label-md text-on-surface-variant font-medium">Method</th>
+<th class="p-4 font-label-md text-label-md text-on-surface-variant font-medium">Match Score</th>
+<th class="p-4 font-label-md text-label-md text-on-surface-variant font-medium">Recorded At</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant">
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="p-4 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center font-bold">AJ</div>
+                                            Amara Johnson
+                                        </td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-status-success/15 text-status-success font-label-sm text-label-sm border border-status-success/30">
+<span class="material-symbols-outlined text-[14px]" data-icon="face">face</span> Face
+                                            </span>
+</td>
+<td class="p-4 font-mono">0.982</td>
+<td class="p-4 text-on-surface-variant">09:02 AM</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="p-4 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center font-bold">DK</div>
+                                            David Kim
+                                        </td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-tertiary-container/15 text-tertiary-container font-label-sm text-label-sm border border-tertiary-container/30">
+<span class="material-symbols-outlined text-[14px]" data-icon="qr_code_2">qr_code_2</span> QR
+                                            </span>
+</td>
+<td class="p-4 text-outline">—</td>
+<td class="p-4 text-on-surface-variant">09:05 AM</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="p-4 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-bold">SL</div>
+                                            Sarah Lin
+                                        </td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-status-success/15 text-status-success font-label-sm text-label-sm border border-status-success/30">
+<span class="material-symbols-outlined text-[14px]" data-icon="face">face</span> Face
+                                            </span>
+</td>
+<td class="p-4 font-mono">0.945</td>
+<td class="p-4 text-on-surface-variant">09:11 AM</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors bg-error-container/30">
+<td class="p-4 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-error-container text-on-error-container flex items-center justify-center font-bold">MR</div>
+                                            Marcus Reed
+                                        </td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-status-rejected/15 text-status-rejected font-label-sm text-label-sm border border-status-rejected/30">
+<span class="material-symbols-outlined text-[14px]" data-icon="face">face</span> Face
+                                            </span>
+</td>
+<td class="p-4 font-mono text-status-rejected">0.412</td>
+<td class="p-4 text-on-surface-variant">09:15 AM <span class="text-status-rejected font-bold ml-2">(Review)</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Right Column: QR Code Display (Span 4, Hidden by default) -->
+<div class="lg:col-span-4">
+<section class="bg-surface-card border border-outline-variant rounded-xl p-6 flex flex-col items-center text-center card-shadow hidden" id="qrSection">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-2">Scan to Check-in</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-6">Trainees can scan this code using the NCCT Mobile App.</p>
+<div class="bg-surface-container-lowest border-2 border-outline-variant p-4 rounded-xl mb-6 shadow-sm">
+<img class="w-48 h-48 object-contain" data-alt="A stark, high-contrast black and white QR code centered on a clean white background. The QR code features sharp, modern geometric patterns typical of digital scanning codes. The lighting is flat and even to ensure high legibility. The aesthetic is purely functional, digital, and minimalist." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBtO7jjgYs6VziEmz9A6cLRM6NhZ8Dsjq1VgXA-kN2PcavijP_aWRuMg-GrFQu8zE0EWlQqwepSCtvGyk2jwvLtz40W6GM-V9ZWzBMmSzk3yU0lun5E3ITfbHIzGwGxSF_9ZvpIH3iDYjmi3oImu28AV0pV4YN9t5TpZqKy5Oy77UJWXiGsMXOKM0IME5rkyQSQn8H9ZCENsbsfESk41H-23eoXnAdDw_jhczIiQETECYgs15lYA8McQ"/>
+</div>
+<div class="w-full bg-surface-container p-4 rounded-lg">
+<p class="font-label-sm text-label-sm text-outline mb-1 uppercase tracking-wider">Manual Entry Link</p>
+<p class="font-mono text-[13px] text-primary break-all bg-surface-container-lowest p-2 rounded border border-outline-variant select-all">
+                                https://portal.ncct.gov/attn/req?s=NCCT-24A-789
+                            </p>
+</div>
+<button class="mt-6 w-full h-touch-target border border-outline text-primary hover:bg-surface-container-highest rounded-full font-label-md text-label-md transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" data-icon="fullscreen">fullscreen</span>
+                            Expand to Fullscreen
+                        </button>
+</section>
+<!-- Empty State for Right Column before QR generation -->
+<section class="bg-surface border border-dashed border-outline-variant rounded-xl p-8 flex flex-col items-center justify-center text-center h-full min-h-[300px]" id="qrEmptyState">
+<span class="material-symbols-outlined text-[48px] text-outline opacity-50 mb-4" data-icon="qr_code_scanner">qr_code_scanner</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface-variant mb-2">No Session Active</h3>
+<p class="font-body-sm text-body-sm text-outline">Generate a QR code to begin accepting trainee check-ins for this session.</p>
+</section>
+</div>
+</div>
+</div>
+</main>
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnGenerateQR = document.getElementById('btnGenerateQR');
+            const btnLoadRoster = document.getElementById('btnLoadRoster');
+            
+            const qrSection = document.getElementById('qrSection');
+            const qrEmptyState = document.getElementById('qrEmptyState');
+            const rosterSection = document.getElementById('rosterSection');
+            
+            // Generate QR Button Logic
+            btnGenerateQR.addEventListener('click', () => {
+                // Add a subtle click effect
+                btnGenerateQR.classList.add('scale-95');
+                setTimeout(() => btnGenerateQR.classList.remove('scale-95'), 150);
+                
+                qrEmptyState.classList.add('hidden');
+                qrSection.classList.remove('hidden');
+                
+                // Optional: Scroll into view on mobile
+                if(window.innerWidth < 1024) {
+                    qrSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            });
+            
+            // Load Roster Button Logic
+            btnLoadRoster.addEventListener('click', () => {
+                // Add a subtle click effect
+                btnLoadRoster.classList.add('scale-95');
+                setTimeout(() => btnLoadRoster.classList.remove('scale-95'), 150);
+                
+                rosterSection.classList.remove('hidden');
+                
+                // Smooth scroll to the table if it was hidden
+                rosterSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+    </script>
+</body></html>

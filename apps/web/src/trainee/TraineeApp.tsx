@@ -9,6 +9,7 @@ import { TraineeShell, type TraineeTab } from "./TraineeShell.js";
 interface TraineeAppProps {
   accessToken: string;
   fullName: string | null;
+  email: string | null;
   /** From App.tsx's `?checkin=` query param — see docs/DECISIONS.md #16. */
   autoCheckInSessionId?: string;
 }
@@ -19,7 +20,12 @@ interface TraineeAppProps {
 // destinations (Home/Learn/Attendance/Career) with full Mega-Menu dropdown support.
 // A `?checkin=` link jumps straight to the Attendance tab so the QR
 // auto-check-in flow still fires exactly as before.
-export function TraineeApp({ accessToken, fullName, autoCheckInSessionId }: TraineeAppProps) {
+export function TraineeApp({
+  accessToken,
+  fullName,
+  email,
+  autoCheckInSessionId,
+}: TraineeAppProps) {
   const [tab, setTab] = useState<TraineeTab>(autoCheckInSessionId ? "attendance" : "home");
   const [learnSubView, setLearnSubView] = useState<LearnView>("lessons");
   const [careerSubView, setCareerSubView] = useState<CareerView>("jobs");
@@ -60,7 +66,7 @@ export function TraineeApp({ accessToken, fullName, autoCheckInSessionId }: Trai
           this is shared logic rather than a trainee-specific rewrite. */}
       {tab === "profile" && (
         <div className="legacy-ui py-6">
-          <ProfileEditor accessToken={accessToken} role="trainee" />
+          <ProfileEditor accessToken={accessToken} role="trainee" email={email} />
         </div>
       )}
     </TraineeShell>

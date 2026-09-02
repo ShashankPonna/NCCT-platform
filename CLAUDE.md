@@ -11,7 +11,7 @@ An AI-enabled digital ecosystem for cooperative training institutions (NCCT / VA
 | Layer            | Choice                                                                                                                                            |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Web              | React (TypeScript)                                                                                                                                |
-| Mobile           | React Native / Expo (TypeScript)                                                                                                                  |
+| Mobile           | React (Vite/TypeScript), packaged as a native Android app via Capacitor — not React Native/Expo; see [docs/DECISIONS.md](docs/DECISIONS.md) #19  |
 | Backend          | Node.js + Express (TypeScript) — single API for both clients                                                                                      |
 | Database         | Supabase (Postgres + Auth + Storage + pgvector)                                                                                                   |
 | Face recognition | `@vladmandic/human` (default); InsightFace `buffalo_l` via `onnxruntime-node` as swap-in alternative — see [docs/DECISIONS.md](docs/DECISIONS.md) |
@@ -22,7 +22,7 @@ Full detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Architecture Rules
 
-- **Monorepo**: `/apps/web`, `/apps/mobile`, `/apps/api`, `/packages/{shared-types,api-client,validation,constants}`. Web and mobile UIs are separate codebases (not React-Native-Web) — they share the logic layer in `/packages`, not UI components.
+- **Monorepo**: `/apps/web`, `/apps/mobile`, `/apps/api`, `/packages/{shared-types,api-client,validation,constants}`. Web and mobile are separate apps (different audiences: web is admin/employer/trainer, mobile is trainee-only), but both are now the same React/Vite stack — mobile is expected to reuse/adapt `apps/web/src/trainee/*` screens rather than rebuild them, not just share the `/packages` logic layer. See [docs/DECISIONS.md](docs/DECISIONS.md) #19.
 - **One backend, one database** for both web and mobile. Never build a mobile-only or web-only endpoint for something both clients need.
 - **Clients never call Supabase directly.** All reads/writes go through the Express API, which centralizes auth checks, RLS-equivalent business rules, face-recognition matching, PDF generation, and chatbot orchestration. Supabase client credentials live server-side only.
 - Before adding a new pattern (new endpoint shape, new state pattern, new shared type), check `/packages` and existing `/apps/api` routes for something reusable first.
@@ -32,7 +32,7 @@ Full detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - TypeScript throughout, no implicit `any`.
 - Request/response and DB-row types live in `packages/shared-types`; don't redefine the same shape in both a client and the API.
 - Validation schemas (`zod`) live in `packages/validation` and are used on both the Express route (server-side truth) and the client form (UX only) — never validate only on the client.
-- Linting/formatting: Prettier formats the whole repo. Linting is per-app since each uses different tooling: `apps/api` and `packages/*` use the root ESLint flat config (`eslint.config.js`); `apps/mobile` uses `eslint-config-expo`; `apps/web` uses `oxlint` (Vite's scaffolded default) rather than ESLint — don't add a second linter to `apps/web` without reason.
+- Linting/formatting: Prettier formats the whole repo. Linting is per-app: `apps/api` and `packages/*` use the root ESLint flat config (`eslint.config.js`); `apps/web` and `apps/mobile` both use `oxlint` (Vite's scaffolded default) rather than ESLint, since both are now Vite apps — don't add a second linter to either without reason.
 
 ## Project-Specific Development Rules
 
@@ -52,7 +52,7 @@ Full detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 ## Testing Requirements
 
 - **API**: Vitest + Supertest — confirmed and in use (`apps/api/src/routes/profile.test.ts` is the reference example: mock the Supabase client boundary via `vi.mock("../supabaseClient.js", ...)`, never hit a live Supabase project from a test). Jest was the original proposed default but was dropped in favor of Vitest for this ESM/TypeScript app — see [docs/DECISIONS.md](docs/DECISIONS.md) #10.
-- **Web / Mobile**: still proposed, not yet confirmed — Vitest + React Testing Library (web, natural fit with the existing Vite setup) and Jest (`jest-expo` preset) + RN Testing Library (mobile, the RN/Expo ecosystem standard). Confirm before the first web/mobile test is written.
+- **Web / Mobile**: still proposed, not yet confirmed — Vitest + React Testing Library for both (natural fit now that both are Vite apps; mobile no longer needs a separate RN test stack — see [docs/DECISIONS.md](docs/DECISIONS.md) #19). Confirm before the first web/mobile test is written.
 - Every new Express route needs at least one request-level test (success + a failure path); every new shared-package function needs a unit test.
 
 ## Important Commands

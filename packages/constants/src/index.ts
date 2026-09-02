@@ -25,6 +25,15 @@ export const LESSON_FILE_MIME_TYPES = [
 
 export const LESSON_FILE_MAX_BYTES = 25 * 1024 * 1024;
 
+// Self-hosted lesson video (Cloudflare R2, DECISIONS.md #18 — supersedes #12).
+// Kept separate from LESSON_FILE_MIME_TYPES/_MAX_BYTES above: video uploads go
+// straight from the browser to R2 via a presigned URL, not buffered through
+// Express like PDFs, so a much larger ceiling is safe. 2GiB is a sanity limit,
+// not a real constraint — a single presigned PUT supports up to 5GiB.
+export const LESSON_VIDEO_MIME_TYPES = ["video/mp4", "video/webm", "video/quicktime"] as const;
+
+export const LESSON_VIDEO_MAX_BYTES = 2 * 1024 * 1024 * 1024;
+
 // Locale codes are validated by shape, not against a fixed list: PRD §14
 // still has "which 2nd MVP language" open, so pinning an enum here would be
 // inventing a requirement. These are only the options the admin UI offers as

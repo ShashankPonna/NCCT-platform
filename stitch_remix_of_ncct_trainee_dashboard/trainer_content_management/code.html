@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Content Management - NCCT Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600;700&amp;family=Hanken+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-container": "#fd7a41",
+                        "on-surface": "#1A1C19",
+                        "surface-tint": "#515f76",
+                        "tertiary-container": "#00214F",
+                        "surface-dim": "#DADAD5",
+                        "on-secondary": "#ffffff",
+                        "primary": "#000000",
+                        "surface-container-highest": "#E3E3DE",
+                        "surface-container-lowest": "#ffffff",
+                        "cta": "#F26522",
+                        "on-secondary-fixed-variant": "#7f2b00",
+                        "tertiary-fixed-dim": "#b9c6e7",
+                        "on-background": "#1b1b1d",
+                        "primary-container": "#0d1c2f",
+                        "surface-bright": "#FAFAF5",
+                        "outline-variant": "#C4C6CE",
+                        "on-secondary-fixed": "#370e00",
+                        "status-success": "#10B981",
+                        "on-tertiary-container": "#5288EA",
+                        "status-rejected": "#BA1A1A",
+                        "secondary": "#a63b00",
+                        "surface-container": "#EEEEE9",
+                        "inverse-primary": "#b8c7e1",
+                        "surface": "#FAFAF5",
+                        "surface-variant": "#e4e2e4",
+                        "background": "#fbf9fa",
+                        "on-primary-fixed": "#0d1c2f",
+                        "tertiary": "#000000",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#ffdbce",
+                        "on-secondary-container": "#5A1C00",
+                        "tertiary-fixed": "#d8e2ff",
+                        "status-pending": "#EAB308",
+                        "on-primary-container": "#76859c",
+                        "cta-hover": "#D94E10",
+                        "surface-container-high": "#eae7e9",
+                        "inverse-on-surface": "#f2f0f2",
+                        "on-primary": "#ffffff",
+                        "inverse-surface": "#303032",
+                        "on-tertiary-fixed-variant": "#3a4762",
+                        "on-tertiary-fixed": "#0d1b34",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f5f3f5",
+                        "on-tertiary": "#ffffff",
+                        "outline": "#74777E",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed-variant": "#39485d",
+                        "primary-fixed": "#d4e3fe",
+                        "on-error": "#ffffff",
+                        "primary-fixed-dim": "#b8c7e1",
+                        "on-surface-variant": "#44474c",
+                        "surface-card": "#FFFFFF",
+                        "secondary-fixed-dim": "#ffb599"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.125rem",
+                        lg: "0.25rem",
+                        xl: "0.5rem",
+                        full: "0.75rem"
+                    },
+                    spacing: {
+                        base: "8px",
+                        "margin-desktop": "32px",
+                        "gutter": "16px",
+                        "touch-target": "44px",
+                        "margin-mobile": "16px",
+                        "max-width-desktop": "1200px"
+                    },
+                    fontFamily: {
+                        "body-lg": ["Fira Sans"],
+                        "label-md": ["Fira Sans"],
+                        "label-sm": ["Fira Sans"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "body-md": ["Fira Sans"],
+                        "body-sm": ["Fira Sans"],
+                        "headline-sm": ["Hanken Grotesk"],
+                        "headline-lg-mobile": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"]
+                    },
+                    fontSize: {
+                        "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],
+                        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "label-sm": ["10px", { lineHeight: "14px", letterSpacing: "0.08em", fontWeight: "700" }],
+                        "headline-md": ["24px", { lineHeight: "30px", fontWeight: "600" }],
+                        "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "body-sm": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+                        "headline-sm": ["20px", { lineHeight: "26px", fontWeight: "600" }],
+                        "headline-lg-mobile": ["26px", { lineHeight: "32px", fontWeight: "700" }],
+                        "headline-lg": ["32px", { lineHeight: "40px", fontWeight: "700" }]
+                    }
+                }
+            }
+        };
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col md:flex-row">
+<!-- TopNavBar (Mobile Only) -->
+<header class="md:hidden flex justify-between items-center w-full px-margin-mobile h-16 z-50 bg-primary text-on-primary sticky top-0 shadow-sm">
+<div class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-primary">NCCT</div>
+<div class="flex items-center gap-4">
+<span class="px-3 py-1 bg-primary-container text-on-primary-container font-label-sm text-label-sm rounded-full">Trainer</span>
+<button class="h-touch-target w-touch-target flex items-center justify-center rounded-full hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+</button>
+</div>
+</header>
+<!-- SideNavBar (Desktop) -->
+<nav class="hidden md:flex flex-col p-4 z-40 bg-surface-container-low text-primary docked left-0 h-full w-64 border-r border-outline-variant fixed top-0 overflow-y-auto">
+<div class="mb-8 px-4 mt-4">
+<h1 class="font-headline-md text-headline-md text-primary font-bold">NCCT Portal</h1>
+<p class="font-label-md text-label-md text-on-surface-variant mt-1">Management Console</p>
+<div class="mt-4 px-3 py-1 inline-block bg-surface-variant text-on-surface-variant font-label-sm text-label-sm rounded-full">Trainer View</div>
+</div>
+<div class="flex-1 space-y-2">
+<!-- Trainer allowed items -->
+<a class="flex items-center gap-3 px-4 h-touch-target font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 h-touch-target font-label-md text-label-md bg-secondary-container text-on-secondary-container rounded-full font-bold translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span>Content</span>
+</a>
+<a class="flex items-center gap-3 px-4 h-touch-target font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="event_available">event_available</span>
+<span>Attendance</span>
+</a>
+<a class="flex items-center gap-3 px-4 h-touch-target font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+<span>Chatbot Knowledge Base</span>
+</a>
+<div class="h-px bg-outline-variant my-4 mx-4"></div>
+<a class="flex items-center gap-3 px-4 h-touch-target font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span>My Profile</span>
+</a>
+</div>
+<div class="mt-auto pt-4">
+<a class="flex items-center gap-3 px-4 h-touch-target font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high rounded-full transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span>Sign Out</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 p-margin-mobile md:p-margin-desktop bg-surface max-w-max-width-desktop mx-auto w-full flex flex-col gap-8 min-h-screen">
+<!-- Header -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<div>
+<h2 class="font-headline-lg text-headline-lg font-bold text-on-surface">Content Management</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">Manage courses, modules, lessons, and assessments.</p>
+</div>
+<!-- Programme Picker -->
+<div class="w-full md:w-72">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Select Programme</label>
+<div class="relative">
+<select class="w-full h-touch-target appearance-none bg-surface-container-lowest border border-outline-variant rounded px-4 font-body-md text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+<option>Foundations of Digital Literacy</option>
+<option>Advanced Agricultural Techniques</option>
+<option>Community Health &amp; Safety</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Cascading Panels Container (Bento/Glassmorphism inspired) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+<!-- Panel 1: Courses (Col 1-3) -->
+<div class="lg:col-span-3 flex flex-col gap-4">
+<div class="bg-surface-card border border-outline-variant rounded-xl p-4 shadow-sm flex flex-col min-h-[500px]">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-headline-sm text-headline-sm font-semibold">Courses</h3>
+<button aria-label="Add Course" class="h-8 w-8 rounded-full hover:bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+<div class="space-y-2 flex-1 overflow-y-auto">
+<div class="p-3 bg-surface-container rounded-lg cursor-pointer border border-primary relative group">
+<div class="font-label-md text-label-md font-bold mb-1">Introduction to Computers</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">4 Modules</div>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-primary opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+</div>
+<div class="p-3 bg-surface-container-lowest rounded-lg cursor-pointer border border-transparent hover:border-outline-variant transition-colors relative group">
+<div class="font-label-md text-label-md font-bold mb-1">Internet Basics</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">3 Modules</div>
+</div>
+<div class="p-3 bg-surface-container-lowest rounded-lg cursor-pointer border border-transparent hover:border-outline-variant transition-colors relative group">
+<div class="font-label-md text-label-md font-bold mb-1">Online Safety</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">2 Modules</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Panel 2: Modules (Col 4-6) -->
+<div class="lg:col-span-3 flex flex-col gap-4">
+<div class="bg-surface-card border border-outline-variant rounded-xl p-4 shadow-sm flex flex-col min-h-[500px]">
+<div class="flex justify-between items-center mb-1">
+<h3 class="font-headline-sm text-headline-sm font-semibold">Modules</h3>
+<button aria-label="Add Module" class="h-8 w-8 rounded-full hover:bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant mb-4 pb-2 border-b border-outline-variant">in Introduction to Computers</div>
+<div class="space-y-2 flex-1 overflow-y-auto">
+<div class="p-3 bg-surface-container-lowest rounded-lg cursor-pointer border border-transparent hover:border-outline-variant transition-colors relative group">
+<div class="font-label-md text-label-md font-bold mb-1">Hardware Basics</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">3 Lessons, 1 Assessment</div>
+</div>
+<div class="p-3 bg-surface-container rounded-lg cursor-pointer border border-primary relative group">
+<div class="font-label-md text-label-md font-bold mb-1">Operating Systems</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">4 Lessons</div>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-primary opacity-0 group-hover:opacity-100 transition-opacity">chevron_right</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Panel 3: Lessons & Details (Col 7-12) -->
+<div class="lg:col-span-6 flex flex-col gap-6">
+<!-- Lessons List -->
+<div class="bg-surface-card border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="p-4 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+<div>
+<h3 class="font-headline-sm text-headline-sm font-semibold">Lessons &amp; Assessments</h3>
+<div class="font-label-sm text-label-sm text-on-surface-variant">in Operating Systems</div>
+</div>
+<button class="h-touch-target px-4 bg-cta text-on-primary font-label-md text-label-md rounded hover:bg-cta-hover transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span> Add Item
+                        </button>
+</div>
+<div class="p-4 space-y-4">
+<!-- Lesson Item (Video) -->
+<div class="border border-outline-variant rounded-lg p-4 bg-surface-container-lowest">
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary-container bg-surface-container p-2 rounded-full">play_circle</span>
+<div>
+<h4 class="font-body-md text-body-md font-semibold">1. What is an OS?</h4>
+<span class="inline-block px-2 py-0.5 mt-1 bg-surface-variant text-on-surface-variant font-label-sm text-label-sm rounded uppercase">Video</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]">translate</span></button>
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+</div>
+</div>
+</div>
+<!-- Lesson Item (PDF) -->
+<div class="border border-outline-variant rounded-lg p-4 bg-surface-container-lowest">
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary-container bg-surface-container p-2 rounded-full">picture_as_pdf</span>
+<div>
+<h4 class="font-body-md text-body-md font-semibold">2. Common Operating Systems</h4>
+<span class="inline-block px-2 py-0.5 mt-1 bg-surface-variant text-on-surface-variant font-label-sm text-label-sm rounded uppercase">PDF</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]">translate</span></button>
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+</div>
+</div>
+</div>
+<!-- Add/Edit Lesson Form (Inline) -->
+<div class="border border-primary rounded-lg p-5 bg-surface-bright shadow-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+<h4 class="font-headline-sm text-headline-sm font-semibold mb-4">Edit Lesson</h4>
+<form class="space-y-4">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Lesson Title</label>
+<input class="w-full h-touch-target bg-surface-container-lowest border border-outline-variant rounded px-4 font-body-md text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" type="text" value="Common Operating Systems"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Content Type</label>
+<div class="relative">
+<select class="w-full h-touch-target appearance-none bg-surface-container-lowest border border-outline-variant rounded px-4 font-body-md text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+<option>Video</option>
+<option selected="">PDF</option>
+<option>Slides</option>
+<option>Text</option>
+<option>Interactive</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+</div>
+</div>
+<!-- Conditional Field: PDF Upload -->
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Upload PDF File</label>
+<div class="flex items-center gap-2">
+<label class="flex-1 h-touch-target bg-surface-container flex items-center justify-center border border-dashed border-outline-variant rounded cursor-pointer hover:bg-surface-variant transition-colors">
+<span class="font-label-md text-label-md text-primary flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">upload</span> Select File</span>
+<input accept=".pdf" class="hidden" type="file"/>
+</label>
+</div>
+<div class="text-xs mt-1 text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">check_circle</span> os_guide_v2.pdf</div>
+</div>
+</div>
+<div class="pt-2 flex justify-end gap-3">
+<button class="h-touch-target px-4 font-label-md text-label-md text-primary border border-outline-variant rounded hover:bg-surface-container transition-colors" type="button">Cancel</button>
+<button class="h-touch-target px-4 font-label-md text-label-md bg-primary text-on-primary rounded hover:bg-primary-container hover:text-on-primary-container transition-colors" type="button">Save Lesson</button>
+</div>
+</form>
+</div>
+</div>
+</div>
+<!-- Assessments Panel -->
+<div class="bg-surface-card border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="p-4 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm font-semibold flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-container">assignment</span> Module Assessments
+                        </h3>
+</div>
+<div class="p-4">
+<div class="border-l-4 border-status-success bg-surface-container-lowest p-4 rounded-r-lg shadow-sm mb-6 flex justify-between items-center">
+<div>
+<h4 class="font-body-md text-body-md font-semibold">End of Module Quiz</h4>
+<div class="flex items-center gap-3 mt-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Pass: 80%</span>
+<span class="px-2 py-0.5 bg-[rgba(16,185,129,0.15)] text-[#0e9f6e] font-label-sm text-label-sm rounded-full">Active</span>
+</div>
+</div>
+<button class="h-8 px-3 border border-outline rounded text-primary font-label-md text-label-md hover:bg-surface-variant">Edit</button>
+</div>
+<!-- Assessment Detail / Add Question -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4">
+<h5 class="font-label-md text-label-md font-bold mb-4 border-b border-outline-variant pb-2">Questions (12)</h5>
+<form class="space-y-4">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">New Question Text</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded p-3 font-body-md text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary min-h-[80px]" placeholder="Enter question..."></textarea>
+</div>
+<div class="space-y-2">
+<label class="block font-label-sm text-label-sm text-on-surface-variant">Options (Select Correct)</label>
+<div class="flex items-center gap-3">
+<input class="w-5 h-5 text-primary border-outline-variant focus:ring-primary" name="correct_option" type="radio"/>
+<span class="font-label-md text-label-md text-on-surface-variant w-4">A.</span>
+<input class="flex-1 h-10 bg-surface-container-lowest border border-outline-variant rounded px-3 font-body-sm text-body-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Option A" type="text"/>
+</div>
+<div class="flex items-center gap-3">
+<input checked="" class="w-5 h-5 text-primary border-outline-variant focus:ring-primary" name="correct_option" type="radio"/>
+<span class="font-label-md text-label-md text-on-surface-variant w-4">B.</span>
+<input class="flex-1 h-10 bg-surface-container-lowest border border-outline-variant rounded px-3 font-body-sm text-body-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" type="text" value="Correct Answer Text"/>
+</div>
+<div class="flex items-center gap-3">
+<input class="w-5 h-5 text-primary border-outline-variant focus:ring-primary" name="correct_option" type="radio"/>
+<span class="font-label-md text-label-md text-on-surface-variant w-4">C.</span>
+<input class="flex-1 h-10 bg-surface-container-lowest border border-outline-variant rounded px-3 font-body-sm text-body-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Option C" type="text"/>
+</div>
+<div class="flex items-center gap-3">
+<input class="w-5 h-5 text-primary border-outline-variant focus:ring-primary" name="correct_option" type="radio"/>
+<span class="font-label-md text-label-md text-on-surface-variant w-4">D.</span>
+<input class="flex-1 h-10 bg-surface-container-lowest border border-outline-variant rounded px-3 font-body-sm text-body-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Option D" type="text"/>
+</div>
+</div>
+<div class="pt-2 flex justify-end">
+<button class="h-10 px-4 font-label-md text-label-md border border-outline text-primary rounded hover:bg-surface-variant transition-colors flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span> Add Question
+                                    </button>
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

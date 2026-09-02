@@ -305,10 +305,65 @@ export function updateLesson(
     title: string;
     content_type: ContentType;
     video_id: string | null;
+    storage_path: string;
     interactive_config: InteractiveConfig | null;
   }>,
 ) {
   return apiFetch<Lesson>(`/lessons/${lessonId}`, accessToken, { method: "PATCH", body });
+}
+
+// Self-hosted lesson video (Backblaze B2, DECISIONS.md #20). Two-step, not
+// one call: get a presigned PUT URL, then PUT the file straight to the
+// storage provider yourself (never through this package's apiFetch — that
+// would route it through Express, defeating the point). Call
+// updateLesson(id, { storage_path: key }) afterwards to attach the upload to
+// the lesson. Named provider-neutrally (not e.g. "ToB2") since nothing about
+// the client side is provider-specific — only the URL it's handed is.
+export function getLessonVideoUploadUrl(
+  accessToken: string,
+  lessonId: string,
+  file: { name: string; type: string; size: number },
+) {
+  return apiFetch<{ upload_url: string; key: string; expires_in: number }>(
+    `/lessons/${lessonId}/video-upload-url`,
+    accessToken,
+    {
+      method: "POST",
+      body: { filename: file.name, content_type: file.type, size_bytes: file.size },
+    },
+  );
+}
+
+export async function uploadLessonVideoFile(
+  uploadUrl: string,
+  file: File,
+  onProgress?: (fraction: number) => void,
+): Promise<void> {
+  // A raw PUT to the presigned URL, not fetch() — XMLHttpRequest is what
+  // still exposes upload progress events in every browser today, and a
+  // multi-hundred-MB upload with no progress indicator is a bad UI, not
+  // just a missing nicety.
+  await new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", uploadUrl);
+    xhr.setRequestHeader("Content-Type", file.type);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress?.(e.loaded / e.total);
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve();
+      else reject(new Error(`Video upload failed: HTTP ${xhr.status}`));
+    };
+    xhr.onerror = () => reject(new Error("Video upload failed: network error"));
+    xhr.send(file);
+  });
+}
+
+export function getLessonVideoUrl(accessToken: string, lessonId: string) {
+  return apiFetch<{ url: string | null; expires_in?: number }>(
+    `/lessons/${lessonId}/video-url`,
+    accessToken,
+  );
 }
 
 export function getLessonTranslations(accessToken: string, lessonId: string) {

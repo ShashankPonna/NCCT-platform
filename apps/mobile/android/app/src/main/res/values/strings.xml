@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NCCT Trainee</string>
+    <string name="title_activity_main">NCCT Trainee</string>
+    <string name="package_name">com.ncct.trainee</string>
+    <string name="custom_url_scheme">com.ncct.trainee</string>
+</resources>

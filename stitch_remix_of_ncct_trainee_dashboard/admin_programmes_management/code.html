@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Programmes - NCCT Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600;700&amp;family=Hanken+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#fd7a41",
+                        "on-surface": "#1A1C19",
+                        "surface-tint": "#515f76",
+                        "tertiary-container": "#00214F",
+                        "surface-dim": "#DADAD5",
+                        "on-secondary": "#ffffff",
+                        "primary": "#000000",
+                        "surface-container-highest": "#E3E3DE",
+                        "surface-container-lowest": "#ffffff",
+                        "cta": "#F26522",
+                        "on-secondary-fixed-variant": "#7f2b00",
+                        "tertiary-fixed-dim": "#b9c6e7",
+                        "on-background": "#1b1b1d",
+                        "primary-container": "#0d1c2f",
+                        "surface-bright": "#FAFAF5",
+                        "outline-variant": "#C4C6CE",
+                        "on-secondary-fixed": "#370e00",
+                        "status-success": "#10B981",
+                        "on-tertiary-container": "#5288EA",
+                        "status-rejected": "#BA1A1A",
+                        "secondary": "#a63b00",
+                        "surface-container": "#EEEEE9",
+                        "inverse-primary": "#b8c7e1",
+                        "surface": "#FAFAF5",
+                        "surface-variant": "#e4e2e4",
+                        "background": "#fbf9fa",
+                        "on-primary-fixed": "#0d1c2f",
+                        "tertiary": "#000000",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed": "#ffdbce",
+                        "on-secondary-container": "#5A1C00",
+                        "tertiary-fixed": "#d8e2ff",
+                        "status-pending": "#EAB308",
+                        "on-primary-container": "#76859c",
+                        "cta-hover": "#D94E10",
+                        "surface-container-high": "#eae7e9",
+                        "inverse-on-surface": "#f2f0f2",
+                        "on-primary": "#ffffff",
+                        "inverse-surface": "#303032",
+                        "on-tertiary-fixed-variant": "#3a4762",
+                        "on-tertiary-fixed": "#0d1b34",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f5f3f5",
+                        "on-tertiary": "#ffffff",
+                        "outline": "#74777E",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed-variant": "#39485d",
+                        "primary-fixed": "#d4e3fe",
+                        "on-error": "#ffffff",
+                        "primary-fixed-dim": "#b8c7e1",
+                        "on-surface-variant": "#44474c",
+                        "surface-card": "#FFFFFF",
+                        "secondary-fixed-dim": "#ffb599"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "margin-desktop": "32px",
+                        "gutter": "16px",
+                        "touch-target": "44px",
+                        "margin-mobile": "16px",
+                        "max-width-desktop": "1200px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Fira Sans"],
+                        "label-md": ["Fira Sans"],
+                        "label-sm": ["Fira Sans"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "body-md": ["Fira Sans"],
+                        "body-sm": ["Fira Sans"],
+                        "headline-sm": ["Hanken Grotesk"],
+                        "headline-lg-mobile": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "26px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["26px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: theme('colors.surface-container'); 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: theme('colors.outline-variant'); 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: theme('colors.outline'); 
+        }
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface h-screen flex overflow-hidden antialiased">
+<!-- Top Navigation Bar (Mobile / Reduced on Desktop with Sidebar) -->
+<nav class="md:hidden fixed top-0 w-full z-50 bg-primary text-on-primary flex justify-between items-center px-margin-mobile h-16 shadow-sm">
+<div class="font-headline-lg-mobile text-headline-lg-mobile font-bold">NCCT</div>
+<button class="w-[44px] h-[44px] flex items-center justify-center rounded-full hover:bg-primary-container transition-colors">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+</nav>
+<!-- Side Navigation Bar (Desktop) -->
+<aside class="hidden md:flex flex-col w-64 bg-surface-container-low border-r border-outline-variant fixed left-0 top-0 bottom-0 z-40 p-4 transition-transform duration-300">
+<div class="mb-8 px-4">
+<div class="flex items-center gap-3">
+<img alt="User Profile" class="w-10 h-10 rounded-full object-cover border border-outline-variant bg-surface-card" data-alt="A small, stylized circular emblem representing an administrative or educational portal. Clean lines, minimalist design, primarily deep navy and white colors, bright high-key lighting style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6Qr73SbNhm17V4SBLixIt3qJrgxtp7XZI0i2IN0EXy08bN0andbzu-aMt0W7CWwgsECV92Q9Y8SmJXGl0IJ11O7iBgIhGD4UTUU0-ld22GHg2FqBTMmVUmQ_GYR2eOT1_qx9pbnRpbQC72vOKA5cq-48tVsZ8_7c72OklDPWHEnCKs2yK7dSpj77fNEfbyoaXwhbFKZ3aXp1vyCWtKx75O1ndbq7iGKU20aV7B7Ydz8C5oBqhuHvC7A"/>
+<div>
+<h1 class="font-headline-md text-headline-md text-primary m-0">NCCT Portal</h1>
+<p class="font-label-md text-label-md text-on-surface-variant m-0">Management Console</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-all min-h-[44px]" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-all min-h-[44px]" href="#">
+<span class="material-symbols-outlined" data-icon="domain">domain</span>
+<span class="font-label-md text-label-md">Users &amp; Institutions</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-full bg-secondary-container text-on-secondary-container font-bold translate-x-1 transition-transform min-h-[44px]" href="#">
+<span class="material-symbols-outlined" data-icon="school" data-weight="fill">school</span>
+<span class="font-label-md text-label-md">Programmes</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-all min-h-[44px]" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-label-md text-label-md">Content</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-all min-h-[44px]" href="#">
+<span class="material-symbols-outlined" data-icon="event_available">event_available</span>
+<span class="font-label-md text-label-md">Attendance</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-all min-h-[44px]" href="#">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+<span class="font-label-md text-label-md">Chatbot Knowledge Base</span>
+</a>
+<div class="h-px bg-outline-variant my-4 mx-4" role="separator"></div>
+<a class="flex items-center gap-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-all min-h-[44px]" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-md text-label-md">My Profile</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-full text-on-surface-variant hover:bg-surface-container-high transition-all min-h-[44px]" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-label-md text-label-md">Sign Out</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col md:ml-64 mt-16 md:mt-0 h-full overflow-hidden bg-background">
+<!-- Header -->
+<header class="bg-surface px-6 py-4 border-b border-outline-variant flex justify-between items-center shrink-0">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-primary m-0">Programme Management</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Administer training programmes and participant nominations.</p>
+</div>
+<button class="bg-cta hover:bg-cta-hover text-on-primary px-6 py-2 rounded-lg font-label-md text-label-md min-h-[44px] transition-colors flex items-center gap-2" onclick="document.getElementById('create-modal').classList.remove('hidden')">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                New Programme
+            </button>
+</header>
+<!-- Master-Detail Layout -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Master List (Programmes) -->
+<div class="w-1/3 min-w-[320px] bg-surface-container-lowest border-r border-outline-variant flex flex-col overflow-hidden">
+<div class="p-4 border-b border-outline-variant bg-surface shrink-0">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" data-icon="search">search</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg pl-10 pr-4 py-2 font-body-md text-body-md focus:outline-none focus:border-cta focus:ring-1 focus:ring-cta min-h-[44px]" placeholder="Search programmes..." type="text"/>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto">
+<!-- List Item 1 (Active) -->
+<div class="p-4 border-b border-outline-variant bg-surface-container-high cursor-pointer hover:bg-surface-container-highest transition-colors flex flex-col gap-2 relative">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary-container"></div>
+<div class="flex justify-between items-start">
+<h3 class="font-headline-sm text-headline-sm text-primary m-0 line-clamp-1">Agri-Business Fundamentals</h3>
+<span class="bg-primary-container/10 text-primary-container px-2 py-1 rounded font-label-sm text-label-sm border border-primary-container/20">Online</span>
+</div>
+<div class="flex justify-between items-center mt-1">
+<span class="font-label-md text-label-md text-on-surface-variant">ID: PRG-2023-A01</span>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]" data-icon="group">group</span>
+<span class="font-label-md text-label-md">24/30</span>
+</div>
+</div>
+</div>
+<!-- List Item 2 -->
+<div class="p-4 border-b border-outline-variant bg-surface-container-lowest cursor-pointer hover:bg-surface-container transition-colors flex flex-col gap-2">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-sm text-headline-sm text-primary m-0 line-clamp-1">Rural Entrepreneurship 101</h3>
+<span class="bg-secondary-container/10 text-secondary-container px-2 py-1 rounded font-label-sm text-label-sm border border-secondary-container/20">Hybrid</span>
+</div>
+<div class="flex justify-between items-center mt-1">
+<span class="font-label-md text-label-md text-on-surface-variant">ID: PRG-2023-B04</span>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]" data-icon="group">group</span>
+<span class="font-label-md text-label-md">15/20</span>
+</div>
+</div>
+</div>
+<!-- List Item 3 -->
+<div class="p-4 border-b border-outline-variant bg-surface-container-lowest cursor-pointer hover:bg-surface-container transition-colors flex flex-col gap-2">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-sm text-headline-sm text-primary m-0 line-clamp-1">Advanced Crop Management</h3>
+<span class="bg-tertiary-container/10 text-tertiary-container px-2 py-1 rounded font-label-sm text-label-sm border border-tertiary-container/20">In-Person</span>
+</div>
+<div class="flex justify-between items-center mt-1">
+<span class="font-label-md text-label-md text-on-surface-variant">ID: PRG-2023-C12</span>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]" data-icon="group">group</span>
+<span class="font-label-md text-label-md">40/50</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Detail Section -->
+<div class="flex-1 flex flex-col overflow-hidden bg-background">
+<!-- Detail Header -->
+<div class="p-6 border-b border-outline-variant bg-surface shrink-0">
+<div class="flex justify-between items-start">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<h2 class="font-headline-lg text-headline-lg text-primary m-0">Agri-Business Fundamentals</h2>
+<span class="bg-status-success/15 text-status-success px-3 py-1 rounded-full font-label-sm text-label-sm border border-status-success/30">Active</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">A comprehensive online course designed for rural farmers looking to transition into formal business structures. Covers basic accounting, marketing, and supply chain management.</p>
+</div>
+<div class="flex gap-2">
+<button class="border border-outline-variant text-primary px-4 py-2 rounded-lg font-label-md text-label-md min-h-[44px] hover:bg-surface-variant transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span>
+                                Edit
+                            </button>
+<button class="border border-outline-variant text-error px-4 py-2 rounded-lg font-label-md text-label-md min-h-[44px] hover:bg-error-container transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="delete">delete</span>
+</button>
+</div>
+</div>
+<!-- Stats / Meta Info -->
+<div class="flex gap-6 mt-6 p-4 bg-surface-container-lowest rounded-lg border border-outline-variant">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Institution</p>
+<p class="font-body-md text-body-md text-primary font-semibold mt-1">National Agricultural Institute</p>
+</div>
+<div class="w-px bg-outline-variant"></div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Dates</p>
+<p class="font-body-md text-body-md text-primary font-semibold mt-1">Oct 1, 2023 - Dec 15, 2023</p>
+</div>
+<div class="w-px bg-outline-variant"></div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Capacity</p>
+<p class="font-body-md text-body-md text-primary font-semibold mt-1">24 / 30 Enrolled</p>
+</div>
+</div>
+</div>
+<!-- Tabs & Content -->
+<div class="flex-1 overflow-y-auto p-6">
+<!-- Nominations Section (Bento Box Style) -->
+<div class="mb-8">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-headline-md text-headline-md text-primary m-0">Pending Nominations</h3>
+<button class="text-cta font-label-md text-label-md hover:underline">View All Participants</button>
+</div>
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+<!-- Nomination Card 1 -->
+<div class="bg-surface-card rounded-xl p-4 border border-outline-variant shadow-[0_4px_4px_rgba(0,0,0,0.05)] flex flex-col justify-between">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-fixed-dim text-on-primary-fixed-variant flex items-center justify-center font-headline-sm text-headline-sm">JD</div>
+<div>
+<h4 class="font-body-md text-body-md font-semibold text-primary m-0">John Doe</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant m-0">Nominated: Sept 28, 2023</p>
+</div>
+</div>
+<span class="bg-status-pending/15 text-status-pending px-2 py-1 rounded font-label-sm text-label-sm">Pending</span>
+</div>
+<div class="flex gap-2 mt-auto">
+<button class="flex-1 bg-surface-container-highest hover:bg-surface-variant text-primary px-3 py-2 rounded-lg font-label-md text-label-md min-h-[44px] transition-colors border border-outline-variant">Waitlist</button>
+<button class="flex-1 bg-status-success/10 hover:bg-status-success/20 text-status-success px-3 py-2 rounded-lg font-label-md text-label-md min-h-[44px] transition-colors border border-status-success/30">Approve</button>
+<button class="w-[44px] flex items-center justify-center bg-error-container/50 hover:bg-error-container text-error rounded-lg transition-colors border border-error/20">
+<span class="material-symbols-outlined text-[20px]" data-icon="close">close</span>
+</button>
+</div>
+</div>
+<!-- Nomination Card 2 -->
+<div class="bg-surface-card rounded-xl p-4 border border-outline-variant shadow-[0_4px_4px_rgba(0,0,0,0.05)] flex flex-col justify-between">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed-dim text-on-secondary-fixed-variant flex items-center justify-center font-headline-sm text-headline-sm">MS</div>
+<div>
+<h4 class="font-body-md text-body-md font-semibold text-primary m-0">Maria Smith</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant m-0">Nominated: Sept 29, 2023</p>
+</div>
+</div>
+<span class="bg-status-pending/15 text-status-pending px-2 py-1 rounded font-label-sm text-label-sm">Pending</span>
+</div>
+<div class="flex gap-2 mt-auto">
+<button class="flex-1 bg-surface-container-highest hover:bg-surface-variant text-primary px-3 py-2 rounded-lg font-label-md text-label-md min-h-[44px] transition-colors border border-outline-variant">Waitlist</button>
+<button class="flex-1 bg-status-success/10 hover:bg-status-success/20 text-status-success px-3 py-2 rounded-lg font-label-md text-label-md min-h-[44px] transition-colors border border-status-success/30">Approve</button>
+<button class="w-[44px] flex items-center justify-center bg-error-container/50 hover:bg-error-container text-error rounded-lg transition-colors border border-error/20">
+<span class="material-symbols-outlined text-[20px]" data-icon="close">close</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Timetable Section -->
+<div>
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-headline-md text-headline-md text-primary m-0">Timetable</h3>
+<button class="flex items-center gap-1 text-cta font-label-md text-label-md hover:underline" onclick="document.getElementById('session-form').classList.toggle('hidden')">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span> Add Session
+                            </button>
+</div>
+<!-- Create Session Inline Form (Hidden by default) -->
+<div class="hidden mb-6 bg-surface-container-lowest p-4 rounded-xl border border-outline-variant" id="session-form">
+<h4 class="font-headline-sm text-headline-sm mb-4">New Session</h4>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-1">Session Title</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md min-h-[44px]" type="text"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-1">Date</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md min-h-[44px]" type="date"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-1">Duration (Hours)</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md min-h-[44px]" type="number"/>
+</div>
+</div>
+<div class="flex justify-end gap-2">
+<button class="px-4 py-2 rounded-lg font-label-md text-label-md border border-outline-variant min-h-[44px] hover:bg-surface-variant" onclick="document.getElementById('session-form').classList.add('hidden')">Cancel</button>
+<button class="px-4 py-2 rounded-lg font-label-md text-label-md bg-cta text-on-primary min-h-[44px] hover:bg-cta-hover">Save Session</button>
+</div>
+</div>
+<!-- Session List -->
+<div class="space-y-3">
+<div class="flex items-center gap-4 p-3 bg-surface-card rounded-lg border border-outline-variant hover:bg-surface-container-lowest transition-colors">
+<div class="bg-surface-container-highest p-2 rounded text-center min-w-[60px]">
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase">Oct</div>
+<div class="font-headline-sm text-headline-sm text-primary">05</div>
+</div>
+<div class="flex-1">
+<h4 class="font-body-md text-body-md font-semibold text-primary m-0">Introduction to Market Analysis</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant m-0 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span> 09:00 AM - 11:00 AM (2 hrs)
+                                    </p>
+</div>
+<button class="text-on-surface-variant hover:text-primary p-2 min-h-[44px] min-w-[44px] flex justify-center items-center rounded-full">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<div class="flex items-center gap-4 p-3 bg-surface-card rounded-lg border border-outline-variant hover:bg-surface-container-lowest transition-colors">
+<div class="bg-surface-container-highest p-2 rounded text-center min-w-[60px]">
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase">Oct</div>
+<div class="font-headline-sm text-headline-sm text-primary">12</div>
+</div>
+<div class="flex-1">
+<h4 class="font-body-md text-body-md font-semibold text-primary m-0">Financial Basics for Farms</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant m-0 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span> 10:00 AM - 12:30 PM (2.5 hrs)
+                                    </p>
+</div>
+<button class="text-on-surface-variant hover:text-primary p-2 min-h-[44px] min-w-[44px] flex justify-center items-center rounded-full">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Create Programme Modal Overlay -->
+<div class="fixed inset-0 bg-primary/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" id="create-modal">
+<div class="bg-surface-card rounded-xl border border-outline-variant shadow-lg w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface">
+<h2 class="font-headline-md text-headline-md text-primary m-0">Create New Programme</h2>
+<button class="w-[44px] h-[44px] flex items-center justify-center rounded-full hover:bg-surface-variant text-on-surface-variant transition-colors" onclick="document.getElementById('create-modal').classList.add('hidden')">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<div class="p-6 overflow-y-auto flex-1">
+<form class="space-y-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Left Col -->
+<div class="space-y-4">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Programme Title *</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md min-h-[44px] focus:ring-1 focus:ring-cta focus:border-cta" placeholder="e.g., Sustainable Farming 101" type="text"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Institution</label>
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md min-h-[44px] focus:ring-1 focus:ring-cta focus:border-cta appearance-none">
+<option>Select Institution...</option>
+<option>National Agricultural Institute</option>
+<option>Rural Development Board</option>
+</select>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Mode</label>
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md min-h-[44px] focus:ring-1 focus:ring-cta focus:border-cta appearance-none">
+<option>Online</option>
+<option>In-Person</option>
+<option>Hybrid</option>
+</select>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Capacity</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md min-h-[44px] focus:ring-1 focus:ring-cta focus:border-cta" placeholder="Max participants" type="number"/>
+</div>
+</div>
+</div>
+<!-- Right Col -->
+<div class="space-y-4">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Description</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md focus:ring-1 focus:ring-cta focus:border-cta resize-none" placeholder="Brief overview of the programme..." rows="4"></textarea>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Target Audience</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md min-h-[44px] focus:ring-1 focus:ring-cta focus:border-cta" placeholder="e.g., Smallholder farmers, Youth" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">Start Date</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md min-h-[44px] focus:ring-1 focus:ring-cta focus:border-cta" type="date"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1">End Date</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md min-h-[44px] focus:ring-1 focus:ring-cta focus:border-cta" type="date"/>
+</div>
+</div>
+</div>
+</div>
+</form>
+</div>
+<div class="p-6 border-t border-outline-variant bg-surface flex justify-end gap-3 shrink-0">
+<button class="px-6 py-2 rounded-lg font-label-md text-label-md border border-outline-variant text-primary min-h-[44px] hover:bg-surface-variant transition-colors" onclick="document.getElementById('create-modal').classList.add('hidden')">Cancel</button>
+<button class="px-6 py-2 rounded-lg font-label-md text-label-md bg-cta text-on-primary min-h-[44px] hover:bg-cta-hover transition-colors">Create Programme</button>
+</div>
+</div>
+</div>
+</body></html>
