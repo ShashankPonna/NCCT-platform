@@ -22,7 +22,7 @@ Full detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Architecture Rules
 
-- **Monorepo**: `/apps/web`, `/apps/mobile`, `/apps/api`, `/packages/{shared-types,api-client,validation,constants}`. Web and mobile are separate apps (different audiences: web is admin/employer/trainer, mobile is trainee-only), but both are now the same React/Vite stack — mobile is expected to reuse/adapt `apps/web/src/trainee/*` screens rather than rebuild them, not just share the `/packages` logic layer. See [docs/DECISIONS.md](docs/DECISIONS.md) #19.
+- **Monorepo**: `/apps/web`, `/apps/mobile`, `/apps/api`, `/packages/{shared-types,api-client,validation,constants}`. `apps/mobile` has no `src/` of its own — it's a Capacitor shell wrapping `apps/web`'s own build (`webDir` points at `apps/web/dist`), so the same app, same role branching, and all roles ship to mobile, not a trainee-only subset. See [docs/DECISIONS.md](docs/DECISIONS.md) #22 (amends #19).
 - **One backend, one database** for both web and mobile. Never build a mobile-only or web-only endpoint for something both clients need.
 - **Clients never call Supabase directly.** All reads/writes go through the Express API, which centralizes auth checks, RLS-equivalent business rules, face-recognition matching, PDF generation, and chatbot orchestration. Supabase client credentials live server-side only.
 - Before adding a new pattern (new endpoint shape, new state pattern, new shared type), check `/packages` and existing `/apps/api` routes for something reusable first.

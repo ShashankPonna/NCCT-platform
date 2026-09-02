@@ -122,7 +122,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
         title: String(form.get("title") ?? "").trim() || undefined,
         starts_at: startsAt,
         ends_at: endsAt,
-        room: String(form.get("room") ?? "").trim() || undefined,
+        location: String(form.get("location") ?? "").trim() || undefined,
       });
       formEl.reset();
       setShowSessionForm(false);
@@ -298,7 +298,9 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                       Nominations
                     </p>
                     <p className="font-body-md text-body-md text-primary font-semibold mt-1">
-                      {approvedNominations.length} Approved / {nominations.length} Total
+                      {approvedNominations.length} Approved
+                      {pendingNominations.length > 0 && ` · ${pendingNominations.length} Pending`} /{" "}
+                      {nominations.length} Total
                     </p>
                   </div>
                 </div>
@@ -342,7 +344,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                                     {traineeName}
                                   </h4>
                                   <p className="font-label-sm text-label-sm text-on-surface-variant m-0">
-                                    Nominated: {new Date(nom.created_at).toLocaleDateString()}
+                                    Nominated: {new Date(nom.nominated_at).toLocaleDateString()}
                                   </p>
                                 </div>
                               </div>
@@ -422,7 +424,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                     >
                       <h4 className="font-headline-sm text-headline-sm m-0">New Timetable Session</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="lg:col-span-2">
+                        <div>
                           <label className="block font-label-md text-label-md text-on-surface mb-1">
                             Session Title
                           </label>
@@ -453,6 +455,17 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                             required
                             className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md min-h-[44px]"
                             type="datetime-local"
+                          />
+                        </div>
+                        <div>
+                          <label className="block font-label-md text-label-md text-on-surface mb-1">
+                            Location
+                          </label>
+                          <input
+                            name="location"
+                            placeholder="e.g. Room 204 or a video-call link"
+                            className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md min-h-[44px]"
+                            type="text"
                           />
                         </div>
                       </div>
@@ -513,7 +526,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                               <p className="font-body-sm text-on-surface-variant m-0 flex items-center gap-1.5 mt-0.5">
                                 <span className="material-symbols-outlined text-[16px]">schedule</span>
                                 {timeStr}
-                                {sess.room && <span className="ml-2">• {sess.room}</span>}
+                                {sess.location && <span className="ml-2">• {sess.location}</span>}
                               </p>
                             </div>
                           </div>

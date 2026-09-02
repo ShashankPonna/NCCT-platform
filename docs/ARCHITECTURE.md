@@ -12,7 +12,7 @@ Two client apps (React web, and a React/Vite mobile app packaged as a native And
 flowchart TB
     subgraph Clients
         Web["React Web App\n(Admin / Employer / public pages)"]
-        Mobile["React/Vite App\n(Trainee, Capacitor-packaged, offline-capable)"]
+        Mobile["React/Vite App\n(all roles, Capacitor-packaged, trainee flows offline-capable)"]
     end
 
     subgraph Backend["Node.js + Express API (single backend)"]
@@ -71,7 +71,7 @@ flowchart TB
 ## 5. Frontend Architecture
 
 - **Web** (React): plain React. Suited to dashboard-dense admin/employer screens (tables, charts) and public no-login pages (certificate verify, profile).
-- **Mobile** (React + Vite, Capacitor): trainee-only. Offline storage/downloads via Capacitor plugins (`@capacitor/filesystem`, a SQLite plugin — not yet installed, added when the offline-queue feature is actually built per [DECISIONS.md](DECISIONS.md) #19). No native camera or NFC access is needed — face-recognition attendance and NFC profile reads both run on external hardware (ESP32-CAM, NFC reader) wired into the web client, not the trainee's phone.
+- **Mobile** (React + Vite, Capacitor): a thin native wrapper around `apps/web`'s own build — same code, same role branching, all roles included, not a separate trainee-only app (see [DECISIONS.md](DECISIONS.md) #22, amending #19). Offline mode is still trainee-scoped, since that's the only role PRD §6.9 asks for it: storage/downloads via Capacitor plugins (`@capacitor/filesystem`, a SQLite plugin — not yet installed, added when the offline-queue feature is actually built). No native camera or NFC access is needed anywhere in the app — face-recognition attendance and NFC profile reads both run on external hardware (ESP32-CAM, NFC reader) wired into a kiosk, not any trainee's or admin's own device (see [DECISIONS.md](DECISIONS.md) #21).
 - Both import from `packages/api-client`, `packages/shared-types`, `packages/validation` — no duplicated fetch logic or type definitions between the two.
 - Unlike the original design, UI components **can** now be shared or ported between web and mobile where it makes sense — `apps/mobile` is expected to reuse/adapt `apps/web/src/trainee/*`'s already-built screens rather than duplicate them from scratch, since both are the same React/Vite stack (see [DECISIONS.md](DECISIONS.md) #19). They remain genuinely separate apps (different audiences, different shells), not a single shared UI package — this is deliberate reuse where convenient, not a merge.
 

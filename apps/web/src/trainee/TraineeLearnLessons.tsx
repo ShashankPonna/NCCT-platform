@@ -19,6 +19,14 @@ import type {
 } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 import { MatchingExercise } from "../MatchingExercise.js";
+import {
+  deleteDownloadedLesson,
+  downloadLessonVideo,
+  getLocalLessonUri,
+  isLessonDownloaded,
+  isOfflineCapable,
+} from "../offline/downloadManager.js";
+import { enqueueWrite, useAutoSync } from "../offline/syncManager.js";
 import { QuizTaker } from "../QuizTaker.js";
 import { SelfHostedVideoPlayer } from "../SelfHostedVideoPlayer.js";
 import { YouTubeVideoPlayer } from "../YouTubeVideoPlayer.js";
@@ -53,7 +61,22 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
   const [locale, setLocale] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
 
+  const { online, pendingCount } = useAutoSync(accessToken);
+  const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set());
+  const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
+  // Distinct from `progress.completed_at` (server-confirmed) — a lesson
+  // marked complete while offline is genuinely pending, not done yet, and
+  // the UI says so rather than pretending it already synced.
+  const [pendingCompletions, setPendingCompletions] = useState<Set<string>>(new Set());
+
   const activeTranslation = translations.find((t) => t.locale === locale) ?? null;
+
+  useEffect(() => {
+    if (!isOfflineCapable() || lessons.length === 0) return;
+    Promise.all(lessons.map(async (l) => [l.id, await isLessonDownloaded(l.id)] as const)).then(
+      (results) => setDownloadedIds(new Set(results.filter(([, done]) => done).map(([id]) => id))),
+    );
+  }, [lessons]);
 
   useEffect(() => {
     getMyNominations(accessToken)
@@ -111,11 +134,27 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
     setLocale("");
     setVideoUrl(null);
     setError(null);
+
+    const needsVideoUrl = lesson.content_type === "video" && !lesson.video_id;
+
+    if (!online) {
+      // Offline: every one of these calls would just fail — the only thing
+      // that can possibly work is a video already downloaded to this
+      // device. Progress/translations simply aren't available until the
+      // trainee is back online; showing a stale cached copy would risk
+      // looking more current than it is.
+      setProgress(null);
+      setTranslations([]);
+      if (needsVideoUrl) {
+        setVideoUrl(await getLocalLessonUri(lesson.id));
+      }
+      return;
+    }
+
     try {
       // Only fetch a playback URL for a video lesson with no YouTube ID —
       // one with a video_id renders via YouTubeVideoPlayer instead, and the
       // route itself would just return { url: null } for a non-video lesson.
-      const needsVideoUrl = lesson.content_type === "video" && !lesson.video_id;
       const [lessonProgress, lessonTranslations, video] = await Promise.all([
         getLessonProgress(accessToken, lesson.id),
         getLessonTranslations(accessToken, lesson.id),
@@ -127,6 +166,34 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
     } catch (err) {
       setError((err as Error).message);
     }
+  }
+
+  async function handleDownload(lesson: Lesson) {
+    setError(null);
+    setDownloadProgress((prev) => ({ ...prev, [lesson.id]: 0 }));
+    try {
+      await downloadLessonVideo(accessToken, lesson, (fraction) =>
+        setDownloadProgress((prev) => ({ ...prev, [lesson.id]: fraction })),
+      );
+      setDownloadedIds((prev) => new Set(prev).add(lesson.id));
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setDownloadProgress((prev) => {
+        const next = { ...prev };
+        delete next[lesson.id];
+        return next;
+      });
+    }
+  }
+
+  async function handleRemoveDownload(lessonId: string) {
+    await deleteDownloadedLesson(lessonId);
+    setDownloadedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(lessonId);
+      return next;
+    });
   }
 
   async function openContent() {
@@ -147,11 +214,24 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
   async function markComplete() {
     if (!selectedLesson) return;
     setError(null);
+    const completedAt = new Date().toISOString();
+
+    if (!online) {
+      await enqueueWrite({
+        type: "lesson_progress",
+        queuedAt: completedAt,
+        lessonId: selectedLesson.id,
+        body: { progress_percent: 100, completed_at: completedAt },
+      });
+      setPendingCompletions((prev) => new Set(prev).add(selectedLesson.id));
+      return;
+    }
+
     try {
       setProgress(
         await updateLessonProgress(accessToken, selectedLesson.id, {
           progress_percent: 100,
-          completed_at: new Date().toISOString(),
+          completed_at: completedAt,
         }),
       );
     } catch (err) {
@@ -193,6 +273,19 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
         </div>
 
         <ErrorBanner message={error} />
+        {!online && (
+          <div className="flex items-center gap-2 rounded-lg border border-status-pending/30 bg-status-pending/10 p-3 text-label-md text-status-pending">
+            <span className="material-symbols-outlined text-[18px]">cloud_off</span>
+            You&apos;re offline — downloaded lessons still work; progress will sync once you&apos;re back
+            online.
+          </div>
+        )}
+        {online && pendingCount > 0 && (
+          <div className="flex items-center gap-2 rounded-lg border border-interactive/30 bg-interactive/10 p-3 text-label-md text-interactive">
+            <span className="material-symbols-outlined animate-spin text-[18px]">sync</span>
+            Syncing {pendingCount} pending {pendingCount === 1 ? "update" : "updates"}…
+          </div>
+        )}
 
         <div className="overflow-hidden rounded-xl border border-border-low-contrast bg-surface-card">
           <div className="border-b border-border-low-contrast bg-surface-container-low p-4">
@@ -325,6 +418,46 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
                 ) : (
                   <SelfHostedVideoPlayer url={videoUrl} />
                 ))}
+              {selectedLesson.content_type === "video" &&
+                !selectedLesson.video_id &&
+                isOfflineCapable() && (
+                  <div className="mt-3 flex flex-col gap-1.5">
+                    {downloadedIds.has(selectedLesson.id) ? (
+                      <div className="flex items-center gap-2 text-label-md text-status-shortlisted">
+                        <span className="material-symbols-outlined text-[18px]">offline_pin</span>
+                        Available offline
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveDownload(selectedLesson.id)}
+                          className="ml-2 text-label-sm text-on-surface-variant underline"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : downloadProgress[selectedLesson.id] !== undefined ? (
+                      <div className="flex items-center gap-2">
+                        <div className="h-1.5 w-40 overflow-hidden rounded-full bg-surface-container-high">
+                          <div
+                            className="h-full bg-cta transition-all"
+                            style={{ width: `${Math.round(downloadProgress[selectedLesson.id] * 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-label-sm text-on-surface-variant">Downloading…</span>
+                      </div>
+                    ) : (
+                      online && (
+                        <button
+                          type="button"
+                          onClick={() => handleDownload(selectedLesson)}
+                          className="flex w-fit min-h-touch-target items-center gap-2 rounded border border-border-low-contrast bg-surface-container-lowest px-3 py-2 text-label-md hover:border-interactive"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">download</span>
+                          Download for offline
+                        </button>
+                      )
+                    )}
+                  </div>
+                )}
               {(selectedLesson.content_type === "pdf" || selectedLesson.content_type === "slides") &&
                 (selectedLesson.storage_path ? (
                   <button
@@ -357,6 +490,11 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
                 <span className="flex items-center gap-2 text-label-md font-bold text-status-shortlisted">
                   <span className="material-symbols-outlined">check_circle</span>
                   Completed
+                </span>
+              ) : pendingCompletions.has(selectedLesson.id) ? (
+                <span className="flex items-center gap-2 text-label-md font-bold text-status-pending">
+                  <span className="material-symbols-outlined">sync</span>
+                  Marked complete — pending sync
                 </span>
               ) : (
                 <button

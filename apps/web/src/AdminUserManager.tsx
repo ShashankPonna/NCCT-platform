@@ -119,13 +119,15 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
     setError(null);
     setBusy(true);
     try {
+      // The backend only stores a single free-text `location` field (no
+      // separate state/district columns) — the two inputs stay, for a more
+      // structured entry experience, and get combined here rather than
+      // silently dropped.
+      const district = String(form.get("district") ?? "").trim();
+      const state = String(form.get("state") ?? "").trim();
       await createInstitution(accessToken, {
         name: String(form.get("name") ?? "").trim(),
-        state: String(form.get("state") ?? "").trim() || undefined,
-        district: String(form.get("district") ?? "").trim() || undefined,
-        pincode: String(form.get("pincode") ?? "").trim() || undefined,
-        contact_email: String(form.get("contact_email") ?? "").trim() || undefined,
-        contact_phone: String(form.get("contact_phone") ?? "").trim() || undefined,
+        location: [district, state].filter(Boolean).join(", ") || undefined,
       });
       formEl.reset();
       await refreshInstitutions();
@@ -372,43 +374,48 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
             {importResult && (
               <div className="mt-4 pt-4 border-t border-outline-variant/30">
                 <h4 className="font-label-md text-label-md text-on-surface mb-2">
-                  Last Import Summary ({importResult.created.length} created, {importResult.failed.length} failed)
+                  Last Import Summary ({importResult.created} created, {importResult.failed} failed
+                  {importResult.skipped > 0 && `, ${importResult.skipped} skipped`})
                 </h4>
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                  {importResult.created.map((c, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-2 bg-surface-bright rounded border border-outline-variant/20 text-xs"
-                    >
-                      <span className="font-body-sm font-medium">{c.email}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="bg-status-success/15 text-status-success px-2 py-0.5 rounded-full font-label-sm uppercase">
-                          Success
-                        </span>
-                        {c.temp_password && (
-                          <code className="bg-surface-container font-mono px-1.5 py-0.5 rounded">
-                            {c.temp_password}
-                          </code>
-                        )}
+                  {importResult.rows
+                    .filter((r) => r.status === "created")
+                    .map((r) => (
+                      <div
+                        key={r.email}
+                        className="flex items-center justify-between p-2 bg-surface-bright rounded border border-outline-variant/20 text-xs"
+                      >
+                        <span className="font-body-sm font-medium">{r.email}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="bg-status-success/15 text-status-success px-2 py-0.5 rounded-full font-label-sm uppercase">
+                            Success
+                          </span>
+                          {r.temp_password && (
+                            <code className="bg-surface-container font-mono px-1.5 py-0.5 rounded">
+                              {r.temp_password}
+                            </code>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                  {importResult.failed.map((f, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-2 bg-surface-bright rounded border border-outline-variant/20 text-xs"
-                    >
-                      <span className="font-body-sm">{f.email}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="bg-error-container text-on-error-container px-2 py-0.5 rounded-full font-label-sm uppercase">
-                          Failed
-                        </span>
-                        <span className="text-error text-xs max-w-[120px] truncate" title={f.reason}>
-                          {f.reason}
-                        </span>
+                    ))}
+                  {importResult.rows
+                    .filter((r) => r.status === "failed" || r.status === "skipped")
+                    .map((r) => (
+                      <div
+                        key={r.email}
+                        className="flex items-center justify-between p-2 bg-surface-bright rounded border border-outline-variant/20 text-xs"
+                      >
+                        <span className="font-body-sm">{r.email}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="bg-error-container text-on-error-container px-2 py-0.5 rounded-full font-label-sm uppercase">
+                            {r.status === "failed" ? "Failed" : "Skipped"}
+                          </span>
+                          <span className="text-error text-xs max-w-[120px] truncate" title={r.reason}>
+                            {r.reason}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             )}
@@ -496,7 +503,7 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
                       <div>
                         <p className="font-body-sm text-body-sm font-medium text-on-surface">{inst.name}</p>
                         <p className="font-label-sm text-label-sm text-on-surface-variant">
-                          {[inst.district, inst.state].filter(Boolean).join(" • ") || "India"}
+                          {inst.location || "India"}
                         </p>
                       </div>
                     )}

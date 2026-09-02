@@ -6,6 +6,8 @@ import type {
   Certificate,
 } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import { useOnlineStatus } from "./offline/network.js";
+import { enqueueWrite } from "./offline/syncManager.js";
 
 interface QuizTakerProps {
   accessToken: string;
@@ -25,6 +27,11 @@ export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Distinct from `result` — a queued attempt has no score yet. Grading
+  // stays server-side even for an offline submission (never trust a
+  // client-reported score), so the real result only exists once this syncs.
+  const [queued, setQueued] = useState(false);
+  const online = useOnlineStatus();
 
   // Reset-on-moduleId-change comes from the parent mounting this component
   // with `key={moduleId}` (a fresh mount) rather than resetting state here.
@@ -38,6 +45,7 @@ export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
     setSelectedAssessment(assessment);
     setAnswers({});
     setResult(null);
+    setQueued(false);
     setError(null);
     try {
       setQuestions(await getAssessmentToTake(accessToken, assessment.id));
@@ -50,6 +58,18 @@ export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
     e.preventDefault();
     if (!selectedAssessment) return;
     setError(null);
+
+    if (!online) {
+      await enqueueWrite({
+        type: "quiz_attempt",
+        queuedAt: new Date().toISOString(),
+        assessmentId: selectedAssessment.id,
+        answers,
+      });
+      setQueued(true);
+      return;
+    }
+
     try {
       setResult(await submitAssessmentAttempt(accessToken, selectedAssessment.id, answers));
     } catch (err) {
@@ -72,8 +92,13 @@ export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
         ))}
       </ul>
 
-      {selectedAssessment && questions.length > 0 && !result && (
+      {selectedAssessment && questions.length > 0 && !result && !queued && (
         <form onSubmit={handleSubmit} className="quiz-form">
+          {!online && (
+            <p className="quiz-offline-notice">
+              You&apos;re offline — your answers will be saved and graded once you&apos;re back online.
+            </p>
+          )}
           {questions.map((q, i) => (
             <fieldset key={q.id}>
               <legend>
@@ -93,8 +118,14 @@ export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
               ))}
             </fieldset>
           ))}
-          <button type="submit">Submit answers</button>
+          <button type="submit">{online ? "Submit answers" : "Save answers offline"}</button>
         </form>
+      )}
+
+      {queued && (
+        <div className="quiz-result">
+          <p>Your answers are saved and will be graded once you&apos;re back online.</p>
+        </div>
       )}
 
       {result && (

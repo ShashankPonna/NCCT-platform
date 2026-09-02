@@ -115,11 +115,7 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
                   >
                     {CHATBOT_SOURCE_TYPES.map((type) => (
                       <option key={type} value={type}>
-                        {type === "programme"
-                          ? "Programme Detail"
-                          : type === "faq"
-                          ? "General FAQ"
-                          : "Policy Document"}
+                        {type === "programme" ? "Programme Detail" : "General FAQ"}
                       </option>
                     ))}
                   </select>
@@ -184,8 +180,6 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
               const badgeClass =
                 chunk.source_type === "programme"
                   ? "bg-tertiary-fixed text-on-tertiary-fixed"
-                  : chunk.source_type === "policy"
-                  ? "bg-primary-fixed text-on-primary-fixed"
                   : "bg-secondary-fixed text-on-secondary-fixed";
 
               return (
@@ -197,11 +191,7 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
                     <span
                       className={`inline-flex items-center px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wider font-bold ${badgeClass}`}
                     >
-                      {chunk.source_type === "programme"
-                        ? "Programme Detail"
-                        : chunk.source_type === "policy"
-                        ? "Policy Document"
-                        : "General FAQ"}
+                      {chunk.source_type === "programme" ? "Programme Detail" : "General FAQ"}
                     </span>
                     <button
                       type="button"

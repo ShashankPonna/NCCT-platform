@@ -42,7 +42,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
   // Lesson sub-actions
   const [youtubeInputs, setYoutubeInputs] = useState<Record<string, string>>({});
   const [translationInputs, setTranslationInputs] = useState<
-    Record<string, { locale: string; title: string; summary: string }>
+    Record<string, { locale: string; title: string; body: string }>
   >({});
   // Fraction (0-1) while a video upload to B2 is in flight; absent once done
   // or if nothing's uploading for that lesson.
@@ -147,13 +147,11 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
     e.preventDefault();
     if (!selectedModuleId) return;
     const form = new FormData(e.currentTarget);
-    const durationRaw = String(form.get("duration_minutes") ?? "");
     const videoIdRaw = String(form.get("video_id") ?? "");
 
     const parsed = createLessonSchema.safeParse({
       title: String(form.get("title") ?? "").trim(),
       content_type: String(form.get("content_type") ?? "video") as ContentType,
-      duration_minutes: durationRaw ? Number(durationRaw) : undefined,
       video_id: videoIdRaw || undefined,
     });
 
@@ -251,11 +249,11 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
     try {
       await upsertLessonTranslation(accessToken, lessonId, input.locale, {
         title: input.title,
-        summary: input.summary || undefined,
+        body: input.body || undefined,
       });
       setTranslationInputs((prev) => ({
         ...prev,
-        [lessonId]: { locale: "", title: "", summary: "" },
+        [lessonId]: { locale: "", title: "", body: "" },
       }));
       if (selectedModuleId) {
         setLessons(await getLessons(accessToken, selectedModuleId));
@@ -506,20 +504,11 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                     <option value="article">Article / Text</option>
                   </select>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input
-                    name="duration_minutes"
-                    type="number"
-                    min="1"
-                    placeholder="Duration (minutes)"
-                    className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-sm"
-                  />
-                  <input
-                    name="video_id"
-                    placeholder="YouTube Video ID (optional)"
-                    className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-sm"
-                  />
-                </div>
+                <input
+                  name="video_id"
+                  placeholder="YouTube Video ID (optional)"
+                  className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-sm"
+                />
                 <div className="flex justify-end">
                   <button
                     disabled={busy}
@@ -566,7 +555,6 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                           <h4 className="font-body-md font-semibold text-primary m-0">{lesson.title}</h4>
                           <p className="font-label-sm text-label-sm text-on-surface-variant m-0 flex items-center gap-2 mt-0.5">
                             <span className="uppercase font-bold">{lesson.content_type}</span>
-                            {lesson.duration_minutes && <span>• {lesson.duration_minutes} mins</span>}
                             {lesson.video_id && (
                               <span className="text-cta font-mono">YT: {lesson.video_id}</span>
                             )}
@@ -675,7 +663,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                                 setTranslationInputs((prev) => ({
                                   ...prev,
                                   [lesson.id]: {
-                                    ...(prev[lesson.id] ?? { title: "", summary: "" }),
+                                    ...(prev[lesson.id] ?? { title: "", body: "" }),
                                     locale: e.target.value,
                                   },
                                 }))
@@ -695,7 +683,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                                 setTranslationInputs((prev) => ({
                                   ...prev,
                                   [lesson.id]: {
-                                    ...(prev[lesson.id] ?? { locale: "", summary: "" }),
+                                    ...(prev[lesson.id] ?? { locale: "", body: "" }),
                                     title: e.target.value,
                                   },
                                 }))
@@ -704,6 +692,21 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                               className="border border-outline-variant rounded p-1 text-xs"
                             />
                           </div>
+                          <textarea
+                            value={translationInputs[lesson.id]?.body ?? ""}
+                            onChange={(e) =>
+                              setTranslationInputs((prev) => ({
+                                ...prev,
+                                [lesson.id]: {
+                                  ...(prev[lesson.id] ?? { locale: "", title: "" }),
+                                  body: e.target.value,
+                                },
+                              }))
+                            }
+                            placeholder="Localized body text (optional)"
+                            rows={2}
+                            className="w-full border border-outline-variant rounded p-1 text-xs"
+                          />
                           <button
                             type="button"
                             onClick={() => void handleSaveTranslation(lesson.id)}
@@ -725,12 +728,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                     <span className="material-symbols-outlined text-secondary">quiz</span>
                     Module Assessments
                   </h4>
-                  <AssessmentBuilder
-                    accessToken={accessToken}
-                    courseId={selectedCourseId}
-                    moduleId={selectedModuleId}
-                    lessonId={lessons[0]?.id}
-                  />
+                  <AssessmentBuilder accessToken={accessToken} moduleId={selectedModuleId} />
                 </div>
               )}
             </div>

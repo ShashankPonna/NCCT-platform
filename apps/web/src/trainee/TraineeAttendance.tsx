@@ -1,7 +1,7 @@
-import { checkInWithFace, checkInWithQr, type AttendanceCheckInResult } from "@ncct/api-client";
+import { checkInWithQr, type AttendanceCheckInResult } from "@ncct/api-client";
 import { useEffect, useState } from "react";
-import { FaceCapture } from "../FaceCapture.js";
-import { FaceEnrollment } from "../FaceEnrollment.js";
+import { useOnlineStatus } from "../offline/network.js";
+import { enqueueWrite } from "../offline/syncManager.js";
 import { ErrorBanner } from "./pieces.js";
 
 interface TraineeAttendanceProps {
@@ -9,17 +9,20 @@ interface TraineeAttendanceProps {
   autoCheckInSessionId?: string;
 }
 
-// Same data flow as the original AttendanceCheckIn.tsx, re-skinned to the
-// NCCT design system (design/stitch_ncct_trainee_portal/attendance). The
-// consent gate stays exactly as load-bearing as before — FaceEnrollment
-// still refuses to render FaceCapture until consent is explicitly given,
-// per CLAUDE.md's DPDP Act 2023 rule; this file only changes the wrapper
-// chrome around it, never the gating logic itself.
+// QR-only, no face check-in here — see DECISIONS.md #21. Face-recognition
+// attendance runs from an ESP32-CAM at an institution kiosk, not a
+// trainee's own device, so FaceCapture/FaceEnrollment were removed from
+// this screen rather than kept as dead UI. They're still on disk
+// (FaceCapture.tsx, FaceEnrollment.tsx) as the extraction pipeline the
+// future kiosk-facing flow (in AttendanceManager.tsx) is meant to reuse —
+// not deleted, just no longer wired into the trainee portal.
 export function TraineeAttendance({ accessToken, autoCheckInSessionId }: TraineeAttendanceProps) {
   const [sessionId, setSessionId] = useState(autoCheckInSessionId ?? "");
   const [result, setResult] = useState<AttendanceCheckInResult | null>(null);
+  const [queued, setQueued] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const online = useOnlineStatus();
 
   useEffect(() => {
     if (autoCheckInSessionId) {
@@ -32,23 +35,21 @@ export function TraineeAttendance({ accessToken, autoCheckInSessionId }: Trainee
     if (!id) return;
     setError(null);
     setResult(null);
+    setQueued(false);
+
+    // A QR check-in scanned while offline (a session at a venue with no
+    // signal, exactly the PRD §7 low-bandwidth context) still records the
+    // moment it actually happened — queued with that timestamp — rather
+    // than failing outright or silently doing nothing.
+    if (!online) {
+      await enqueueWrite({ type: "qr_checkin", queuedAt: new Date().toISOString(), sessionId: id });
+      setQueued(true);
+      return;
+    }
+
     setBusy(true);
     try {
       setResult(await checkInWithQr(accessToken, id));
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleFaceCapture(embedding: number[]) {
-    if (!sessionId) return;
-    setError(null);
-    setResult(null);
-    setBusy(true);
-    try {
-      setResult(await checkInWithFace(accessToken, sessionId, embedding));
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -63,9 +64,16 @@ export function TraineeAttendance({ accessToken, autoCheckInSessionId }: Trainee
           Mark Attendance
         </h1>
         <p className="mt-2 text-body-md text-on-surface-variant">
-          Enter your session ID, then check in via QR code or face verification.
+          Enter your session ID, then check in via QR code.
         </p>
       </div>
+
+      {!online && (
+        <div className="flex w-full items-center gap-2 rounded-lg border border-status-pending/30 bg-status-pending/10 p-3 text-label-md text-status-pending">
+          <span className="material-symbols-outlined text-[18px]">cloud_off</span>
+          You&apos;re offline — check-in will be saved and sent once you&apos;re back online.
+        </div>
+      )}
 
       <div className="flex w-full flex-col gap-4 rounded-xl border border-border-low-contrast bg-surface-card p-6">
         <label className="flex flex-col gap-2 text-label-md text-on-surface-variant">
@@ -91,33 +99,23 @@ export function TraineeAttendance({ accessToken, autoCheckInSessionId }: Trainee
 
       <ErrorBanner message={error} />
 
+      {queued && (
+        <p className="w-full rounded-lg border border-interactive/30 bg-interactive/10 p-4 text-body-md text-interactive">
+          Check-in saved — it will be sent once you&apos;re back online.
+        </p>
+      )}
+
       {result &&
         (result.matched === false ? (
           <p className="w-full rounded-lg border border-status-pending/30 bg-amber-50 p-4 text-body-md text-status-pending">
-            Face didn't match confidently (score {result.match_score.toFixed(2)}). Please use QR check-in
-            instead.
+            Check-in couldn&apos;t be confirmed (score {result.match_score.toFixed(2)}). Please try QR
+            check-in again.
           </p>
         ) : (
           <p className="w-full rounded-lg border border-status-shortlisted/30 bg-emerald-50 p-4 text-body-md text-status-shortlisted">
             Checked in via {result.method} at {new Date(result.recorded_at).toLocaleTimeString()}.
           </p>
         ))}
-
-      <div className="w-full">
-        <h3 className="mb-4 border-b border-border-low-contrast pb-2 font-headline text-headline-md text-primary">
-          Face check-in
-        </h3>
-        <FaceEnrollment accessToken={accessToken} />
-        {sessionId ? (
-          <div className="mt-4">
-            <FaceCapture actionLabel="Check in via face" onCapture={handleFaceCapture} disabled={busy} />
-          </div>
-        ) : (
-          <p className="mt-4 text-body-md text-on-surface-variant">
-            Enter a session ID above to enable face check-in.
-          </p>
-        )}
-      </div>
     </div>
   );
 }
