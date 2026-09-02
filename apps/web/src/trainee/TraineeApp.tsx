@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ProfileEditor } from "../ProfileEditor.js";
 import { TraineeAttendance } from "./TraineeAttendance.js";
 import { TraineeCareer, type CareerView } from "./TraineeCareer.js";
 import { TraineeHome } from "./TraineeHome.js";
@@ -53,6 +54,14 @@ export function TraineeApp({ accessToken, fullName, autoCheckInSessionId }: Trai
           subView={careerSubView}
           onSubViewChange={setCareerSubView}
         />
+      )}
+      {/* Reuses the same ProfileEditor the admin/employer shell renders —
+          own-profile editing is identical for every role (F1, PRD §6.1), so
+          this is shared logic rather than a trainee-specific rewrite. */}
+      {tab === "profile" && (
+        <div className="legacy-ui py-6">
+          <ProfileEditor accessToken={accessToken} role="trainee" />
+        </div>
       )}
     </TraineeShell>
   );

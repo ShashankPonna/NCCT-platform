@@ -13,6 +13,68 @@ import { z } from "zod";
 
 export const roleSchema = z.enum(ROLES);
 
+// F1 — a user editing their own profile. Every field is optional (PATCH
+// semantics), but an all-empty body is rejected so a no-op write can't be
+// mistaken for a successful edit. `role` is deliberately absent: a user must
+// never be able to change their own role, only an admin can (see
+// createUserSchema / the users route).
+export const updateProfileSchema = z
+  .object({
+    full_name: z.string().min(1).optional(),
+    phone: z.string().min(1).nullable().optional(),
+    cooperative_affiliation: z.string().min(1).nullable().optional(),
+    // Employer org profile fields (PRD §6.1) — stored on the same profiles
+    // row rather than a separate table, matching the existing schema.
+    org_name: z.string().min(1).nullable().optional(),
+    org_sector: z.string().min(1).nullable().optional(),
+  })
+  .refine((body) => Object.keys(body).length > 0, {
+    message: "At least one field must be provided",
+  });
+
+export const createInstitutionSchema = z.object({
+  name: z.string().min(1),
+  type: z.string().min(1).optional(),
+  location: z.string().min(1).optional(),
+});
+
+export const updateInstitutionSchema = createInstitutionSchema
+  .partial()
+  .refine((body) => Object.keys(body).length > 0, {
+    message: "At least one field must be provided",
+  });
+
+// Admin-created account. A password may be supplied; when omitted the API
+// generates a temporary one and returns it so the admin can distribute it.
+export const createUserSchema = z.object({
+  email: z.string().email(),
+  role: roleSchema,
+  full_name: z.string().min(1),
+  password: z.string().min(8).optional(),
+  phone: z.string().min(1).optional(),
+  cooperative_affiliation: z.string().min(1).optional(),
+  org_name: z.string().min(1).optional(),
+  org_sector: z.string().min(1).optional(),
+});
+
+// Bulk trainee import (PRD §6.1). Role is fixed to `trainee` rather than
+// accepted per row — this endpoint exists specifically for trainee intake,
+// and letting a spreadsheet grant admin rights would be a real escalation
+// risk. Use createUserSchema for anything else.
+export const bulkImportTraineesSchema = z.object({
+  trainees: z
+    .array(
+      z.object({
+        email: z.string().email(),
+        full_name: z.string().min(1),
+        phone: z.string().min(1).optional(),
+        cooperative_affiliation: z.string().min(1).optional(),
+      }),
+    )
+    .min(1)
+    .max(200),
+});
+
 export const createProgrammeSchema = z.object({
   institution_id: z.string().uuid(),
   title: z.string().min(1),

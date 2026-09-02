@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient.js";
 
-export type TraineeTab = "home" | "learn" | "attendance" | "career";
+export type TraineeTab = "home" | "learn" | "attendance" | "career" | "profile";
 
 const NAV_ITEMS: { id: TraineeTab; label: string; icon: string }[] = [
   { id: "home", label: "Home", icon: "home" },
@@ -203,8 +203,12 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
 
             <button
               type="button"
-              aria-label="Settings"
-              className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container"
+              aria-label="My profile"
+              title="My profile"
+              onClick={() => onNavigate("profile")}
+              className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-surface-container ${
+                active === "profile" ? "text-interactive" : "text-on-surface-variant"
+              }`}
             >
               <span className="material-symbols-outlined text-[20px]">settings</span>
             </button>
@@ -215,12 +219,16 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                 alt="Trainee Avatar"
                 className="h-9 w-9 rounded-full border border-outline-variant object-cover shadow-xs"
               />
-              <div className="hidden flex-col text-left sm:flex">
-                <span className="text-label-md font-bold leading-tight text-on-surface">
+              <button
+                type="button"
+                onClick={() => onNavigate("profile")}
+                className="hidden flex-col text-left sm:flex"
+              >
+                <span className="text-label-md font-bold leading-tight text-on-surface hover:text-interactive">
                   {fullName || "Trainee"}
                 </span>
                 <span className="text-[11px] leading-tight text-on-surface-variant">Trainee</span>
-              </div>
+              </button>
               <button
                 type="button"
                 onClick={() => void supabase.auth.signOut()}

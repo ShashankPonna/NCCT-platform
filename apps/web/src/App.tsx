@@ -1,5 +1,6 @@
 import { AdminCourseManager } from "./AdminCourseManager.js";
 import { AdminProgrammeManager } from "./AdminProgrammeManager.js";
+import { AdminUserManager } from "./AdminUserManager.js";
 import { AnalyticsDashboard } from "./AnalyticsDashboard.js";
 import "./App.css";
 import { AttendanceManager } from "./AttendanceManager.js";
@@ -7,6 +8,7 @@ import { CertificateVerification } from "./CertificateVerification.js";
 import { ChatbotCorpusManager } from "./ChatbotCorpusManager.js";
 import { EmployerDashboard } from "./EmployerDashboard.js";
 import { LoginForm } from "./LoginForm.js";
+import { ProfileEditor } from "./ProfileEditor.js";
 import { supabase } from "./supabaseClient.js";
 import { TraineeApp } from "./trainee/TraineeApp.js";
 import { useSession } from "./useSession.js";
@@ -72,12 +74,18 @@ function App() {
         </div>
       </header>
       {error && <p className="form-error">{error}</p>}
+      <ProfileEditor accessToken={session.accessToken} role={session.role} />
       {session.role === "admin" || session.role === "trainer" ? (
         <>
           {/* Programme/nomination/timetable writes are all admin-only at the
               route level (F2), so this panel is too — a trainer would just
               get 403s from every control in it. */}
-          {session.role === "admin" && <AdminProgrammeManager accessToken={session.accessToken} />}
+          {session.role === "admin" && (
+            <>
+              <AdminUserManager accessToken={session.accessToken} />
+              <AdminProgrammeManager accessToken={session.accessToken} />
+            </>
+          )}
           <AdminCourseManager accessToken={session.accessToken} />
           <AttendanceManager accessToken={session.accessToken} />
           <ChatbotCorpusManager accessToken={session.accessToken} />

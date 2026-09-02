@@ -4,6 +4,7 @@ import type {
   AssessmentQuestion,
   AssessmentQuestionForTrainee,
   AttendanceRecord,
+  BulkImportResult,
   Certificate,
   ChatbotAnswer,
   ChatbotCorpusChunk,
@@ -22,9 +23,11 @@ import type {
   Module,
   Nomination,
   NominationDecision,
+  Profile,
   Programme,
   ProgrammeMode,
   QuestionOption,
+  Role,
   TimetableSession,
   TraineeSearchResult,
   VisibilitySettings,
@@ -74,8 +77,83 @@ async function apiFetch<T>(
   return res.json();
 }
 
+// F1 — own profile. getProfile (below, used by session bootstrap) returns
+// only id/role/full_name; this returns the whole editable row.
+export function getProfileDetails(accessToken: string) {
+  return apiFetch<Profile>("/profile/details", accessToken);
+}
+
+export function updateProfile(
+  accessToken: string,
+  body: Partial<{
+    full_name: string;
+    phone: string | null;
+    cooperative_affiliation: string | null;
+    org_name: string | null;
+    org_sector: string | null;
+  }>,
+) {
+  return apiFetch<Profile>("/profile", accessToken, { method: "PATCH", body });
+}
+
+export function createUser(
+  accessToken: string,
+  body: {
+    email: string;
+    role: Role;
+    full_name: string;
+    password?: string;
+    phone?: string;
+    cooperative_affiliation?: string;
+    org_name?: string;
+    org_sector?: string;
+  },
+) {
+  return apiFetch<{
+    id: string;
+    email: string;
+    role: Role;
+    full_name: string;
+    temp_password?: string;
+  }>("/users", accessToken, { method: "POST", body });
+}
+
+export function bulkImportTrainees(
+  accessToken: string,
+  trainees: {
+    email: string;
+    full_name: string;
+    phone?: string;
+    cooperative_affiliation?: string;
+  }[],
+) {
+  return apiFetch<BulkImportResult>("/users/bulk-trainees", accessToken, {
+    method: "POST",
+    body: { trainees },
+  });
+}
+
 export function getInstitutions(accessToken: string) {
   return apiFetch<Institution[]>("/institutions", accessToken);
+}
+
+export function createInstitution(
+  accessToken: string,
+  body: { name: string; type?: string; location?: string },
+) {
+  return apiFetch<Institution>("/institutions", accessToken, { method: "POST", body });
+}
+
+export function updateInstitution(
+  accessToken: string,
+  id: string,
+  body: Partial<{ name: string; type: string; location: string }>,
+) {
+  return apiFetch<Institution>(`/institutions/${id}`, accessToken, { method: "PATCH", body });
+}
+
+export function deleteInstitution(accessToken: string, id: string) {
+  return apiFetch<void>(`/institutions/${id}`, accessToken, { method: "DELETE" });
 }
 
 export function getProgrammes(accessToken: string) {

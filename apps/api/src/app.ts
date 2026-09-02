@@ -24,6 +24,7 @@ import { profileRouter } from "./routes/profile.js";
 import { programmeProgressRouter } from "./routes/programmeProgress.js";
 import { programmesRouter } from "./routes/programmes.js";
 import { timetableRouter } from "./routes/timetable.js";
+import { usersRouter } from "./routes/users.js";
 import { visibilitySettingsRouter } from "./routes/visibilitySettings.js";
 
 export const app = express();
@@ -37,6 +38,7 @@ app.get("/health", (_req, res) => {
 
 app.use("/api", profileRouter);
 app.use("/api", institutionsRouter);
+app.use("/api", usersRouter);
 app.use("/api", programmesRouter);
 app.use("/api", programmeProgressRouter);
 app.use("/api", nominationsRouter);

@@ -31,6 +31,43 @@ export interface Institution {
   location: string | null;
 }
 
+// The full profiles row. `GET /api/profile` returns the narrower
+// AuthenticatedUser shape below (what auth middleware resolves); this is what
+// the profile read/update routes deal in.
+export interface Profile {
+  id: string;
+  role: Role;
+  full_name: string;
+  phone: string | null;
+  cooperative_affiliation: string | null;
+  org_name: string | null;
+  org_sector: string | null;
+  created_at: string;
+}
+
+export interface AuthenticatedUser {
+  id: string;
+  role: Role;
+  full_name: string | null;
+}
+
+// One row's outcome from a bulk trainee import. `temp_password` is only
+// present for rows the API generated a password for.
+export interface BulkImportRow {
+  email: string;
+  status: "created" | "skipped" | "failed";
+  reason?: string;
+  user_id?: string;
+  temp_password?: string;
+}
+
+export interface BulkImportResult {
+  created: number;
+  skipped: number;
+  failed: number;
+  rows: BulkImportRow[];
+}
+
 export interface Programme {
   id: string;
   institution_id: string;
