@@ -3,14 +3,10 @@ import {
   getEmployerTrainees,
   getJobInterests,
   getJobs,
-  getJobSkills,
-  getSkills,
-  setJobSkills,
   shortlistTrainee,
 } from "@ncct/api-client";
-import type { Job, JobInterest, Skill, TraineeSearchResult } from "@ncct/shared-types";
+import type { Job, JobInterest, TraineeSearchResult } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
-import { SkillChips, SkillPicker } from "./SkillPicker.js";
 
 interface EmployerDashboardProps {
   accessToken: string;
@@ -20,10 +16,14 @@ type InterestRow = JobInterest & { profiles: { full_name: string | null } | null
 
 // Employer's own postings + trainee search/shortlist — same bare-bones
 // scope as every other admin/employer panel in this repo (no job-picker
-// beyond a plain list, no rich filters beyond keyword/location). The
-// taxonomy skill-tagging below (Phase-2 P1, docs/PRD.md §13.1) is additive
-// to the pre-existing free-text `required_skills` field, not a replacement
-// for it — see the job_skills entity note in docs/DATABASE.md.
+// beyond a plain list, no rich filters beyond keyword/location).
+//
+// NOTE: a taxonomy skill-tagging layer (Phase-2 P1, docs/PRD.md §13.1) was
+// built into this component and is currently disconnected pending a scope
+// decision — it needs `getSkills`/`getJobSkills`/`setJobSkills` and a
+// `Skill` type that don't exist in packages/* yet. `SkillPicker.tsx` is
+// still on disk, unimported. The free-text `required_skills` field below is
+// the pre-existing MVP (F6/PRD §6.6) behaviour and is unaffected.
 export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -33,16 +33,9 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
   const [results, setResults] = useState<TraineeSearchResult[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const [allSkills, setAllSkills] = useState<Skill[]>([]);
-  const [jobSkillsById, setJobSkillsById] = useState<Record<string, Skill[]>>({});
-  const [newJobSkillIds, setNewJobSkillIds] = useState<Set<string>>(new Set());
-  const [editingSkillsForJobId, setEditingSkillsForJobId] = useState<string | null>(null);
-  const [editSkillIds, setEditSkillIds] = useState<Set<string>>(new Set());
-
   useEffect(() => {
     getJobs().catch((err: Error) => setError(err.message));
     loadOwnJobs();
-    void loadAllSkills();
     // Deliberately not depending on searchQuery/searchLocation — search is
     // user-triggered (handleSearch), not live-as-you-type.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -54,34 +47,12 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
       // GET /jobs has no owner filter (it's a public listing) — this repo
       // has no "my jobs" endpoint yet, so this fetches all jobs and shows
       // every one, same "no picker beyond what already exists" limitation
-      // noted throughout this repo's admin UI. Tagging is still safe: the
-      // API 404s if this employer doesn't own the job being tagged.
+      // noted throughout this repo's admin UI.
       const fetchedJobs = await getJobs();
       setJobs(fetchedJobs);
-      const skillEntries = await Promise.all(
-        fetchedJobs.map(async (job) => [job.id, await getJobSkills(job.id)] as const),
-      );
-      setJobSkillsById(Object.fromEntries(skillEntries));
     } catch (err) {
       setError((err as Error).message);
     }
-  }
-
-  async function loadAllSkills() {
-    try {
-      setAllSkills(await getSkills(accessToken));
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  }
-
-  function toggleNewJobSkill(skillId: string) {
-    setNewJobSkillIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(skillId)) next.delete(skillId);
-      else next.add(skillId);
-      return next;
-    });
   }
 
   async function handleCreateJob(e: React.FormEvent<HTMLFormElement>) {
@@ -98,38 +69,9 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
       : undefined;
     setError(null);
     try {
-      const job = await createJob(accessToken, { title, location, required_skills });
-      if (newJobSkillIds.size > 0) {
-        await setJobSkills(accessToken, job.id, [...newJobSkillIds]);
-      }
+      await createJob(accessToken, { title, location, required_skills });
       e.currentTarget.reset();
-      setNewJobSkillIds(new Set());
       await loadOwnJobs();
-    } catch (err) {
-      setError((err as Error).message);
-    }
-  }
-
-  function startEditingSkills(job: Job) {
-    setEditingSkillsForJobId(job.id);
-    setEditSkillIds(new Set((jobSkillsById[job.id] ?? []).map((skill) => skill.id)));
-  }
-
-  function toggleEditSkill(skillId: string) {
-    setEditSkillIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(skillId)) next.delete(skillId);
-      else next.add(skillId);
-      return next;
-    });
-  }
-
-  async function handleSaveSkills(jobId: string) {
-    setError(null);
-    try {
-      const updated = await setJobSkills(accessToken, jobId, [...editSkillIds]);
-      setJobSkillsById((prev) => ({ ...prev, [jobId]: updated }));
-      setEditingSkillsForJobId(null);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -192,10 +134,6 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
         </label>
         <button type="submit">Post job</button>
       </form>
-      <div>
-        <p className="skill-picker-label">Required skills (from taxonomy, optional)</p>
-        <SkillPicker skills={allSkills} selectedIds={newJobSkillIds} onToggle={toggleNewJobSkill} />
-      </div>
 
       <h3>All jobs</h3>
       <ul>
@@ -206,24 +144,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                 {job.title}
               </button>
               {job.location ? ` — ${job.location}` : ""}
-              <SkillChips skills={jobSkillsById[job.id] ?? []} />
-              <button type="button" onClick={() => startEditingSkills(job)}>
-                {editingSkillsForJobId === job.id ? "Editing skills…" : "Edit skills"}
-              </button>
             </div>
-            {editingSkillsForJobId === job.id && (
-              <div className="job-skill-editor">
-                <SkillPicker skills={allSkills} selectedIds={editSkillIds} onToggle={toggleEditSkill} />
-                <div className="inline-form">
-                  <button type="button" onClick={() => void handleSaveSkills(job.id)}>
-                    Save skills
-                  </button>
-                  <button type="button" onClick={() => setEditingSkillsForJobId(null)}>
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
           </li>
         ))}
       </ul>
@@ -245,11 +166,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
       <form className="inline-form" onSubmit={(e) => void handleSearch(e)}>
         <label>
           Skill / certification
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
         </label>
         <label>
           Location

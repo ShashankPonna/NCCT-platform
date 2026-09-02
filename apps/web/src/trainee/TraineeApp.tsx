@@ -7,6 +7,7 @@ import { TraineeShell, type TraineeTab } from "./TraineeShell.js";
 
 interface TraineeAppProps {
   accessToken: string;
+  fullName: string | null;
   /** From App.tsx's `?checkin=` query param — see docs/DECISIONS.md #16. */
   autoCheckInSessionId?: string;
 }
@@ -17,7 +18,7 @@ interface TraineeAppProps {
 // destinations (Home/Learn/Attendance/Career) with full Mega-Menu dropdown support.
 // A `?checkin=` link jumps straight to the Attendance tab so the QR
 // auto-check-in flow still fires exactly as before.
-export function TraineeApp({ accessToken, autoCheckInSessionId }: TraineeAppProps) {
+export function TraineeApp({ accessToken, fullName, autoCheckInSessionId }: TraineeAppProps) {
   const [tab, setTab] = useState<TraineeTab>(autoCheckInSessionId ? "attendance" : "home");
   const [learnSubView, setLearnSubView] = useState<LearnView>("lessons");
   const [careerSubView, setCareerSubView] = useState<CareerView>("jobs");
@@ -32,8 +33,10 @@ export function TraineeApp({ accessToken, autoCheckInSessionId }: TraineeAppProp
   }
 
   return (
-    <TraineeShell active={tab} onNavigate={handleNavigate}>
-      {tab === "home" && <TraineeHome accessToken={accessToken} onNavigate={handleNavigate} />}
+    <TraineeShell active={tab} onNavigate={handleNavigate} fullName={fullName}>
+      {tab === "home" && (
+        <TraineeHome accessToken={accessToken} fullName={fullName} onNavigate={handleNavigate} />
+      )}
       {tab === "learn" && (
         <TraineeLearn
           accessToken={accessToken}

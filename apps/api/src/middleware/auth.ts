@@ -7,7 +7,7 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
-      user?: { id: string; role: Role };
+      user?: { id: string; role: Role; full_name: string | null };
       supabase?: SupabaseClient;
     }
   }
@@ -37,7 +37,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
   const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
-    .select("role")
+    .select("role, full_name")
     .eq("id", authData.user.id)
     .single();
 
@@ -46,7 +46,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     return;
   }
 
-  req.user = { id: authData.user.id, role: profile.role as Role };
+  req.user = { id: authData.user.id, role: profile.role as Role, full_name: profile.full_name };
   req.supabase = getSupabaseForUser(token);
   next();
 }

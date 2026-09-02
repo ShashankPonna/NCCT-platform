@@ -19,7 +19,10 @@ import type {
   Lesson,
   LessonProgress,
   Module,
+  Nomination,
+  Programme,
   QuestionOption,
+  TimetableSession,
   TraineeSearchResult,
   VisibilitySettings,
 } from "@ncct/shared-types";
@@ -66,6 +69,54 @@ async function apiFetch<T>(
     return undefined as T;
   }
   return res.json();
+}
+
+export function getProgrammes(accessToken: string) {
+  return apiFetch<Programme[]>("/programmes", accessToken);
+}
+
+export function nominateSelf(accessToken: string, programmeId: string) {
+  return apiFetch<Nomination>(`/programmes/${programmeId}/nominations`, accessToken, {
+    method: "POST",
+  });
+}
+
+export function getMyNominations(accessToken: string) {
+  return apiFetch<
+    (Nomination & {
+      programmes: {
+        title: string;
+        mode: string;
+        start_date: string | null;
+        end_date: string | null;
+      } | null;
+    })[]
+  >("/nominations/mine", accessToken);
+}
+
+// Distinct from getCertificate(code) above, which is the public no-login
+// verification lookup — this one is the authenticated trainee's own list.
+export function getMyCertificates(accessToken: string) {
+  return apiFetch<
+    (Certificate & {
+      pdf_url: string;
+      programme_title: string | null;
+      institution_name: string | null;
+    })[]
+  >("/certificates/mine", accessToken);
+}
+
+export function getTimetableSessions(accessToken: string, programmeId: string) {
+  return apiFetch<TimetableSession[]>(`/programmes/${programmeId}/timetable`, accessToken);
+}
+
+export function getProgrammeProgress(accessToken: string, programmeId: string) {
+  return apiFetch<{
+    programme_id: string;
+    total_lessons: number;
+    completed_lessons: number;
+    percent: number;
+  }>(`/programmes/${programmeId}/progress`, accessToken);
 }
 
 export function getCourses(accessToken: string, programmeId: string) {
@@ -178,9 +229,7 @@ export function getLessonContentUrl(accessToken: string, lessonId: string) {
 
 // The certificate verification page is explicitly no-login (PRD §6.4) —
 // this is the one fetch helper that never sends an Authorization header.
-export async function getCertificate(
-  code: string,
-): Promise<
+export async function getCertificate(code: string): Promise<
   | (Certificate & {
       pdf_url: string;
       trainee_name: string | null;
@@ -338,7 +387,10 @@ export function createJob(
   return apiFetch<Job>("/jobs", accessToken, { method: "POST", body });
 }
 
-export function getEmployerTrainees(accessToken: string, filters?: { q?: string; location?: string }) {
+export function getEmployerTrainees(
+  accessToken: string,
+  filters?: { q?: string; location?: string },
+) {
   const params = new URLSearchParams();
   if (filters?.q) params.set("q", filters.q);
   if (filters?.location) params.set("location", filters.location);
@@ -373,9 +425,10 @@ export function updateJobInterestStatus(
 }
 
 export function getMyJobInterests(accessToken: string) {
-  return apiFetch<
-    (JobInterest & { jobs: { title: string; location: string | null } | null })[]
-  >("/job-interests/mine", accessToken);
+  return apiFetch<(JobInterest & { jobs: { title: string; location: string | null } | null })[]>(
+    "/job-interests/mine",
+    accessToken,
+  );
 }
 
 export function getVisibilitySettings(accessToken: string) {

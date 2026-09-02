@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { ChatbotPanel } from "../ChatbotPanel.js";
-import { TraineeCareerCounsellor } from "./TraineeCareerCounsellor.js";
 import { TraineeCareerJobs } from "./TraineeCareerJobs.js";
-import { TraineeCareerSkillGap } from "./TraineeCareerSkillGap.js";
 
 export type CareerView = "jobs" | "skill-gap" | "ask" | "faq";
 
@@ -12,20 +10,24 @@ interface TraineeCareerProps {
   onSubViewChange?: (view: CareerView) => void;
 }
 
+// The "Skill-Gap Check" (Phase-2 P1) and "Ask a Counsellor" (Phase-2 P2)
+// tabs are intentionally absent from this list: their components
+// (TraineeCareerSkillGap.tsx, TraineeCareerCounsellor.tsx) are still on
+// disk but disconnected pending a scope decision, since PRD §13 puts both
+// outside the MVP and neither has backend support in packages/* yet.
+// Restoring them = re-adding these two entries and the imports/branches
+// below. "Open Positions" (F6) and "Programme FAQ" (F7) are both MVP.
 const TABS: { id: CareerView; label: string }[] = [
   { id: "jobs", label: "Open Positions" },
-  { id: "skill-gap", label: "Skill-Gap Check" },
-  { id: "ask", label: "Ask a Counsellor" },
   { id: "faq", label: "Programme FAQ" },
 ];
 
-// Career's Stitch screens (career_open_positions, career_skill_gap_check,
-// career_ask_a_counsellor) plus F7's existing chatbot, as one segmented
+// Career's Stitch screens plus F7's existing chatbot, as one segmented
 // sub-nav — same "don't overload the main navbar" reasoning as
 // TraineeLearn.tsx. "Ask a Counsellor" (P2, personalized, tool-grounded)
 // and "Programme FAQ" (F7, shared corpus, deliberately refuses personal
-// advice) are kept as two clearly separate destinations, not merged — see
-// docs/DECISIONS.md #19 for why that split matters.
+// advice) are meant to stay two clearly separate destinations, not merged,
+// if/when P2 is restored.
 export function TraineeCareer({ accessToken, subView, onSubViewChange }: TraineeCareerProps) {
   const [localView, setLocalView] = useState<CareerView>("jobs");
   const view = subView ?? localView;
@@ -55,8 +57,6 @@ export function TraineeCareer({ accessToken, subView, onSubViewChange }: Trainee
       </div>
 
       {view === "jobs" && <TraineeCareerJobs accessToken={accessToken} />}
-      {view === "skill-gap" && <TraineeCareerSkillGap accessToken={accessToken} />}
-      {view === "ask" && <TraineeCareerCounsellor accessToken={accessToken} />}
       {view === "faq" && (
         <div className="py-6 md:py-8">
           <ChatbotPanel accessToken={accessToken} />
@@ -65,4 +65,3 @@ export function TraineeCareer({ accessToken, subView, onSubViewChange }: Trainee
     </div>
   );
 }
-

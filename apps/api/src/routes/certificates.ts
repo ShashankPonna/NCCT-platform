@@ -1,7 +1,51 @@
 import { Router } from "express";
+import { requireAuth, requireRole } from "../middleware/auth.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
 export const certificatesRouter = Router();
+
+// MUST stay registered before GET /certificates/:code below — Express matches
+// in registration order, so the `:code` route would otherwise swallow "mine"
+// as a certificate code and always 404.
+//
+// Uses supabaseAdmin rather than req.supabase (unlike the other own-row
+// "/mine" routes) for one specific reason: `institutions` has RLS enabled
+// with no policy at all, so the institutions(name) embed returns null under
+// the caller's own client. Ownership is still enforced here, just in code —
+// trainee_id always comes from req.user, never the request body, the same
+// approach assessmentAttempts uses.
+certificatesRouter.get(
+  "/certificates/mine",
+  requireAuth,
+  requireRole("trainee"),
+  async (req, res) => {
+    const { data, error } = await supabaseAdmin
+      .from("certificates")
+      .select("*, programmes(title), institutions(name)")
+      .eq("trainee_id", req.user!.id)
+      .order("issued_at", { ascending: false });
+
+    if (error) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
+
+    res.json(
+      (data ?? []).map((row) => {
+        const { programmes, institutions, ...certificate } = row;
+        const { data: publicUrl } = supabaseAdmin.storage
+          .from("certificates")
+          .getPublicUrl(certificate.pdf_storage_path);
+        return {
+          ...certificate,
+          pdf_url: publicUrl.publicUrl,
+          programme_title: programmes?.title ?? null,
+          institution_name: institutions?.name ?? null,
+        };
+      }),
+    );
+  },
+);
 
 // Deliberately the one route in this API with no requireAuth — PRD §6.4
 // explicitly requires "public, no-login certificate verification." Backed

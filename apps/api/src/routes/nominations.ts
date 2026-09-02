@@ -30,6 +30,28 @@ nominationsRouter.post(
   },
 );
 
+// A trainee's own nominations across all programmes — own-row RLS
+// (`nominations_own`), so req.supabase suffices, no ownership check needed.
+// Mirrors GET /api/job-interests/mine. The programmes embed is readable
+// under the caller's own client via `programmes_read_authenticated`.
+nominationsRouter.get(
+  "/nominations/mine",
+  requireAuth,
+  requireRole("trainee"),
+  async (req, res) => {
+    const { data, error } = await req
+      .supabase!.from("nominations")
+      .select("*, programmes(title, mode, start_date, end_date)")
+      .order("nominated_at", { ascending: false });
+
+    if (error) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
+    res.json(data);
+  },
+);
+
 nominationsRouter.get(
   "/programmes/:id/nominations",
   requireAuth,

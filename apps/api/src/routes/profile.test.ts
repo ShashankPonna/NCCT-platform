@@ -47,15 +47,27 @@ describe("GET /api/profile", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns the caller's id and role when authenticated", async () => {
+  it("returns the caller's id, role, and full_name when authenticated", async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: "user-123" } }, error: null });
-    singleMock.mockResolvedValue({ data: { role: "trainee" }, error: null });
+    singleMock.mockResolvedValue({ data: { role: "trainee", full_name: "Asha Patil" }, error: null });
 
     const res = await request(buildApp())
       .get("/api/profile")
       .set("Authorization", "Bearer good-token");
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ id: "user-123", role: "trainee" });
+    expect(res.body).toEqual({ id: "user-123", role: "trainee", full_name: "Asha Patil" });
+  });
+
+  it("returns full_name: null when the profile hasn't set one", async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: "user-123" } }, error: null });
+    singleMock.mockResolvedValue({ data: { role: "trainee", full_name: null }, error: null });
+
+    const res = await request(buildApp())
+      .get("/api/profile")
+      .set("Authorization", "Bearer good-token");
+
+    expect(res.status).toBe(200);
+    expect(res.body.full_name).toBeNull();
   });
 });

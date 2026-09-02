@@ -13,12 +13,13 @@ const NAV_ITEMS: { id: TraineeTab; label: string; icon: string }[] = [
 interface TraineeShellProps {
   active: TraineeTab;
   onNavigate: (tab: TraineeTab, subView?: string) => void;
+  fullName: string | null;
   children: React.ReactNode;
 }
 
 // Nav shell for the trainee portal with cohesive light & dark modes, accessibility controls,
 // sticky main header with search & profile, and desktop mega-menu navigation bar with dropdown sub-destinations.
-export function TraineeShell({ active, onNavigate, children }: TraineeShellProps) {
+export function TraineeShell({ active, onNavigate, fullName, children }: TraineeShellProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [contrastHigh, setContrastHigh] = useState(false);
   const [isDark, setIsDark] = useState<boolean>(() => {
@@ -215,7 +216,9 @@ export function TraineeShell({ active, onNavigate, children }: TraineeShellProps
                 className="h-9 w-9 rounded-full border border-outline-variant object-cover shadow-xs"
               />
               <div className="hidden flex-col text-left sm:flex">
-                <span className="text-label-md font-bold leading-tight text-on-surface">Rahul Sharma</span>
+                <span className="text-label-md font-bold leading-tight text-on-surface">
+                  {fullName ?? "Trainee"}
+                </span>
                 <span className="text-[11px] leading-tight text-on-surface-variant">Trainee</span>
               </div>
               <button
@@ -354,7 +357,11 @@ export function TraineeShell({ active, onNavigate, children }: TraineeShellProps
                 </span>
               </button>
 
-              {/* Mega Dropdown */}
+              {/* Mega Dropdown — "Skill-Gap Check" and "Ask a Counsellor" are
+                  Phase-2 (PRD §13) and intentionally absent: their screens
+                  are parked pending a scope decision, see
+                  docs/IMPLEMENTATION.md. Restore alongside TraineeCareer.tsx's
+                  TABS once that's resolved. */}
               <div className="invisible absolute left-0 top-full z-50 flex w-[380px] flex-col gap-1 rounded-b-xl border border-outline-variant bg-surface-card p-2 opacity-0 shadow-xl transition-all duration-150 group-hover:visible group-hover:opacity-100">
                 <button
                   type="button"
@@ -370,40 +377,6 @@ export function TraineeShell({ active, onNavigate, children }: TraineeShellProps
                     </div>
                     <div className="text-[11px] text-on-surface-variant">
                       Employer listings & visibility preferences
-                    </div>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onNavigate("career", "skill-gap")}
-                  className="group/item flex items-center gap-3.5 rounded-lg p-3 text-left transition-colors hover:bg-surface-container"
-                >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-fixed text-primary transition-transform group-hover/item:scale-105">
-                    <span className="material-symbols-outlined text-[18px]">trending_up</span>
-                  </div>
-                  <div>
-                    <div className="text-label-md font-bold text-on-surface group-hover/item:text-interactive">
-                      Skill-Gap Check
-                    </div>
-                    <div className="text-[11px] text-on-surface-variant">
-                      Analyze readiness against target job roles
-                    </div>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onNavigate("career", "ask")}
-                  className="group/item flex items-center gap-3.5 rounded-lg p-3 text-left transition-colors hover:bg-surface-container"
-                >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-fixed text-primary transition-transform group-hover/item:scale-105">
-                    <span className="material-symbols-outlined text-[18px]">support_agent</span>
-                  </div>
-                  <div>
-                    <div className="text-label-md font-bold text-on-surface group-hover/item:text-interactive">
-                      Ask a Counsellor
-                    </div>
-                    <div className="text-[11px] text-on-surface-variant">
-                      AI career advisory grounded in your profile
                     </div>
                   </div>
                 </button>

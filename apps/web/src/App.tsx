@@ -50,7 +50,11 @@ function App() {
     return (
       <>
         {error && <p className="form-error">{error}</p>}
-        <TraineeApp accessToken={session.accessToken} autoCheckInSessionId={checkinSessionId} />
+        <TraineeApp
+          accessToken={session.accessToken}
+          fullName={session.fullName}
+          autoCheckInSessionId={checkinSessionId}
+        />
       </>
     );
   }

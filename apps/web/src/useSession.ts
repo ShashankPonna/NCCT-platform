@@ -6,6 +6,7 @@ interface SessionInfo {
   accessToken: string;
   userId: string;
   role: Role;
+  fullName: string | null;
 }
 
 // Minimal session hook: Supabase Auth handles login (client-side, per
@@ -35,9 +36,9 @@ export function useSession() {
         await supabase.auth.signOut();
         throw new Error(`Could not load profile/role for the signed-in user (HTTP ${res.status})`);
       }
-      const profile = (await res.json()) as { role: Role };
+      const profile = (await res.json()) as { role: Role; full_name: string | null };
       if (!cancelled) {
-        setSession({ accessToken, userId, role: profile.role });
+        setSession({ accessToken, userId, role: profile.role, fullName: profile.full_name });
         setError(null);
       }
     }

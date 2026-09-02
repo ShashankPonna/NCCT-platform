@@ -20,6 +20,7 @@ import { lessonsRouter } from "./routes/lessons.js";
 import { modulesRouter } from "./routes/modules.js";
 import { nominationsRouter } from "./routes/nominations.js";
 import { profileRouter } from "./routes/profile.js";
+import { programmeProgressRouter } from "./routes/programmeProgress.js";
 import { programmesRouter } from "./routes/programmes.js";
 import { timetableRouter } from "./routes/timetable.js";
 import { visibilitySettingsRouter } from "./routes/visibilitySettings.js";
@@ -35,6 +36,7 @@ app.get("/health", (_req, res) => {
 
 app.use("/api", profileRouter);
 app.use("/api", programmesRouter);
+app.use("/api", programmeProgressRouter);
 app.use("/api", nominationsRouter);
 app.use("/api", timetableRouter);
 app.use("/api", coursesRouter);

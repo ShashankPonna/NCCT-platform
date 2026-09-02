@@ -175,3 +175,60 @@ describe("PATCH /api/programmes/:id/nominations/:nominationId", () => {
     expect(res.body.status).toBe("approved");
   });
 });
+
+describe("GET /api/nominations/mine", () => {
+  it("returns 401 with no bearer token", async () => {
+    const res = await request(buildApp()).get("/api/nominations/mine");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 403 for a non-trainee", async () => {
+    authenticateAs("admin-1", "admin");
+    const res = await request(buildApp())
+      .get("/api/nominations/mine")
+      .set("Authorization", "Bearer token");
+    expect(res.status).toBe(403);
+  });
+
+  it("returns the trainee's own nominations with the programme embedded", async () => {
+    authenticateAs("trainee-1", "trainee");
+    nominationsMock.result.data = [
+      {
+        id: "nom-1",
+        programme_id: "prog-1",
+        trainee_id: "trainee-1",
+        status: "approved",
+        nominated_at: "2026-09-01T00:00:00.000Z",
+        programmes: {
+          title: "Cooperative Management Basics",
+          mode: "online",
+          start_date: "2026-10-01",
+          end_date: "2026-10-30",
+        },
+      },
+    ];
+
+    const res = await request(buildApp())
+      .get("/api/nominations/mine")
+      .set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0]).toMatchObject({
+      status: "approved",
+      programmes: { title: "Cooperative Management Basics", mode: "online" },
+    });
+  });
+
+  it("returns an empty list (not 404) when the trainee has nominated for nothing", async () => {
+    authenticateAs("trainee-1", "trainee");
+    nominationsMock.result.data = [];
+
+    const res = await request(buildApp())
+      .get("/api/nominations/mine")
+      .set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+});

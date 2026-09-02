@@ -5,10 +5,18 @@ import {
   getLessons,
   getLessonTranslations,
   getModules,
+  getMyNominations,
   updateLessonProgress,
 } from "@ncct/api-client";
-import type { Course, ContentTranslation, Lesson, LessonProgress, Module } from "@ncct/shared-types";
-import { useState } from "react";
+import type {
+  Course,
+  ContentTranslation,
+  Lesson,
+  LessonProgress,
+  Module,
+  Nomination,
+} from "@ncct/shared-types";
+import { useEffect, useState } from "react";
 import { MatchingExercise } from "../MatchingExercise.js";
 import { QuizTaker } from "../QuizTaker.js";
 import { YouTubeVideoPlayer } from "../YouTubeVideoPlayer.js";
@@ -18,11 +26,18 @@ interface TraineeLearnLessonsProps {
   accessToken: string;
 }
 
+type MyNomination = Nomination & { programmes: { title: string; mode: string } | null };
+
 // Same data flow as the original StudentLessonView.tsx, re-skinned to the
 // NCCT design system (design/stitch_ncct_trainee_portal/learn_my_lessons).
-// Still a raw programme-ID input — F2 has no browsing UI yet (see
-// docs/IMPLEMENTATION.md), unchanged by this redesign.
+// The programme picker used to be a raw UUID paste box with nothing to paste
+// it from — F2 still has no admin/trainee programme-browsing UI, but the
+// trainee's own approved nominations (GET /api/nominations/mine) are real
+// data already used elsewhere in this portal, so this now offers those as a
+// dropdown; the manual UUID field stays as a fallback for anything not
+// covered by an approved nomination (e.g. before F2 gains real browsing).
 export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
+  const [myProgrammes, setMyProgrammes] = useState<MyNomination[]>([]);
   const [programmeId, setProgrammeId] = useState("");
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
@@ -36,6 +51,20 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
   const [error, setError] = useState<string | null>(null);
 
   const activeTranslation = translations.find((t) => t.locale === locale) ?? null;
+
+  useEffect(() => {
+    getMyNominations(accessToken)
+      .then((nominations) => {
+        const approved = nominations.filter((n) => n.status === "approved");
+        setMyProgrammes(approved);
+        if (approved.length > 0) {
+          setProgrammeId(approved[0].programme_id);
+          void loadCourses(approved[0].programme_id);
+        }
+      })
+      .catch((err: Error) => setError(err.message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken]);
 
   async function loadCourses(id: string) {
     setError(null);
@@ -125,13 +154,32 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
       <div className="flex flex-col gap-6 md:col-span-4">
         <div className="rounded-lg border border-border-low-contrast bg-surface-card p-4">
           <label className="mb-2 block text-label-md text-on-surface-variant">Programme</label>
-          <input
-            value={programmeId}
-            onChange={(e) => setProgrammeId(e.target.value)}
-            onBlur={() => programmeId && loadCourses(programmeId)}
-            placeholder="paste a programme UUID"
-            className="min-h-touch-target w-full rounded border border-border-low-contrast bg-surface-container-lowest px-4 py-3 text-body-md focus:outline-none focus:ring-2 focus:ring-interactive"
-          />
+          {myProgrammes.length > 0 ? (
+            <select
+              value={programmeId}
+              onChange={(e) => e.target.value && loadCourses(e.target.value)}
+              className="min-h-touch-target w-full rounded border border-border-low-contrast bg-surface-container-lowest px-4 py-3 text-body-md focus:outline-none focus:ring-2 focus:ring-interactive"
+            >
+              {myProgrammes.map((nom) => (
+                <option key={nom.programme_id} value={nom.programme_id}>
+                  {nom.programmes?.title ?? nom.programme_id}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <>
+              <input
+                value={programmeId}
+                onChange={(e) => setProgrammeId(e.target.value)}
+                onBlur={() => programmeId && loadCourses(programmeId)}
+                placeholder="paste a programme UUID"
+                className="min-h-touch-target w-full rounded border border-border-low-contrast bg-surface-container-lowest px-4 py-3 text-body-md focus:outline-none focus:ring-2 focus:ring-interactive"
+              />
+              <p className="mt-2 text-label-sm text-on-surface-variant">
+                No approved programme yet — nominate for one first, or paste a programme ID directly.
+              </p>
+            </>
+          )}
         </div>
 
         <ErrorBanner message={error} />
