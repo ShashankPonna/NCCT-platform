@@ -4,8 +4,9 @@
   "version": "0.0.1",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.18.0"
   },
+  "packageManager": "pnpm@11.24.0",
   "scripts": {
     "dev:web": "pnpm --filter web dev",
     "dev:api": "pnpm --filter api dev",

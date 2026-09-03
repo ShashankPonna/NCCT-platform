@@ -130,7 +130,7 @@ MVP is prototype-scale; no concurrent-user or data-volume targets have been set 
 
 ## 15. Deployment Architecture
 
-`TBD` in full — no hosting provider chosen for web, API, or mobile builds; no CI/CD pipeline exists yet. Supabase itself is hosted (managed service) regardless of where the rest deploys.
+**Resolved** — see [docs/DECISIONS.md](DECISIONS.md) #24. `apps/api` deploys to Render as a Node Web Service (build: `tsc`; start: `node dist/index.js`); `apps/web` deploys to Render as a Static Site (Vite build, `VITE_*` vars baked in at build time). `apps/mobile`'s Capacitor build bakes the same `apps/web` build's URL in — no separate mobile deployment target, matching Decision #22's whole-app-wrap architecture. No CI/CD pipeline exists yet (manual redeploys); Supabase remains its own managed service regardless of where the rest deploys.
 
 ## 16. Technical Risks & Constraints
 
