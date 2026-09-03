@@ -2,6 +2,10 @@ packages:
   - "apps/*"
   - "packages/*"
 allowBuilds:
+  # Its only non-noop lifecycle script is "prepare" (scripts/prepare.js),
+  # which isn't even included in the published tarball -- it's a repo-only
+  # dev step, not something the installed package needs to function.
+  '@google/genai': false
   esbuild: true
   # F7's local embedding model (@huggingface/transformers) pulls these in.
   # Their build scripts download native binaries (onnxruntime-node's are
@@ -14,3 +18,5 @@ allowBuilds:
   protobufjs: false
   sharp: false
   unrs-resolver: true
+minimumReleaseAgeExclude:
+  - '@google/genai@2.21.0'

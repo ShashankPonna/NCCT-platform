@@ -108,7 +108,7 @@ chatbotRouter.post("/chatbot/ask", requireAuth, async (req, res) => {
     res.json(result);
   } catch (err) {
     // The most likely failure in a fresh environment is a missing
-    // ANTHROPIC_API_KEY, which is a deployment/config problem rather than a
+    // GEMINI_API_KEY, which is a deployment/config problem rather than a
     // bad request — surface it as 503 with the real reason instead of a
     // generic 500, so it's obvious what to fix.
     res.status(503).json({ error: `Chatbot unavailable: ${(err as Error).message}` });

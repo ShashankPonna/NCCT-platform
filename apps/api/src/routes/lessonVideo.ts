@@ -83,7 +83,7 @@ lessonVideoRouter.post(
     } catch (err) {
       // Most likely cause in a fresh environment: B2_* env vars unset — a
       // deployment/config problem, not a bad request, same reasoning as
-      // chatbot.ts's 503 on a missing ANTHROPIC_API_KEY.
+      // chatbot.ts's 503 on a missing GEMINI_API_KEY.
       res.status(503).json({ error: `Video storage unavailable: ${(err as Error).message}` });
       return;
     }

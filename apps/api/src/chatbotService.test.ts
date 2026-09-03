@@ -71,15 +71,15 @@ describe("answerQuestion", () => {
       data: [{ id: "a", content: "x", source_type: "faq", source_id: null, similarity: 0.01 }],
       error: null,
     });
-    const createMock = vi.fn();
+    const generateContentMock = vi.fn();
 
     const result = await answerQuestion("what is the weather?", {
-      client: { messages: { create: createMock } } as never,
+      client: { models: { generateContent: generateContentMock } } as never,
     });
 
     expect(result.answered).toBe(false);
     expect(result.sources).toEqual([]);
-    expect(createMock).not.toHaveBeenCalled();
+    expect(generateContentMock).not.toHaveBeenCalled();
   });
 
   it("grounds the model call in the retrieved chunks and returns them as sources", async () => {
@@ -95,12 +95,12 @@ describe("answerQuestion", () => {
       ],
       error: null,
     });
-    const createMock = vi.fn().mockResolvedValue({
-      content: [{ type: "text", text: "Cooperative members can enroll." }],
+    const generateContentMock = vi.fn().mockResolvedValue({
+      text: "Cooperative members can enroll.",
     });
 
     const result = await answerQuestion("Who can enroll?", {
-      client: { messages: { create: createMock } } as never,
+      client: { models: { generateContent: generateContentMock } } as never,
     });
 
     expect(result.answered).toBe(true);
@@ -113,14 +113,14 @@ describe("answerQuestion", () => {
       },
     ]);
 
-    const callArgs = createMock.mock.calls[0][0];
-    expect(callArgs.model).toBe("claude-opus-5");
+    const callArgs = generateContentMock.mock.calls[0][0];
+    expect(callArgs.model).toBe("gemini-3.1-flash-lite");
     // The retrieved chunk must actually reach the model, and the question with it.
-    expect(callArgs.messages[0].content).toContain("Programmes are open to cooperative members.");
-    expect(callArgs.messages[0].content).toContain("Who can enroll?");
+    expect(callArgs.contents).toContain("Programmes are open to cooperative members.");
+    expect(callArgs.contents).toContain("Who can enroll?");
     // The scope guardrails (PRD §6.7 informational-only) must be in the system prompt.
-    expect(callArgs.system).toContain("ONLY from the reference material");
-    expect(callArgs.system).toContain("personalised career advice");
+    expect(callArgs.config.systemInstruction).toContain("ONLY from the reference material");
+    expect(callArgs.config.systemInstruction).toContain("personalised career advice");
   });
 
   it("falls back to the no-information answer if the model returns no text", async () => {
@@ -128,10 +128,10 @@ describe("answerQuestion", () => {
       data: [{ id: "a", content: "ctx", source_type: "faq", source_id: null, similarity: 0.9 }],
       error: null,
     });
-    const createMock = vi.fn().mockResolvedValue({ content: [] });
+    const generateContentMock = vi.fn().mockResolvedValue({ text: "" });
 
     const result = await answerQuestion("Who can enroll?", {
-      client: { messages: { create: createMock } } as never,
+      client: { models: { generateContent: generateContentMock } } as never,
     });
 
     expect(result.answered).toBe(true);

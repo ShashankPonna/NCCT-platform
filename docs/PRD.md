@@ -82,7 +82,7 @@ Cooperative training programmes (for PACS members, SHGs, dairy cooperatives, far
 ## 10. Integrations
 
 - **Supabase** — Auth, Postgres, Storage, pgvector.
-- **Claude API** — chatbot RAG responses.
+- **Gemini API** — chatbot RAG responses (see [docs/DECISIONS.md](DECISIONS.md) #25; originally Claude API, switched per user request).
 - **Face recognition model** — `@vladmandic/human` (default) or InsightFace `buffalo_l` — see [docs/DECISIONS.md](DECISIONS.md).
 - **Push notifications** — provider `TBD` (FCM/APNs).
 
