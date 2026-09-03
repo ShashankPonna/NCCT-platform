@@ -184,22 +184,30 @@ export function ManagementShell({
 
       {/* 2. Main Navigation Header (Sticky) */}
       <header className="sticky top-0 z-50 border-b border-outline-variant bg-surface-card shadow-xs transition-colors">
-        <div className="mx-auto flex max-w-container-max items-center justify-between gap-6 px-margin-mobile py-3.5 md:px-margin-desktop">
-          {/* Brand Logo & Title */}
+        <div className="mx-auto flex max-w-container-max items-center justify-between gap-2 px-margin-mobile py-3.5 md:gap-6 md:px-margin-desktop">
+          {/* Brand Logo & Title. Both this block and the actions cluster
+              below are `shrink-0` — deliberately, so the logo/icons never
+              get squashed — but that means their combined natural width has
+              to actually fit 375px on its own. It didn't: with the
+              institution subtitle always shown, this block alone measured
+              264px, and 264 + the actions cluster's 235px overflowed the
+              viewport by 164px, real and confirmed via a real DOM
+              measurement, not a visual guess. Hiding the subtitle below
+              md: is what actually closes that gap. */}
           <div className="flex shrink-0 items-center">
             <button
               type="button"
               onClick={() => onNavigate(roleNavItems[0]?.id ?? "profile")}
-              className="flex items-center gap-3 text-left transition-opacity hover:opacity-90 cursor-pointer"
+              className="flex items-center gap-2 text-left transition-opacity hover:opacity-90 cursor-pointer md:gap-3"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-container text-on-primary shadow-xs">
-                <span className="material-symbols-outlined text-[22px]">school</span>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-container text-on-primary shadow-xs md:h-10 md:w-10">
+                <span className="material-symbols-outlined text-[20px] md:text-[22px]">school</span>
               </div>
               <div className="flex flex-col">
                 <span className="font-headline text-headline-sm font-bold leading-tight text-on-surface">
                   NCCT Platform
                 </span>
-                <span className="text-[11px] font-medium leading-tight text-on-surface-variant">
+                <span className="hidden text-[11px] font-medium leading-tight text-on-surface-variant md:block">
                   National Council for Cooperative Training
                 </span>
               </div>
@@ -220,26 +228,35 @@ export function ManagementShell({
             />
           </div>
 
-          {/* Actions & Profile */}
-          <div className="flex shrink-0 items-center gap-2 md:gap-3">
+          {/* Actions & Profile. Icon buttons trimmed from 36px to 32px and
+              gaps tightened below md: — this cluster measured 235px on its
+              own at 375px width, `shrink-0` (deliberately, so icons don't
+              visually squash), which is most of why the header overflowed;
+              full size returns at md:. */}
+          <div className="flex shrink-0 items-center gap-1 md:gap-3">
             <button
               type="button"
               onClick={toggleTheme}
               title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
               aria-label="Toggle Theme"
-              className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container cursor-pointer"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container cursor-pointer md:h-9 md:w-9"
             >
-              <span className="material-symbols-outlined text-[20px]">
+              <span className="material-symbols-outlined text-[18px] md:text-[20px]">
                 {isDark ? "light_mode" : "dark_mode"}
               </span>
             </button>
 
+            {/* Hidden below md: — the header still overflowed 375px by
+                ~28px even after every other trim here, and this button
+                isn't wired to a real notification system yet (the red dot
+                is unconditional, not driven by actual state), making it the
+                lowest-cost thing left to drop on the smallest screens. */}
             <button
               type="button"
               aria-label="Notifications"
-              className="relative flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container cursor-pointer"
+              className="relative hidden h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container cursor-pointer md:flex md:h-9 md:w-9"
             >
-              <span className="material-symbols-outlined text-[20px]">notifications</span>
+              <span className="material-symbols-outlined text-[18px] md:text-[20px]">notifications</span>
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-cta" />
             </button>
 
@@ -248,15 +265,15 @@ export function ManagementShell({
               aria-label="My profile"
               title="My profile"
               onClick={() => onNavigate("profile")}
-              className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-surface-container cursor-pointer ${
+              className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-surface-container cursor-pointer md:h-9 md:w-9 ${
                 activeTab === "profile" ? "text-interactive" : "text-on-surface-variant"
               }`}
             >
-              <span className="material-symbols-outlined text-[20px]">settings</span>
+              <span className="material-symbols-outlined text-[18px] md:text-[20px]">settings</span>
             </button>
 
-            <div className="ml-1 flex items-center gap-2.5 border-l border-outline-variant pl-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary-fixed text-on-secondary-fixed font-bold text-xs border border-outline-variant shadow-xs">
+            <div className="ml-0.5 flex items-center gap-1.5 border-l border-outline-variant pl-1.5 md:ml-1 md:gap-2.5 md:pl-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary-fixed text-on-secondary-fixed font-bold text-xs border border-outline-variant shadow-xs md:h-9 md:w-9">
                 {(fullName || roleDisplayName).slice(0, 2).toUpperCase()}
               </div>
               <button

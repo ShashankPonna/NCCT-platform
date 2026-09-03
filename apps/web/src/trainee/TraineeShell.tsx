@@ -146,22 +146,25 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
 
       {/* Main Navigation Header */}
       <header className="sticky top-0 z-50 border-b border-outline-variant bg-surface-card shadow-xs transition-colors">
-        <div className="mx-auto flex max-w-container-max items-center justify-between gap-6 px-margin-mobile py-3.5 md:px-margin-desktop">
-          {/* Brand Logo & Title */}
+        <div className="mx-auto flex max-w-container-max items-center justify-between gap-2 px-margin-mobile py-3.5 md:gap-6 md:px-margin-desktop">
+          {/* Brand Logo & Title. See ManagementShell.tsx's identical fix and
+              comment — this header is duplicated between the two shells,
+              not shared, and had the same real overflow (264px logo block +
+              235px actions cluster, both shrink-0, on a 375px viewport). */}
           <div className="flex shrink-0 items-center">
             <button
               type="button"
               onClick={() => onNavigate("home")}
-              className="flex items-center gap-3 text-left transition-opacity hover:opacity-90"
+              className="flex items-center gap-2 text-left transition-opacity hover:opacity-90 md:gap-3"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-container text-on-primary shadow-xs">
-                <span className="material-symbols-outlined text-[22px]">school</span>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-container text-on-primary shadow-xs md:h-10 md:w-10">
+                <span className="material-symbols-outlined text-[20px] md:text-[22px]">school</span>
               </div>
               <div className="flex flex-col">
                 <span className="font-headline text-headline-sm font-bold leading-tight text-on-surface">
                   NCCT Platform
                 </span>
-                <span className="text-[11px] font-medium leading-tight text-on-surface-variant">
+                <span className="hidden text-[11px] font-medium leading-tight text-on-surface-variant md:block">
                   National Council for Cooperative Training
                 </span>
               </div>
@@ -182,26 +185,30 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
             />
           </form>
 
-          {/* Actions & Profile */}
-          <div className="flex shrink-0 items-center gap-2 md:gap-3">
+          {/* Actions & Profile — sizes trimmed below md:, see
+              ManagementShell.tsx's identical comment. */}
+          <div className="flex shrink-0 items-center gap-1 md:gap-3">
             <button
               type="button"
               onClick={toggleTheme}
               title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
               aria-label="Toggle Theme"
-              className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container md:h-9 md:w-9"
             >
-              <span className="material-symbols-outlined text-[20px]">
+              <span className="material-symbols-outlined text-[18px] md:text-[20px]">
                 {isDark ? "light_mode" : "dark_mode"}
               </span>
             </button>
 
+            {/* Hidden below md: — see ManagementShell.tsx's identical
+                comment: still overflowed after every other trim, and this
+                isn't wired to a real notification system yet. */}
             <button
               type="button"
               aria-label="Notifications"
-              className="relative flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container"
+              className="relative hidden h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container md:flex md:h-9 md:w-9"
             >
-              <span className="material-symbols-outlined text-[20px]">notifications</span>
+              <span className="material-symbols-outlined text-[18px] md:text-[20px]">notifications</span>
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-cta" />
             </button>
 
@@ -210,18 +217,18 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
               aria-label="My profile"
               title="My profile"
               onClick={() => onNavigate("profile")}
-              className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-surface-container ${
+              className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-surface-container md:h-9 md:w-9 ${
                 active === "profile" ? "text-interactive" : "text-on-surface-variant"
               }`}
             >
-              <span className="material-symbols-outlined text-[20px]">settings</span>
+              <span className="material-symbols-outlined text-[18px] md:text-[20px]">settings</span>
             </button>
 
-            <div className="ml-1 flex items-center gap-2.5 border-l border-outline-variant pl-3">
+            <div className="ml-0.5 flex items-center gap-1.5 border-l border-outline-variant pl-1.5 md:ml-1 md:gap-2.5 md:pl-3">
               <img
                 src="/assets/trainee_avatar.png"
                 alt="Trainee Avatar"
-                className="h-9 w-9 rounded-full border border-outline-variant object-cover shadow-xs"
+                className="h-8 w-8 shrink-0 rounded-full border border-outline-variant object-cover shadow-xs md:h-9 md:w-9"
               />
               <button
                 type="button"
