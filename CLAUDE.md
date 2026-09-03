@@ -15,7 +15,7 @@ An AI-enabled digital ecosystem for cooperative training institutions (NCCT / VA
 | Backend          | Node.js + Express (TypeScript) — single API for both clients                                                                                      |
 | Database         | Supabase (Postgres + Auth + Storage + pgvector)                                                                                                   |
 | Face recognition | `@vladmandic/human` (default); InsightFace `buffalo_l` via `onnxruntime-node` as swap-in alternative — see [docs/DECISIONS.md](docs/DECISIONS.md) |
-| Chatbot          | Claude API + pgvector RAG                                                                                                                         |
+| Chatbot          | Gemini API + pgvector RAG — see [docs/DECISIONS.md](docs/DECISIONS.md) #25 (amends #17)                                                          |
 | Hosting/CI       | TBD — see Open Questions in [docs/PRD.md](docs/PRD.md)                                                                                            |
 
 Full detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).

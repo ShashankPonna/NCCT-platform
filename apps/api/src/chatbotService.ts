@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI } from "@google/genai";
 import {
   CHATBOT_MIN_SIMILARITY,
   CHATBOT_RETRIEVAL_COUNT,
@@ -81,13 +81,13 @@ const NO_CONTEXT_ANSWER =
   "I don't have information about that in the programme material available to me. Please contact your training institution for help with this question.";
 
 interface AnswerOptions {
-  /** Injectable for tests so they never reach the real Claude API. */
-  client?: Anthropic;
+  /** Injectable for tests so they never reach the real Gemini API. */
+  client?: GoogleGenAI;
 }
 
 /**
  * Full RAG turn: embed the question, retrieve grounding chunks, then ask
- * Claude to answer from them. When retrieval finds nothing above the
+ * Gemini to answer from them. When retrieval finds nothing above the
  * relevance floor this returns early WITHOUT calling the model at all —
  * cheaper, and it makes "no grounding" a structurally different outcome
  * than "the model decided it didn't know", which the caller can tell apart
@@ -103,32 +103,21 @@ export async function answerQuestion(
     return { answered: false, answer: NO_CONTEXT_ANSWER, sources: [] };
   }
 
-  const client = options.client ?? new Anthropic();
+  const client = options.client ?? new GoogleGenAI({});
   const referenceMaterial = chunks
     .map((chunk, index) => `[${index + 1}] ${chunk.content}`)
     .join("\n\n");
 
-  const response = await client.messages.create({
-    model: "claude-opus-5",
-    max_tokens: 1024,
-    // Grounded FAQ answering is a light task — low effort keeps latency and
-    // cost down without hurting quality here (see the claude-api skill's
-    // cost guidance on chat-shaped routes).
-    output_config: { effort: "low" },
-    system: SYSTEM_PROMPT,
-    messages: [
-      {
-        role: "user",
-        content: `Reference material:\n\n${referenceMaterial}\n\nQuestion: ${question}`,
-      },
-    ],
+  const response = await client.models.generateContent({
+    model: "gemini-3.1-flash-lite",
+    contents: `Reference material:\n\n${referenceMaterial}\n\nQuestion: ${question}`,
+    config: {
+      systemInstruction: SYSTEM_PROMPT,
+      maxOutputTokens: 1024,
+    },
   });
 
-  const answer = response.content
-    .filter((block) => block.type === "text")
-    .map((block) => block.text)
-    .join("\n")
-    .trim();
+  const answer = (response.text ?? "").trim();
 
   return {
     answered: true,

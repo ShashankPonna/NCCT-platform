@@ -4,7 +4,7 @@ Status: **entirely proposed** — no code exists yet. Everything in this documen
 
 ## 1. Overview
 
-Two client apps (React web, and a React/Vite mobile app packaged as a native Android app via Capacitor — see [DECISIONS.md](DECISIONS.md) #19) talk to a single Node/Express REST API, which is the only thing allowed to talk to Supabase. Supabase provides Postgres (with pgvector), Auth, and file Storage. The Claude API powers the RAG chatbot. Face recognition (attendance) and NFC profile reads run on dedicated external hardware (an ESP32-CAM and an NFC reader, respectively) wired into the **web** client, not into either app's own device hardware.
+Two client apps (React web, and a React/Vite mobile app packaged as a native Android app via Capacitor — see [DECISIONS.md](DECISIONS.md) #19) talk to a single Node/Express REST API, which is the only thing allowed to talk to Supabase. Supabase provides Postgres (with pgvector), Auth, and file Storage. The Gemini API powers the RAG chatbot (see [DECISIONS.md](DECISIONS.md) #25 — originally Claude API). Face recognition (attendance) and NFC profile reads run on dedicated external hardware (an ESP32-CAM and an NFC reader, respectively) wired into the **web** client, not into either app's own device hardware.
 
 ## 2. Architecture Diagram
 
@@ -29,7 +29,7 @@ flowchart TB
         Storage["Supabase Storage\n(videos, PDFs, images)"]
     end
 
-    ClaudeAPI["Claude API\n(chatbot RAG)"]
+    ClaudeAPI["Gemini API\n(chatbot RAG)"]
 
     Web -->|HTTPS/JSON, JWT| Auth
     Mobile -->|HTTPS/JSON, JWT| Auth
@@ -49,7 +49,7 @@ flowchart TB
 - Backend: Node.js + Express + TypeScript
 - Database: Supabase (Postgres, pgvector extension), Auth, Storage
 - Face recognition: `@vladmandic/human` (default) or InsightFace `buffalo_l` via `onnxruntime-node` — see [DECISIONS.md](DECISIONS.md)
-- Chatbot: Claude API, retrieval via pgvector
+- Chatbot: Gemini API (`gemini-3.1-flash-lite`), retrieval via pgvector — see [DECISIONS.md](DECISIONS.md) #25
 - Monorepo tooling: pnpm workspaces (proposed default; Turborepo/Nx not adopted unless build-time pain justifies it later)
 
 ## 4. Repository Structure
@@ -102,7 +102,7 @@ See [docs/DATABASE.md](DATABASE.md) for the entity-level data model. Summary: on
 ## 10. External Services
 
 - **Supabase** — Auth, Postgres/pgvector, Storage.
-- **Claude API** — chatbot response generation over retrieved context.
+- **Gemini API** — chatbot response generation over retrieved context (see [DECISIONS.md](DECISIONS.md) #25 — originally Claude API).
 - **Face-recognition model** — runs in-process in Express (Node), not a separate hosted service, to avoid extra infra for MVP.
 - **Push notifications** — provider `TBD` (FCM/APNs).
 
@@ -111,7 +111,7 @@ See [docs/DATABASE.md](DATABASE.md) for the entity-level data model. Summary: on
 - **Enrollment → Certification → Verification**: see PRD §8. Certificate PDF + QR generated server-side on assessment pass; verification page hits an open (no-auth) Express endpoint keyed by certificate ID.
 - **Attendance (face)**: mobile captures photo → POST to Express → embedding extracted → pgvector similarity search against enrolled embeddings → threshold match → attendance logged; below threshold → client falls back to QR.
 - **Offline sync**: mobile queues writes (progress, quiz results, attendance) locally while offline → on reconnect, replays them against the _same_ Express endpoints used when online (no separate sync API) → last-write-wins by timestamp on conflict.
-- **Chatbot**: user query embedded → pgvector similarity search over course/FAQ corpus → top matches + query sent to Claude API → response returned.
+- **Chatbot**: user query embedded → pgvector similarity search over course/FAQ corpus → top matches + query sent to Gemini API → response returned.
 
 ## 12. Error Handling
 
