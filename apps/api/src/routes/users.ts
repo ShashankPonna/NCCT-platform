@@ -1,7 +1,12 @@
-import { bulkImportTraineesSchema, createUserSchema } from "@ncct/validation";
+import {
+  adminUpdateUserSchema,
+  bulkImportTraineesSchema,
+  createUserSchema,
+  listUsersQuerySchema,
+} from "@ncct/validation";
 import { Router } from "express";
 import { randomBytes } from "node:crypto";
-import type { BulkImportRow } from "@ncct/shared-types";
+import type { AdminUserRow, BulkImportRow } from "@ncct/shared-types";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
@@ -61,7 +66,9 @@ usersRouter.post("/users", requireAuth, requireRole("admin"), async (req, res) =
     // Supabase reports an existing address as a 422-ish error; surface it as
     // a 409 so a client can distinguish "already exists" from "bad input".
     const alreadyExists = /already|exists|registered/i.test(error?.message ?? "");
-    res.status(alreadyExists ? 409 : 400).json({ error: error?.message ?? "Could not create user" });
+    res
+      .status(alreadyExists ? 409 : 400)
+      .json({ error: error?.message ?? "Could not create user" });
     return;
   }
 
@@ -130,4 +137,117 @@ usersRouter.post("/users/bulk-trainees", requireAuth, requireRole("admin"), asyn
     failed: rows.filter((r) => r.status === "failed").length,
     rows,
   });
+});
+
+// --- Admin user directory & lifecycle (PRD §6.1's "User Management") -------
+//
+// Emails live in `auth.users`, which PostgREST does not expose, so they can
+// only be reached through the service-role admin API. That means the
+// directory is a two-source join done in Node: `profiles` (the queryable,
+// filterable half) plus a `listUsers()` page for addresses.
+//
+// Stated limitation rather than hidden: `listUsers` is paginated and this
+// fetches a single page at the API's maximum size, so beyond EMAIL_PAGE_SIZE
+// accounts some rows come back with `email: null` instead of silently
+// dropping the user from the directory. The profile half is never truncated.
+const EMAIL_PAGE_SIZE = 1000;
+
+async function fetchEmailsById(): Promise<Map<string, string | null>> {
+  const { data, error } = await supabaseAdmin.auth.admin.listUsers({
+    page: 1,
+    perPage: EMAIL_PAGE_SIZE,
+  });
+  const emails = new Map<string, string | null>();
+  if (error || !data) return emails;
+  for (const user of data.users) emails.set(user.id, user.email ?? null);
+  return emails;
+}
+
+usersRouter.get("/users", requireAuth, requireRole("admin"), async (req, res) => {
+  const parsed = listUsersQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  let query = supabaseAdmin.from("profiles").select("*");
+  if (parsed.data.role) query = query.eq("role", parsed.data.role);
+
+  const { data, error } = await query.order("created_at", { ascending: false });
+  if (error) {
+    res.status(400).json({ error: error.message });
+    return;
+  }
+
+  const emails = await fetchEmailsById();
+  const rows: AdminUserRow[] = (data ?? []).map((profile) => ({
+    ...profile,
+    email: emails.get(profile.id) ?? null,
+  }));
+
+  // `q` is applied here rather than in Postgres because it has to match the
+  // email too, and the email isn't a column on this table to filter on.
+  const q = parsed.data.q?.toLowerCase();
+  const filtered = q
+    ? rows.filter(
+        (row) => row.full_name?.toLowerCase().includes(q) || row.email?.toLowerCase().includes(q),
+      )
+    : rows;
+
+  res.json(filtered);
+});
+
+usersRouter.patch("/users/:id", requireAuth, requireRole("admin"), async (req, res) => {
+  const parsed = adminUpdateUserSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.flatten() });
+    return;
+  }
+
+  // An admin demoting themselves would immediately lose access to this very
+  // route, and if they were the last admin the project would have no way back
+  // in at all without going through the Supabase dashboard. Editing your own
+  // other fields is fine — it's specifically the role that's refused.
+  if (req.params.id === req.user!.id && parsed.data.role && parsed.data.role !== req.user!.role) {
+    res.status(400).json({ error: "You cannot change your own role" });
+    return;
+  }
+
+  // `profiles.role` is the source of truth that requireAuth reads on every
+  // request; auth user_metadata is only the seed `handle_new_user` copies at
+  // signup, so it is deliberately not written back here.
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .update(parsed.data)
+    .eq("id", req.params.id)
+    .select()
+    .maybeSingle();
+
+  if (error) {
+    res.status(400).json({ error: error.message });
+    return;
+  }
+  if (!data) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  res.json(data);
+});
+
+usersRouter.delete("/users/:id", requireAuth, requireRole("admin"), async (req, res) => {
+  if (req.params.id === req.user!.id) {
+    res.status(400).json({ error: "You cannot delete your own account" });
+    return;
+  }
+
+  // Deleting the auth user cascades to `profiles` via the table's
+  // `references auth.users (id) on delete cascade`, so there is no second
+  // delete to do — and no window where a profile outlives its login.
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(req.params.id);
+  if (error) {
+    const notFound = /not found|does not exist/i.test(error.message);
+    res.status(notFound ? 404 : 400).json({ error: error.message });
+    return;
+  }
+  res.status(204).send();
 });

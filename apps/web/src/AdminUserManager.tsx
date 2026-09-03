@@ -3,15 +3,22 @@ import {
   createInstitution,
   createUser,
   deleteInstitution,
+  deleteUser,
   getInstitutions,
+  listUsers,
   updateInstitution,
+  updateUser,
 } from "@ncct/api-client";
 import { ROLES } from "@ncct/constants";
-import type { BulkImportResult, Institution, Role } from "@ncct/shared-types";
+import type { AdminUserRow, BulkImportResult, Institution, Role } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 
 interface AdminUserManagerProps {
   accessToken: string;
+  // Needed to grey out the two self-targeting actions the API refuses
+  // anyway (changing your own role, deleting your own account) — showing a
+  // control that always errors is worse than not showing it.
+  currentUserId: string;
 }
 
 interface CreatedUser {
@@ -36,12 +43,15 @@ function parseTraineeCsv(text: string) {
   }));
 }
 
-export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
+export function AdminUserManager({ accessToken, currentUserId }: AdminUserManagerProps) {
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [createdUsers, setCreatedUsers] = useState<CreatedUser[]>([]);
   const [importResult, setImportResult] = useState<BulkImportResult | null>(null);
   const [csv, setCsv] = useState("");
   const [selectedRole, setSelectedRole] = useState<Role>("trainee");
+  const [users, setUsers] = useState<AdminUserRow[]>([]);
+  const [userQuery, setUserQuery] = useState("");
+  const [userRoleFilter, setUserRoleFilter] = useState<Role | "">("");
   const [editingInstId, setEditingInstId] = useState<string | null>(null);
   const [editInstName, setEditInstName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -52,9 +62,58 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken]);
 
+  // Filtering is server-side (the email half of `q` isn't a column the client
+  // holds), so the directory refetches whenever a filter changes rather than
+  // narrowing an already-fetched list.
+  useEffect(() => {
+    void refreshUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken, userRoleFilter]);
+
   async function refreshInstitutions() {
     try {
       setInstitutions(await getInstitutions(accessToken));
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  async function refreshUsers() {
+    try {
+      setUsers(
+        await listUsers(accessToken, {
+          ...(userRoleFilter ? { role: userRoleFilter } : {}),
+          ...(userQuery.trim() ? { q: userQuery.trim() } : {}),
+        }),
+      );
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  async function handleChangeRole(id: string, role: Role) {
+    setError(null);
+    try {
+      await updateUser(accessToken, id, { role });
+      await refreshUsers();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  async function handleDeleteUser(row: AdminUserRow) {
+    // Deleting an account cascades to everything hanging off it (progress,
+    // attendance, certificates), so this one gets a confirm step — unlike
+    // the institution delete, which the API itself guards.
+    if (
+      !window.confirm(`Delete ${row.full_name || row.email || "this user"}? This cannot be undone.`)
+    ) {
+      return;
+    }
+    setError(null);
+    try {
+      await deleteUser(accessToken, row.id);
+      await refreshUsers();
     } catch (err) {
       setError((err as Error).message);
     }
@@ -86,6 +145,7 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
       ]);
       formEl.reset();
       setSelectedRole("trainee");
+      await refreshUsers();
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -105,6 +165,7 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
       const result = await bulkImportTrainees(accessToken, trainees);
       setImportResult(result);
       setCsv("");
+      await refreshUsers();
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -172,7 +233,8 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
             Users &amp; Institutions Management
           </h1>
           <p className="font-body-md text-body-md text-on-surface-variant mt-1 max-w-2xl">
-            Provision new accounts, manage organizational entities, and handle bulk operations for the NCCT platform.
+            Provision new accounts, manage organizational entities, and handle bulk operations for
+            the NCCT platform.
           </p>
         </div>
       </div>
@@ -195,7 +257,10 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
               <span className="material-symbols-outlined text-primary">person_add</span>
               Provision Single Account
             </h3>
-            <form onSubmit={(e) => void handleCreateUser(e)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form
+              onSubmit={(e) => void handleCreateUser(e)}
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
               <div className="flex flex-col gap-1 md:col-span-2">
                 <label className="font-label-md text-label-md text-on-surface">Full Name *</label>
                 <input
@@ -208,7 +273,9 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="font-label-md text-label-md text-on-surface">Email Address *</label>
+                <label className="font-label-md text-label-md text-on-surface">
+                  Email Address *
+                </label>
                 <input
                   name="email"
                   required
@@ -228,7 +295,9 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
                 >
                   {ROLES.map((r) => (
                     <option key={r} value={r}>
-                      {r === "employer" ? "Employer / Partner" : r.charAt(0).toUpperCase() + r.slice(1)}
+                      {r === "employer"
+                        ? "Employer / Partner"
+                        : r.charAt(0).toUpperCase() + r.slice(1)}
                     </option>
                   ))}
                 </select>
@@ -238,7 +307,9 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
               {selectedRole === "employer" && (
                 <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 bg-surface-container/30 p-4 rounded-lg border border-outline-variant/50">
                   <div className="flex flex-col gap-1">
-                    <label className="font-label-md text-label-md text-on-surface">Organisation Name</label>
+                    <label className="font-label-md text-label-md text-on-surface">
+                      Organisation Name
+                    </label>
                     <input
                       name="org_name"
                       className="bg-surface-container-lowest border border-outline-variant rounded-lg p-3 h-[44px] font-body-md text-body-md focus:border-primary outline-none"
@@ -259,7 +330,9 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
               )}
 
               <div className="flex flex-col gap-1 md:col-span-2">
-                <label className="font-label-md text-label-md text-on-surface">Initial Password</label>
+                <label className="font-label-md text-label-md text-on-surface">
+                  Initial Password
+                </label>
                 <input
                   name="password"
                   className="bg-surface-container-lowest border border-outline-variant rounded-lg p-3 h-[44px] font-body-md text-body-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
@@ -291,7 +364,8 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
                     Created This Session
                   </h3>
                   <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                    Warning: Temporary passwords are only visible here once. Please distribute them securely before closing this page.
+                    Warning: Temporary passwords are only visible here once. Please distribute them
+                    securely before closing this page.
                   </p>
                 </div>
               </div>
@@ -299,9 +373,15 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-surface-container-low border-b border-outline-variant/50">
-                      <th className="p-3 font-label-md text-label-md text-on-surface-variant uppercase">Email</th>
-                      <th className="p-3 font-label-md text-label-md text-on-surface-variant uppercase">Role</th>
-                      <th className="p-3 font-label-md text-label-md text-on-surface-variant uppercase">Temp Password</th>
+                      <th className="p-3 font-label-md text-label-md text-on-surface-variant uppercase">
+                        Email
+                      </th>
+                      <th className="p-3 font-label-md text-label-md text-on-surface-variant uppercase">
+                        Role
+                      </th>
+                      <th className="p-3 font-label-md text-label-md text-on-surface-variant uppercase">
+                        Temp Password
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant/30">
@@ -410,7 +490,10 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
                           <span className="bg-error-container text-on-error-container px-2 py-0.5 rounded-full font-label-sm uppercase">
                             {r.status === "failed" ? "Failed" : "Skipped"}
                           </span>
-                          <span className="text-error text-xs max-w-[120px] truncate" title={r.reason}>
+                          <span
+                            className="text-error text-xs max-w-[120px] truncate"
+                            title={r.reason}
+                          >
                             {r.reason}
                           </span>
                         </div>
@@ -433,7 +516,9 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
               onSubmit={(e) => void handleCreateInstitution(e)}
               className="bg-surface-container-low p-4 rounded-lg border border-outline-variant/50 mb-6 flex flex-col gap-3"
             >
-              <h4 className="font-label-md text-label-md text-on-surface uppercase tracking-wider">Register New</h4>
+              <h4 className="font-label-md text-label-md text-on-surface uppercase tracking-wider">
+                Register New
+              </h4>
               <input
                 name="name"
                 required
@@ -467,9 +552,13 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
             </form>
 
             {/* Existing List */}
-            <h4 className="font-label-md text-label-md text-on-surface mb-3 uppercase tracking-wider">Directory</h4>
+            <h4 className="font-label-md text-label-md text-on-surface mb-3 uppercase tracking-wider">
+              Directory
+            </h4>
             {institutions.length === 0 ? (
-              <p className="font-body-sm text-on-surface-variant">No institutions registered yet.</p>
+              <p className="font-body-sm text-on-surface-variant">
+                No institutions registered yet.
+              </p>
             ) : (
               <ul className="flex flex-col gap-2 overflow-y-auto max-h-[300px] pr-1">
                 {institutions.map((inst) => (
@@ -501,7 +590,9 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
                       </div>
                     ) : (
                       <div>
-                        <p className="font-body-sm text-body-sm font-medium text-on-surface">{inst.name}</p>
+                        <p className="font-body-sm text-body-sm font-medium text-on-surface">
+                          {inst.name}
+                        </p>
                         <p className="font-label-sm text-label-sm text-on-surface-variant">
                           {inst.location || "India"}
                         </p>
@@ -536,6 +627,133 @@ export function AdminUserManager({ accessToken }: AdminUserManagerProps) {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Block 3: User Directory (full width) */}
+      <div className="bg-surface-card border border-outline-variant rounded-xl p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <h3 className="font-headline-sm text-headline-sm text-on-surface m-0 flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary">group</span>
+            User Directory
+            <span className="font-label-sm text-label-sm text-on-surface-variant font-normal">
+              ({users.length})
+            </span>
+          </h3>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
+              <input
+                value={userQuery}
+                onChange={(e) => setUserQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void refreshUsers();
+                }}
+                placeholder="Search name or email"
+                type="search"
+                aria-label="Search users by name or email"
+                className="bg-surface-container-lowest border border-outline-variant rounded-lg p-2 h-[36px] font-body-sm text-body-sm w-56"
+              />
+              <button
+                type="button"
+                onClick={() => void refreshUsers()}
+                className="bg-surface-container-high text-on-surface hover:bg-surface-container-highest rounded-lg px-3 font-label-md text-label-md h-[36px]"
+              >
+                Search
+              </button>
+            </div>
+            <select
+              value={userRoleFilter}
+              onChange={(e) => setUserRoleFilter(e.target.value as Role | "")}
+              aria-label="Filter users by role"
+              className="bg-surface-container-lowest border border-outline-variant rounded-lg p-2 h-[36px] font-body-sm text-body-sm capitalize"
+            >
+              <option value="">All roles</option>
+              {ROLES.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {users.length === 0 ? (
+          <p className="font-body-sm text-on-surface-variant">
+            No users match the current filters.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse min-w-[640px]">
+              <thead>
+                <tr className="border-b border-outline-variant">
+                  {["Name", "Email", "Role", "Joined", ""].map((heading) => (
+                    <th
+                      key={heading}
+                      scope="col"
+                      className="text-left font-label-md text-label-md text-on-surface-variant uppercase tracking-wider pb-3 px-2"
+                    >
+                      {heading}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((row) => {
+                  const isSelf = row.id === currentUserId;
+                  return (
+                    <tr
+                      key={row.id}
+                      className="border-b border-outline-variant/30 hover:bg-surface-bright transition-colors"
+                    >
+                      <td className="py-3 px-2 font-body-sm text-body-sm text-on-surface">
+                        {row.full_name || (
+                          <span className="text-on-surface-variant italic">Unnamed</span>
+                        )}
+                        {isSelf && (
+                          <span className="ml-2 font-label-sm text-label-sm text-primary">
+                            (you)
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-2 font-body-sm text-body-sm text-on-surface-variant">
+                        {row.email ?? "—"}
+                      </td>
+                      <td className="py-3 px-2">
+                        <select
+                          value={row.role}
+                          disabled={isSelf}
+                          aria-label={`Role for ${row.full_name || row.email || "user"}`}
+                          title={isSelf ? "You cannot change your own role" : undefined}
+                          onChange={(e) => void handleChangeRole(row.id, e.target.value as Role)}
+                          className="bg-surface-container-lowest border border-outline-variant rounded-lg p-1 font-body-sm text-body-sm capitalize disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {ROLES.map((role) => (
+                            <option key={role} value={role}>
+                              {role}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="py-3 px-2 font-body-sm text-body-sm text-on-surface-variant">
+                        {new Date(row.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="py-3 px-2 text-right">
+                        <button
+                          type="button"
+                          disabled={isSelf}
+                          onClick={() => void handleDeleteUser(row)}
+                          title={isSelf ? "You cannot delete your own account" : "Delete user"}
+                          className="w-8 h-8 rounded flex items-center justify-center text-error hover:bg-error-container transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">delete</span>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

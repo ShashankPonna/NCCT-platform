@@ -53,6 +53,13 @@ export interface AuthenticatedUser {
 
 // One row's outcome from a bulk trainee import. `temp_password` is only
 // present for rows the API generated a password for.
+// A row in the admin user directory: the `profiles` row plus the email,
+// which lives in `auth.users` and is therefore only reachable through the
+// service-role admin API, never through a PostgREST join.
+export interface AdminUserRow extends Profile {
+  email: string | null;
+}
+
 export interface BulkImportRow {
   email: string;
   status: "created" | "skipped" | "failed";

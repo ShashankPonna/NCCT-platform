@@ -96,10 +96,10 @@ function App() {
     session.role === "admin"
       ? "dashboard"
       : session.role === "trainer"
-      ? "content"
-      : session.role === "employer"
-      ? "employer"
-      : "profile";
+        ? "content"
+        : session.role === "employer"
+          ? "employer"
+          : "profile";
 
   const currentTab = activeTab ?? defaultTab;
 
@@ -119,10 +119,10 @@ function App() {
       {/* Active Tab View */}
       <div className="w-full">
         {currentTab === "dashboard" && <AnalyticsDashboard accessToken={session.accessToken} />}
-        {currentTab === "users" && <AdminUserManager accessToken={session.accessToken} />}
-        {currentTab === "programmes" && (
-          <AdminProgrammeManager accessToken={session.accessToken} />
+        {currentTab === "users" && (
+          <AdminUserManager accessToken={session.accessToken} currentUserId={session.userId} />
         )}
+        {currentTab === "programmes" && <AdminProgrammeManager accessToken={session.accessToken} />}
         {currentTab === "content" && <AdminCourseManager accessToken={session.accessToken} />}
         {currentTab === "attendance" && <AttendanceManager accessToken={session.accessToken} />}
         {currentTab === "chatbot" && <ChatbotCorpusManager accessToken={session.accessToken} />}

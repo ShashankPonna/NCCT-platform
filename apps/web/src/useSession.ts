@@ -1,5 +1,6 @@
 import type { Role } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "./apiBaseUrl.js";
 import { supabase } from "./supabaseClient.js";
 
 interface SessionInfo {
@@ -23,8 +24,7 @@ export function useSession() {
     let cancelled = false;
 
     async function loadRole(accessToken: string, userId: string, email: string | null) {
-      const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
-      const res = await fetch(`${apiUrl}/api/profile`, {
+      const res = await fetch(`${API_BASE_URL}/api/profile`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!res.ok) {

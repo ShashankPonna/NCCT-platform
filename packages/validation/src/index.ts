@@ -75,6 +75,33 @@ export const bulkImportTraineesSchema = z.object({
     .max(200),
 });
 
+// Admin-side user management (PRD §6.1's "User Management" half). Distinct
+// from updateProfileSchema, which is a user editing *themselves* and
+// deliberately cannot touch `role`: this one is admin-gated and CAN, because
+// the signup trigger defaults every self-registered account to `trainee`, so
+// without a role-change route there is no path to ever promote someone to
+// trainer/admin/employer. The route additionally refuses to let an admin
+// change their *own* role — see users.ts for why.
+export const adminUpdateUserSchema = z
+  .object({
+    role: roleSchema.optional(),
+    full_name: z.string().min(1).optional(),
+    phone: z.string().min(1).nullable().optional(),
+    cooperative_affiliation: z.string().min(1).nullable().optional(),
+    org_name: z.string().min(1).nullable().optional(),
+    org_sector: z.string().min(1).nullable().optional(),
+  })
+  .refine((body) => Object.keys(body).length > 0, {
+    message: "At least one field must be provided",
+  });
+
+// Query params for the admin user directory. Both filters are optional and
+// combine; `q` matches name or email case-insensitively.
+export const listUsersQuerySchema = z.object({
+  role: roleSchema.optional(),
+  q: z.string().min(1).optional(),
+});
+
 export const createProgrammeSchema = z.object({
   institution_id: z.string().uuid(),
   title: z.string().min(1),
@@ -224,7 +251,10 @@ export const submitAttemptSchema = z.object({
 
 const faceEmbeddingVectorSchema = z
   .array(z.number().finite())
-  .length(FACE_EMBEDDING_DIMENSIONS, `Embedding must have exactly ${FACE_EMBEDDING_DIMENSIONS} values`);
+  .length(
+    FACE_EMBEDDING_DIMENSIONS,
+    `Embedding must have exactly ${FACE_EMBEDDING_DIMENSIONS} values`,
+  );
 
 // Only "human" is accepted — see FACE_REC_MODELS' comment in
 // packages/constants: "insightface_buffalo_l" is a documented alternative,

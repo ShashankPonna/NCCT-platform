@@ -1,4 +1,5 @@
 import type {
+  AdminUserRow,
   Assessment,
   AssessmentAttempt,
   AssessmentQuestion,
@@ -116,6 +117,36 @@ export function createUser(
     full_name: string;
     temp_password?: string;
   }>("/users", accessToken, { method: "POST", body });
+}
+
+// F1 — admin user directory & lifecycle. `listUsers` merges each profile
+// with its auth email server-side; `updateUser` is the only path that can
+// change someone's role (updateProfile deliberately cannot).
+export function listUsers(accessToken: string, filters?: { role?: Role; q?: string }) {
+  const params = new URLSearchParams();
+  if (filters?.role) params.set("role", filters.role);
+  if (filters?.q) params.set("q", filters.q);
+  const query = params.toString();
+  return apiFetch<AdminUserRow[]>(`/users${query ? `?${query}` : ""}`, accessToken);
+}
+
+export function updateUser(
+  accessToken: string,
+  id: string,
+  body: {
+    role?: Role;
+    full_name?: string;
+    phone?: string | null;
+    cooperative_affiliation?: string | null;
+    org_name?: string | null;
+    org_sector?: string | null;
+  },
+) {
+  return apiFetch<Profile>(`/users/${id}`, accessToken, { method: "PATCH", body });
+}
+
+export function deleteUser(accessToken: string, id: string) {
+  return apiFetch<void>(`/users/${id}`, accessToken, { method: "DELETE" });
 }
 
 export function bulkImportTrainees(

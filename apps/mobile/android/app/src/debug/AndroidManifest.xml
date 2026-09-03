@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug-variant manifest override — Gradle merges this into the main
+  AndroidManifest.xml only for debug builds, adding the cleartext
+  exception from network_security_config.xml without touching release
+  builds at all.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:networkSecurityConfig="@xml/network_security_config" />
+</manifest>

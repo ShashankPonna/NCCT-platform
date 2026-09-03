@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug-only: Android blocks all plain-HTTP (non-TLS) traffic by default
+  since targetSdkVersion 28+ (this app targets 35). The dev API server
+  (apps/api) has no TLS cert of its own, so testing against it from a real
+  device needs this narrow exception — scoped to exactly the dev machine's
+  current LAN IP, not a blanket cleartext allowance, and only compiled into
+  debug builds (src/debug/, never src/main/) so a release build never
+  inherits it. If the dev machine's LAN IP changes, update the <domain>
+  value below to match and rebuild.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">192.168.1.8</domain>
+    </domain-config>
+</network-security-config>
