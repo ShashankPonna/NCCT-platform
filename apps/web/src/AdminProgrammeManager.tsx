@@ -31,6 +31,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showSessionForm, setShowSessionForm] = useState(false);
+  const [copiedSessionId, setCopiedSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -131,6 +132,16 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
       setError((err as Error).message);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleCopySessionId(sessionId: string) {
+    try {
+      await navigator.clipboard.writeText(sessionId);
+      setCopiedSessionId(sessionId);
+      window.setTimeout(() => setCopiedSessionId(null), 2000);
+    } catch {
+      setError("Could not copy the session UUID. Please select and copy it manually.");
     }
   }
 
@@ -528,6 +539,22 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                                 {timeStr}
                                 {sess.location && <span className="ml-2">• {sess.location}</span>}
                               </p>
+                              <div className="flex flex-wrap items-center gap-2 mt-2">
+                                <span className="font-body-sm text-on-surface-variant">Session UUID:</span>
+                                <code className="font-body-sm text-on-surface break-all select-all">{sess.id}</code>
+                                <button
+                                  type="button"
+                                  onClick={() => void handleCopySessionId(sess.id)}
+                                  title="Copy session UUID"
+                                  aria-label={`Copy session UUID ${sess.id}`}
+                                  className="inline-flex items-center gap-1 px-2 py-1 rounded border border-outline-variant text-primary hover:bg-surface-variant font-label-sm text-label-sm"
+                                >
+                                  <span className="material-symbols-outlined text-[16px]">
+                                    {copiedSessionId === sess.id ? "check" : "content_copy"}
+                                  </span>
+                                  {copiedSessionId === sess.id ? "Copied" : "Copy"}
+                                </button>
+                              </div>
                             </div>
                           </div>
                         );
