@@ -47,6 +47,10 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
   // Fraction (0-1) while a video upload to B2 is in flight; absent once done
   // or if nothing's uploading for that lesson.
   const [videoUploadProgress, setVideoUploadProgress] = useState<Record<string, number>>({});
+  // True while a PDF/slides upload to Supabase Storage is in flight for a
+  // given lesson (that upload has no progress callback, only a busy/done
+  // state — unlike video's B2 presigned-PUT path).
+  const [fileUploading, setFileUploading] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     getProgrammes(accessToken)
@@ -176,6 +180,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
 
   async function handleUpload(lessonId: string, file: File) {
     setError(null);
+    setFileUploading((prev) => ({ ...prev, [lessonId]: true }));
     try {
       await uploadLessonContent(accessToken, lessonId, file);
       if (selectedModuleId) {
@@ -183,6 +188,12 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
       }
     } catch (err) {
       setError((err as Error).message);
+    } finally {
+      setFileUploading((prev) => {
+        const next = { ...prev };
+        delete next[lessonId];
+        return next;
+      });
     }
   }
 
@@ -574,7 +585,11 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                     {/* Extended Controls (When expanded) */}
                     {activeLessonId === lesson.id && (
                       <div className="pt-3 border-t border-outline-variant/40 space-y-3 text-xs">
-                        {/* File Upload (PDF/slides) */}
+                        {/* File Upload (PDF/slides) — fires immediately on file
+                            selection, same as the video upload below; there is
+                            no separate Save button by design. The uploading/
+                            attached indicators exist so that's visible instead
+                            of looking like nothing happened. */}
                         {lesson.content_type !== "video" && (
                           <div className="flex items-center gap-2">
                             <label className="font-label-sm text-on-surface-variant uppercase">
@@ -582,12 +597,23 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                             </label>
                             <input
                               type="file"
+                              disabled={fileUploading[lesson.id] === true}
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) void handleUpload(lesson.id, file);
                               }}
-                              className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-surface-container-high"
+                              className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-surface-container-high disabled:opacity-50"
                             />
+                            {fileUploading[lesson.id] === true && (
+                              <span className="text-on-surface-variant font-semibold">
+                                Uploading…
+                              </span>
+                            )}
+                            {fileUploading[lesson.id] !== true && lesson.storage_path && (
+                              <span className="text-status-shortlisted font-semibold">
+                                File attached
+                              </span>
+                            )}
                           </div>
                         )}
 
