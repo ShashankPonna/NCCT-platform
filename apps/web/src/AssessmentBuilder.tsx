@@ -104,7 +104,13 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
   }
 
   return (
-    <div className="assessment-builder">
+    // `legacy-ui` isn't guaranteed by whatever page embeds this component
+    // (AdminCourseManager doesn't wrap it), and without it every <input>/
+    // <button> here falls back to each browser's raw UA-stylesheet default —
+    // unstyled, and on mobile Safari specifically, under the 16px font-size
+    // that stops iOS auto-zooming the page on focus. Self-contained here so
+    // this component is correctly styled regardless of where it's embedded.
+    <div className="assessment-builder legacy-ui">
       <h3>Assessments</h3>
       {error && <p className="form-error">{error}</p>}
 

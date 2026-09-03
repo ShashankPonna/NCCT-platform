@@ -42,7 +42,8 @@ export function FaceEnrollment({ accessToken, onEnrolled }: FaceEnrollmentProps)
   }
 
   return (
-    <div className="face-enrollment">
+    // See FaceCapture.tsx's identical comment on `legacy-ui`.
+    <div className="face-enrollment legacy-ui">
       <p>
         Enroll your face for attendance check-in. Your camera image never leaves this device —
         only a numeric face descriptor is sent and stored.

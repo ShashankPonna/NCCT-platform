@@ -78,7 +78,11 @@ export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
   }
 
   return (
-    <div className="quiz-taker">
+    // See AssessmentBuilder.tsx's identical comment: `legacy-ui` is applied
+    // here directly rather than relying on the caller (TraineeLearnLessons
+    // doesn't wrap this one), so the quiz's radio/text inputs get real
+    // styling and don't trigger iOS's zoom-on-focus behavior on mobile.
+    <div className="quiz-taker legacy-ui">
       <h3>Assessments</h3>
       {error && <p className="form-error">{error}</p>}
 

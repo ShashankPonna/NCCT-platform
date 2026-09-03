@@ -111,11 +111,19 @@ export function ManagementShell({
     >
       {/* 1. Top Utility Bar (Matching Trainee Top Bar) */}
       <div className="border-b border-outline-variant bg-surface-container-low py-1.5 text-xs transition-colors">
-        <div className="mx-auto flex h-7 max-w-container-max items-center justify-between px-margin-mobile md:px-margin-desktop">
+        <div className="mx-auto flex min-h-7 max-w-container-max flex-wrap items-center justify-between gap-y-1 px-margin-mobile md:h-7 md:px-margin-desktop">
           <div className="flex items-center gap-2 text-label-sm text-on-surface-variant">
             <span className="text-xs font-bold text-primary tracking-wide">NCCT PORTAL</span>
-            <span className="text-outline-variant text-[10px]">●</span>
-            <span className="text-xs text-on-surface-variant">Cooperative Training &amp; Certification</span>
+            {/* The tagline is the one thing here with no hidden/sm: treatment
+                at all — unlike everything to its right, which already
+                degrades gracefully. On a phone it wrapped this bar to 3
+                lines and pushed the font-size/theme/contrast controls off
+                the right edge. Hidden below sm:, same pattern as "Skip to
+                Main Content" a few elements over. */}
+            <span className="hidden text-outline-variant text-[10px] sm:inline">●</span>
+            <span className="hidden text-xs text-on-surface-variant sm:inline">
+              Cooperative Training &amp; Certification
+            </span>
           </div>
 
           <div className="flex items-center gap-4 text-xs text-on-surface-variant">

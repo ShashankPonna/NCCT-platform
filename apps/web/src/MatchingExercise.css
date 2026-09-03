@@ -14,6 +14,13 @@
     flex-direction: column;
     gap: 8px;
   }
+
+  /* Two side-by-side ~150px columns squeeze real term/definition text on a
+     phone-width viewport — stack instead of forcing a cramped 2-up grid. */
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
 }
 
 .matching-term,

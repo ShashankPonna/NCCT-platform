@@ -127,7 +127,11 @@ export function FaceCapture({ actionLabel, onCapture, disabled }: FaceCapturePro
   }
 
   return (
-    <div className="face-capture">
+    // `legacy-ui` applied directly (see AssessmentBuilder.tsx's comment) so
+    // this stays correctly styled on mobile wherever a future kiosk-facing
+    // caller re-embeds it (DECISIONS.md #21 — not wired into any screen
+    // today, kept for that reuse rather than deleted).
+    <div className="face-capture legacy-ui">
       <video ref={videoRef} className="face-capture-video" muted playsInline />
       {error && <p className="form-error">{error}</p>}
       {status === "idle" || status === "error" ? (

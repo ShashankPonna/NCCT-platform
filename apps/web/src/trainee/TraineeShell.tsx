@@ -78,11 +78,15 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
     <div className={`flex min-h-screen flex-col bg-background font-body text-body-md text-on-background transition-colors duration-200 ${contrastHigh ? "contrast-125" : ""}`}>
       {/* Top Utility Bar */}
       <div className="border-b border-outline-variant bg-surface-container-low py-1.5 text-xs transition-colors">
-        <div className="mx-auto flex h-7 max-w-container-max items-center justify-between px-margin-mobile md:px-margin-desktop">
+        <div className="mx-auto flex min-h-7 max-w-container-max flex-wrap items-center justify-between gap-y-1 px-margin-mobile md:h-7 md:px-margin-desktop">
           <div className="flex items-center gap-2 text-label-sm text-on-surface-variant">
             <span className="text-xs font-bold text-primary tracking-wide">NCCT PORTAL</span>
-            <span className="text-outline-variant text-[10px]">●</span>
-            <span className="text-xs text-on-surface-variant">Cooperative Training & Certification</span>
+            {/* See ManagementShell.tsx's identical fix and comment — this bar
+                is duplicated between the two shells, not shared. */}
+            <span className="hidden text-outline-variant text-[10px] sm:inline">●</span>
+            <span className="hidden text-xs text-on-surface-variant sm:inline">
+              Cooperative Training &amp; Certification
+            </span>
           </div>
           <div className="flex items-center gap-4 text-xs text-on-surface-variant">
             <a href="#main-content" className="hidden transition-colors hover:text-interactive sm:inline">

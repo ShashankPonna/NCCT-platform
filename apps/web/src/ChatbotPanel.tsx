@@ -37,7 +37,11 @@ export function ChatbotPanel({ accessToken }: ChatbotPanelProps) {
   }
 
   return (
-    <section className="attendance-panel">
+    // See AssessmentBuilder.tsx's identical comment: `legacy-ui` applied
+    // directly here rather than relying on the caller (TraineeCareer only
+    // wraps this in plain spacing utility classes), so the question input
+    // gets real styling and doesn't trigger iOS's zoom-on-focus on mobile.
+    <section className="attendance-panel legacy-ui">
       <h2>Ask about programmes</h2>
       <p>
         Questions about programmes, eligibility, and certification. Answers come only from the
