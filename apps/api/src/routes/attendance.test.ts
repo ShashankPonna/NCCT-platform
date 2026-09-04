@@ -251,6 +251,114 @@ describe("POST /api/attendance", () => {
   });
 });
 
+describe("POST /api/timetable/:sessionId/kiosk-face-checkin", () => {
+  const url = "/api/timetable/11111111-1111-1111-1111-111111111111/kiosk-face-checkin";
+  const traineeId = "22222222-2222-2222-2222-222222222222";
+
+  it("returns 401 with no bearer token", async () => {
+    const res = await request(buildApp())
+      .post(url)
+      .send({ trainee_id: traineeId, embedding: embeddingOf(1) });
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 403 for a trainee (staff-only, no self-service)", async () => {
+    authenticateAs("trainee-1", "trainee");
+    const res = await request(buildApp())
+      .post(url)
+      .set("Authorization", "Bearer token")
+      .send({ trainee_id: traineeId, embedding: embeddingOf(1) });
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 400 for a malformed trainee_id", async () => {
+    authenticateAs("admin-1", "admin");
+    const res = await request(buildApp())
+      .post(url)
+      .set("Authorization", "Bearer token")
+      .send({ trainee_id: "not-a-uuid", embedding: embeddingOf(1) });
+    expect(res.status).toBe(400);
+  });
+
+  it("falls back to QR when the named trainee has no enrolled embedding", async () => {
+    authenticateAs("trainer-1", "trainer");
+    embeddingsMock.result.data = [];
+
+    const res = await request(buildApp())
+      .post(url)
+      .set("Authorization", "Bearer token")
+      .send({ trainee_id: traineeId, embedding: embeddingOf(0.5) });
+
+    expect(res.status).toBe(400);
+    expect(res.body.fallbackToQr).toBe(true);
+  });
+
+  it("falls back to QR without writing a record when the match score is below threshold", async () => {
+    authenticateAs("trainer-1", "trainer");
+    embeddingsMock.result.data = [{ embedding: embeddingOf(1) }];
+
+    const res = await request(buildApp())
+      .post(url)
+      .set("Authorization", "Bearer token")
+      .send({ trainee_id: traineeId, embedding: embeddingOf(-1) });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ matched: false, fallbackToQr: true });
+    expect(attendanceMock.builder.insert).not.toHaveBeenCalled();
+  });
+
+  it("records a face check-in for the named trainee_id, not the caller", async () => {
+    authenticateAs("trainer-1", "trainer");
+    embeddingsMock.result.data = [{ embedding: embeddingOf(1) }];
+    attendanceMock.result.data = {
+      id: "att-1",
+      session_id: "11111111-1111-1111-1111-111111111111",
+      trainee_id: traineeId,
+      method: "face",
+      match_score: 1,
+    };
+
+    const res = await request(buildApp())
+      .post(url)
+      .set("Authorization", "Bearer token")
+      .send({ trainee_id: traineeId, embedding: embeddingOf(1) });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({ matched: true, method: "face", trainee_id: traineeId });
+    expect(attendanceMock.builder.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ trainee_id: traineeId, method: "face" }),
+    );
+  });
+
+  it("returns 409 on a duplicate check-in for the same session", async () => {
+    authenticateAs("admin-1", "admin");
+    embeddingsMock.result.data = [{ embedding: embeddingOf(1) }];
+    attendanceMock.result.data = null;
+    attendanceMock.result.error = { code: "23505", message: "duplicate" };
+
+    const res = await request(buildApp())
+      .post(url)
+      .set("Authorization", "Bearer token")
+      .send({ trainee_id: traineeId, embedding: embeddingOf(1) });
+
+    expect(res.status).toBe(409);
+  });
+
+  it("returns 404 against a nonexistent session", async () => {
+    authenticateAs("admin-1", "admin");
+    embeddingsMock.result.data = [{ embedding: embeddingOf(1) }];
+    attendanceMock.result.data = null;
+    attendanceMock.result.error = { code: "23503", message: "fk violation" };
+
+    const res = await request(buildApp())
+      .post(url)
+      .set("Authorization", "Bearer token")
+      .send({ trainee_id: traineeId, embedding: embeddingOf(1) });
+
+    expect(res.status).toBe(404);
+  });
+});
+
 describe("GET /api/timetable/:sessionId/attendance", () => {
   it("returns 401 with no bearer token", async () => {
     const res = await request(buildApp()).get(

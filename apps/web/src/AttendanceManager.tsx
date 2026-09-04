@@ -1,6 +1,7 @@
 import { getAttendanceQr, getAttendanceRoster } from "@ncct/api-client";
 import type { AttendanceRecord } from "@ncct/shared-types";
 import { useState } from "react";
+import { KioskFaceCheckIn } from "./KioskFaceCheckIn.js";
 
 interface AttendanceManagerProps {
   accessToken: string;
@@ -124,6 +125,8 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
               </div>
             </div>
           </section>
+
+          <KioskFaceCheckIn accessToken={accessToken} sessionId={sessionId} />
 
           {/* Attendance Roster Table Card */}
           {roster && (

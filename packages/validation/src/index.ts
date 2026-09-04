@@ -249,7 +249,7 @@ export const submitAttemptSchema = z.object({
   answers: z.record(z.string(), z.string()),
 });
 
-const faceEmbeddingVectorSchema = z
+export const faceEmbeddingVectorSchema = z
   .array(z.number().finite())
   .length(
     FACE_EMBEDDING_DIMENSIONS,
@@ -284,6 +284,14 @@ export const attendanceCheckInSchema = z.discriminatedUnion("method", [
     embedding: faceEmbeddingVectorSchema,
   }),
 ]);
+
+// Kiosk face check-in (docs/DECISIONS.md #21): staff-operated terminal, no
+// trainee JWT present, so unlike attendanceCheckInSchema's "face" branch the
+// trainee has to be named explicitly rather than inferred from the caller.
+export const kioskFaceCheckInSchema = z.object({
+  trainee_id: z.string().uuid(),
+  embedding: faceEmbeddingVectorSchema,
+});
 
 export const createJobSchema = z.object({
   title: z.string().min(1),

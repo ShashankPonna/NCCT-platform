@@ -1,5 +1,6 @@
 import { checkInWithQr, type AttendanceCheckInResult } from "@ncct/api-client";
 import { useEffect, useState } from "react";
+import { FaceEnrollment } from "../FaceEnrollment.js";
 import { useOnlineStatus } from "../offline/network.js";
 import { enqueueWrite } from "../offline/syncManager.js";
 import { ErrorBanner } from "./pieces.js";
@@ -9,13 +10,14 @@ interface TraineeAttendanceProps {
   autoCheckInSessionId?: string;
 }
 
-// QR-only, no face check-in here — see DECISIONS.md #21. Face-recognition
-// attendance runs from an ESP32-CAM at an institution kiosk, not a
-// trainee's own device, so FaceCapture/FaceEnrollment were removed from
-// this screen rather than kept as dead UI. They're still on disk
-// (FaceCapture.tsx, FaceEnrollment.tsx) as the extraction pipeline the
-// future kiosk-facing flow (in AttendanceManager.tsx) is meant to reuse —
-// not deleted, just no longer wired into the trainee portal.
+// Check-in itself is QR-only here — see DECISIONS.md #21. Face-recognition
+// attendance *matching* runs from an ESP32-CAM at an institution kiosk, not
+// a trainee's own device, so FaceCapture's getUserMedia flow was removed
+// from check-in specifically. Enrollment is different: it's a one-time,
+// consent-gated identity action that only makes sense as trainee
+// self-service (their own device, their own explicit consent per CLAUDE.md's
+// DPDP Act 2023 rule) — re-added below (DECISIONS.md #32) as what a staff
+// kiosk's face check-in verifies against.
 export function TraineeAttendance({ accessToken, autoCheckInSessionId }: TraineeAttendanceProps) {
   const [sessionId, setSessionId] = useState(autoCheckInSessionId ?? "");
   const [result, setResult] = useState<AttendanceCheckInResult | null>(null);
@@ -98,6 +100,18 @@ export function TraineeAttendance({ accessToken, autoCheckInSessionId }: Trainee
       </div>
 
       <ErrorBanner message={error} />
+
+      <div className="flex w-full flex-col gap-4 rounded-xl border border-border-low-contrast bg-surface-card p-6">
+        <div>
+          <h2 className="text-headline-sm text-primary">Face ID</h2>
+          <p className="mt-1 text-body-sm text-on-surface-variant">
+            Enroll once here, on your own device. Staff at an institution kiosk can then verify
+            your face against this enrollment to check you in — you never need to use your own
+            camera for check-in itself.
+          </p>
+        </div>
+        <FaceEnrollment accessToken={accessToken} />
+      </div>
 
       {queued && (
         <p className="w-full rounded-lg border border-interactive/30 bg-interactive/10 p-4 text-body-md text-interactive">

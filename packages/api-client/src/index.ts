@@ -574,6 +574,22 @@ export function checkInWithFace(accessToken: string, sessionId: string, embeddin
   });
 }
 
+// Staff-operated kiosk check-in (docs/DECISIONS.md #21) — trainee_id is
+// supplied explicitly (e.g. from a preceding NFC tap) rather than inferred
+// from the caller's own JWT, since nobody is logged in as the trainee on a
+// shared terminal.
+export function kioskFaceCheckIn(
+  accessToken: string,
+  sessionId: string,
+  traineeId: string,
+  embedding: number[],
+) {
+  return apiFetch<AttendanceCheckInResult>(`/timetable/${sessionId}/kiosk-face-checkin`, accessToken, {
+    method: "POST",
+    body: { trainee_id: traineeId, embedding },
+  });
+}
+
 export function getAttendanceRoster(accessToken: string, sessionId: string) {
   return apiFetch<(AttendanceRecord & { profiles: { full_name: string | null } | null })[]>(
     `/timetable/${sessionId}/attendance`,

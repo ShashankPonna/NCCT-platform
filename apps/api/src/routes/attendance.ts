@@ -1,5 +1,5 @@
 import { FACE_MATCH_THRESHOLD } from "@ncct/constants";
-import { attendanceCheckInSchema } from "@ncct/validation";
+import { attendanceCheckInSchema, kioskFaceCheckInSchema } from "@ncct/validation";
 import { Router } from "express";
 import QRCode from "qrcode";
 import { requireAuth, requireRole } from "../middleware/auth.js";
@@ -130,6 +130,79 @@ attendanceRouter.post("/attendance", requireAuth, requireRole("trainee"), async 
   }
   res.status(201).json({ matched: true, ...data });
 });
+
+// Kiosk-operated face check-in (docs/DECISIONS.md #21): an ESP32-CAM-fed
+// terminal has no trainee JWT to read an identity from — a staff member (or
+// a prior NFC tap, see publicProfile.ts's kiosk lookup) supplies trainee_id
+// explicitly instead, the same shift the NFC kiosk route already made for
+// the same reason. Everything else mirrors the trainee-facing "face" branch
+// above exactly: the match score is always recomputed server-side, a
+// below-threshold match doesn't block or error, just reports fallbackToQr.
+attendanceRouter.post(
+  "/timetable/:sessionId/kiosk-face-checkin",
+  requireAuth,
+  requireRole("admin", "trainer"),
+  async (req, res) => {
+    const parsed = kioskFaceCheckInSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() });
+      return;
+    }
+    const { trainee_id, embedding } = parsed.data;
+
+    const { data: embeddings, error: embeddingsError } = await supabaseAdmin
+      .from("face_embeddings")
+      .select("embedding")
+      .eq("trainee_id", trainee_id)
+      .order("created_at", { ascending: false });
+
+    if (embeddingsError) {
+      res.status(400).json({ error: embeddingsError.message });
+      return;
+    }
+    if (!embeddings || embeddings.length === 0) {
+      res.status(400).json({
+        error: "No enrolled face embedding for this trainee",
+        fallbackToQr: true,
+      });
+      return;
+    }
+
+    const matchScore = Math.max(
+      ...embeddings.map((row) => cosineSimilarity(embedding, parseEmbedding(row.embedding))),
+    );
+
+    if (matchScore < FACE_MATCH_THRESHOLD) {
+      res.status(200).json({ matched: false, match_score: matchScore, fallbackToQr: true });
+      return;
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from("attendance_records")
+      .insert({
+        session_id: req.params.sessionId,
+        trainee_id,
+        method: "face",
+        match_score: matchScore,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === UNIQUE_VIOLATION) {
+        res.status(409).json({ error: "Attendance already recorded for this session" });
+        return;
+      }
+      if (error.code === FOREIGN_KEY_VIOLATION) {
+        res.status(404).json({ error: "Session not found" });
+        return;
+      }
+      res.status(400).json({ error: error.message });
+      return;
+    }
+    res.status(201).json({ matched: true, ...data });
+  },
+);
 
 // Roster + QR generation are admin/trainer-only cross-trainee reads, so both
 // go through supabaseAdmin, same pattern as nominations' admin routes.

@@ -22,7 +22,10 @@ const HUMAN_MODEL_BASE_PATH = "https://vladmandic.github.io/human-models/models/
 // loaded instance instead of re-downloading per mount.
 let humanPromise: Promise<import("@vladmandic/human").Human> | null = null;
 
-async function getHuman() {
+// Exported so the ESP32-CAM kiosk flow (AttendanceManager.tsx) can share
+// this exact loaded instance rather than loading Human's models a second
+// time — same singleton, just fed a different frame source than getUserMedia.
+export async function getHuman() {
   if (!humanPromise) {
     humanPromise = import("@vladmandic/human").then(async ({ Human }) => {
       const human = new Human({
