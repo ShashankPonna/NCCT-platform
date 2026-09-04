@@ -29,6 +29,7 @@ import type {
   ProgrammeMode,
   CareerCounsellorAnswer,
   JobMatchesResult,
+  KioskProfileResult,
   PublicProfileResult,
   QuestionOption,
   Role,
@@ -701,7 +702,7 @@ export async function getPublicProfile(code: string): Promise<PublicProfileResul
 export async function kioskNfcLookup(
   accessToken: string,
   uid: string,
-): Promise<PublicProfileResult | null> {
+): Promise<KioskProfileResult | null> {
   const res = await fetch(`${apiBaseUrl}/api/kiosk/nfc-lookup/${encodeURIComponent(uid)}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });

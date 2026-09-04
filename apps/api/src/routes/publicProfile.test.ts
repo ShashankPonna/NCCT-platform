@@ -3,7 +3,15 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { publicProfileRouter } from "./publicProfile.js";
 
-const { getUserMock, profilesMock, visibilityMock, certificatesMock, fromMock } = vi.hoisted(() => {
+const {
+  getUserMock,
+  profilesMock,
+  visibilityMock,
+  certificatesMock,
+  nominationsMock,
+  attendanceMock,
+  fromMock,
+} = vi.hoisted(() => {
   // `profiles` is queried twice per request on every authenticated route
   // here — once by requireAuth's own role lookup, once by the route body
   // (mint/lookup/bind) — so a single static `result` can't represent both
@@ -25,14 +33,26 @@ const { getUserMock, profilesMock, visibilityMock, certificatesMock, fromMock } 
   const profilesMock = createTableMock();
   const visibilityMock = createTableMock();
   const certificatesMock = createTableMock();
+  const nominationsMock = createTableMock();
+  const attendanceMock = createTableMock();
   const tables: Record<string, ReturnType<typeof createTableMock>> = {
     profiles: profilesMock,
     visibility_settings: visibilityMock,
     certificates: certificatesMock,
+    nominations: nominationsMock,
+    attendance_records: attendanceMock,
   };
   const fromMock = vi.fn((table: string) => tables[table].builder);
   const getUserMock = vi.fn();
-  return { getUserMock, profilesMock, visibilityMock, certificatesMock, fromMock };
+  return {
+    getUserMock,
+    profilesMock,
+    visibilityMock,
+    certificatesMock,
+    nominationsMock,
+    attendanceMock,
+    fromMock,
+  };
 });
 
 vi.mock("../supabaseClient.js", () => ({
@@ -59,7 +79,7 @@ beforeEach(() => {
   getUserMock.mockReset();
   profilesMock.builder.eq.mockClear();
   fromMock.mockClear();
-  for (const mock of [profilesMock, visibilityMock, certificatesMock]) {
+  for (const mock of [profilesMock, visibilityMock, certificatesMock, nominationsMock, attendanceMock]) {
     mock.queue.length = 0;
     mock.result.data = null;
     mock.result.error = null;
@@ -190,6 +210,40 @@ describe("GET /api/kiosk/nfc-lookup/:uid", () => {
     expect(res.body.full_name).toBe("Arjun Patil");
     // visibility_settings is never queried on this path.
     expect(fromMock).not.toHaveBeenCalledWith("visibility_settings");
+  });
+
+  it("includes staff-only fields the no-login public route omits", async () => {
+    authenticateAs("trainer-1", "trainer");
+    profilesMock.result.data = {
+      id: TRAINEE_ID,
+      full_name: "Arjun Patil",
+      phone: "9876543210",
+      cooperative_affiliation: "Sahyadri Farmers Cooperative",
+      created_at: "2026-01-15T00:00:00.000Z",
+    };
+    certificatesMock.result.data = [];
+    nominationsMock.result.data = [
+      { status: "approved", programmes: { title: "Cooperative Banking Operations" } },
+      { status: "pending", programmes: { title: "Dairy Supply Chain Management" } },
+    ];
+    attendanceMock.result.data = [{ id: "a1" }, { id: "a2" }, { id: "a3" }];
+
+    const res = await request(buildApp())
+      .get("/api/kiosk/nfc-lookup/04A22B9C")
+      .set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      full_name: "Arjun Patil",
+      phone: "9876543210",
+      cooperative_affiliation: "Sahyadri Farmers Cooperative",
+      member_since: "2026-01-15T00:00:00.000Z",
+      attendance_count: 3,
+      programmes: [
+        { title: "Cooperative Banking Operations", status: "approved" },
+        { title: "Dairy Supply Chain Management", status: "pending" },
+      ],
+    });
   });
 
   it("normalises separators and case before looking up the uid", async () => {

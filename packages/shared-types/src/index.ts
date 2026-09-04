@@ -286,10 +286,24 @@ export interface PublicProfileResult {
   skills: string[];
 }
 
-// F10 — GET /api/kiosk/nfc-lookup/:uid response shape (staff-only). Same
-// underlying data as PublicProfileResult; kept as a distinct type since the
-// kiosk is a different trust boundary and may grow staff-only fields later.
-export type KioskProfileResult = PublicProfileResult;
+// F10 — GET /api/kiosk/nfc-lookup/:uid response shape (staff-only). Kept as
+// a distinct type from PublicProfileResult since the kiosk is a different
+// trust boundary — staff already see full trainee records through the admin
+// UI, so this carries the fields the no-login public route deliberately
+// omits (phone, cooperative_affiliation, programme enrollment, attendance).
+// See docs/DECISIONS.md #30/#31.
+export interface KioskProfileProgramme {
+  title: string;
+  status: NominationStatus;
+}
+
+export interface KioskProfileResult extends PublicProfileResult {
+  phone: string | null;
+  cooperative_affiliation: string | null;
+  member_since: string;
+  programmes: KioskProfileProgramme[];
+  attendance_count: number;
+}
 
 // The embedding itself is never returned to a client — it exists only for
 // server-side retrieval, same as FaceEmbedding.

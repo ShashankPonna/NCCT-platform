@@ -1,6 +1,7 @@
 import { bindNfcTag, kioskNfcLookup } from "@ncct/api-client";
-import type { PublicProfileResult } from "@ncct/shared-types";
+import type { KioskProfileResult } from "@ncct/shared-types";
 import { useCallback, useRef, useState } from "react";
+import { SkillChip, StatusPill } from "./trainee/pieces.js";
 
 interface KioskNfcReaderProps {
   accessToken: string;
@@ -15,7 +16,7 @@ interface KioskNfcReaderProps {
 export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
   const [connected, setConnected] = useState(false);
   const [lastUid, setLastUid] = useState<string | null>(null);
-  const [profile, setProfile] = useState<PublicProfileResult | null | "loading">(null);
+  const [profile, setProfile] = useState<KioskProfileResult | null | "loading">(null);
   const [unbound, setUnbound] = useState<string | null>(null);
   const [bindTraineeId, setBindTraineeId] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +99,19 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
     }
   }
 
+  function initials(fullName: string): string {
+    const parts = fullName.trim().split(/\s+/);
+    return ((parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "")).toUpperCase();
+  }
+
+  function formatDate(iso: string): string {
+    return new Date(iso).toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  }
+
   async function handleBind() {
     if (!unbound || !bindTraineeId.trim()) return;
     setError(null);
@@ -164,27 +178,118 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
       )}
 
       {profile && profile !== "loading" && (
-        <div className="bg-surface-card border border-outline-variant rounded-xl p-6 shadow-sm">
-          <h2 className="font-headline-md text-headline-md text-primary m-0 mb-3">
-            {profile.full_name}
-          </h2>
-          {profile.skills.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {profile.skills.map((skill) => (
-                <span
-                  key={skill}
-                  className="rounded-full border border-sky-200 bg-sky-100 px-3 py-1 text-label-sm text-sky-800"
-                >
-                  {skill}
-                </span>
-              ))}
+        <div className="bg-surface-card border border-outline-variant rounded-xl shadow-sm overflow-hidden">
+          <div className="p-6 flex items-center gap-4 border-b border-outline-variant/50 bg-surface-container-lowest/50">
+            <div
+              aria-hidden="true"
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary-container font-headline-md text-headline-md text-primary"
+            >
+              {initials(profile.full_name)}
             </div>
-          )}
-          {profile.certificates.map((cert) => (
-            <div key={cert.certificate_code} className="text-body-sm text-on-surface-variant py-1">
-              {cert.programme_title} — {cert.institution_name}
+            <div>
+              <h2 className="font-headline-md text-headline-md text-primary m-0">
+                {profile.full_name}
+              </h2>
+              <p className="font-body-sm text-body-sm text-on-surface-variant m-0">
+                Member since {formatDate(profile.member_since)}
+              </p>
             </div>
-          ))}
+          </div>
+
+          <div className="p-6 flex flex-col gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <p className="font-label-sm text-label-sm text-on-surface-variant m-0 mb-1">Phone</p>
+                <p className="font-body-md text-body-md text-on-surface m-0">
+                  {profile.phone ?? "—"}
+                </p>
+              </div>
+              <div>
+                <p className="font-label-sm text-label-sm text-on-surface-variant m-0 mb-1">
+                  Cooperative
+                </p>
+                <p className="font-body-md text-body-md text-on-surface m-0">
+                  {profile.cooperative_affiliation ?? "—"}
+                </p>
+              </div>
+              <div>
+                <p className="font-label-sm text-label-sm text-on-surface-variant m-0 mb-1">
+                  Sessions Attended
+                </p>
+                <p className="font-body-md text-body-md text-on-surface m-0">
+                  {profile.attendance_count}
+                </p>
+              </div>
+            </div>
+
+            {profile.skills.length > 0 && (
+              <div>
+                <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide m-0 mb-2">
+                  Skills
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {profile.skills.map((skill) => (
+                    <SkillChip key={skill} label={skill} acquired />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {profile.programmes.length > 0 && (
+              <div>
+                <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide m-0 mb-2">
+                  Programmes
+                </h3>
+                <div className="flex flex-col gap-2">
+                  {profile.programmes.map((prog, i) => (
+                    <div
+                      key={`${prog.title}-${i}`}
+                      className="flex items-center justify-between gap-3 rounded-lg border border-outline-variant/50 px-4 py-2"
+                    >
+                      <span className="font-body-md text-body-md text-on-surface">{prog.title}</span>
+                      <StatusPill status={prog.status} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {profile.certificates.length > 0 && (
+              <div>
+                <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide m-0 mb-2">
+                  Certificates
+                </h3>
+                <div className="flex flex-col gap-2">
+                  {profile.certificates.map((cert) => (
+                    <div
+                      key={cert.certificate_code}
+                      className="flex items-center gap-3 rounded-lg border border-outline-variant/50 px-4 py-3"
+                    >
+                      <span className="material-symbols-outlined text-primary">
+                        workspace_premium
+                      </span>
+                      <div>
+                        <p className="font-body-md text-body-md text-on-surface m-0">
+                          {cert.programme_title ?? "Certificate"}
+                        </p>
+                        <p className="font-body-sm text-body-sm text-on-surface-variant m-0">
+                          {cert.institution_name ?? "—"} · {formatDate(cert.issued_at)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {profile.skills.length === 0 &&
+              profile.programmes.length === 0 &&
+              profile.certificates.length === 0 && (
+                <p className="font-body-sm text-body-sm text-on-surface-variant m-0">
+                  No programme, skill, or certificate records yet.
+                </p>
+              )}
+          </div>
         </div>
       )}
 

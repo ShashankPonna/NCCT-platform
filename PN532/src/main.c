@@ -68,6 +68,7 @@ static void _rfid_task(void *pvParameter) {
                 uid_str[uidLength * 2] = '\0';
 
                 ESP_LOGI(TAG, "Card detected. UID: %s", uid_str);
+                printf("UID:%s\n", uid_str); // plain line for the web kiosk page's serial parser (KioskNfcReader.tsx)
 
                 if (strcmp(uid_str, "C5AC0907") == 0) {
                     led_state = !led_state;

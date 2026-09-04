@@ -1,6 +1,6 @@
 import { bindNfcTagSchema } from "@ncct/validation";
 import { Router } from "express";
-import type { PublicProfileResult } from "@ncct/shared-types";
+import type { KioskProfileResult, PublicProfileResult } from "@ncct/shared-types";
 import { generateCode } from "../codeGenerator.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { supabaseAdmin } from "../supabaseClient.js";
@@ -54,6 +54,50 @@ async function buildProfileResult(
       issued_at: row.issued_at,
     })),
     skills,
+  };
+}
+
+interface KioskProfileRow {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  cooperative_affiliation: string | null;
+  created_at: string;
+}
+
+interface NominationRow {
+  status: KioskProfileResult["programmes"][number]["status"];
+  programmes: { title: string } | null;
+}
+
+// Kiosk-only extension of buildProfileResult — staff already see full
+// trainee records through the admin UI, so this carries fields the no-login
+// public route deliberately omits (docs/DECISIONS.md #31).
+async function buildKioskProfileResult(profile: KioskProfileRow): Promise<KioskProfileResult> {
+  const base = await buildProfileResult(profile.id, profile.full_name);
+
+  const [{ data: nominations, error: nominationsError }, { data: attendance, error: attendanceError }] =
+    await Promise.all([
+      supabaseAdmin
+        .from("nominations")
+        .select("status, programmes(title)")
+        .eq("trainee_id", profile.id),
+      supabaseAdmin.from("attendance_records").select("id").eq("trainee_id", profile.id),
+    ]);
+  if (nominationsError) throw new Error(nominationsError.message);
+  if (attendanceError) throw new Error(attendanceError.message);
+
+  const nominationRows = (nominations ?? []) as unknown as NominationRow[];
+
+  return {
+    ...base,
+    phone: profile.phone,
+    cooperative_affiliation: profile.cooperative_affiliation,
+    member_since: profile.created_at,
+    programmes: nominationRows
+      .filter((row) => row.programmes)
+      .map((row) => ({ title: row.programmes!.title, status: row.status })),
+    attendance_count: (attendance ?? []).length,
   };
 }
 
@@ -154,7 +198,7 @@ publicProfileRouter.get(
 
     const { data: profile, error } = await supabaseAdmin
       .from("profiles")
-      .select("id, full_name")
+      .select("id, full_name, phone, cooperative_affiliation, created_at")
       .eq("nfc_tag_uid", uid)
       .maybeSingle();
 
@@ -168,7 +212,7 @@ publicProfileRouter.get(
     }
 
     try {
-      res.json(await buildProfileResult(profile.id, profile.full_name));
+      res.json(await buildKioskProfileResult(profile as KioskProfileRow));
     } catch (err) {
       res.status(400).json({ error: (err as Error).message });
     }
