@@ -128,7 +128,7 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
   }
 
   return (
-    <div className="p-margin-mobile md:p-margin-desktop max-w-2xl mx-auto w-full flex flex-col gap-6 text-left">
+    <div className="p-margin-mobile md:p-margin-desktop max-w-5xl mx-auto w-full flex flex-col gap-6 text-left">
       <div>
         <h1 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary m-0">
           NFC Kiosk
@@ -178,68 +178,96 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
       )}
 
       {profile && profile !== "loading" && (
-        <div className="bg-surface-card border border-outline-variant rounded-xl shadow-sm overflow-hidden">
-          <div className="p-6 flex items-center gap-4 border-b border-outline-variant/50 bg-surface-container-lowest/50">
-            <div
-              aria-hidden="true"
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary-container font-headline-md text-headline-md text-primary"
-            >
-              {initials(profile.full_name)}
-            </div>
-            <div>
-              <h2 className="font-headline-md text-headline-md text-primary m-0">
-                {profile.full_name}
-              </h2>
-              <p className="font-body-sm text-body-sm text-on-surface-variant m-0">
-                Member since {formatDate(profile.member_since)}
-              </p>
+        <div className="flex flex-col gap-4">
+          {/* Hero header */}
+          <div className="relative bg-surface-card border border-outline-variant rounded-2xl shadow-sm overflow-hidden">
+            <div className="h-20 bg-gradient-to-r from-primary-container via-secondary-container to-primary-container" />
+            <div className="px-6 pb-6 -mt-10 flex flex-col sm:flex-row sm:items-end gap-4">
+              <div
+                aria-hidden="true"
+                className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary font-headline-lg text-headline-lg ring-4 ring-surface-card shadow-md"
+              >
+                {initials(profile.full_name)}
+              </div>
+              <div className="flex-1 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="font-headline-md text-headline-md text-primary m-0">
+                      {profile.full_name}
+                    </h2>
+                    <span className="flex items-center gap-1 rounded-full bg-status-success/15 text-status-success px-2.5 py-0.5 font-label-sm text-label-sm font-bold">
+                      <span className="material-symbols-outlined text-[14px]">verified</span>
+                      Verified Trainee
+                    </span>
+                  </div>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant m-0 mt-1">
+                    {profile.cooperative_affiliation ?? "No cooperative on file"} · Member since{" "}
+                    {formatDate(profile.member_since)}
+                  </p>
+                </div>
+                {profile.phone && (
+                  <div className="flex items-center gap-1.5 text-on-surface font-body-sm text-body-sm">
+                    <span className="material-symbols-outlined text-[18px] text-on-surface-variant">
+                      call
+                    </span>
+                    {profile.phone}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="p-6 flex flex-col gap-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <p className="font-label-sm text-label-sm text-on-surface-variant m-0 mb-1">Phone</p>
-                <p className="font-body-md text-body-md text-on-surface m-0">
-                  {profile.phone ?? "—"}
-                </p>
+          {/* Stat tiles */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: "Certificates", value: profile.certificates.length, icon: "workspace_premium" },
+              { label: "Programmes", value: profile.programmes.length, icon: "school" },
+              { label: "Sessions Attended", value: profile.attendance_count, icon: "event_available" },
+              { label: "Skills", value: profile.skills.length, icon: "military_tech" },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="bg-surface-card border border-outline-variant rounded-xl p-4 flex flex-col gap-2 shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wide m-0">
+                    {stat.label}
+                  </p>
+                  <span className="material-symbols-outlined text-primary bg-primary-container/60 rounded-full p-1 text-[18px]">
+                    {stat.icon}
+                  </span>
+                </div>
+                <p className="font-headline-lg text-headline-lg text-primary m-0">{stat.value}</p>
               </div>
-              <div>
-                <p className="font-label-sm text-label-sm text-on-surface-variant m-0 mb-1">
-                  Cooperative
-                </p>
-                <p className="font-body-md text-body-md text-on-surface m-0">
-                  {profile.cooperative_affiliation ?? "—"}
-                </p>
-              </div>
-              <div>
-                <p className="font-label-sm text-label-sm text-on-surface-variant m-0 mb-1">
-                  Sessions Attended
-                </p>
-                <p className="font-body-md text-body-md text-on-surface m-0">
-                  {profile.attendance_count}
-                </p>
-              </div>
-            </div>
+            ))}
+          </div>
 
-            {profile.skills.length > 0 && (
-              <div>
-                <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide m-0 mb-2">
-                  Skills
-                </h3>
+          {/* Detail sections */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-surface-card border border-outline-variant rounded-xl p-6 shadow-sm">
+              <h3 className="flex items-center gap-2 font-label-md text-label-md text-on-surface-variant uppercase tracking-wide m-0 mb-3">
+                <span className="material-symbols-outlined text-[18px]">military_tech</span>
+                Skills
+              </h3>
+              {profile.skills.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {profile.skills.map((skill) => (
                     <SkillChip key={skill} label={skill} acquired />
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="font-body-sm text-body-sm text-on-surface-variant m-0">
+                  No skills recorded yet.
+                </p>
+              )}
+            </div>
 
-            {profile.programmes.length > 0 && (
-              <div>
-                <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide m-0 mb-2">
-                  Programmes
-                </h3>
+            <div className="bg-surface-card border border-outline-variant rounded-xl p-6 shadow-sm">
+              <h3 className="flex items-center gap-2 font-label-md text-label-md text-on-surface-variant uppercase tracking-wide m-0 mb-3">
+                <span className="material-symbols-outlined text-[18px]">school</span>
+                Programmes
+              </h3>
+              {profile.programmes.length > 0 ? (
                 <div className="flex flex-col gap-2">
                   {profile.programmes.map((prog, i) => (
                     <div
@@ -251,19 +279,24 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="font-body-sm text-body-sm text-on-surface-variant m-0">
+                  No programme enrollments yet.
+                </p>
+              )}
+            </div>
 
-            {profile.certificates.length > 0 && (
-              <div>
-                <h3 className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide m-0 mb-2">
-                  Certificates
-                </h3>
-                <div className="flex flex-col gap-2">
+            <div className="bg-surface-card border border-outline-variant rounded-xl p-6 shadow-sm lg:col-span-2">
+              <h3 className="flex items-center gap-2 font-label-md text-label-md text-on-surface-variant uppercase tracking-wide m-0 mb-3">
+                <span className="material-symbols-outlined text-[18px]">workspace_premium</span>
+                Certificates
+              </h3>
+              {profile.certificates.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {profile.certificates.map((cert) => (
                     <div
                       key={cert.certificate_code}
-                      className="flex items-center gap-3 rounded-lg border border-outline-variant/50 px-4 py-3"
+                      className="flex items-start gap-3 rounded-lg border border-outline-variant/50 border-l-4 border-l-primary px-4 py-3"
                     >
                       <span className="material-symbols-outlined text-primary">
                         workspace_premium
@@ -275,20 +308,19 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
                         <p className="font-body-sm text-body-sm text-on-surface-variant m-0">
                           {cert.institution_name ?? "—"} · {formatDate(cert.issued_at)}
                         </p>
+                        <p className="font-mono text-label-sm text-on-surface-variant/70 m-0 mt-1">
+                          {cert.certificate_code}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {profile.skills.length === 0 &&
-              profile.programmes.length === 0 &&
-              profile.certificates.length === 0 && (
+              ) : (
                 <p className="font-body-sm text-body-sm text-on-surface-variant m-0">
-                  No programme, skill, or certificate records yet.
+                  No certificates earned yet.
                 </p>
               )}
+            </div>
           </div>
         </div>
       )}
