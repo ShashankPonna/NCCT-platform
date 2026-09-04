@@ -8,6 +8,7 @@ export type ManagementTab =
   | "programmes"
   | "content"
   | "attendance"
+  | "kiosk"
   | "chatbot"
   | "profile"
   | "employer";
@@ -25,7 +26,13 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { id: "programmes", label: "Programmes", icon: "school", roles: ["admin"] },
   { id: "content", label: "Content", icon: "description", roles: ["admin", "trainer"] },
   { id: "attendance", label: "Attendance", icon: "calendar_today", roles: ["admin", "trainer"] },
-  { id: "chatbot", label: "Chatbot Knowledge Base", icon: "smart_toy", roles: ["admin", "trainer"] },
+  { id: "kiosk", label: "NFC Kiosk", icon: "nfc", roles: ["admin", "trainer"] },
+  {
+    id: "chatbot",
+    label: "Chatbot Knowledge Base",
+    icon: "smart_toy",
+    roles: ["admin", "trainer"],
+  },
   { id: "employer", label: "Jobs & Candidates", icon: "work", roles: ["employer"] },
   { id: "profile", label: "My Profile", icon: "person", roles: ["admin", "trainer", "employer"] },
 ];
@@ -98,10 +105,10 @@ export function ManagementShell({
     role === "admin"
       ? "Administrator"
       : role === "trainer"
-      ? "Trainer"
-      : role === "employer"
-      ? "Employer"
-      : "Trainee";
+        ? "Trainer"
+        : role === "employer"
+          ? "Employer"
+          : "Trainee";
 
   return (
     <div
@@ -127,7 +134,10 @@ export function ManagementShell({
           </div>
 
           <div className="flex items-center gap-4 text-xs text-on-surface-variant">
-            <a href="#main-content" className="hidden transition-colors hover:text-interactive sm:inline">
+            <a
+              href="#main-content"
+              className="hidden transition-colors hover:text-interactive sm:inline"
+            >
               Skip To Main Content
             </a>
             <div className="hidden h-3.5 w-px bg-outline-variant sm:block" />
@@ -256,7 +266,9 @@ export function ManagementShell({
               aria-label="Notifications"
               className="relative hidden h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container cursor-pointer md:flex md:h-9 md:w-9"
             >
-              <span className="material-symbols-outlined text-[18px] md:text-[20px]">notifications</span>
+              <span className="material-symbols-outlined text-[18px] md:text-[20px]">
+                notifications
+              </span>
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-cta" />
             </button>
 
@@ -375,9 +387,7 @@ export function ManagementShell({
                 isActive ? "text-secondary" : "text-on-surface-variant"
               }`}
             >
-              {isActive && (
-                <span className="absolute top-0 h-1 w-8 rounded-full bg-secondary" />
-              )}
+              {isActive && <span className="absolute top-0 h-1 w-8 rounded-full bg-secondary" />}
               <span
                 className="material-symbols-outlined text-[20px]"
                 style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}

@@ -10,8 +10,10 @@ import { ChatbotCorpusManager } from "./ChatbotCorpusManager.js";
 import { EmployerDashboard } from "./EmployerDashboard.js";
 import { ForgotPasswordForm } from "./ForgotPasswordForm.js";
 import { LoginForm } from "./LoginForm.js";
+import { KioskNfcReader } from "./KioskNfcReader.js";
 import { ManagementShell, type ManagementTab } from "./ManagementShell.js";
 import { ProfileEditor } from "./ProfileEditor.js";
+import { PublicProfile } from "./PublicProfile.js";
 import { ResetPasswordForm } from "./ResetPasswordForm.js";
 import { TraineeApp } from "./trainee/TraineeApp.js";
 import { usePasswordRecovery } from "./usePasswordRecovery.js";
@@ -29,6 +31,17 @@ function App() {
   const verifyCode = new URLSearchParams(window.location.search).get("verify");
   if (verifyCode) {
     return <CertificateVerification code={verifyCode} />;
+  }
+
+  // Same reasoning as ?verify= above, and checked at the same point: F10's
+  // NFC card opens this URL (docs/DECISIONS.md #30) with no Supabase
+  // session — a stranger tapping a trainee's card at a job fair has no
+  // account. Placed after ?verify= only because that's the established
+  // convention; the two are mutually exclusive params so order is
+  // otherwise arbitrary.
+  const profileCode = new URLSearchParams(window.location.search).get("profile");
+  if (profileCode) {
+    return <PublicProfile code={profileCode} />;
   }
 
   // Also checked ahead of the loading/session gates: a password-reset link
@@ -125,6 +138,7 @@ function App() {
         {currentTab === "programmes" && <AdminProgrammeManager accessToken={session.accessToken} />}
         {currentTab === "content" && <AdminCourseManager accessToken={session.accessToken} />}
         {currentTab === "attendance" && <AttendanceManager accessToken={session.accessToken} />}
+        {currentTab === "kiosk" && <KioskNfcReader accessToken={session.accessToken} />}
         {currentTab === "chatbot" && <ChatbotCorpusManager accessToken={session.accessToken} />}
         {currentTab === "profile" && (
           <ProfileEditor

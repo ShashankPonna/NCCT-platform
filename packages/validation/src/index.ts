@@ -310,6 +310,22 @@ export const updateVisibilitySettingsSchema = z.object({
   visible_to_employers: z.boolean(),
 });
 
+// F10. public_profile_enabled is intentionally its own schema, not folded
+// into updateVisibilitySettingsSchema above — the two consent scopes are
+// meant to be toggled independently by the trainee UI, not always sent
+// together (see docs/DECISIONS.md #30).
+export const updatePublicProfileEnabledSchema = z.object({
+  public_profile_enabled: z.boolean(),
+});
+
+// F10. Binding accepts null to explicitly unbind a lost/reissued card —
+// distinct from omitting the field, which zod would reject as missing.
+// Normalised (uppercased, separators stripped) again server-side in the
+// route regardless of what the client sends.
+export const bindNfcTagSchema = z.object({
+  nfc_tag_uid: z.string().trim().min(1).max(32).nullable(),
+});
+
 export const createCorpusChunkSchema = z.object({
   source_type: z.enum(CHATBOT_SOURCE_TYPES),
   source_id: z.string().uuid().nullable().optional(),

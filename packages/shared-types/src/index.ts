@@ -45,6 +45,10 @@ export interface Profile {
   org_name: string | null;
   org_sector: string | null;
   created_at: string;
+  // F10 — nullable until a trainee opts in / a card is issued. Neither is
+  // ever returned by /profile or /profile/details to anyone but the owner.
+  public_profile_code: string | null;
+  nfc_tag_uid: string | null;
 }
 
 export interface AuthenticatedUser {
@@ -259,8 +263,33 @@ export interface JobInterest {
 export interface VisibilitySettings {
   trainee_id: string;
   visible_to_employers: boolean;
+  // F10 — a separate consent scope from visible_to_employers: this gates
+  // an unauthenticated public URL, not an employer-portal audience behind
+  // a login. See docs/DECISIONS.md #30.
+  public_profile_enabled: boolean;
   updated_at: string;
 }
+
+// F10 — GET /api/public-profiles/:code response shape. No-login, so
+// deliberately narrow: name plus earned credentials, nothing else on the
+// profile row (no phone, no cooperative_affiliation).
+export interface PublicProfileCertificate {
+  certificate_code: string;
+  programme_title: string | null;
+  institution_name: string | null;
+  issued_at: string;
+}
+
+export interface PublicProfileResult {
+  full_name: string;
+  certificates: PublicProfileCertificate[];
+  skills: string[];
+}
+
+// F10 — GET /api/kiosk/nfc-lookup/:uid response shape (staff-only). Same
+// underlying data as PublicProfileResult; kept as a distinct type since the
+// kiosk is a different trust boundary and may grow staff-only fields later.
+export type KioskProfileResult = PublicProfileResult;
 
 // The embedding itself is never returned to a client — it exists only for
 // server-side retrieval, same as FaceEmbedding.

@@ -4,6 +4,12 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- The whole app is a single index.html (no per-route SSR), and both
+         the certificate-verification and F10 public-profile pages are
+         reachable off this same document via a query param — so the only
+         place a noindex can apply is here, blanket. That's fine: nothing
+         else in this login-gated ERP should be indexed either. -->
+    <meta name="robots" content="noindex, nofollow" />
     <title>NCCT Platform - Cooperative Training Portal</title>
     <!-- Trainee-portal design system fonts (Plus Jakarta Sans / Noto Sans /
          Material Symbols) — see design/stitch_ncct_trainee_portal. -->

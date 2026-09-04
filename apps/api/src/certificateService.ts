@@ -1,18 +1,12 @@
-import { randomBytes } from "node:crypto";
 import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
+import { generateCode } from "./codeGenerator.js";
 import { supabaseAdmin } from "./supabaseClient.js";
 
 const CERTIFICATE_BUCKET = "certificates";
-const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I — avoids transcription errors
 
 function generateCertificateCode(): string {
-  const bytes = randomBytes(8);
-  let code = "";
-  for (const byte of bytes) {
-    code += CODE_ALPHABET[byte % CODE_ALPHABET.length];
-  }
-  return `NCCT-${code}`;
+  return `NCCT-${generateCode(8)}`;
 }
 
 interface IssueCertificateParams {

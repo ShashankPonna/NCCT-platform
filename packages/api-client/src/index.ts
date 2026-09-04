@@ -29,6 +29,7 @@ import type {
   ProgrammeMode,
   CareerCounsellorAnswer,
   JobMatchesResult,
+  PublicProfileResult,
   QuestionOption,
   Role,
   Skill,
@@ -660,6 +661,63 @@ export function updateVisibilitySettings(accessToken: string, visibleToEmployers
   return apiFetch<VisibilitySettings>("/visibility-settings", accessToken, {
     method: "PUT",
     body: { visible_to_employers: visibleToEmployers },
+  });
+}
+
+// F10 — a separate consent scope from visible_to_employers, see
+// docs/DECISIONS.md #30.
+export function updatePublicProfileEnabled(accessToken: string, enabled: boolean) {
+  return apiFetch<VisibilitySettings>("/visibility-settings/public-profile", accessToken, {
+    method: "PUT",
+    body: { public_profile_enabled: enabled },
+  });
+}
+
+// Trainee mints or rotates their own public-profile code — the revocation
+// lever for a lost card (docs/DECISIONS.md #30).
+export function issuePublicProfileCard(accessToken: string) {
+  return apiFetch<{ public_profile_code: string }>("/profiles/me/card", accessToken, {
+    method: "POST",
+  });
+}
+
+// The NFC card's phone-tap path — no-login, same category as getCertificate.
+export async function getPublicProfile(code: string): Promise<PublicProfileResult | null> {
+  const res = await fetch(`${apiBaseUrl}/api/public-profiles/${encodeURIComponent(code)}`);
+  if (res.status === 404) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new Error(`Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+// The NFC card's kiosk path — staff-only, keyed by the tag's factory UID
+// rather than the public code (docs/DECISIONS.md #30). A raw fetch, not
+// apiFetch, so a 404 (unbound card — an expected outcome the kiosk UI
+// offers to fix, not an error) can resolve to null instead of throwing,
+// same reasoning as getCertificate above.
+export async function kioskNfcLookup(
+  accessToken: string,
+  uid: string,
+): Promise<PublicProfileResult | null> {
+  const res = await fetch(`${apiBaseUrl}/api/kiosk/nfc-lookup/${encodeURIComponent(uid)}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (res.status === 404) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new Error(`Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export function bindNfcTag(accessToken: string, traineeId: string, nfcTagUid: string | null) {
+  return apiFetch<Profile>(`/profiles/${traineeId}/nfc-tag`, accessToken, {
+    method: "PUT",
+    body: { nfc_tag_uid: nfcTagUid },
   });
 }
 

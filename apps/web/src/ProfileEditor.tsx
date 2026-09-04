@@ -1,6 +1,7 @@
 import { getProfileDetails, updateProfile } from "@ncct/api-client";
 import type { Profile, Role } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import { NfcProfileCard } from "./trainee/NfcProfileCard.js";
 
 interface ProfileEditorProps {
   accessToken: string;
@@ -52,10 +53,10 @@ export function ProfileEditor({ accessToken, role, email }: ProfileEditorProps) 
     role === "admin"
       ? "Administrator Role"
       : role === "trainer"
-      ? "Trainer Role"
-      : role === "employer"
-      ? "Employer Role"
-      : "Trainee Role";
+        ? "Trainer Role"
+        : role === "employer"
+          ? "Employer Role"
+          : "Trainee Role";
 
   const initials = (profile?.full_name ?? "User").slice(0, 2).toUpperCase();
 
@@ -191,7 +192,10 @@ export function ProfileEditor({ accessToken, role, email }: ProfileEditorProps) 
 
                 {/* Email (Read Only) */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="font-label-md text-label-md text-on-surface-variant" htmlFor="email">
+                  <label
+                    className="font-label-md text-label-md text-on-surface-variant"
+                    htmlFor="email"
+                  >
                     Email Address <span className="font-normal text-xs">(Read-only)</span>
                   </label>
                   <input
@@ -232,7 +236,10 @@ export function ProfileEditor({ accessToken, role, email }: ProfileEditorProps) 
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <label className="font-label-md text-label-md text-on-surface" htmlFor="orgName">
+                      <label
+                        className="font-label-md text-label-md text-on-surface"
+                        htmlFor="orgName"
+                      >
                         Organisation Name
                       </label>
                       <input
@@ -245,7 +252,10 @@ export function ProfileEditor({ accessToken, role, email }: ProfileEditorProps) 
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
-                      <label className="font-label-md text-label-md text-on-surface" htmlFor="orgSector">
+                      <label
+                        className="font-label-md text-label-md text-on-surface"
+                        htmlFor="orgSector"
+                      >
                         Sector
                       </label>
                       <input
@@ -273,6 +283,13 @@ export function ProfileEditor({ accessToken, role, email }: ProfileEditorProps) 
                 </button>
               </div>
             </form>
+
+            {role === "trainee" && (
+              <NfcProfileCard
+                accessToken={accessToken}
+                publicProfileCode={profile.public_profile_code}
+              />
+            )}
           </div>
         </div>
       )}
