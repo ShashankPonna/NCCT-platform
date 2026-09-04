@@ -1,12 +1,17 @@
 import {
   createJob,
+  createSkill,
   getEmployerTrainees,
   getJobInterests,
   getJobs,
+  getJobSkills,
+  getSkills,
+  setJobSkills,
   shortlistTrainee,
 } from "@ncct/api-client";
-import type { Job, JobInterest, TraineeSearchResult } from "@ncct/shared-types";
+import type { Job, JobInterest, Skill, TraineeSearchResult } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import { SkillChips, SkillPicker } from "./SkillPicker.js";
 
 interface EmployerDashboardProps {
   accessToken: string;
@@ -24,9 +29,20 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // P1 Skill-Gap Analysis (DECISIONS.md #26): tagging a posting against the
+  // shared skills taxonomy is what lets a trainee later check their gap
+  // against it. `required_skills` (free text) stays untouched as-is for F6
+  // search — this is an additive taxonomy layer, not a replacement.
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [selectedSkillIds, setSelectedSkillIds] = useState<Set<string>>(new Set());
+  const [newSkillName, setNewSkillName] = useState("");
+  const [selectedJobSkills, setSelectedJobSkills] = useState<Skill[]>([]);
+
   useEffect(() => {
-    getJobs().catch((err: Error) => setError(err.message));
     loadOwnJobs();
+    getSkills(accessToken)
+      .then(setSkills)
+      .catch((err: Error) => setError(err.message));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -59,8 +75,12 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
     setError(null);
     setBusy(true);
     try {
-      await createJob(accessToken, { title, location, required_skills });
+      const created = await createJob(accessToken, { title, location, required_skills });
+      if (selectedSkillIds.size > 0) {
+        await setJobSkills(accessToken, created.id, [...selectedSkillIds]);
+      }
       formEl.reset();
+      setSelectedSkillIds(new Set());
       await loadOwnJobs();
     } catch (err) {
       setError((err as Error).message);
@@ -69,11 +89,39 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
     }
   }
 
+  function toggleSkillSelection(skillId: string) {
+    setSelectedSkillIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(skillId)) next.delete(skillId);
+      else next.add(skillId);
+      return next;
+    });
+  }
+
+  async function handleCreateSkill() {
+    const name = newSkillName.trim();
+    if (!name) return;
+    setError(null);
+    try {
+      const skill = await createSkill(accessToken, { name });
+      setSkills((prev) => [...prev, skill].sort((a, b) => a.name.localeCompare(b.name)));
+      setSelectedSkillIds((prev) => new Set(prev).add(skill.id));
+      setNewSkillName("");
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
   async function loadInterests(jobId: string) {
     setSelectedJobId(jobId);
     setError(null);
     try {
-      setInterests(await getJobInterests(accessToken, jobId));
+      const [jobInterests, jobSkills] = await Promise.all([
+        getJobInterests(accessToken, jobId),
+        getJobSkills(jobId),
+      ]);
+      setInterests(jobInterests);
+      setSelectedJobSkills(jobSkills);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -175,6 +223,35 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                 />
               </div>
 
+              <div>
+                <label className="skill-picker-label block font-label-md text-label-md text-on-surface mb-1">
+                  Tag Skills (for Skill-Gap matching)
+                </label>
+                <SkillPicker skills={skills} selectedIds={selectedSkillIds} onToggle={toggleSkillSelection} />
+                <div className="flex gap-2">
+                  <input
+                    value={newSkillName}
+                    onChange={(e) => setNewSkillName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void handleCreateSkill();
+                      }
+                    }}
+                    placeholder="New skill, e.g. Tally"
+                    className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                    type="text"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void handleCreateSkill()}
+                    className="px-4 h-touch-target bg-surface-container-highest text-on-surface rounded-lg font-label-sm text-label-sm hover:bg-surface-variant cursor-pointer"
+                  >
+                    Add to Taxonomy
+                  </button>
+                </div>
+              </div>
+
               <button
                 type="submit"
                 disabled={busy}
@@ -239,6 +316,13 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                   {interests.length} Candidates
                 </span>
               </div>
+
+              {selectedJobSkills.length > 0 && (
+                <div className="mb-4 flex items-center gap-2 text-sm">
+                  <span className="font-label-sm text-on-surface-variant">Tagged skills:</span>
+                  <SkillChips skills={selectedJobSkills} />
+                </div>
+              )}
 
               {interests.length === 0 ? (
                 <div className="p-6 text-center text-on-surface-variant text-sm bg-surface-container-low rounded-lg">

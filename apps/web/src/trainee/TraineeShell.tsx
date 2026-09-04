@@ -376,11 +376,10 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                 </span>
               </button>
 
-              {/* Mega Dropdown — "Skill-Gap Check" and "Ask a Counsellor" are
-                  Phase-2 (PRD §13) and intentionally absent: their screens
-                  are parked pending a scope decision, see
-                  docs/IMPLEMENTATION.md. Restore alongside TraineeCareer.tsx's
-                  TABS once that's resolved. */}
+              {/* Mega Dropdown — "Skill-Gap Check" (P1, docs/DECISIONS.md
+                  #26) and "Ask a Counsellor" (P2, docs/DECISIONS.md #27)
+                  were both promoted into scope and are included below,
+                  matching TraineeCareer.tsx's TABS. */}
               <div className="invisible absolute left-0 top-full z-50 flex w-[380px] flex-col gap-1 rounded-b-xl border border-outline-variant bg-surface-card p-2 opacity-0 shadow-xl transition-all duration-150 group-hover:visible group-hover:opacity-100">
                 <button
                   type="button"
@@ -396,6 +395,40 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                     </div>
                     <div className="text-[11px] text-on-surface-variant">
                       Employer listings & visibility preferences
+                    </div>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onNavigate("career", "skill-gap")}
+                  className="group/item flex items-center gap-3.5 rounded-lg p-3 text-left transition-colors hover:bg-surface-container"
+                >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-fixed text-primary transition-transform group-hover/item:scale-105">
+                    <span className="material-symbols-outlined text-[18px]">checklist</span>
+                  </div>
+                  <div>
+                    <div className="text-label-md font-bold text-on-surface group-hover/item:text-interactive">
+                      Skill-Gap Check
+                    </div>
+                    <div className="text-[11px] text-on-surface-variant">
+                      See what a job needs that you don&apos;t have yet
+                    </div>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onNavigate("career", "ask")}
+                  className="group/item flex items-center gap-3.5 rounded-lg p-3 text-left transition-colors hover:bg-surface-container"
+                >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-fixed text-primary transition-transform group-hover/item:scale-105">
+                    <span className="material-symbols-outlined text-[18px]">support_agent</span>
+                  </div>
+                  <div>
+                    <div className="text-label-md font-bold text-on-surface group-hover/item:text-interactive">
+                      Ask a Counsellor
+                    </div>
+                    <div className="text-[11px] text-on-surface-variant">
+                      Personalized guidance based on your own profile
                     </div>
                   </div>
                 </button>

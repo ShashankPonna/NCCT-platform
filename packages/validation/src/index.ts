@@ -321,3 +321,27 @@ export const createCorpusChunkSchema = z.object({
 export const askChatbotSchema = z.object({
   question: z.string().min(1).max(500),
 });
+
+// P1 Skill-Gap Analysis (DECISIONS.md #26). Admin-only taxonomy creation —
+// deliberately no update/delete schema yet, matching how narrowly this was
+// scoped in (see skills.ts route comments).
+export const createSkillSchema = z.object({
+  name: z.string().min(1),
+  category: z.string().min(1).optional(),
+});
+
+// Shared by job_skills and programme_skills: both replace the *entire*
+// tagged set in one call rather than incremental add/remove — a picker UI
+// (SkillPicker.tsx) always submits its full current selection, and a
+// replace-all PUT is simpler and matches how content_translations' upsert
+// already avoids a separate add/remove pair for a small owned set.
+export const setSkillIdsSchema = z.object({
+  skill_ids: z.array(z.string().uuid()),
+});
+
+// P2 AI Career Counsellor (DECISIONS.md #27). Same bound as
+// askChatbotSchema — a single question can't be used to push an
+// arbitrarily large payload into the model call.
+export const askCareerCounsellorSchema = z.object({
+  question: z.string().min(1).max(500),
+});

@@ -52,6 +52,10 @@ Cooperative training programmes (for PACS members, SHGs, dairy cooperatives, far
 8. **Analytics Dashboard** (Admin) — programmes run, trainees by region, completion rates, certificates issued, placements.
 9. **Offline Mobile App** — download course videos and quiz content for offline use; take quizzes offline; local queue of progress/attendance writes; automatic sync on reconnect (last-write-wins conflict resolution).
 10. **NFC Profile Card** — static NFC tag encoding a URL to the trainee's public profile page (skills, courses, certifications); opens natively on tap, no app required by the person reading it.
+11. **Skill-Gap Analysis** — promoted from Phase-2 into MVP scope, see [docs/DECISIONS.md](DECISIONS.md) #26. A shared skills taxonomy; employers tag a job posting's required skills against it; a programme is tagged with the skills a trainee is read as acquiring by earning a certificate under it; a trainee picks a job and sees which of its required skills they already have vs. still need. An optional AI-ranked "what to learn first" ordering over the gap is a non-essential enrichment layer, not the feature itself — the gap computation is fully deterministic on its own and the ranking degrades to absent (not an error) when unavailable.
+12. **AI Career Counsellor** — promoted from Phase-2 into MVP scope, see [docs/DECISIONS.md](DECISIONS.md) #27. Personalized, tool-using chat: a trainee asks a question and the model calls read-only tools scoped to their own data (certificates, nominations, open programmes/jobs, and Skill-Gap Analysis results for a specific job) before answering, and the answer is shown with which tools grounded it. Deliberately distinct from the Career Counseling Chatbot (§6.7 above), which stays a shared, non-personalized FAQ surface that refuses this kind of advice — the two are separate features with intentionally opposite scope rules, not one merged into the other.
+13. **AI Job Matching** — promoted from Phase-2 into MVP scope, see [docs/DECISIONS.md](DECISIONS.md) #28. Ranked, embedding-based: jobs are embedded (title/description/tagged skills) and a trainee's own certificates/skills are embedded fresh per request, ranked by cosine similarity via pgvector. Shown on the trainee's job board as "Best Matches for You," with a distinct low-signal state when the trainee has no certificates/skills yet.
+14. **Deep Training & Learning Analytics (dropout-risk)** — promoted from Phase-2 into MVP scope, see [docs/DECISIONS.md](DECISIONS.md) #29. A heuristic risk flag (not a trained model — no historical dropout data exists yet to train one) per approved-nomination trainee, from lesson-completion rate, timetable-attendance rate, days since any activity, and failed assessment attempts. Surfaced on the Admin Analytics Dashboard (§6.8) as a new dimension, not a separate screen.
 
 **Explicitly out of MVP**: hostel/logistics management (roadmap only).
 
@@ -96,11 +100,11 @@ Cooperative training programmes (for PACS members, SHGs, dairy cooperatives, far
 
 ## 12. MVP Scope
 
-The 10 functional requirements in Section 6.
+The 14 functional requirements in Section 6.
 
 ## 13. Future Scope (Phase 2)
 
-Skill-Gap Analysis, AI Career Counsellor (personalized, tool-using), AI Job Matching (ranked, embedding-based), Employer Outcome Analysis, Entrepreneurship Support, deep Training & Learning Analytics (predictive/dropout-risk), Government Scheme Matchmaking, Alumni-as-Mentor Loop. Rationale and dependencies for each are in the project discussion history; not re-derived here since none are being built yet — expand this section with full requirements when Phase-2 planning begins.
+Employer Outcome Analysis, Entrepreneurship Support, Government Scheme Matchmaking, Alumni-as-Mentor Loop. Skill-Gap Analysis, AI Career Counsellor, AI Job Matching, and deep Training & Learning Analytics were originally listed here but were promoted into MVP scope (§6.11–§6.14) — see [docs/DECISIONS.md](DECISIONS.md) #26–#29. Rationale and dependencies for the remaining items are in the project discussion history; not re-derived here since none are being built yet — expand this section with full requirements when Phase-2 planning begins.
 
 ## 14. Open Questions / TBD
 

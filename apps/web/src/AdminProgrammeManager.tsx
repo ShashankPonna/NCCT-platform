@@ -1,11 +1,15 @@
 import {
   createProgramme,
+  createSkill,
   createTimetableSession,
   decideNomination,
   getInstitutions,
   getProgrammeNominations,
   getProgrammes,
+  getProgrammeSkills,
+  getSkills,
   getTimetableSessions,
+  setProgrammeSkills,
 } from "@ncct/api-client";
 import { PROGRAMME_MODES } from "@ncct/constants";
 import type {
@@ -14,9 +18,11 @@ import type {
   NominationDecision,
   Programme,
   ProgrammeMode,
+  Skill,
   TimetableSession,
 } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import { SkillPicker } from "./SkillPicker.js";
 
 interface AdminProgrammeManagerProps {
   accessToken: string;
@@ -35,6 +41,15 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // P1 Skill-Gap Analysis (DECISIONS.md #26): skills a trainee is read as
+  // "acquiring" by earning a certificate under this programme — the
+  // acquisition source getSkillGap (apps/api/src/skillGapService.ts) reads
+  // from.
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [programmeSkillIds, setProgrammeSkillIds] = useState<Set<string>>(new Set());
+  const [newSkillName, setNewSkillName] = useState("");
+  const [savingSkills, setSavingSkills] = useState(false);
+
   useEffect(() => {
     getInstitutions(accessToken)
       .then(setInstitutions)
@@ -46,6 +61,9 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
           void selectProgramme(progs[0].id);
         }
       })
+      .catch((err: Error) => setError(err.message));
+    getSkills(accessToken)
+      .then(setSkills)
       .catch((err: Error) => setError(err.message));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken]);
@@ -60,12 +78,50 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
     setSelectedProgrammeId(programmeId);
     setError(null);
     try {
-      const [noms, sess] = await Promise.all([
+      const [noms, sess, progSkills] = await Promise.all([
         getProgrammeNominations(accessToken, programmeId),
         getTimetableSessions(accessToken, programmeId),
+        getProgrammeSkills(accessToken, programmeId),
       ]);
       setNominations(noms);
       setSessions(sess);
+      setProgrammeSkillIds(new Set(progSkills.map((s) => s.id)));
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  function toggleProgrammeSkill(skillId: string) {
+    setProgrammeSkillIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(skillId)) next.delete(skillId);
+      else next.add(skillId);
+      return next;
+    });
+  }
+
+  async function handleSaveProgrammeSkills() {
+    if (!selectedProgrammeId) return;
+    setError(null);
+    setSavingSkills(true);
+    try {
+      await setProgrammeSkills(accessToken, selectedProgrammeId, [...programmeSkillIds]);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSavingSkills(false);
+    }
+  }
+
+  async function handleCreateSkill() {
+    const name = newSkillName.trim();
+    if (!name) return;
+    setError(null);
+    try {
+      const skill = await createSkill(accessToken, { name });
+      setSkills((prev) => [...prev, skill].sort((a, b) => a.name.localeCompare(b.name)));
+      setProgrammeSkillIds((prev) => new Set(prev).add(skill.id));
+      setNewSkillName("");
     } catch (err) {
       setError((err as Error).message);
     }
@@ -561,6 +617,51 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                       })}
                     </div>
                   )}
+                </div>
+
+                {/* Skills Granted Section (P1 Skill-Gap Analysis, DECISIONS.md #26) */}
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-headline-md text-headline-md text-primary m-0">
+                      Skills Granted ({programmeSkillIds.size})
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => void handleSaveProgrammeSkills()}
+                      disabled={savingSkills}
+                      className="px-4 py-2 rounded-lg font-label-md text-label-md bg-cta text-on-primary min-h-[44px] hover:bg-cta-hover shadow-sm disabled:opacity-50"
+                    >
+                      {savingSkills ? "Saving..." : "Save Skills"}
+                    </button>
+                  </div>
+                  <p className="font-body-sm text-on-surface-variant mb-3">
+                    A trainee who earns a certificate under this programme is read as having acquired
+                    every skill tagged here — this is what the Skill-Gap Check compares a job's required
+                    skills against.
+                  </p>
+                  <SkillPicker skills={skills} selectedIds={programmeSkillIds} onToggle={toggleProgrammeSkill} />
+                  <div className="flex gap-2 mt-2">
+                    <input
+                      value={newSkillName}
+                      onChange={(e) => setNewSkillName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void handleCreateSkill();
+                        }
+                      }}
+                      placeholder="New skill, e.g. Bookkeeping"
+                      className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                      type="text"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void handleCreateSkill()}
+                      className="px-4 h-touch-target bg-surface-container-highest text-on-surface rounded-lg font-label-sm text-label-sm hover:bg-surface-variant cursor-pointer"
+                    >
+                      Add to Taxonomy
+                    </button>
+                  </div>
                 </div>
               </div>
             </>

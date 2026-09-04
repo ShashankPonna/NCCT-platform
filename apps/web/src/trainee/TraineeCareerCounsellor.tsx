@@ -12,11 +12,12 @@ interface Turn {
   error: string | null;
 }
 
-// Phase-2 P2 (docs/PRD.md §13.2), re-skinned
+// P2 AI Career Counsellor (docs/PRD.md §6.12, promoted from Phase-2 — see
+// docs/DECISIONS.md #27), re-skinned
 // (design/stitch_ncct_trainee_portal/career_ask_a_counsellor). Every
 // assistant turn shows its toolCalls as provenance tags — this is
 // deliberate transparency (which of the trainee's own data this specific
-// answer is grounded in), not decoration, per DECISIONS.md #19. Distinct
+// answer is grounded in), not decoration, per DECISIONS.md #27. Distinct
 // from ChatbotPanel.tsx (F7): that one is a shared, non-personalized FAQ
 // lookup and is intentionally not merged with this screen.
 export function TraineeCareerCounsellor({ accessToken }: TraineeCareerCounsellorProps) {

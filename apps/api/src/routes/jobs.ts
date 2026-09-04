@@ -1,5 +1,6 @@
 import { createJobSchema, updateJobSchema } from "@ncct/validation";
 import { Router } from "express";
+import { embedJobBestEffort } from "../jobMatchingService.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
@@ -30,6 +31,12 @@ jobsRouter.post("/jobs", requireAuth, requireRole("employer"), async (req, res) 
     res.status(400).json({ error: error.message });
     return;
   }
+  // Fire-and-forget: embedding involves a real model call (~15s cold
+  // start, see chatbotService.ts), so it must never block the response a
+  // job posting is normally instant. P3 AI Job Matching (DECISIONS.md
+  // #28) — a null embedding just means this job won't surface in ranked
+  // matches until a later write recomputes it, not a broken posting.
+  void embedJobBestEffort(data.id);
   res.status(201).json(data);
 });
 
@@ -95,6 +102,10 @@ jobsRouter.patch("/jobs/:id", requireAuth, requireRole("employer"), async (req, 
     res.status(404).json({ error: "Job not found" });
     return;
   }
+  // Re-embeds on any update rather than only title/description/
+  // required_skills changes — simpler, and the cost is a background async
+  // call, not anything user-facing. See the POST route's comment.
+  void embedJobBestEffort(data.id);
   res.json(data);
 });
 

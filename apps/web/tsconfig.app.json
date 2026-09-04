@@ -22,20 +22,10 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
+  "include": ["src"]
 
-  /* Phase-2 (PRD §13) components that were committed ahead of their backend
-     support and are currently disconnected from the app pending a scope
-     decision. They are excluded rather than deleted so the work isn't lost:
-     they reference `Skill`/`SkillGapResult`/`CareerCounsellorAnswer` types and
-     `getSkills`/`getJobSkills`/`setJobSkills`/`getSkillGap`/`askCareerCounsellor`
-     client functions that don't exist in packages/* yet, so leaving them in the
-     program breaks `tsc -b` for the whole app even while nothing imports them.
-     To restore: build the backend + packages/* support, delete these entries,
-     and re-add the imports in TraineeCareer.tsx / EmployerDashboard.tsx. */
-  "exclude": [
-    "src/SkillPicker.tsx",
-    "src/trainee/TraineeCareerCounsellor.tsx",
-    "src/trainee/TraineeCareerSkillGap.tsx"
-  ]
+  /* P1 Skill-Gap Analysis (docs/DECISIONS.md #26) and P2 AI Career
+     Counsellor (docs/DECISIONS.md #27) were both promoted from Phase-2
+     into scope and now have full backend + packages/* support, so every
+     component that was previously excluded here is back in the program. */
 }

@@ -421,8 +421,9 @@
   color: var(--text-h);
 }
 
-/* Skills taxonomy (Phase-2 P1) — grouped multi-select picker and read-only
-   chip display, shared by SkillPicker.tsx wherever a caller needs either. */
+/* Skills taxonomy (P1 Skill-Gap Analysis) — grouped multi-select picker and
+   read-only chip display, shared by SkillPicker.tsx wherever a caller needs
+   either. */
 .skill-picker-label {
   font-size: 14px;
   margin: 4px 0;

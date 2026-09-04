@@ -27,8 +27,12 @@ import type {
   Profile,
   Programme,
   ProgrammeMode,
+  CareerCounsellorAnswer,
+  JobMatchesResult,
   QuestionOption,
   Role,
+  Skill,
+  SkillGapResult,
   TimetableSession,
   TraineeSearchResult,
   VisibilitySettings,
@@ -683,4 +687,62 @@ export function deleteCorpusChunk(accessToken: string, id: string) {
 
 export function getDashboardAnalytics(accessToken: string) {
   return apiFetch<DashboardAnalytics>("/analytics/dashboard", accessToken);
+}
+
+// P1 Skill-Gap Analysis (DECISIONS.md #26).
+
+export function getSkills(accessToken: string, filters?: { category?: string }) {
+  const params = new URLSearchParams();
+  if (filters?.category) params.set("category", filters.category);
+  const qs = params.toString();
+  return apiFetch<Skill[]>(`/skills${qs ? `?${qs}` : ""}`, accessToken);
+}
+
+export function createSkill(accessToken: string, body: { name: string; category?: string }) {
+  return apiFetch<Skill>("/skills", accessToken, { method: "POST", body });
+}
+
+// Public — a job's tagged skills are part of the same public job-board data
+// as the posting itself, same category as getJobs.
+export async function getJobSkills(jobId: string): Promise<Skill[]> {
+  const res = await fetch(`${apiBaseUrl}/api/jobs/${jobId}/skills`);
+  if (!res.ok) {
+    throw new Error(`Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export function setJobSkills(accessToken: string, jobId: string, skillIds: string[]) {
+  return apiFetch<void>(`/jobs/${jobId}/skills`, accessToken, {
+    method: "PUT",
+    body: { skill_ids: skillIds },
+  });
+}
+
+export function getProgrammeSkills(accessToken: string, programmeId: string) {
+  return apiFetch<Skill[]>(`/programmes/${programmeId}/skills`, accessToken);
+}
+
+export function setProgrammeSkills(accessToken: string, programmeId: string, skillIds: string[]) {
+  return apiFetch<void>(`/programmes/${programmeId}/skills`, accessToken, {
+    method: "PUT",
+    body: { skill_ids: skillIds },
+  });
+}
+
+export function getSkillGap(accessToken: string, jobId: string) {
+  return apiFetch<SkillGapResult>(`/skill-gap/${jobId}`, accessToken);
+}
+
+// P2 AI Career Counsellor (DECISIONS.md #27).
+export function askCareerCounsellor(accessToken: string, question: string) {
+  return apiFetch<CareerCounsellorAnswer>("/career-counsellor/ask", accessToken, {
+    method: "POST",
+    body: { question },
+  });
+}
+
+// P3 AI Job Matching (DECISIONS.md #28).
+export function getJobMatches(accessToken: string) {
+  return apiFetch<JobMatchesResult>("/job-matches/mine", accessToken);
 }

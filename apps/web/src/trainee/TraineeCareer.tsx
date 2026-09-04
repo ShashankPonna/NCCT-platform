@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { ChatbotPanel } from "../ChatbotPanel.js";
+import { TraineeCareerCounsellor } from "./TraineeCareerCounsellor.js";
 import { TraineeCareerJobs } from "./TraineeCareerJobs.js";
+import { TraineeCareerSkillGap } from "./TraineeCareerSkillGap.js";
 
 export type CareerView = "jobs" | "skill-gap" | "ask" | "faq";
 
@@ -10,15 +12,14 @@ interface TraineeCareerProps {
   onSubViewChange?: (view: CareerView) => void;
 }
 
-// The "Skill-Gap Check" (Phase-2 P1) and "Ask a Counsellor" (Phase-2 P2)
-// tabs are intentionally absent from this list: their components
-// (TraineeCareerSkillGap.tsx, TraineeCareerCounsellor.tsx) are still on
-// disk but disconnected pending a scope decision, since PRD §13 puts both
-// outside the MVP and neither has backend support in packages/* yet.
-// Restoring them = re-adding these two entries and the imports/branches
-// below. "Open Positions" (F6) and "Programme FAQ" (F7) are both MVP.
+// Both P1 "Skill-Gap Check" (docs/DECISIONS.md #26) and P2 "Ask a
+// Counsellor" (docs/DECISIONS.md #27) were promoted from Phase-2 into
+// scope and are wired in below alongside the MVP "Open Positions" (F6) and
+// "Programme FAQ" (F7) tabs.
 const TABS: { id: CareerView; label: string }[] = [
   { id: "jobs", label: "Open Positions" },
+  { id: "skill-gap", label: "Skill-Gap Check" },
+  { id: "ask", label: "Ask a Counsellor" },
   { id: "faq", label: "Programme FAQ" },
 ];
 
@@ -26,8 +27,9 @@ const TABS: { id: CareerView; label: string }[] = [
 // sub-nav — same "don't overload the main navbar" reasoning as
 // TraineeLearn.tsx. "Ask a Counsellor" (P2, personalized, tool-grounded)
 // and "Programme FAQ" (F7, shared corpus, deliberately refuses personal
-// advice) are meant to stay two clearly separate destinations, not merged,
-// if/when P2 is restored.
+// advice) are two clearly separate destinations, not merged — see
+// docs/DECISIONS.md #27 for why the two prompts intentionally disagree on
+// whether personalized advice is in scope.
 export function TraineeCareer({ accessToken, subView, onSubViewChange }: TraineeCareerProps) {
   const [localView, setLocalView] = useState<CareerView>("jobs");
   const view = subView ?? localView;
@@ -57,6 +59,8 @@ export function TraineeCareer({ accessToken, subView, onSubViewChange }: Trainee
       </div>
 
       {view === "jobs" && <TraineeCareerJobs accessToken={accessToken} />}
+      {view === "skill-gap" && <TraineeCareerSkillGap accessToken={accessToken} />}
+      {view === "ask" && <TraineeCareerCounsellor accessToken={accessToken} />}
       {view === "faq" && (
         <div className="py-6 md:py-8">
           <ChatbotPanel accessToken={accessToken} />

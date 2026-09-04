@@ -90,3 +90,23 @@ export const EMBEDDING_DIMENSIONS = 384;
 // optima — same category of judgment call as FACE_MATCH_THRESHOLD.
 export const CHATBOT_RETRIEVAL_COUNT = 5;
 export const CHATBOT_MIN_SIMILARITY = 0.25;
+
+// P3 AI Job Matching (DECISIONS.md #28) — reuses F7's embedding model
+// (EMBEDDING_MODEL/EMBEDDING_DIMENSIONS above), just a different corpus
+// (jobs, not FAQ chunks) and no relevance floor: a ranked "best available
+// matches" list is useful even when nothing is a strong match, unlike the
+// chatbot where an irrelevant answer would be actively misleading.
+export const JOB_MATCH_COUNT = 10;
+
+// P6 Deep Training & Learning Analytics — dropout-risk flagging
+// (DECISIONS.md #29). Hand-tuned starting points, not measured optima —
+// same category of judgment call as FACE_MATCH_THRESHOLD/
+// CHATBOT_MIN_SIMILARITY: there's no real historical dropout data in this
+// project yet to tune against. Read this as a heuristic risk *flag*, not a
+// trained prediction.
+export const DROPOUT_RISK_STALE_DAYS = 14;
+export const DROPOUT_RISK_LOW_COMPLETION = 0.25;
+export const DROPOUT_RISK_LOW_ATTENDANCE = 0.5;
+export const DROPOUT_RISK_MEDIUM_THRESHOLD = 30;
+export const DROPOUT_RISK_HIGH_THRESHOLD = 60;
+export const DROPOUT_RISK_LEVELS = ["low", "medium", "high"] as const;

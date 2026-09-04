@@ -6,11 +6,12 @@ interface SkillPickerProps {
   onToggle: (skillId: string) => void;
 }
 
-// Grouped checkbox multi-select against the skills taxonomy (Phase-2 P1,
-// docs/PRD.md §13.1) — reused wherever a caller needs to pick a set of
-// skills (job postings today; programme-skill tagging and the trainee gap
-// view are separate, later UI work). Skills with no category collect under
-// "Other" rather than being dropped or crashing the group-by.
+// Grouped checkbox multi-select against the skills taxonomy (P1 Skill-Gap
+// Analysis, docs/PRD.md §6.11) — reused wherever a caller needs to pick a
+// set of skills: EmployerDashboard.tsx (job postings) and
+// AdminProgrammeManager.tsx (programme-granted skills). Skills with no
+// category collect under "Other" rather than being dropped or crashing the
+// group-by.
 export function SkillPicker({ skills, selectedIds, onToggle }: SkillPickerProps) {
   if (skills.length === 0) {
     return <p className="skill-picker-empty">No skills in the taxonomy yet.</p>;

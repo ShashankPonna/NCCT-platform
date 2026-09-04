@@ -82,6 +82,7 @@ describe("GET /api/analytics/dashboard", () => {
       completionRates: { overall: { approvedNominations: 0, certificatesIssued: 0, rate: 0 }, byProgramme: [] },
       certificatesIssued: { total: 0, byMonth: [] },
       placements: { totalJobs: 0, byStatus: [] },
+      dropoutRisk: { byLevel: [], flagged: [] },
     };
     getDashboardAnalyticsMock.mockResolvedValue(payload);
 

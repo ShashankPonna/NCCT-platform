@@ -2,6 +2,7 @@ import type {
   ATTENDANCE_METHODS,
   CHATBOT_SOURCE_TYPES,
   CONTENT_TYPES,
+  DROPOUT_RISK_LEVELS,
   FACE_REC_MODELS,
   INTERACTIVE_EXERCISE_TYPES,
   JOB_INTEREST_STATUSES,
@@ -22,6 +23,7 @@ export type InteractiveExerciseType = (typeof INTERACTIVE_EXERCISE_TYPES)[number
 export type AttendanceMethod = (typeof ATTENDANCE_METHODS)[number];
 export type FaceRecModel = (typeof FACE_REC_MODELS)[number];
 export type JobInterestStatus = (typeof JOB_INTEREST_STATUSES)[number];
+export type DropoutRiskLevel = (typeof DROPOUT_RISK_LEVELS)[number];
 export type ChatbotSourceType = (typeof CHATBOT_SOURCE_TYPES)[number];
 
 export interface Institution {
@@ -322,6 +324,30 @@ export interface DashboardAnalytics {
     totalJobs: number;
     byStatus: { status: JobInterestStatus; count: number }[];
   };
+  // P6 deep Training & Learning Analytics (dropout-risk), promoted from
+  // Phase-2 — see DECISIONS.md #29. A heuristic risk *flag* computed from
+  // lesson-progress/attendance/failed-attempt signals, not a trained
+  // prediction — there's no historical dropout data in this project to
+  // train or validate against yet.
+  dropoutRisk: {
+    byLevel: { level: DropoutRiskLevel; count: number }[];
+    flagged: DropoutRiskFlag[];
+  };
+}
+
+export interface DropoutRiskFlag {
+  traineeId: string;
+  traineeName: string | null;
+  programmeId: string;
+  programmeTitle: string;
+  // null when the programme has no lessons authored yet, or no timetable
+  // sessions have happened yet — a real "no data" state, not a 0.
+  completionRate: number | null;
+  attendanceRate: number | null;
+  daysSinceLastActivity: number | null;
+  failedAttempts: number;
+  riskScore: number;
+  riskLevel: DropoutRiskLevel;
 }
 
 // A trainee's "skill"/"certification" search result — there's no dedicated
@@ -339,4 +365,59 @@ export interface TraineeSearchResult {
     institution_location: string | null;
     issued_at: string;
   }[];
+}
+
+// P1 Skill-Gap Analysis (PRD §6.11, promoted from Phase-2 — see
+// DECISIONS.md #26). The skills taxonomy TraineeSearchResult's comment
+// above notes as absent — `jobs`/`programme_skills` tag against these
+// rows instead of free text.
+export interface Skill {
+  id: string;
+  name: string;
+  category: string | null;
+}
+
+// The optional "what to learn first" layer over the gap. Always absent
+// (`reasoning: null`) rather than erroring when the model call fails or
+// there's nothing to rank — a distinct, non-error state the UI renders
+// differently from an empty gap.
+export interface SkillGapReasoningItem {
+  rank: number;
+  skill_id: string;
+  skill_name: string;
+  reason: string;
+}
+
+export interface SkillGapResult {
+  acquired_skills: Skill[];
+  gap_skills: Skill[];
+  reasoning: SkillGapReasoningItem[] | null;
+}
+
+// P2 AI Career Counsellor (PRD §6.12, promoted from Phase-2 — see
+// DECISIONS.md #27). `toolCalls` is provenance, not decoration: which of
+// the trainee's own data (or the open catalog) this specific answer was
+// actually grounded in, shown to the trainee alongside the answer.
+export interface CareerCounsellorToolCall {
+  tool: string;
+  args: Record<string, unknown>;
+}
+
+export interface CareerCounsellorAnswer {
+  answer: string;
+  toolCalls: CareerCounsellorToolCall[];
+}
+
+// P3 AI Job Matching (PRD §6.13, promoted from Phase-2 — see
+// DECISIONS.md #28). A Job plus how well it matched the requesting
+// trainee's own profile (0-1 cosine similarity, higher is closer).
+export interface JobMatch extends Job {
+  similarity: number;
+}
+
+export interface JobMatchesResult {
+  matches: JobMatch[];
+  // false when the trainee has no certificates/skills yet to base a match
+  // on — a distinct "not enough profile data" state, not an error.
+  hasProfileSignal: boolean;
 }

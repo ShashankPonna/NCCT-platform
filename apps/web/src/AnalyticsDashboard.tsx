@@ -1,5 +1,5 @@
 import { getDashboardAnalytics } from "@ncct/api-client";
-import type { DashboardAnalytics } from "@ncct/shared-types";
+import type { DashboardAnalytics, DropoutRiskLevel } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 
 interface AnalyticsDashboardProps {
@@ -12,8 +12,26 @@ const MODE_FILL_COLORS: Record<string, string> = {
   offline: "#00214F",
 };
 
+// P6 dropout-risk levels are status (state), not categorical (identity) —
+// per the dataviz skill's color-by-job rule, they reuse this app's existing
+// reserved status tokens (already used for shortlisted/pending/rejected
+// pills elsewhere) rather than the categorical --chart-1/2/3 set, and each
+// ships with an icon + label, never color alone.
+const RISK_LEVEL_STYLES: Record<DropoutRiskLevel, { text: string; bg: string; border: string; icon: string }> = {
+  low: { text: "text-status-shortlisted", bg: "bg-status-success/10", border: "border-status-shortlisted/30", icon: "check_circle" },
+  medium: { text: "text-status-pending", bg: "bg-status-pending/10", border: "border-status-pending/30", icon: "warning" },
+  high: { text: "text-status-rejected", bg: "bg-status-rejected/10", border: "border-status-rejected/30", icon: "error" },
+};
+
 function formatPercent(rate: number): string {
   return `${Math.round(rate * 100)}%`;
+}
+
+// A null rate/day-count is a real "no data yet" state (no lessons authored,
+// no timetable sessions yet), not a 0 — shown distinctly rather than
+// silently rendered as if it meant something it doesn't.
+function formatMaybePercent(rate: number | null): string {
+  return rate === null ? "—" : formatPercent(rate);
 }
 
 function formatMonth(month: string): string {
@@ -352,6 +370,102 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
                       </td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Block 5: Dropout Risk (P6, DECISIONS.md #29) */}
+        <div className="bg-surface-card border border-outline-variant rounded-lg p-6 flex flex-col lg:col-span-2 shadow-sm">
+          <h3 className="font-headline-sm text-headline-sm text-primary mb-1">Dropout Risk</h3>
+          <p className="font-body-sm text-body-sm text-on-surface-variant mb-4">
+            Heuristic flags from lesson progress, session attendance, and failed attempts — not a trained
+            prediction.
+          </p>
+
+          <div className="flex flex-wrap gap-3 mb-4">
+            {data.dropoutRisk.byLevel.map((row) => {
+              const style = RISK_LEVEL_STYLES[row.level];
+              return (
+                <div
+                  key={row.level}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${style.border} ${style.bg}`}
+                >
+                  <span className={`material-symbols-outlined text-[18px] ${style.text}`}>{style.icon}</span>
+                  <span className={`font-label-md text-label-md font-bold capitalize ${style.text}`}>
+                    {row.level}
+                  </span>
+                  <span className="font-body-sm text-on-surface-variant">{row.count}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {data.dropoutRisk.flagged.length === 0 ? (
+            <div className="flex-grow flex flex-col items-center justify-center text-center p-6 bg-surface-container-low rounded border border-dashed border-outline-variant min-h-[140px]">
+              <span className="material-symbols-outlined text-[48px] text-outline opacity-50 mb-3">
+                task_alt
+              </span>
+              <h4 className="font-headline-sm text-headline-sm text-on-surface-variant mb-2">
+                No trainees currently flagged
+              </h4>
+              <p className="font-body-sm text-body-sm text-outline max-w-sm">
+                Every approved trainee is either progressing well or there isn&apos;t enough activity data yet
+                to flag anyone.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-outline-variant">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-surface-container-low border-b border-outline-variant">
+                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase">
+                      Trainee
+                    </th>
+                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase">
+                      Programme
+                    </th>
+                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
+                      Risk
+                    </th>
+                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
+                      Completion
+                    </th>
+                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
+                      Attendance
+                    </th>
+                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
+                      Inactive (days)
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant font-body-sm">
+                  {data.dropoutRisk.flagged.map((flag) => {
+                    const style = RISK_LEVEL_STYLES[flag.riskLevel];
+                    return (
+                      <tr
+                        key={`${flag.traineeId}-${flag.programmeId}`}
+                        className="hover:bg-surface-container-lowest transition-colors"
+                      >
+                        <td className="p-4 font-medium text-primary">
+                          {flag.traineeName ?? `Trainee #${flag.traineeId.slice(0, 8)}`}
+                        </td>
+                        <td className="p-4">{flag.programmeTitle}</td>
+                        <td className="p-4 text-center">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-label-sm font-bold capitalize ${style.bg} ${style.text}`}
+                          >
+                            <span className="material-symbols-outlined text-[14px]">{style.icon}</span>
+                            {flag.riskLevel}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">{formatMaybePercent(flag.completionRate)}</td>
+                        <td className="p-4 text-center">{formatMaybePercent(flag.attendanceRate)}</td>
+                        <td className="p-4 text-center">{flag.daysSinceLastActivity}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

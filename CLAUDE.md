@@ -36,7 +36,7 @@ Full detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Project-Specific Development Rules
 
-- Check [docs/PRD.md](docs/PRD.md)'s MVP vs Phase-2 scope before building a feature — Phase-2 items (Skill-Gap Analysis, AI Career Counsellor, AI Job Matching, Employer Outcome Analysis, Entrepreneurship Support, deep Learning Analytics, Government Scheme Matchmaking, Alumni Mentor Loop) are explicitly **not** MVP.
+- Check [docs/PRD.md](docs/PRD.md)'s MVP vs Phase-2 scope before building a feature — Phase-2 items (Employer Outcome Analysis, Entrepreneurship Support, Government Scheme Matchmaking, Alumni Mentor Loop) are explicitly **not** MVP. Skill-Gap Analysis, AI Career Counsellor, AI Job Matching, and deep Training & Learning Analytics were promoted into scope — see [docs/DECISIONS.md](docs/DECISIONS.md) #26–#29.
 - Any new/changed DB table: update [docs/DATABASE.md](docs/DATABASE.md) in the same change.
 - Any reversal or addition to a recorded architectural decision: add an entry to [docs/DECISIONS.md](docs/DECISIONS.md) rather than silently diverging from it.
 - Offline sync uses simple timestamp/last-write-wins conflict resolution by design — do not introduce a CRDT/OT sync engine (see DECISIONS.md).

@@ -3,7 +3,7 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { jobsRouter } from "./jobs.js";
 
-const { getUserMock, profilesMock, jobsMock, fromMock } = vi.hoisted(() => {
+const { getUserMock, profilesMock, jobsMock, fromMock, embedJobBestEffortMock } = vi.hoisted(() => {
   function createTableMock() {
     const result: { data: unknown; error: unknown } = { data: null, error: null };
     // Every chain method returns the same builder (real supabase-js filter
@@ -40,13 +40,18 @@ const { getUserMock, profilesMock, jobsMock, fromMock } = vi.hoisted(() => {
   };
   const fromMock = vi.fn((table: string) => tables[table].builder);
   const getUserMock = vi.fn();
-  return { getUserMock, profilesMock, jobsMock, fromMock };
+  const embedJobBestEffortMock = vi.fn();
+  return { getUserMock, profilesMock, jobsMock, fromMock, embedJobBestEffortMock };
 });
 
 vi.mock("../supabaseClient.js", () => ({
   supabaseAdmin: { auth: { getUser: getUserMock }, from: fromMock },
   getSupabaseForUser: () => ({ from: fromMock }),
 }));
+
+// Never load the real embedding model from a job create/update in tests —
+// same reasoning as chatbotService.test.ts mocking @huggingface/transformers.
+vi.mock("../jobMatchingService.js", () => ({ embedJobBestEffort: embedJobBestEffortMock }));
 
 function buildApp() {
   const app = express();
@@ -63,6 +68,7 @@ function authenticateAs(userId: string, role: string) {
 
 beforeEach(() => {
   getUserMock.mockReset();
+  embedJobBestEffortMock.mockReset();
   jobsMock.builder.insert.mockClear();
   for (const mock of [profilesMock, jobsMock]) {
     mock.result.data = null;
@@ -108,6 +114,9 @@ describe("POST /api/jobs", () => {
     expect(jobsMock.builder.insert).toHaveBeenCalledWith(
       expect.objectContaining({ employer_id: "employer-1", title: "Warehouse hand" }),
     );
+    // P3 AI Job Matching (DECISIONS.md #28): every created job gets a
+    // best-effort embedding kicked off, fire-and-forget.
+    expect(embedJobBestEffortMock).toHaveBeenCalledWith("job-1");
   });
 });
 
@@ -176,6 +185,7 @@ describe("PATCH /api/jobs/:id", () => {
       .send({ title: "Updated" });
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ title: "Updated" });
+    expect(embedJobBestEffortMock).toHaveBeenCalledWith("job-1");
   });
 });
 

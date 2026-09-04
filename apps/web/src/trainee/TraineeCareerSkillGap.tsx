@@ -7,13 +7,14 @@ interface TraineeCareerSkillGapProps {
   accessToken: string;
 }
 
-// Phase-2 P1 (docs/PRD.md §13.1), re-skinned
+// P1 Skill-Gap Analysis (docs/PRD.md §6.11, promoted from Phase-2 — see
+// docs/DECISIONS.md #26), re-skinned
 // (design/stitch_ncct_trainee_portal/career_skill_gap_check). The gap
 // itself is always deterministic (required − acquired skills); the ranked
 // "what to learn first" panel is the optional LLM reasoning layer and is
-// rendered only when the API actually returned it — see
-// docs/DECISIONS.md #18 for why that fallback exists and must stay visible
-// as a distinct, non-error state, not hidden.
+// rendered only when the API actually returned it — see docs/DECISIONS.md
+// #26 for why that fallback exists and must stay visible as a distinct,
+// non-error state, not hidden.
 export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProps) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedJobId, setSelectedJobId] = useState("");

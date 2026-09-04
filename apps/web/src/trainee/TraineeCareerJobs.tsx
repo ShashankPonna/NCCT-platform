@@ -1,5 +1,5 @@
-import { getJobs, getMyJobInterests, getVisibilitySettings, updateVisibilitySettings } from "@ncct/api-client";
-import type { Job, JobInterest, VisibilitySettings } from "@ncct/shared-types";
+import { getJobMatches, getJobs, getMyJobInterests, getVisibilitySettings, updateVisibilitySettings } from "@ncct/api-client";
+import type { Job, JobInterest, JobMatch, VisibilitySettings } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 import { ErrorBanner, StatusPill } from "./pieces.js";
 
@@ -15,6 +15,12 @@ export function TraineeCareerJobs({ accessToken }: TraineeCareerJobsProps) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [visibility, setVisibility] = useState<VisibilitySettings | null>(null);
   const [myInterests, setMyInterests] = useState<MyInterest[]>([]);
+  // P3 AI Job Matching (DECISIONS.md #28) — ranked separately from the
+  // plain job list below; `null` while loading, `hasProfileSignal: false`
+  // when the trainee has no certificates/skills yet to rank against.
+  const [matches, setMatches] = useState<JobMatch[]>([]);
+  const [hasProfileSignal, setHasProfileSignal] = useState(true);
+  const [matchesLoaded, setMatchesLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,6 +33,13 @@ export function TraineeCareerJobs({ accessToken }: TraineeCareerJobsProps) {
     getMyJobInterests(accessToken)
       .then(setMyInterests)
       .catch((err: Error) => setError(err.message));
+    getJobMatches(accessToken)
+      .then((result) => {
+        setMatches(result.matches);
+        setHasProfileSignal(result.hasProfileSignal);
+      })
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setMatchesLoaded(true));
   }, [accessToken]);
 
   async function handleToggleVisibility(visible: boolean) {
@@ -106,6 +119,39 @@ export function TraineeCareerJobs({ accessToken }: TraineeCareerJobsProps) {
         </div>
 
         <div className="flex flex-col gap-4 lg:col-span-2">
+          {matchesLoaded && matches.length > 0 && (
+            <div className="flex flex-col gap-4 rounded-xl border border-border-low-contrast bg-surface-card p-6">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-secondary">bolt</span>
+                <h2 className="font-headline text-headline-md text-primary">Best Matches for You</h2>
+              </div>
+              {!hasProfileSignal && (
+                <p className="rounded-lg border border-dashed border-outline-variant bg-surface-container-low px-4 py-3 text-body-sm text-on-surface-variant">
+                  You don&apos;t have any certificates or tagged skills yet, so these rankings are low-signal —
+                  earn a certificate to get better matches.
+                </p>
+              )}
+              <div className="flex flex-col gap-3">
+                {matches.slice(0, 3).map((match) => (
+                  <div
+                    key={match.id}
+                    className="flex flex-col gap-2 rounded-lg border border-border-low-contrast p-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <h3 className="text-label-md font-bold text-primary">{match.title}</h3>
+                      {match.location && (
+                        <span className="text-label-sm text-on-surface-variant">{match.location}</span>
+                      )}
+                    </div>
+                    <span className="w-fit rounded-full bg-secondary-fixed px-3 py-1 text-label-sm font-bold text-secondary">
+                      {Math.round(match.similarity * 100)}% match
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <h2 className="font-headline text-headline-md text-primary">Open Jobs</h2>
           {jobs.length === 0 ? (
             <p className="text-body-md text-on-surface-variant">No open positions right now.</p>
