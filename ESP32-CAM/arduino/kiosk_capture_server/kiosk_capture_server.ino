@@ -102,6 +102,14 @@ void setupCamera() {
   config.pin_reset = RESET_GPIO_NUM;
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG;
+  // The camera sensor captures continuously in the background regardless
+  // of whether anything is requesting frames — the default grab mode
+  // (CAMERA_GRAB_WHEN_EMPTY) hands esp_camera_fb_get() the OLDEST queued
+  // frame, not the newest, which is exactly wrong for a "capture on
+  // demand" kiosk: a frame from a few seconds before the click, not the
+  // moment of the click. CAMERA_GRAB_LATEST discards stale queued frames
+  // and always returns the most recent one instead.
+  config.grab_mode = CAMERA_GRAB_LATEST;
 
   // Dropped from VGA to QVGA (and more compression) after real-world testing
   // on weak WiFi: a 640x480 frame (~18KB) was observed taking 4.5-15+
