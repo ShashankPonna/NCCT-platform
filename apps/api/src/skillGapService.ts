@@ -55,6 +55,8 @@ export async function getSkillGap(traineeId: string, jobId: string): Promise<Ski
   return { acquired_skills, gap_skills, reasoning };
 }
 
+export const computeSkillGap = getSkillGap;
+
 interface RankOptions {
   /** Injectable for tests so they never reach the real Gemini API. */
   client?: GoogleGenAI;

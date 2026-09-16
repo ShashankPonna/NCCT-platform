@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Attendance Screen - NCCT Platform</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&amp;family=Noto+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error": "#ffffff",
+                        "error": "#ba1a1a",
+                        "status-rejected": "#991B1B",
+                        "surface-container-highest": "#e2e2e2",
+                        "secondary-fixed-dim": "#ffb599",
+                        "on-primary-container": "#768bad",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#44474d",
+                        "on-secondary-container": "#5a1c00",
+                        "inverse-surface": "#2f3131",
+                        "tertiary": "#000c25",
+                        "on-error-container": "#93000a",
+                        "surface": "#f9f9f9",
+                        "border-low-contrast": "#E5E7EB",
+                        "surface-dim": "#dadada",
+                        "primary-fixed": "#d5e3ff",
+                        "error-container": "#ffdad6",
+                        "secondary": "#a63b00",
+                        "inverse-primary": "#b2c8ed",
+                        "surface-bright": "#f9f9f9",
+                        "on-background": "#1a1c1c",
+                        "on-secondary-fixed-variant": "#7f2b00",
+                        "outline": "#74777e",
+                        "on-primary-fixed-variant": "#334866",
+                        "on-tertiary-fixed-variant": "#004494",
+                        "inverse-on-surface": "#f1f1f1",
+                        "secondary-fixed": "#ffdbce",
+                        "primary-fixed-dim": "#b2c8ed",
+                        "status-shortlisted": "#065F46",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "on-tertiary-fixed": "#001a42",
+                        "tertiary-container": "#00214f",
+                        "primary-container": "#0b2340",
+                        "on-tertiary-container": "#5288ea",
+                        "surface-container-low": "#f3f3f3",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "status-pending": "#92400E",
+                        "on-secondary-fixed": "#370e00",
+                        "surface-card": "#FFFFFF",
+                        "outline-variant": "#c4c6ce",
+                        "background": "#f9f9f9",
+                        "surface-tint": "#4b5f7f",
+                        "on-primary-fixed": "#031c39",
+                        "surface-container-high": "#e8e8e8",
+                        "on-surface": "#1a1c1c",
+                        "tertiary-fixed-dim": "#adc6ff",
+                        "secondary-container": "#fc6c29",
+                        "tertiary-fixed": "#d8e2ff",
+                        "primary": "#000d20",
+                        "surface-container": "#eeeeee"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "container-max": "1280px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "64px",
+                        "mobile-width": "390px",
+                        "touch-target": "44px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "body-md": ["Noto Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "label-sm": ["Noto Sans"],
+                        "body-lg": ["Noto Sans"],
+                        "label-md": ["Noto Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col pb-[56px] md:pb-0">
+<!-- TopAppBar (Web) -->
+<header class="hidden md:flex justify-between items-center w-full px-margin-desktop h-14 bg-surface border-b border-border-low-contrast transition-colors duration-200 docked full-width top-0 z-50 fixed">
+<div class="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">school</span>
+<span class="font-headline-md text-headline-md font-bold text-primary">NCCT Platform</span>
+</div>
+<nav class="flex gap-6 items-center">
+<a class="text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low px-3 py-2 rounded-md transition-colors cursor-pointer" href="#">Home</a>
+<a class="text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low px-3 py-2 rounded-md transition-colors cursor-pointer" href="#">Learn</a>
+<a class="text-primary font-label-md text-label-md font-bold hover:bg-surface-container-low px-3 py-2 rounded-md transition-colors cursor-pointer" href="#">Attendance</a>
+<a class="text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low px-3 py-2 rounded-md transition-colors cursor-pointer" href="#">Career</a>
+</nav>
+<div class="flex items-center cursor-pointer hover:bg-surface-container-low p-2 rounded-md transition-colors active:scale-95">
+<span class="font-label-md text-label-md text-primary mr-2">Sign Out</span>
+</div>
+</header>
+<!-- TopAppBar (Mobile) -->
+<header class="md:hidden flex justify-between items-center w-full px-margin-mobile h-14 bg-surface border-b border-border-low-contrast transition-colors duration-200 docked full-width top-0 z-50 fixed">
+<div class="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">school</span>
+<span class="font-headline-md text-headline-md font-bold text-primary">NCCT Platform</span>
+</div>
+<div class="flex items-center cursor-pointer hover:bg-surface-container-low p-2 rounded-md transition-colors active:scale-95">
+<span class="material-symbols-outlined text-primary">logout</span>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow pt-14 md:pt-[5.5rem] px-margin-mobile md:px-margin-desktop w-full max-w-container-max mx-auto flex flex-col items-center">
+<!-- Header Section -->
+<div class="w-full max-w-2xl text-center mb-8 mt-6">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-2">Mark Attendance</h1>
+<p class="text-on-surface-variant">Please grant permission to access your camera to scan a QR code or use facial recognition for attendance verification.</p>
+</div>
+<!-- Consent Gate Container (Initially Visible) -->
+<div class="bg-surface-card w-full max-w-xl rounded-xl border border-border-low-contrast p-8 flex flex-col items-center shadow-sm" id="consent-gate">
+<div class="bg-surface-container-highest rounded-full p-6 mb-6">
+<span class="material-symbols-outlined text-6xl text-primary opacity-80" style="font-variation-settings: 'FILL' 0;">photo_camera</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-primary mb-4 text-center">Camera &amp; Face Access Required</h2>
+<p class="text-on-surface-variant text-center mb-8">We need one-time access to your device's camera to securely verify your presence. This data is not permanently stored.</p>
+<button class="bg-[#F26522] text-on-primary font-label-md text-label-md font-bold py-3 px-8 rounded-lg shadow-sm hover:shadow-md transition-shadow flex items-center justify-center min-h-[44px] min-w-[200px] active:scale-95 duration-150" onclick="document.getElementById('consent-gate').classList.add('hidden'); document.getElementById('active-scanner').classList.remove('hidden');">
+                Grant One-time Consent
+            </button>
+<button class="mt-4 text-primary font-label-md text-label-md hover:underline min-h-[44px] px-4 py-2">
+                Learn more about privacy
+            </button>
+</div>
+<!-- Active Scanner Container (Hidden initially) -->
+<div class="hidden w-full max-w-2xl flex flex-col items-center gap-6" id="active-scanner">
+<!-- Camera Viewfinder -->
+<div class="relative w-full aspect-square md:aspect-video bg-surface-container-highest rounded-xl overflow-hidden border-2 border-primary-fixed border-dashed flex items-center justify-center">
+<!-- Mock Camera Feed -->
+<div class="absolute inset-0 bg-cover bg-center opacity-50 blur-[2px]" data-alt="A slightly blurred, abstract view of an empty modern classroom setting seen through a digital camera viewfinder interface, conveying a sense of readiness and technological integration. The lighting is soft and natural, typical of a well-lit educational space. Overlays of minimal camera corner markers suggest an active scanning state." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD0QX8Q87gRgSO-rjm8vArWIxxF_6uRO0-757hYFoYiyjrDly2KrKLKAs42FxiPQVvlc7Ri5J1BX0oX5H8eKD9WN_NUazKKWQmPGFLdRz_zCK65AsJXm9B5ISzBC1ntB4LYEra-yGoZWJ0OaOVPiXgwSaPzRfNEkv8Trlcf3ghuCBZwo-nucJHj7bJ3qTiN5nZfYS6Dah6MLZXQEN0o676x90c0rb4awL_iQnxfhPXHIpt-KFAqBIMY')"></div>
+<!-- Scanning Overlay Graphics -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<div class="w-3/4 h-3/4 border-2 border-primary rounded-lg relative">
+<!-- Scanning Line -->
+<div class="absolute top-0 left-0 w-full h-[2px] bg-secondary-container shadow-[0_0_8px_rgba(252,108,41,0.8)] animate-[scan_2s_ease-in-out_infinite]"></div>
+</div>
+</div>
+<div class="absolute bottom-4 left-0 w-full flex justify-center gap-4">
+<button class="bg-surface-card bg-opacity-90 backdrop-blur-sm border border-border-low-contrast rounded-full px-4 py-2 flex items-center gap-2 shadow-sm font-label-md text-label-md text-primary active:scale-95 transition-transform">
+<span class="material-symbols-outlined">qr_code_scanner</span> QR Scan
+                     </button>
+<button class="bg-surface-card bg-opacity-90 backdrop-blur-sm border border-border-low-contrast rounded-full px-4 py-2 flex items-center gap-2 shadow-sm font-label-md text-label-md text-on-surface-variant active:scale-95 transition-transform">
+<span class="material-symbols-outlined">face</span> Face Match
+                     </button>
+</div>
+</div>
+<p class="text-on-surface-variant font-label-sm text-label-sm text-center">Align the QR code within the frame.</p>
+</div>
+<!-- History List -->
+<div class="w-full max-w-2xl mt-12 mb-8">
+<h3 class="font-headline-md text-headline-md text-primary mb-4 border-b border-border-low-contrast pb-2">Recent Attendance</h3>
+<div class="flex flex-col gap-3">
+<!-- History Item 1 -->
+<div class="bg-surface-card rounded-lg border border-border-low-contrast p-4 flex justify-between items-center hover:bg-surface-container-low transition-colors shadow-sm">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-[#065F46]/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-[#065F46]">check_circle</span>
+</div>
+<div>
+<div class="font-label-md text-label-md text-on-background">Advanced Carpentry Workshop</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Today, 08:45 AM</div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="bg-surface-container-highest text-on-surface-variant font-label-sm text-[10px] px-2 py-1 rounded-sm uppercase tracking-wider">qr</span>
+<span class="font-label-sm text-label-sm text-[#065F46] font-bold">Present</span>
+</div>
+</div>
+<!-- History Item 2 -->
+<div class="bg-surface-card rounded-lg border border-border-low-contrast p-4 flex justify-between items-center hover:bg-surface-container-low transition-colors shadow-sm">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-[#065F46]/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-[#065F46]">check_circle</span>
+</div>
+<div>
+<div class="font-label-md text-label-md text-on-background">Digital Literacy 101</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Yesterday, 09:00 AM</div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="bg-surface-container-highest text-on-surface-variant font-label-sm text-[10px] px-2 py-1 rounded-sm uppercase tracking-wider">face</span>
+<span class="font-label-sm text-label-sm text-[#065F46] font-bold">Present</span>
+</div>
+</div>
+<!-- History Item 3 -->
+<div class="bg-surface-card rounded-lg border border-border-low-contrast p-4 flex justify-between items-center hover:bg-surface-container-low transition-colors shadow-sm">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-status-rejected/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-status-rejected">cancel</span>
+</div>
+<div>
+<div class="font-label-md text-label-md text-on-background">Cooperative Management</div>
+<div class="font-label-sm text-label-sm text-on-surface-variant">Oct 24, 10:15 AM</div>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-status-rejected font-bold">Absent</span>
+</div>
+</div>
+</div>
+<button class="w-full mt-4 text-center text-primary font-label-md text-label-md hover:bg-surface-container-low py-3 rounded-lg transition-colors border border-dashed border-border-low-contrast">
+                View All History
+            </button>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-[56px] px-2 bg-surface border-t border-border-low-contrast shadow-sm transition-colors duration-200">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low active:scale-90 transition-transform duration-150 p-2 rounded-lg w-16 h-full" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">home</span>
+<span class="font-label-sm text-[10px] mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low active:scale-90 transition-transform duration-150 p-2 rounded-lg w-16 h-full" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">menu_book</span>
+<span class="font-label-sm text-[10px] mt-1">Learn</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary relative after:content-[''] after:absolute after:top-0 after:w-12 after:h-1 after:bg-secondary after:rounded-full hover:bg-surface-container-low active:scale-90 transition-transform duration-150 p-2 rounded-lg w-16 h-full" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+<span class="font-label-sm text-[10px] mt-1">Attendance</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low active:scale-90 transition-transform duration-150 p-2 rounded-lg w-16 h-full" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">work</span>
+<span class="font-label-sm text-[10px] mt-1">Career</span>
+</a>
+</nav>
+<style>
+        @keyframes scan {
+            0% { top: 0; }
+            50% { top: 100%; }
+            100% { top: 0; }
+        }
+    </style>
+</body></html>

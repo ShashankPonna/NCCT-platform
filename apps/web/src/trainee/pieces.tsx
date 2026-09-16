@@ -1,6 +1,8 @@
 // Small shared building blocks for the trainee portal screens, matching
 // DESIGN.md's Status Pills / Skill Chips component spec.
 
+import { useLocale, type Locale } from "../i18n/LocaleContext.js";
+
 const STATUS_STYLES: Record<string, string> = {
   approved: "bg-emerald-100 text-status-shortlisted",
   shortlisted: "bg-emerald-100 text-status-shortlisted",
@@ -11,11 +13,38 @@ const STATUS_STYLES: Record<string, string> = {
   contacted: "bg-emerald-100 text-status-shortlisted",
 };
 
+// These are the DB's own enum values (nomination/interest status columns),
+// not free text, so this is a fixed lookup rather than a sentence to
+// translate — any status not in this table (an unexpected/future value)
+// falls back to showing the raw value rather than breaking.
+const STATUS_LABELS: Record<Locale, Record<string, string>> = {
+  en: {
+    approved: "Approved",
+    shortlisted: "Shortlisted",
+    pending: "Pending",
+    waitlisted: "Waitlisted",
+    viewed: "Viewed",
+    rejected: "Rejected",
+    contacted: "Contacted",
+  },
+  hi: {
+    approved: "स्वीकृत",
+    shortlisted: "शॉर्टलिस्ट किया गया",
+    pending: "लंबित",
+    waitlisted: "प्रतीक्षा सूची में",
+    viewed: "देखा गया",
+    rejected: "अस्वीकृत",
+    contacted: "संपर्क किया गया",
+  },
+};
+
 export function StatusPill({ status }: { status: string }) {
+  const { locale } = useLocale();
   const style = STATUS_STYLES[status] ?? "bg-surface-container-highest text-on-surface-variant";
+  const label = STATUS_LABELS[locale][status] ?? status;
   return (
     <span className={`whitespace-nowrap rounded-full px-3 py-1 text-label-sm font-bold capitalize ${style}`}>
-      {status}
+      {label}
     </span>
   );
 }

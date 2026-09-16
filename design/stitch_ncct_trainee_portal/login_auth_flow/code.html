@@ -1,0 +1,336 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Sign In - NCCT Platform</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600;700&amp;family=Hanken+Grotesk:wght@700&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              primary: '#0f172a',
+              cta: '#f26522',
+              'cta-hover': '#d95b1e',
+              border: '#e2e8f0',
+              muted: '#475569',
+              error: '#ba1a1a',
+              'error-bg': '#ffdad6',
+              'light-blue': '#e0f2fe',
+            }
+          },
+          fontFamily: {
+            heading: ['"Hanken Grotesk"', 'sans-serif'],
+            body: ['"Fira Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      user-select: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-[#f8fafc] to-[#ffffff] font-body text-brand-primary flex flex-col justify-between antialiased p-4 sm:p-6 md:p-8">
+<!-- Top bar: subtle back link (14px, #475569, hover #0f172a) -->
+<header class="w-full max-w-5xl mx-auto flex items-center justify-between py-2">
+<a class="inline-flex items-center gap-1.5 text-[14px] font-normal text-brand-muted hover:text-brand-primary transition-colors duration-150 group" href="#">
+<span class="material-symbols-outlined text-[18px] transition-transform group-hover:-translate-x-0.5">arrow_back</span>
+<span class="">Back to home</span>
+</a>
+</header>
+<!-- Main Centered Authentication Column -->
+<main class="w-full flex-1 flex flex-col items-center justify-center my-6">
+<!-- Centered Brand Lockup: exactly 36px rounded square (8px radius) in navy #0f172a with white 'school' icon, next to bold 'NCCT Platform' in Hanken Grotesk 700 (#0f172a) -->
+<div class="flex items-center justify-center gap-3 mb-8">
+<div class="w-[36px] h-[36px] rounded-[8px] bg-[#0f172a] flex items-center justify-center text-white shadow-sm flex-shrink-0">
+<span class="material-symbols-outlined text-[22px]">school</span>
+</div>
+<span class="font-heading font-bold text-[22px] tracking-tight text-brand-primary">
+        NCCT Platform
+      </span>
+</div>
+<!-- The 420px Card Container: white bg, 1px #e2e8f0 border, 16px corner radius, shadow-md, 32px padding -->
+<div class="w-full max-w-[420px] bg-white border border-[#e2e8f0] rounded-[16px] shadow-md p-[32px] transition-all">
+<!-- ================= SCREEN 1: SIGN IN ================= -->
+<div id="view-signin" class="">
+<!-- Card Header -->
+<div class="mb-6">
+<div class="flex items-start justify-between">
+<h1 class="font-heading font-bold text-[24px] leading-tight text-[#0f172a] tracking-tight">Sign In</h1>
+<button class="text-[11px] font-normal text-brand-muted hover:text-brand-primary px-2 py-0.5 rounded border border-[#e2e8f0] hover:bg-slate-50 transition" onclick="toggleErrorBanner()" title="Test error alert state" type="button">
+              Toggle Error
+            </button>
+</div>
+<p class="text-brand-muted text-[14px] mt-1.5 font-normal">Enter your credentials to access your console</p>
+</div>
+<!-- Error State Banner: full-width, background #ffdad6, text/icon #ba1a1a, rounded 8px -->
+<div class="hidden mb-5 p-3 rounded-[8px] bg-[#ffdad6] text-[#ba1a1a] text-xs flex items-start gap-2.5 leading-snug" id="error-banner">
+<span class="material-symbols-outlined text-[18px] flex-shrink-0 mt-0.5 text-[#ba1a1a]">error</span>
+<div>
+<span class="font-semibold block">Authentication failed</span>
+<span class="">Invalid email address or password. Please verify your credentials.</span>
+</div>
+</div>
+<!-- Sign In Form -->
+<form class="space-y-4" id="signin-form" onsubmit="event.preventDefault();">
+<!-- Email Field: 44px input, 8px radius, white bg, 1px #e2e8f0 border, inset 'mail' icon, focus ring #0f172a -->
+<div>
+<label class="block text-xs font-semibold text-brand-primary mb-1.5" for="email">
+              Email Address
+            </label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-brand-muted">
+<span class="material-symbols-outlined text-[20px]">mail</span>
+</div>
+<input class="w-full h-[44px] pl-10 pr-3.5 bg-white border border-[#e2e8f0] rounded-[8px] text-[14px] text-brand-primary placeholder:text-slate-400 focus:outline-none focus:border-[#0f172a] focus:ring-1 focus:ring-[#0f172a] transition-colors" id="email" name="email" placeholder="name@institution.gov" required="" type="email" value="rahul.sharma@coop.gov.in">
+</div>
+</div>
+<!-- Password Field: 44px input with 'lock' icon, dots placeholder, functional clickable eye toggle -->
+<div>
+<div class="flex items-center justify-between mb-1.5">
+<label class="block text-xs font-semibold text-brand-primary" for="password">
+                Password
+              </label>
+</div>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-brand-muted">
+<span class="material-symbols-outlined text-[20px]">lock</span>
+</div>
+<input class="w-full h-[44px] pl-10 pr-11 bg-white border border-[#e2e8f0] rounded-[8px] text-[14px] text-brand-primary placeholder:text-slate-400 focus:outline-none focus:border-[#0f172a] focus:ring-1 focus:ring-[#0f172a] transition-colors tracking-wide" id="password" name="password" placeholder="••••••••••••" required="" type="password">
+<button aria-label="Toggle password visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-brand-muted hover:text-brand-primary focus:outline-none transition-colors" id="toggle-password" onclick="togglePasswordVisibility('password', 'pwd-toggle-icon')" type="button">
+<span class="material-symbols-outlined text-[20px]" id="pwd-toggle-icon">visibility</span>
+</button>
+</div>
+</div>
+<!-- Primary CTA Button: full-width, FULLY PILL-SHAPED (rounded-full), solid #f26522, hover #d95b1e, white bold 'Sign In', trailing 'arrow_forward', 44px tall -->
+<div class="pt-2">
+<button class="w-full h-[44px] rounded-full bg-[#f26522] hover:bg-[#d95b1e] text-white font-bold text-[14px] flex items-center justify-center gap-2 shadow-sm transition-all duration-150 active:scale-[0.99]" type="submit">
+<span class="">Sign In</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+<!-- Plain centered text link 'Forgot password?' (#475569, hover #0f172a) below button without button chrome -->
+<div class="text-center pt-2">
+<a class="inline-block text-[14px] font-normal text-brand-muted hover:text-[#0f172a] transition-colors focus:outline-none focus:underline" href="#forgot" onclick="showScreen('forgot')">
+              Forgot password?
+            </a>
+</div>
+</form>
+</div>
+<!-- ================= SCREEN 2: FORGOT PASSWORD ================= -->
+<div class="hidden" id="view-forgot">
+<!-- Initial Form State -->
+<div id="forgot-form-state">
+<!-- 40px circular badge (light blue bg #e0f2fe, navy #0f172a 'lock_reset' icon) next to heading -->
+<div class="flex items-center gap-3.5 mb-6">
+<div class="w-[40px] h-[40px] rounded-full bg-[#e0f2fe] flex items-center justify-center text-[#0f172a] flex-shrink-0">
+<span class="material-symbols-outlined text-[22px] text-[#0f172a]">lock_reset</span>
+</div>
+<div>
+<h2 class="font-heading font-bold text-[24px] leading-tight text-[#0f172a] tracking-tight">Forgot password</h2>
+<p class="text-brand-muted text-[14px] mt-0.5 font-normal">We'll send you instructions to reset it</p>
+</div>
+</div>
+<form class="space-y-4" onsubmit="event.preventDefault(); submitForgotForm();">
+<div>
+<label class="block text-xs font-semibold text-brand-primary mb-1.5" for="forgot-email">
+                Email Address
+              </label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-brand-muted">
+<span class="material-symbols-outlined text-[20px]">mail</span>
+</div>
+<input class="w-full h-[44px] pl-10 pr-3.5 bg-white border border-[#e2e8f0] rounded-[8px] text-[14px] text-brand-primary placeholder:text-slate-400 focus:outline-none focus:border-[#0f172a] focus:ring-1 focus:ring-[#0f172a] transition-colors" id="forgot-email" placeholder="name@institution.gov" required="" type="email">
+</div>
+</div>
+<div class="pt-2">
+<button class="w-full h-[44px] rounded-full bg-[#f26522] hover:bg-[#d95b1e] text-white font-bold text-[14px] flex items-center justify-center gap-2 shadow-sm transition-all duration-150 active:scale-[0.99]" type="submit">
+<span class="">Send reset link</span>
+<span class="material-symbols-outlined text-[18px]">send</span>
+</button>
+</div>
+<div class="text-center pt-2">
+<a class="inline-flex items-center gap-1 text-[14px] font-normal text-brand-muted hover:text-[#0f172a] transition-colors" href="#signin" onclick="showScreen('signin')">
+<span class="material-symbols-outlined text-[16px]">arrow_back</span>
+<span class="">Back to sign in</span>
+</a>
+</div>
+</form>
+</div>
+<!-- Confirmation State: mark_email_read icon, confirmation copy, primary 'Back to sign in' button -->
+<div class="hidden text-center py-3" id="forgot-sent-state">
+<div class="w-[48px] h-[48px] rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 mx-auto mb-4">
+<span class="material-symbols-outlined text-[26px]">mark_email_read</span>
+</div>
+<h3 class="font-heading font-bold text-[22px] text-[#0f172a] tracking-tight">Check your email</h3>
+<p class="text-brand-muted text-[14px] mt-2 mb-6 leading-relaxed max-w-[280px] mx-auto font-normal">
+            We have sent password recovery instructions to your registered email address.
+          </p>
+<button class="w-full h-[44px] rounded-full bg-[#f26522] hover:bg-[#d95b1e] text-white font-bold text-[14px] flex items-center justify-center gap-2 shadow-sm transition-all duration-150" onclick="showScreen('signin')" type="button">
+<span class="">Back to sign in</span>
+</button>
+</div>
+</div>
+<!-- ================= SCREEN 3: RESET PASSWORD ================= -->
+<div class="hidden" id="view-reset">
+<!-- 40px circular badge (light blue bg #e0f2fe, navy #0f172a 'password' icon) next to heading -->
+<div class="flex items-center gap-3.5 mb-6">
+<div class="w-[40px] h-[40px] rounded-full bg-[#e0f2fe] flex items-center justify-center text-[#0f172a] flex-shrink-0" id="reset-badge-icon">
+<span class="material-symbols-outlined text-[22px] text-[#0f172a]">password</span>
+</div>
+<div>
+<h2 class="font-heading font-bold text-[24px] leading-tight text-[#0f172a] tracking-tight">Set new password</h2>
+<p class="text-brand-muted text-[14px] mt-0.5 font-normal">Must be at least 8 characters long</p>
+</div>
+</div>
+<form class="space-y-4" onsubmit="event.preventDefault(); submitResetForm();">
+<!-- New Password field with lock icon & show/hide toggle -->
+<div>
+<label class="block text-xs font-semibold text-brand-primary mb-1.5" for="new-password">
+              New Password
+            </label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-brand-muted">
+<span class="material-symbols-outlined text-[20px]">lock</span>
+</div>
+<input class="w-full h-[44px] pl-10 pr-11 bg-white border border-[#e2e8f0] rounded-[8px] text-[14px] text-brand-primary placeholder:text-slate-400 focus:outline-none focus:border-[#0f172a] focus:ring-1 focus:ring-[#0f172a] transition-colors tracking-wide" id="new-password" placeholder="••••••••••••" required="" type="password">
+<button aria-label="Toggle new password visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-brand-muted hover:text-brand-primary focus:outline-none transition-colors" onclick="togglePasswordVisibility('new-password', 'new-pwd-icon')" type="button">
+<span class="material-symbols-outlined text-[20px]" id="new-pwd-icon">visibility</span>
+</button>
+</div>
+</div>
+<!-- Confirm New Password field with lock icon & show/hide toggle -->
+<div>
+<label class="block text-xs font-semibold text-brand-primary mb-1.5" for="confirm-password">
+              Confirm New Password
+            </label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-brand-muted">
+<span class="material-symbols-outlined text-[20px]">lock</span>
+</div>
+<input class="w-full h-[44px] pl-10 pr-11 bg-white border border-[#e2e8f0] rounded-[8px] text-[14px] text-brand-primary placeholder:text-slate-400 focus:outline-none focus:border-[#0f172a] focus:ring-1 focus:ring-[#0f172a] transition-colors tracking-wide" id="confirm-password" placeholder="••••••••••••" required="" type="password">
+<button aria-label="Toggle confirm password visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-brand-muted hover:text-brand-primary focus:outline-none transition-colors" onclick="togglePasswordVisibility('confirm-password', 'confirm-pwd-icon')" type="button">
+<span class="material-symbols-outlined text-[20px]" id="confirm-pwd-icon">visibility</span>
+</button>
+</div>
+</div>
+<!-- Primary pill button: Update password -->
+<div class="pt-2">
+<button class="w-full h-[44px] rounded-full bg-[#f26522] hover:bg-[#d95b1e] text-white font-bold text-[14px] flex items-center justify-center gap-2 shadow-sm transition-all duration-150 active:scale-[0.99]" type="submit">
+<span class="">Update password</span>
+<span class="material-symbols-outlined text-[18px]">check</span>
+</button>
+</div>
+<div class="text-center pt-2">
+<a class="inline-flex items-center gap-1 text-[14px] font-normal text-brand-muted hover:text-[#0f172a] transition-colors" href="#signin" onclick="showScreen('signin')">
+<span class="material-symbols-outlined text-[16px]">arrow_back</span>
+<span class="">Back to sign in</span>
+</a>
+</div>
+</form>
+</div>
+</div>
+<!-- Companion Screen Seamless Switcher Dock -->
+
+</main>
+<!-- Clean, minimal footer -->
+<footer class="w-full max-w-5xl mx-auto py-4 text-center text-xs text-brand-muted flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-slate-100">
+<div class="">
+      © 2025 National Council for Cooperative Training. All rights reserved.
+    </div>
+<div class="flex items-center gap-4 text-[11px]">
+<a class="hover:text-brand-primary transition-colors" href="#">Security Policy</a>
+<span class="text-slate-300">•</span>
+<a class="hover:text-brand-primary transition-colors" href="#">Help &amp; Support</a>
+<span class="text-slate-300">•</span>
+<a class="hover:text-brand-primary transition-colors" href="#">Privacy Notice</a>
+</div>
+</footer>
+<!-- Vanilla JS for interactive flows -->
+<script>
+    function togglePasswordVisibility(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = 'visibility_off';
+      } else {
+        input.type = 'password';
+        icon.textContent = 'visibility';
+      }
+    }
+
+    function toggleErrorBanner() {
+      const banner = document.getElementById('error-banner');
+      banner.classList.toggle('hidden');
+    }
+
+    function submitForgotForm() {
+      document.getElementById('forgot-form-state').classList.add('hidden');
+      document.getElementById('forgot-sent-state').classList.remove('hidden');
+    }
+
+    function submitResetForm() {
+      const badge = document.getElementById('reset-badge-icon');
+      badge.innerHTML = '<span class="material-symbols-outlined text-[22px] text-emerald-700">check_circle</span>';
+      badge.classList.remove('bg-[#e0f2fe]');
+      badge.classList.add('bg-emerald-50');
+      setTimeout(() => {
+        alert('Password successfully updated! Redirecting to Sign In...');
+        showScreen('signin');
+        // restore reset badge icon
+        badge.innerHTML = '<span class="material-symbols-outlined text-[22px] text-[#0f172a]">password</span>';
+        badge.classList.remove('bg-emerald-50');
+        badge.classList.add('bg-[#e0f2fe]');
+      }, 300);
+    }
+
+    function showScreen(screen) {
+      const vSignin = document.getElementById('view-signin');
+      const vForgot = document.getElementById('view-forgot');
+      const vReset = document.getElementById('view-reset');
+
+      const dSignin = document.getElementById('dock-signin');
+      const dForgot = document.getElementById('dock-forgot');
+      const dReset = document.getElementById('dock-reset');
+
+      vSignin.classList.add('hidden');
+      vForgot.classList.add('hidden');
+      vReset.classList.add('hidden');
+
+      const inactiveClass = "px-3.5 py-1.5 rounded-full text-brand-muted hover:text-brand-primary hover:bg-slate-50 transition-colors";
+      const activeClass = "px-3.5 py-1.5 rounded-full bg-[#0f172a] text-white transition-colors";
+
+      dSignin.className = inactiveClass;
+      dForgot.className = inactiveClass;
+      dReset.className = inactiveClass;
+
+      if (screen === 'signin') {
+        vSignin.classList.remove('hidden');
+        dSignin.className = activeClass;
+      } else if (screen === 'forgot') {
+        vForgot.classList.remove('hidden');
+        dForgot.className = activeClass;
+        // reset forgot internal state
+        document.getElementById('forgot-form-state').classList.remove('hidden');
+        document.getElementById('forgot-sent-state').classList.add('hidden');
+      } else if (screen === 'reset') {
+        vReset.classList.remove('hidden');
+        dReset.className = activeClass;
+      }
+    }
+  </script>
+
+
+</body></html>

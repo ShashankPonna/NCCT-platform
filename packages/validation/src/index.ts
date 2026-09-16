@@ -369,3 +369,34 @@ export const setSkillIdsSchema = z.object({
 export const askCareerCounsellorSchema = z.object({
   question: z.string().min(1).max(500),
 });
+
+// NFC Attendance Kiosk Schemas (ESP32/PN532 Kiosks)
+export const kioskTapCheckInSchema = z.object({
+  card_uid: z.string().min(4),
+  session_id: z.string().uuid().optional(),
+  tapped_at: z.string().datetime().optional(),
+});
+
+export const kioskBatchSyncSchema = z.object({
+  taps: z
+    .array(
+      z.object({
+        card_uid: z.string().min(4),
+        session_id: z.string().uuid().optional(),
+        tapped_at: z.string().datetime(),
+      }),
+    )
+    .min(1),
+});
+
+export const kioskCardEnrollSchema = z.object({
+  card_uid: z.string().min(4),
+  trainee_id: z.string().uuid(),
+  replace_existing: z.boolean().optional().default(false),
+  notes: z.string().optional(),
+});
+
+export const setKioskSessionSchema = z.object({
+  session_id: z.string().uuid().nullable(),
+});
+

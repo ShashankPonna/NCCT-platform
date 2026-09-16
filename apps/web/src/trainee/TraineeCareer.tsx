@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChatbotPanel } from "../ChatbotPanel.js";
+import { useLocale, type Locale } from "../i18n/LocaleContext.js";
 import { TraineeCareerCounsellor } from "./TraineeCareerCounsellor.js";
 import { TraineeCareerJobs } from "./TraineeCareerJobs.js";
 import { TraineeCareerSkillGap } from "./TraineeCareerSkillGap.js";
@@ -12,16 +13,26 @@ interface TraineeCareerProps {
   onSubViewChange?: (view: CareerView) => void;
 }
 
+const TAB_LABELS: Record<Locale, Record<CareerView, string>> = {
+  en: {
+    jobs: "Open Positions",
+    "skill-gap": "Skill-Gap Check",
+    ask: "Ask a Counsellor",
+    faq: "Programme FAQ",
+  },
+  hi: {
+    jobs: "खुली रिक्तियां",
+    "skill-gap": "कौशल-अंतर जांच",
+    ask: "काउंसलर से पूछें",
+    faq: "कार्यक्रम सामान्य प्रश्न",
+  },
+};
+
 // Both P1 "Skill-Gap Check" (docs/DECISIONS.md #26) and P2 "Ask a
 // Counsellor" (docs/DECISIONS.md #27) were promoted from Phase-2 into
 // scope and are wired in below alongside the MVP "Open Positions" (F6) and
 // "Programme FAQ" (F7) tabs.
-const TABS: { id: CareerView; label: string }[] = [
-  { id: "jobs", label: "Open Positions" },
-  { id: "skill-gap", label: "Skill-Gap Check" },
-  { id: "ask", label: "Ask a Counsellor" },
-  { id: "faq", label: "Programme FAQ" },
-];
+const TAB_IDS: CareerView[] = ["jobs", "skill-gap", "ask", "faq"];
 
 // Career's Stitch screens plus F7's existing chatbot, as one segmented
 // sub-nav — same "don't overload the main navbar" reasoning as
@@ -31,6 +42,8 @@ const TABS: { id: CareerView; label: string }[] = [
 // docs/DECISIONS.md #27 for why the two prompts intentionally disagree on
 // whether personalized advice is in scope.
 export function TraineeCareer({ accessToken, subView, onSubViewChange }: TraineeCareerProps) {
+  const { locale } = useLocale();
+  const labels = TAB_LABELS[locale];
   const [localView, setLocalView] = useState<CareerView>("jobs");
   const view = subView ?? localView;
 
@@ -42,18 +55,18 @@ export function TraineeCareer({ accessToken, subView, onSubViewChange }: Trainee
   return (
     <div>
       <div className="sticky top-14 z-30 -mx-margin-mobile flex gap-1 overflow-x-auto border-b border-border-low-contrast bg-background px-margin-mobile py-2 md:static md:mx-0 md:px-0">
-        {TABS.map((tab) => (
+        {TAB_IDS.map((tabId) => (
           <button
-            key={tab.id}
+            key={tabId}
             type="button"
-            onClick={() => handleTabClick(tab.id)}
+            onClick={() => handleTabClick(tabId)}
             className={`min-h-touch-target flex-shrink-0 rounded-full px-4 py-2 text-label-md transition-colors ${
-              view === tab.id
+              view === tabId
                 ? "bg-primary text-on-primary"
                 : "border border-border-low-contrast text-on-surface-variant hover:bg-surface-container-low"
             }`}
           >
-            {tab.label}
+            {labels[tabId]}
           </button>
         ))}
       </div>

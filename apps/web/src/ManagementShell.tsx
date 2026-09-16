@@ -1,5 +1,6 @@
 import type { Role } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import { LocaleToggle, useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { supabase } from "./supabaseClient.js";
 
 export type ManagementTab =
@@ -16,28 +17,141 @@ export type ManagementTab =
 
 interface NavItem {
   id: ManagementTab;
-  label: string;
+  labelKey: keyof ManagementShellText["nav"];
   icon: string;
   roles: Role[];
 }
 
 const ALL_NAV_ITEMS: NavItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: "dashboard", roles: ["admin"] },
-  { id: "users", label: "Users & Institutions", icon: "domain", roles: ["admin"] },
-  { id: "programmes", label: "Programmes", icon: "school", roles: ["admin"] },
-  { id: "content", label: "Content", icon: "description", roles: ["admin", "trainer"] },
-  { id: "attendance", label: "Attendance", icon: "calendar_today", roles: ["admin", "trainer"] },
-  { id: "kiosk", label: "NFC Kiosk", icon: "nfc", roles: ["admin", "trainer"] },
-  { id: "terminal", label: "Kiosk Terminal", icon: "point_of_sale", roles: ["admin", "trainer"] },
-  {
-    id: "chatbot",
-    label: "Chatbot Knowledge Base",
-    icon: "smart_toy",
-    roles: ["admin", "trainer"],
-  },
-  { id: "employer", label: "Jobs & Candidates", icon: "work", roles: ["employer"] },
-  { id: "profile", label: "My Profile", icon: "person", roles: ["admin", "trainer", "employer"] },
+  { id: "dashboard", labelKey: "dashboard", icon: "dashboard", roles: ["admin"] },
+  { id: "users", labelKey: "users", icon: "domain", roles: ["admin"] },
+  { id: "programmes", labelKey: "programmes", icon: "school", roles: ["admin"] },
+  { id: "content", labelKey: "content", icon: "description", roles: ["admin", "trainer"] },
+  { id: "attendance", labelKey: "attendance", icon: "calendar_today", roles: ["admin", "trainer"] },
+  { id: "kiosk", labelKey: "kiosk", icon: "nfc", roles: ["admin", "trainer"] },
+  { id: "terminal", labelKey: "terminal", icon: "point_of_sale", roles: ["admin", "trainer"] },
+  { id: "chatbot", labelKey: "chatbot", icon: "smart_toy", roles: ["admin", "trainer"] },
+  { id: "employer", labelKey: "employer", icon: "work", roles: ["employer"] },
+  { id: "profile", labelKey: "profile", icon: "person", roles: ["admin", "trainer", "employer"] },
 ];
+
+interface ManagementShellText {
+  nav: {
+    dashboard: string;
+    users: string;
+    programmes: string;
+    content: string;
+    attendance: string;
+    kiosk: string;
+    terminal: string;
+    chatbot: string;
+    employer: string;
+    profile: string;
+  };
+  roles: {
+    admin: string;
+    trainer: string;
+    employer: string;
+    trainee: string;
+  };
+  portalTag: string;
+  tagline: string;
+  skipToContent: string;
+  decreaseText: string;
+  normalText: string;
+  increaseText: string;
+  lightMode: string;
+  darkMode: string;
+  highContrast: string;
+  searchPlaceholder: string;
+  toggleTheme: string;
+  notifications: string;
+  myProfile: string;
+  signOut: string;
+  footerCopyright: string;
+  footerPrivacy: string;
+  footerTerms: string;
+  footerSupport: string;
+}
+
+const content: Record<Locale, ManagementShellText> = {
+  en: {
+    nav: {
+      dashboard: "Dashboard",
+      users: "Users & Institutions",
+      programmes: "Programmes",
+      content: "Content",
+      attendance: "Attendance",
+      kiosk: "NFC Kiosk",
+      terminal: "Kiosk Terminal",
+      chatbot: "Chatbot Knowledge Base",
+      employer: "Jobs & Candidates",
+      profile: "My Profile",
+    },
+    roles: {
+      admin: "Administrator",
+      trainer: "Trainer",
+      employer: "Employer",
+      trainee: "Trainee",
+    },
+    portalTag: "NCCT PORTAL",
+    tagline: "Cooperative Training & Certification",
+    skipToContent: "Skip To Main Content",
+    decreaseText: "Decrease text size",
+    normalText: "Normal text size",
+    increaseText: "Increase text size",
+    lightMode: "Switch to Light Mode",
+    darkMode: "Switch to Dark Mode",
+    highContrast: "High Contrast Toggle",
+    searchPlaceholder: "Search Programmes, Content, Users...",
+    toggleTheme: "Toggle Theme",
+    notifications: "Notifications",
+    myProfile: "My profile",
+    signOut: "Sign Out",
+    footerCopyright: "2026 National Council for Cooperative Training. All rights reserved.",
+    footerPrivacy: "Privacy Policy",
+    footerTerms: "Terms of Service",
+    footerSupport: "Support",
+  },
+  hi: {
+    nav: {
+      dashboard: "डैशबोर्ड",
+      users: "उपयोगकर्ता एवं संस्थान",
+      programmes: "कार्यक्रम",
+      content: "सामग्री",
+      attendance: "उपस्थिति",
+      kiosk: "NFC कियोस्क",
+      terminal: "कियोस्क टर्मिनल",
+      chatbot: "चैटबॉट ज्ञान आधार",
+      employer: "नौकरियां एवं उम्मीदवार",
+      profile: "मेरी प्रोफ़ाइल",
+    },
+    roles: {
+      admin: "प्रशासक",
+      trainer: "प्रशिक्षक",
+      employer: "नियोक्ता",
+      trainee: "प्रशिक्षणार्थी",
+    },
+    portalTag: "NCCT पोर्टल",
+    tagline: "सहकारी प्रशिक्षण एवं प्रमाणन",
+    skipToContent: "मुख्य सामग्री पर जाएं",
+    decreaseText: "फ़ॉन्ट आकार घटाएं",
+    normalText: "सामान्य फ़ॉन्ट आकार",
+    increaseText: "फ़ॉन्ट आकार बढ़ाएं",
+    lightMode: "लाइट मोड में बदलें",
+    darkMode: "डार्क मोड में बदलें",
+    highContrast: "उच्च कंट्रास्ट टॉगल",
+    searchPlaceholder: "कार्यक्रम, सामग्री, उपयोगकर्ता खोजें...",
+    toggleTheme: "थीम टॉगल करें",
+    notifications: "सूचनाएं",
+    myProfile: "मेरी प्रोफ़ाइल",
+    signOut: "साइन आउट",
+    footerCopyright: "2026 राष्ट्रीय सहकारी प्रशिक्षण परिषद। सर्वाधिकार सुरक्षित।",
+    footerPrivacy: "गोपनीयता नीति",
+    footerTerms: "सेवा की शर्तें",
+    footerSupport: "सहायता",
+  },
+};
 
 interface ManagementShellProps {
   role: Role;
@@ -54,6 +168,8 @@ export function ManagementShell({
   onNavigate,
   children,
 }: ManagementShellProps) {
+  const { locale } = useLocale();
+  const t = content[locale];
   const [searchQuery, setSearchQuery] = useState("");
   const [contrastHigh, setContrastHigh] = useState(false);
   const [isDark, setIsDark] = useState<boolean>(() => {
@@ -105,12 +221,12 @@ export function ManagementShell({
 
   const roleDisplayName =
     role === "admin"
-      ? "Administrator"
+      ? t.roles.admin
       : role === "trainer"
-        ? "Trainer"
+        ? t.roles.trainer
         : role === "employer"
-          ? "Employer"
-          : "Trainee";
+          ? t.roles.employer
+          : t.roles.trainee;
 
   return (
     <div
@@ -122,7 +238,7 @@ export function ManagementShell({
       <div className="border-b border-outline-variant bg-surface-container-low py-1.5 text-xs transition-colors">
         <div className="mx-auto flex min-h-7 max-w-container-max flex-wrap items-center justify-between gap-y-1 px-margin-mobile md:h-7 md:px-margin-desktop">
           <div className="flex items-center gap-2 text-label-sm text-on-surface-variant">
-            <span className="text-xs font-bold text-primary tracking-wide">NCCT PORTAL</span>
+            <span className="text-xs font-bold text-primary tracking-wide">{t.portalTag}</span>
             {/* The tagline is the one thing here with no hidden/sm: treatment
                 at all — unlike everything to its right, which already
                 degrades gracefully. On a phone it wrapped this bar to 3
@@ -130,9 +246,7 @@ export function ManagementShell({
                 the right edge. Hidden below sm:, same pattern as "Skip to
                 Main Content" a few elements over. */}
             <span className="hidden text-outline-variant text-[10px] sm:inline">●</span>
-            <span className="hidden text-xs text-on-surface-variant sm:inline">
-              Cooperative Training &amp; Certification
-            </span>
+            <span className="hidden text-xs text-on-surface-variant sm:inline">{t.tagline}</span>
           </div>
 
           <div className="flex items-center gap-4 text-xs text-on-surface-variant">
@@ -140,20 +254,17 @@ export function ManagementShell({
               href="#main-content"
               className="hidden transition-colors hover:text-interactive sm:inline"
             >
-              Skip To Main Content
+              {t.skipToContent}
             </a>
             <div className="hidden h-3.5 w-px bg-outline-variant sm:block" />
-            <div className="flex cursor-pointer items-center gap-1 transition-colors hover:text-interactive">
-              <span className="material-symbols-outlined text-[16px]">language</span>
-              <span>English / हिन्दी</span>
-            </div>
+            <LocaleToggle className="flex items-center gap-1 transition-colors" />
             <div className="h-3.5 w-px bg-outline-variant" />
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => adjustFontSize(-1)}
                 className="px-1 font-bold hover:text-interactive cursor-pointer"
-                title="Decrease text size"
+                title={t.decreaseText}
               >
                 A-
               </button>
@@ -161,7 +272,7 @@ export function ManagementShell({
                 type="button"
                 onClick={() => adjustFontSize(0)}
                 className="border-x border-outline-variant px-1 font-bold hover:text-interactive cursor-pointer"
-                title="Normal text size"
+                title={t.normalText}
               >
                 A
               </button>
@@ -169,7 +280,7 @@ export function ManagementShell({
                 type="button"
                 onClick={() => adjustFontSize(1)}
                 className="px-1 font-bold hover:text-interactive cursor-pointer"
-                title="Increase text size"
+                title={t.increaseText}
               >
                 A+
               </button>
@@ -177,7 +288,7 @@ export function ManagementShell({
                 type="button"
                 onClick={toggleTheme}
                 className="material-symbols-outlined ml-1 cursor-pointer text-[16px] hover:text-interactive"
-                title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                title={isDark ? t.lightMode : t.darkMode}
               >
                 {isDark ? "light_mode" : "dark_mode"}
               </button>
@@ -185,7 +296,7 @@ export function ManagementShell({
                 type="button"
                 onClick={toggleContrast}
                 className="material-symbols-outlined ml-1 cursor-pointer text-[16px] hover:text-interactive"
-                title="High Contrast Toggle"
+                title={t.highContrast}
               >
                 contrast
               </button>
@@ -220,7 +331,7 @@ export function ManagementShell({
                   NCCT Platform
                 </span>
                 <span className="hidden text-[11px] font-medium leading-tight text-on-surface-variant md:block">
-                  National Council for Cooperative Training
+                  {t.tagline}
                 </span>
               </div>
             </button>
@@ -235,7 +346,7 @@ export function ManagementShell({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search Programmes, Content, Users..."
+              placeholder={t.searchPlaceholder}
               className="h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest pl-9 pr-4 text-sm text-on-surface transition-all outline-none focus:border-interactive focus:ring-1 focus:ring-interactive placeholder:text-on-surface-variant/60"
             />
           </div>
@@ -249,8 +360,8 @@ export function ManagementShell({
             <button
               type="button"
               onClick={toggleTheme}
-              title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              aria-label="Toggle Theme"
+              title={isDark ? t.lightMode : t.darkMode}
+              aria-label={t.toggleTheme}
               className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container cursor-pointer md:h-9 md:w-9"
             >
               <span className="material-symbols-outlined text-[18px] md:text-[20px]">
@@ -265,7 +376,7 @@ export function ManagementShell({
                 lowest-cost thing left to drop on the smallest screens. */}
             <button
               type="button"
-              aria-label="Notifications"
+              aria-label={t.notifications}
               className="relative hidden h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container cursor-pointer md:flex md:h-9 md:w-9"
             >
               <span className="material-symbols-outlined text-[18px] md:text-[20px]">
@@ -276,8 +387,8 @@ export function ManagementShell({
 
             <button
               type="button"
-              aria-label="My profile"
-              title="My profile"
+              aria-label={t.myProfile}
+              title={t.myProfile}
               onClick={() => onNavigate("profile")}
               className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-surface-container cursor-pointer md:h-9 md:w-9 ${
                 activeTab === "profile" ? "text-interactive" : "text-on-surface-variant"
@@ -305,9 +416,9 @@ export function ManagementShell({
               <button
                 type="button"
                 onClick={() => void supabase.auth.signOut()}
-                title="Sign Out"
+                title={t.signOut}
                 className="ml-1 rounded p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-status-rejected cursor-pointer"
-                aria-label="Sign Out"
+                aria-label={t.signOut}
               >
                 <span className="material-symbols-outlined text-[20px]">logout</span>
               </button>
@@ -337,7 +448,7 @@ export function ManagementShell({
                   >
                     {item.icon}
                   </span>
-                  {item.label}
+                  {t.nav[item.labelKey]}
                 </button>
               );
             })}
@@ -358,19 +469,17 @@ export function ManagementShell({
         <div className="mx-auto flex max-w-container-max flex-col items-center justify-between gap-4 md:flex-row">
           <div className="flex items-center gap-2 text-on-surface-variant">
             <span className="material-symbols-outlined text-sm">copyright</span>
-            <span className="text-label-sm">
-              2026 National Council for Cooperative Training. All rights reserved.
-            </span>
+            <span className="text-label-sm">{t.footerCopyright}</span>
           </div>
           <div className="flex gap-6 text-label-sm text-interactive">
             <a href="#" className="hover:underline">
-              Privacy Policy
+              {t.footerPrivacy}
             </a>
             <a href="#" className="hover:underline">
-              Terms of Service
+              {t.footerTerms}
             </a>
             <a href="#" className="hover:underline">
-              Support
+              {t.footerSupport}
             </a>
           </div>
         </div>
@@ -380,6 +489,7 @@ export function ManagementShell({
       <nav className="fixed bottom-0 left-0 z-50 flex h-14 w-full items-center justify-around border-t border-outline-variant bg-surface-card px-2 shadow-lg md:hidden transition-colors overflow-x-auto">
         {roleNavItems.map((item) => {
           const isActive = activeTab === item.id;
+          const label = t.nav[item.labelKey];
           return (
             <button
               key={item.id}
@@ -397,7 +507,7 @@ export function ManagementShell({
                 {item.icon}
               </span>
               <span className="text-[10px] font-medium leading-tight truncate max-w-[60px]">
-                {item.label.split(" ")[0]}
+                {label.split(" ")[0]}
               </span>
             </button>
           );

@@ -1,11 +1,85 @@
 import { bindNfcTag, kioskNfcLookup } from "@ncct/api-client";
 import type { KioskProfileResult } from "@ncct/shared-types";
 import { useCallback, useRef, useState } from "react";
+import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { SkillChip, StatusPill } from "./trainee/pieces.js";
 
 interface KioskNfcReaderProps {
   accessToken: string;
 }
+
+interface KioskNfcReaderText {
+  heading: string;
+  subheading: string;
+  webSerialUnsupported: string;
+  connectReader: string;
+  readerConnected: string;
+  lastScan: string;
+  lookingUp: string;
+  verifiedTrainee: string;
+  noCooperative: string;
+  memberSince: (date: string) => string;
+  statCertificates: string;
+  statProgrammes: string;
+  statSessionsAttended: string;
+  statSkills: string;
+  noSkills: string;
+  noProgrammes: string;
+  noCertificates: string;
+  certificateFallback: string;
+  unboundPrompt: string;
+  traineeIdPlaceholder: string;
+  bindCard: string;
+}
+
+const content: Record<Locale, KioskNfcReaderText> = {
+  en: {
+    heading: "NFC Kiosk",
+    subheading: "Tap a trainee's card on the reader to look up their profile.",
+    webSerialUnsupported: "This browser doesn't support Web Serial — use Chrome or Edge on desktop.",
+    connectReader: "Connect Reader",
+    readerConnected: "Reader connected — waiting for a tap",
+    lastScan: "Last scan:",
+    lookingUp: "Looking up card...",
+    verifiedTrainee: "Verified Trainee",
+    noCooperative: "No cooperative on file",
+    memberSince: (date) => `Member since ${date}`,
+    statCertificates: "Certificates",
+    statProgrammes: "Programmes",
+    statSessionsAttended: "Sessions Attended",
+    statSkills: "Skills",
+    noSkills: "No skills recorded yet.",
+    noProgrammes: "No programme enrollments yet.",
+    noCertificates: "No certificates earned yet.",
+    certificateFallback: "Certificate",
+    unboundPrompt: "This card isn't registered to any trainee yet. Bind it now:",
+    traineeIdPlaceholder: "Trainee ID (UUID)",
+    bindCard: "Bind Card",
+  },
+  hi: {
+    heading: "NFC कियोस्क",
+    subheading: "प्रोफ़ाइल खोजने के लिए रीडर पर प्रशिक्षणार्थी का कार्ड टैप करें।",
+    webSerialUnsupported: "यह ब्राउज़र Web Serial का समर्थन नहीं करता — डेस्कटॉप पर Chrome या Edge का उपयोग करें।",
+    connectReader: "रीडर कनेक्ट करें",
+    readerConnected: "रीडर कनेक्टेड — टैप की प्रतीक्षा है",
+    lastScan: "अंतिम स्कैन:",
+    lookingUp: "कार्ड खोजा जा रहा है...",
+    verifiedTrainee: "सत्यापित प्रशिक्षणार्थी",
+    noCooperative: "कोई सहकारी संस्था दर्ज नहीं",
+    memberSince: (date) => `सदस्य बने: ${date}`,
+    statCertificates: "प्रमाणपत्र",
+    statProgrammes: "कार्यक्रम",
+    statSessionsAttended: "उपस्थित सत्र",
+    statSkills: "कौशल",
+    noSkills: "अभी तक कोई कौशल दर्ज नहीं है।",
+    noProgrammes: "अभी तक कोई कार्यक्रम नामांकन नहीं है।",
+    noCertificates: "अभी तक कोई प्रमाणपत्र अर्जित नहीं किया गया है।",
+    certificateFallback: "प्रमाणपत्र",
+    unboundPrompt: "यह कार्ड अभी तक किसी प्रशिक्षणार्थी के लिए पंजीकृत नहीं है। अभी इसे बाइंड करें:",
+    traineeIdPlaceholder: "प्रशिक्षणार्थी आईडी (UUID)",
+    bindCard: "कार्ड बाइंड करें",
+  },
+};
 
 // F10 kiosk terminal (docs/DECISIONS.md #30) — reads UIDs over Web Serial
 // from the ESP32+RC522 reader tethered by USB, rather than polling an
@@ -14,6 +88,8 @@ interface KioskNfcReaderProps {
 // so unlike an ESP32 HTTP server it works against the real deployed site,
 // not only against a localhost dev server — no mixed-content problem.
 export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
+  const { locale } = useLocale();
+  const t = content[locale];
   const [connected, setConnected] = useState(false);
   const [lastUid, setLastUid] = useState<string | null>(null);
   const [profile, setProfile] = useState<KioskProfileResult | null | "loading">(null);
@@ -50,7 +126,7 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
   async function connect() {
     setError(null);
     if (!navigator.serial) {
-      setError("This browser doesn't support Web Serial — use Chrome or Edge on desktop.");
+      setError(t.webSerialUnsupported);
       return;
     }
     try {
@@ -105,7 +181,7 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
   }
 
   function formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString(undefined, {
+    return new Date(iso).toLocaleDateString(locale === "hi" ? "hi-IN" : undefined, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -127,15 +203,22 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
     }
   }
 
+  const stats = profile && profile !== "loading"
+    ? [
+        { label: t.statCertificates, value: profile.certificates.length, icon: "workspace_premium" },
+        { label: t.statProgrammes, value: profile.programmes.length, icon: "school" },
+        { label: t.statSessionsAttended, value: profile.attendance_count, icon: "event_available" },
+        { label: t.statSkills, value: profile.skills.length, icon: "military_tech" },
+      ]
+    : [];
+
   return (
     <div className="p-margin-mobile md:p-margin-desktop max-w-5xl mx-auto w-full flex flex-col gap-6 text-left">
       <div>
         <h1 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary m-0">
-          NFC Kiosk
+          {t.heading}
         </h1>
-        <p className="font-body-md text-body-md text-on-surface-variant mt-1">
-          Tap a trainee&apos;s card on the reader to look up their profile.
-        </p>
+        <p className="font-body-md text-body-md text-on-surface-variant mt-1">{t.subheading}</p>
       </div>
 
       {error && (
@@ -152,18 +235,18 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
           className="self-start px-6 h-touch-target bg-cta text-on-primary hover:bg-cta-hover rounded-full font-label-md text-label-md transition-colors flex items-center gap-2 shadow-sm"
         >
           <span className="material-symbols-outlined text-[18px]">usb</span>
-          Connect Reader
+          {t.connectReader}
         </button>
       ) : (
         <div className="flex items-center gap-2 text-status-success font-label-md">
           <span className="material-symbols-outlined text-[18px]">nfc</span>
-          Reader connected — waiting for a tap
+          {t.readerConnected}
         </div>
       )}
 
       {lastUid && (
         <p className="font-body-sm text-on-surface-variant">
-          Last scan:{" "}
+          {t.lastScan}{" "}
           <code className="font-mono bg-surface-container px-2 py-0.5 rounded">{lastUid}</code>
         </p>
       )}
@@ -173,7 +256,7 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
           <div className="animate-spin material-symbols-outlined text-[20px]">
             progress_activity
           </div>
-          Looking up card...
+          {t.lookingUp}
         </div>
       )}
 
@@ -197,12 +280,11 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
                     </h2>
                     <span className="flex items-center gap-1 rounded-full bg-status-success/15 text-status-success px-2.5 py-0.5 font-label-sm text-label-sm font-bold">
                       <span className="material-symbols-outlined text-[14px]">verified</span>
-                      Verified Trainee
+                      {t.verifiedTrainee}
                     </span>
                   </div>
                   <p className="font-body-sm text-body-sm text-on-surface-variant m-0 mt-1">
-                    {profile.cooperative_affiliation ?? "No cooperative on file"} · Member since{" "}
-                    {formatDate(profile.member_since)}
+                    {profile.cooperative_affiliation ?? t.noCooperative} · {t.memberSince(formatDate(profile.member_since))}
                   </p>
                 </div>
                 {profile.phone && (
@@ -219,12 +301,7 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
 
           {/* Stat tiles */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { label: "Certificates", value: profile.certificates.length, icon: "workspace_premium" },
-              { label: "Programmes", value: profile.programmes.length, icon: "school" },
-              { label: "Sessions Attended", value: profile.attendance_count, icon: "event_available" },
-              { label: "Skills", value: profile.skills.length, icon: "military_tech" },
-            ].map((stat) => (
+            {stats.map((stat) => (
               <div
                 key={stat.label}
                 className="bg-surface-card border border-outline-variant rounded-xl p-4 flex flex-col gap-2 shadow-sm"
@@ -247,7 +324,7 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
             <div className="bg-surface-card border border-outline-variant rounded-xl p-6 shadow-sm">
               <h3 className="flex items-center gap-2 font-label-md text-label-md text-on-surface-variant uppercase tracking-wide m-0 mb-3">
                 <span className="material-symbols-outlined text-[18px]">military_tech</span>
-                Skills
+                {t.statSkills}
               </h3>
               {profile.skills.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
@@ -256,16 +333,14 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
                   ))}
                 </div>
               ) : (
-                <p className="font-body-sm text-body-sm text-on-surface-variant m-0">
-                  No skills recorded yet.
-                </p>
+                <p className="font-body-sm text-body-sm text-on-surface-variant m-0">{t.noSkills}</p>
               )}
             </div>
 
             <div className="bg-surface-card border border-outline-variant rounded-xl p-6 shadow-sm">
               <h3 className="flex items-center gap-2 font-label-md text-label-md text-on-surface-variant uppercase tracking-wide m-0 mb-3">
                 <span className="material-symbols-outlined text-[18px]">school</span>
-                Programmes
+                {t.statProgrammes}
               </h3>
               {profile.programmes.length > 0 ? (
                 <div className="flex flex-col gap-2">
@@ -280,16 +355,14 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
                   ))}
                 </div>
               ) : (
-                <p className="font-body-sm text-body-sm text-on-surface-variant m-0">
-                  No programme enrollments yet.
-                </p>
+                <p className="font-body-sm text-body-sm text-on-surface-variant m-0">{t.noProgrammes}</p>
               )}
             </div>
 
             <div className="bg-surface-card border border-outline-variant rounded-xl p-6 shadow-sm lg:col-span-2">
               <h3 className="flex items-center gap-2 font-label-md text-label-md text-on-surface-variant uppercase tracking-wide m-0 mb-3">
                 <span className="material-symbols-outlined text-[18px]">workspace_premium</span>
-                Certificates
+                {t.statCertificates}
               </h3>
               {profile.certificates.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -303,7 +376,7 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
                       </span>
                       <div>
                         <p className="font-body-md text-body-md text-on-surface m-0">
-                          {cert.programme_title ?? "Certificate"}
+                          {cert.programme_title ?? t.certificateFallback}
                         </p>
                         <p className="font-body-sm text-body-sm text-on-surface-variant m-0">
                           {cert.institution_name ?? "—"} · {formatDate(cert.issued_at)}
@@ -316,9 +389,7 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
                   ))}
                 </div>
               ) : (
-                <p className="font-body-sm text-body-sm text-on-surface-variant m-0">
-                  No certificates earned yet.
-                </p>
+                <p className="font-body-sm text-body-sm text-on-surface-variant m-0">{t.noCertificates}</p>
               )}
             </div>
           </div>
@@ -327,15 +398,13 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
 
       {unbound && (
         <div className="bg-surface-card border border-dashed border-outline-variant rounded-xl p-6">
-          <p className="font-body-md text-on-surface mb-3">
-            This card isn&apos;t registered to any trainee yet. Bind it now:
-          </p>
+          <p className="font-body-md text-on-surface mb-3">{t.unboundPrompt}</p>
           <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
               value={bindTraineeId}
               onChange={(e) => setBindTraineeId(e.target.value)}
-              placeholder="Trainee ID (UUID)"
+              placeholder={t.traineeIdPlaceholder}
               className="flex-1 min-h-[44px] px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg font-body-md text-body-md"
             />
             <button
@@ -344,7 +413,7 @@ export function KioskNfcReader({ accessToken }: KioskNfcReaderProps) {
               disabled={!bindTraineeId.trim()}
               className="px-6 h-touch-target bg-cta text-on-primary hover:bg-cta-hover rounded-full font-label-md text-label-md disabled:opacity-50"
             >
-              Bind Card
+              {t.bindCard}
             </button>
           </div>
         </div>

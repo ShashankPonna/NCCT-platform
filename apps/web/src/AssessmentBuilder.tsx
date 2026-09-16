@@ -7,6 +7,7 @@ import {
 import type { Assessment, AssessmentQuestion } from "@ncct/shared-types";
 import { createQuestionSchema } from "@ncct/validation";
 import { useEffect, useState } from "react";
+import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 
 interface AssessmentBuilderProps {
   accessToken: string;
@@ -15,11 +16,53 @@ interface AssessmentBuilderProps {
 
 const OPTION_LETTERS = ["a", "b", "c", "d"] as const;
 
+interface AssessmentBuilderText {
+  assessments: string;
+  titlePlaceholder: string;
+  passThresholdPlaceholder: string;
+  addAssessment: string;
+  assessmentLabel: (title: string, threshold: number | null) => string;
+  questions: string;
+  questionLine: (text: string, correctId: string) => string;
+  questionTextPlaceholder: string;
+  optionPlaceholder: (letter: string) => string;
+  addQuestion: string;
+}
+
+const content: Record<Locale, AssessmentBuilderText> = {
+  en: {
+    assessments: "Assessments",
+    titlePlaceholder: "New assessment title",
+    passThresholdPlaceholder: "Pass % (default 60)",
+    addAssessment: "Add assessment",
+    assessmentLabel: (title, threshold) => `${title} (pass ≥ ${threshold}%)`,
+    questions: "Questions",
+    questionLine: (text, correctId) => `${text} — correct: ${correctId}`,
+    questionTextPlaceholder: "Question text",
+    optionPlaceholder: (letter) => `Option ${letter.toUpperCase()}`,
+    addQuestion: "Add question",
+  },
+  hi: {
+    assessments: "मूल्यांकन",
+    titlePlaceholder: "नया मूल्यांकन शीर्षक",
+    passThresholdPlaceholder: "उत्तीर्ण % (डिफ़ॉल्ट 60)",
+    addAssessment: "मूल्यांकन जोड़ें",
+    assessmentLabel: (title, threshold) => `${title} (उत्तीर्ण ≥ ${threshold}%)`,
+    questions: "प्रश्न",
+    questionLine: (text, correctId) => `${text} — सही: ${correctId}`,
+    questionTextPlaceholder: "प्रश्न टेक्स्ट",
+    optionPlaceholder: (letter) => `विकल्प ${letter.toUpperCase()}`,
+    addQuestion: "प्रश्न जोड़ें",
+  },
+};
+
 // Minimal MCQ quiz builder: create an assessment under the selected module,
 // then add questions with up to 4 options and a marked correct answer.
 // Same "just enough to demonstrate the feature" scope as the rest of
 // AdminCourseManager, not a polished authoring tool.
 export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderProps) {
+  const { locale } = useLocale();
+  const t = content[locale];
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
@@ -111,19 +154,19 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
     // that stops iOS auto-zooming the page on focus. Self-contained here so
     // this component is correctly styled regardless of where it's embedded.
     <div className="assessment-builder legacy-ui">
-      <h3>Assessments</h3>
+      <h3>{t.assessments}</h3>
       {error && <p className="form-error">{error}</p>}
 
       <form onSubmit={handleCreateAssessment} className="inline-form">
-        <input name="title" placeholder="New assessment title" required />
+        <input name="title" placeholder={t.titlePlaceholder} required />
         <input
           name="pass_threshold_percent"
-          placeholder="Pass % (default 60)"
+          placeholder={t.passThresholdPlaceholder}
           type="number"
           min={0}
           max={100}
         />
-        <button type="submit">Add assessment</button>
+        <button type="submit">{t.addAssessment}</button>
       </form>
 
       <ul>
@@ -136,7 +179,7 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
                 loadQuestions(a.id);
               }}
             >
-              {a.title} (pass ≥ {a.pass_threshold_percent}%)
+              {t.assessmentLabel(a.title, a.pass_threshold_percent)}
             </button>
           </li>
         ))}
@@ -144,24 +187,22 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
 
       {selectedAssessmentId && (
         <div className="question-editor">
-          <h4>Questions</h4>
+          <h4>{t.questions}</h4>
           <ul>
             {questions.map((q) => (
-              <li key={q.id}>
-                {q.question_text} — correct: {q.correct_option_id}
-              </li>
+              <li key={q.id}>{t.questionLine(q.question_text, q.correct_option_id)}</li>
             ))}
           </ul>
 
           <form onSubmit={handleCreateQuestion} className="inline-form question-form">
-            <input name="question_text" placeholder="Question text" required />
+            <input name="question_text" placeholder={t.questionTextPlaceholder} required />
             {OPTION_LETTERS.map((letter) => (
               <label key={letter} className="option-input">
                 <input type="radio" name="correct_option_id" value={letter} required />
-                <input name={`option_${letter}`} placeholder={`Option ${letter.toUpperCase()}`} />
+                <input name={`option_${letter}`} placeholder={t.optionPlaceholder(letter)} />
               </label>
             ))}
-            <button type="submit">Add question</button>
+            <button type="submit">{t.addQuestion}</button>
           </form>
         </div>
       )}

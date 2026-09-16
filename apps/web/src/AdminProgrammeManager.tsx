@@ -22,13 +22,237 @@ import type {
   TimetableSession,
 } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { SkillPicker } from "./SkillPicker.js";
 
 interface AdminProgrammeManagerProps {
   accessToken: string;
 }
 
+interface AdminProgrammeManagerText {
+  heading: string;
+  subheading: string;
+  newProgramme: string;
+  searchPlaceholder: string;
+  noProgrammesFound: string;
+  mode: Record<string, string>;
+  flexibleDate: string;
+  seats: (count: number) => string;
+  openCapacity: string;
+  active: string;
+  noDescription: string;
+  institution: string;
+  independentCentral: string;
+  dates: string;
+  ongoing: string;
+  selfPaced: string;
+  nominationsLabel: string;
+  nominationsSummary: (approved: number, pending: number, total: number) => string;
+  nominationsHeading: (count: number) => string;
+  noNominationsYet: string;
+  nominatedOn: (date: string) => string;
+  approve: string;
+  waitlist: string;
+  rejectTitle: string;
+  timetableHeading: (count: number) => string;
+  cancel: string;
+  addSession: string;
+  newTimetableSession: string;
+  sessionTitleLabel: string;
+  sessionTitlePlaceholder: string;
+  startsAt: string;
+  endsAt: string;
+  locationLabel: string;
+  locationPlaceholder: string;
+  saving: string;
+  saveSession: string;
+  noSessionsYet: string;
+  scheduledSessionFallback: string;
+  sessionUuidLabel: string;
+  copySessionUuidTitle: string;
+  copySessionUuidAria: (id: string) => string;
+  copied: string;
+  copy: string;
+  copyFailedError: string;
+  skillsGranted: (count: number) => string;
+  saveSkills: string;
+  skillsGrantedBody: string;
+  newSkillPlaceholder: string;
+  addToTaxonomy: string;
+  noProgrammeSelected: string;
+  noProgrammeSelectedBody: string;
+  createNewProgramme: string;
+  programmeTitleLabel: string;
+  programmeTitlePlaceholder: string;
+  institutionLabel: string;
+  selectInstitution: string;
+  modeLabel: string;
+  capacity: string;
+  capacityPlaceholder: string;
+  startDate: string;
+  endDate: string;
+  targetAudience: string;
+  targetAudiencePlaceholder: string;
+  description: string;
+  descriptionPlaceholder: string;
+  creating: string;
+  createProgramme: string;
+  status: Record<string, string>;
+}
+
+const content: Record<Locale, AdminProgrammeManagerText> = {
+  en: {
+    heading: "Programme Management",
+    subheading: "Administer training programmes and participant nominations.",
+    newProgramme: "New Programme",
+    searchPlaceholder: "Search programmes...",
+    noProgrammesFound: "No programmes found.",
+    mode: { online: "Online", hybrid: "Hybrid", offline: "Offline" },
+    flexibleDate: "Flexible date",
+    seats: (count) => `${count} seats`,
+    openCapacity: "Open",
+    active: "Active",
+    noDescription: "No description provided.",
+    institution: "Institution",
+    independentCentral: "Independent / Central",
+    dates: "Dates",
+    ongoing: "Ongoing",
+    selfPaced: "Self-paced",
+    nominationsLabel: "Nominations",
+    nominationsSummary: (approved, pending, total) =>
+      `${approved} Approved${pending > 0 ? ` · ${pending} Pending` : ""} / ${total} Total`,
+    nominationsHeading: (count) => `Nominations (${count})`,
+    noNominationsYet: "No nominations submitted for this programme yet.",
+    nominatedOn: (date) => `Nominated: ${date}`,
+    approve: "Approve",
+    waitlist: "Waitlist",
+    rejectTitle: "Reject nomination",
+    timetableHeading: (count) => `Timetable (${count} sessions)`,
+    cancel: "Cancel",
+    addSession: "Add Session",
+    newTimetableSession: "New Timetable Session",
+    sessionTitleLabel: "Session Title",
+    sessionTitlePlaceholder: "e.g. Introduction to Cooperative Governance",
+    startsAt: "Starts At *",
+    endsAt: "Ends At *",
+    locationLabel: "Location",
+    locationPlaceholder: "e.g. Room 204 or a video-call link",
+    saving: "Saving...",
+    saveSession: "Save Session",
+    noSessionsYet: "No timetable sessions scheduled yet.",
+    scheduledSessionFallback: "Scheduled Session",
+    sessionUuidLabel: "Session UUID:",
+    copySessionUuidTitle: "Copy session UUID",
+    copySessionUuidAria: (id) => `Copy session UUID ${id}`,
+    copied: "Copied",
+    copy: "Copy",
+    copyFailedError: "Could not copy the session UUID. Please select and copy it manually.",
+    skillsGranted: (count) => `Skills Granted (${count})`,
+    saveSkills: "Save Skills",
+    skillsGrantedBody:
+      "A trainee who earns a certificate under this programme is read as having acquired every skill tagged here — this is what the Skill-Gap Check compares a job's required skills against.",
+    newSkillPlaceholder: "New skill, e.g. Bookkeeping",
+    addToTaxonomy: "Add to Taxonomy",
+    noProgrammeSelected: "No Programme Selected",
+    noProgrammeSelectedBody:
+      "Select a programme from the list on the left to review nominations, timetable schedules, and participant details.",
+    createNewProgramme: "Create New Programme",
+    programmeTitleLabel: "Programme Title *",
+    programmeTitlePlaceholder: "e.g. Sustainable Agri-Cooperative Management",
+    institutionLabel: "Institution *",
+    selectInstitution: "Select Institution...",
+    modeLabel: "Mode *",
+    capacity: "Capacity",
+    capacityPlaceholder: "e.g. 30",
+    startDate: "Start Date",
+    endDate: "End Date",
+    targetAudience: "Target Audience",
+    targetAudiencePlaceholder: "e.g. Rural youth, cooperative society secretaries",
+    description: "Description",
+    descriptionPlaceholder: "Detailed course description, prerequisites, and learning outcomes...",
+    creating: "Creating...",
+    createProgramme: "Create Programme",
+    status: { pending: "Pending", approved: "Approved", waitlisted: "Waitlisted", rejected: "Rejected" },
+  },
+  hi: {
+    heading: "कार्यक्रम प्रबंधन",
+    subheading: "प्रशिक्षण कार्यक्रमों और प्रतिभागी नामांकनों का प्रबंधन करें।",
+    newProgramme: "नया कार्यक्रम",
+    searchPlaceholder: "कार्यक्रम खोजें...",
+    noProgrammesFound: "कोई कार्यक्रम नहीं मिला।",
+    mode: { online: "ऑनलाइन", hybrid: "हाइब्रिड", offline: "ऑफ़लाइन" },
+    flexibleDate: "लचीली तिथि",
+    seats: (count) => `${count} सीटें`,
+    openCapacity: "खुला",
+    active: "सक्रिय",
+    noDescription: "कोई विवरण उपलब्ध नहीं है।",
+    institution: "संस्थान",
+    independentCentral: "स्वतंत्र / केंद्रीय",
+    dates: "तिथियां",
+    ongoing: "जारी",
+    selfPaced: "स्व-गति",
+    nominationsLabel: "नामांकन",
+    nominationsSummary: (approved, pending, total) =>
+      `${approved} स्वीकृत${pending > 0 ? ` · ${pending} लंबित` : ""} / कुल ${total}`,
+    nominationsHeading: (count) => `नामांकन (${count})`,
+    noNominationsYet: "इस कार्यक्रम के लिए अभी तक कोई नामांकन जमा नहीं किया गया है।",
+    nominatedOn: (date) => `नामांकित: ${date}`,
+    approve: "स्वीकृत करें",
+    waitlist: "प्रतीक्षा सूची में डालें",
+    rejectTitle: "नामांकन अस्वीकार करें",
+    timetableHeading: (count) => `समय-सारणी (${count} सत्र)`,
+    cancel: "रद्द करें",
+    addSession: "सत्र जोड़ें",
+    newTimetableSession: "नया समय-सारणी सत्र",
+    sessionTitleLabel: "सत्र शीर्षक",
+    sessionTitlePlaceholder: "उदा. सहकारी शासन का परिचय",
+    startsAt: "प्रारंभ समय *",
+    endsAt: "समाप्ति समय *",
+    locationLabel: "स्थान",
+    locationPlaceholder: "उदा. कक्ष 204 या वीडियो-कॉल लिंक",
+    saving: "सहेजा जा रहा है...",
+    saveSession: "सत्र सहेजें",
+    noSessionsYet: "अभी तक कोई समय-सारणी सत्र निर्धारित नहीं है।",
+    scheduledSessionFallback: "निर्धारित सत्र",
+    sessionUuidLabel: "सत्र UUID:",
+    copySessionUuidTitle: "सत्र UUID कॉपी करें",
+    copySessionUuidAria: (id) => `सत्र UUID ${id} कॉपी करें`,
+    copied: "कॉपी किया गया",
+    copy: "कॉपी करें",
+    copyFailedError: "सत्र UUID कॉपी नहीं हो सका। कृपया इसे मैन्युअल रूप से चुनें और कॉपी करें।",
+    skillsGranted: (count) => `प्रदत्त कौशल (${count})`,
+    saveSkills: "कौशल सहेजें",
+    skillsGrantedBody:
+      "जो प्रशिक्षणार्थी इस कार्यक्रम के तहत प्रमाणपत्र अर्जित करता है, उसे यहां टैग किए गए हर कौशल को अर्जित माना जाता है — कौशल-अंतर जांच किसी नौकरी के आवश्यक कौशलों की तुलना इसी से करती है।",
+    newSkillPlaceholder: "नया कौशल, उदा. बहीखाता",
+    addToTaxonomy: "वर्गीकरण में जोड़ें",
+    noProgrammeSelected: "कोई कार्यक्रम चयनित नहीं",
+    noProgrammeSelectedBody:
+      "नामांकन, समय-सारणी और प्रतिभागी विवरण की समीक्षा करने के लिए बाईं ओर सूची से एक कार्यक्रम चुनें।",
+    createNewProgramme: "नया कार्यक्रम बनाएं",
+    programmeTitleLabel: "कार्यक्रम शीर्षक *",
+    programmeTitlePlaceholder: "उदा. सतत कृषि-सहकारी प्रबंधन",
+    institutionLabel: "संस्थान *",
+    selectInstitution: "संस्थान चुनें...",
+    modeLabel: "मोड *",
+    capacity: "क्षमता",
+    capacityPlaceholder: "उदा. 30",
+    startDate: "प्रारंभ तिथि",
+    endDate: "समाप्ति तिथि",
+    targetAudience: "लक्षित दर्शक",
+    targetAudiencePlaceholder: "उदा. ग्रामीण युवा, सहकारी समिति सचिव",
+    description: "विवरण",
+    descriptionPlaceholder: "विस्तृत पाठ्यक्रम विवरण, पूर्वापेक्षाएं, और सीखने के परिणाम...",
+    creating: "बनाया जा रहा है...",
+    createProgramme: "कार्यक्रम बनाएं",
+    status: { pending: "लंबित", approved: "स्वीकृत", waitlisted: "प्रतीक्षा सूची में", rejected: "अस्वीकृत" },
+  },
+};
+
 export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProps) {
+  const { locale } = useLocale();
+  const t = content[locale];
+  const dateLocale = locale === "hi" ? "hi-IN" : undefined;
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [programmes, setProgrammes] = useState<Programme[]>([]);
   const [selectedProgrammeId, setSelectedProgrammeId] = useState<string | null>(null);
@@ -197,7 +421,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
       setCopiedSessionId(sessionId);
       window.setTimeout(() => setCopiedSessionId(null), 2000);
     } catch {
-      setError("Could not copy the session UUID. Please select and copy it manually.");
+      setError(t.copyFailedError);
     }
   }
 
@@ -210,6 +434,8 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
 
   const pendingNominations = nominations.filter((n) => n.status === "pending");
   const approvedNominations = nominations.filter((n) => n.status === "approved");
+  const modeLabel = (mode: string) => t.mode[mode] ?? mode;
+  const statusLabel = (status: string) => t.status[status] ?? status;
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden bg-background text-left">
@@ -217,11 +443,9 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
       <header className="bg-surface px-6 py-4 border-b border-outline-variant flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
         <div>
           <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary m-0">
-            Programme Management
+            {t.heading}
           </h2>
-          <p className="font-body-md text-body-md text-on-surface-variant mt-1">
-            Administer training programmes and participant nominations.
-          </p>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-1">{t.subheading}</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
@@ -229,7 +453,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
           className="bg-cta hover:bg-cta-hover text-on-primary px-6 py-2 rounded-lg font-label-md text-label-md min-h-[44px] transition-colors flex items-center gap-2 shadow-sm"
         >
           <span className="material-symbols-outlined text-[18px]">add</span>
-          New Programme
+          {t.newProgramme}
         </button>
       </header>
 
@@ -253,7 +477,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search programmes..."
+                placeholder={t.searchPlaceholder}
                 className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg pl-10 pr-4 py-2 font-body-md text-body-md focus:outline-none focus:border-cta focus:ring-1 focus:ring-cta min-h-[44px]"
                 type="text"
               />
@@ -263,9 +487,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
           {/* Programmes List */}
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {filteredProgrammes.length === 0 ? (
-              <div className="p-6 text-center text-on-surface-variant font-body-sm">
-                No programmes found.
-              </div>
+              <div className="p-6 text-center text-on-surface-variant font-body-sm">{t.noProgrammesFound}</div>
             ) : (
               filteredProgrammes.map((p) => {
                 const isSelected = p.id === selectedProgrammeId;
@@ -295,16 +517,16 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                             : "bg-tertiary-container/10 text-tertiary-container border-tertiary-container/20"
                         }`}
                       >
-                        {p.mode}
+                        {modeLabel(p.mode)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center text-xs text-on-surface-variant mt-1">
                       <span className="font-mono">
-                        {p.start_date ? new Date(p.start_date).toLocaleDateString() : "Flexible date"}
+                        {p.start_date ? new Date(p.start_date).toLocaleDateString(dateLocale) : t.flexibleDate}
                       </span>
                       <div className="flex items-center gap-1 font-medium">
                         <span className="material-symbols-outlined text-[16px]">group</span>
-                        <span>{p.capacity ? `${p.capacity} seats` : "Open"}</span>
+                        <span>{p.capacity ? t.seats(p.capacity) : t.openCapacity}</span>
                       </div>
                     </div>
                   </div>
@@ -327,11 +549,11 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                         {selectedProg.title}
                       </h2>
                       <span className="bg-status-success/15 text-status-success px-3 py-1 rounded-full font-label-sm text-label-sm border border-status-success/30 font-bold uppercase">
-                        Active
+                        {t.active}
                       </span>
                     </div>
                     <p className="font-body-md text-body-md text-on-surface-variant max-w-3xl">
-                      {selectedProg.description || "No description provided."}
+                      {selectedProg.description || t.noDescription}
                     </p>
                   </div>
                 </div>
@@ -340,34 +562,34 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                 <div className="flex flex-wrap gap-6 mt-6 p-4 bg-surface-container-lowest rounded-lg border border-outline-variant">
                   <div>
                     <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
-                      Institution
+                      {t.institution}
                     </p>
                     <p className="font-body-md text-body-md text-primary font-semibold mt-1">
-                      {selectedInst?.name ?? "Independent / Central"}
+                      {selectedInst?.name ?? t.independentCentral}
                     </p>
                   </div>
                   <div className="hidden sm:block w-px bg-outline-variant" />
                   <div>
                     <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
-                      Dates
+                      {t.dates}
                     </p>
                     <p className="font-body-md text-body-md text-primary font-semibold mt-1">
                       {selectedProg.start_date
-                        ? `${new Date(selectedProg.start_date).toLocaleDateString()} - ${
-                            selectedProg.end_date ? new Date(selectedProg.end_date).toLocaleDateString() : "Ongoing"
+                        ? `${new Date(selectedProg.start_date).toLocaleDateString(dateLocale)} - ${
+                            selectedProg.end_date
+                              ? new Date(selectedProg.end_date).toLocaleDateString(dateLocale)
+                              : t.ongoing
                           }`
-                        : "Self-paced"}
+                        : t.selfPaced}
                     </p>
                   </div>
                   <div className="hidden sm:block w-px bg-outline-variant" />
                   <div>
                     <p className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
-                      Nominations
+                      {t.nominationsLabel}
                     </p>
                     <p className="font-body-md text-body-md text-primary font-semibold mt-1">
-                      {approvedNominations.length} Approved
-                      {pendingNominations.length > 0 && ` · ${pendingNominations.length} Pending`} /{" "}
-                      {nominations.length} Total
+                      {t.nominationsSummary(approvedNominations.length, pendingNominations.length, nominations.length)}
                     </p>
                   </div>
                 </div>
@@ -379,14 +601,14 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                 <div>
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="font-headline-md text-headline-md text-primary m-0">
-                      Nominations ({nominations.length})
+                      {t.nominationsHeading(nominations.length)}
                     </h3>
                   </div>
 
                   {nominations.length === 0 ? (
                     <div className="p-8 text-center bg-surface-container-low rounded-xl border border-dashed border-outline-variant text-on-surface-variant">
                       <span className="material-symbols-outlined text-[40px] text-outline mb-2">person_off</span>
-                      <p className="font-body-md">No nominations submitted for this programme yet.</p>
+                      <p className="font-body-md">{t.noNominationsYet}</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -411,7 +633,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                                     {traineeName}
                                   </h4>
                                   <p className="font-label-sm text-label-sm text-on-surface-variant m-0">
-                                    Nominated: {new Date(nom.nominated_at).toLocaleDateString()}
+                                    {t.nominatedOn(new Date(nom.nominated_at).toLocaleDateString(dateLocale))}
                                   </p>
                                 </div>
                               </div>
@@ -426,7 +648,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                                     : "bg-status-pending/15 text-status-pending border border-status-pending/30"
                                 }`}
                               >
-                                {nom.status}
+                                {statusLabel(nom.status)}
                               </span>
                             </div>
 
@@ -438,7 +660,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                                 disabled={nom.status === "approved"}
                                 className="flex-1 bg-status-success/10 hover:bg-status-success/20 text-status-success disabled:opacity-40 px-3 py-2 rounded-lg font-label-md text-label-md min-h-[44px] transition-colors border border-status-success/30 font-semibold"
                               >
-                                Approve
+                                {t.approve}
                               </button>
                               <button
                                 type="button"
@@ -446,13 +668,13 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                                 disabled={nom.status === "waitlisted"}
                                 className="flex-1 bg-surface-container-highest hover:bg-surface-variant text-primary disabled:opacity-40 px-3 py-2 rounded-lg font-label-md text-label-md min-h-[44px] transition-colors border border-outline-variant font-semibold"
                               >
-                                Waitlist
+                                {t.waitlist}
                               </button>
                               <button
                                 type="button"
                                 onClick={() => void handleDecide(nom.id, "rejected")}
                                 disabled={nom.status === "rejected"}
-                                title="Reject nomination"
+                                title={t.rejectTitle}
                                 className="w-[44px] flex items-center justify-center bg-error-container/50 hover:bg-error-container text-error disabled:opacity-40 rounded-lg transition-colors border border-error/20"
                               >
                                 <span className="material-symbols-outlined text-[20px]">close</span>
@@ -469,7 +691,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                 <div>
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="font-headline-md text-headline-md text-primary m-0">
-                      Timetable ({sessions.length} sessions)
+                      {t.timetableHeading(sessions.length)}
                     </h3>
                     <button
                       type="button"
@@ -479,7 +701,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                       <span className="material-symbols-outlined text-[18px]">
                         {showSessionForm ? "close" : "add"}
                       </span>
-                      {showSessionForm ? "Cancel" : "Add Session"}
+                      {showSessionForm ? t.cancel : t.addSession}
                     </button>
                   </div>
 
@@ -489,22 +711,22 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                       onSubmit={(e) => void handleCreateSession(e)}
                       className="mb-6 bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm space-y-4"
                     >
-                      <h4 className="font-headline-sm text-headline-sm m-0">New Timetable Session</h4>
+                      <h4 className="font-headline-sm text-headline-sm m-0">{t.newTimetableSession}</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
                           <label className="block font-label-md text-label-md text-on-surface mb-1">
-                            Session Title
+                            {t.sessionTitleLabel}
                           </label>
                           <input
                             name="title"
-                            placeholder="e.g. Introduction to Cooperative Governance"
+                            placeholder={t.sessionTitlePlaceholder}
                             className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md min-h-[44px]"
                             type="text"
                           />
                         </div>
                         <div>
                           <label className="block font-label-md text-label-md text-on-surface mb-1">
-                            Starts At *
+                            {t.startsAt}
                           </label>
                           <input
                             name="starts_at"
@@ -515,7 +737,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                         </div>
                         <div>
                           <label className="block font-label-md text-label-md text-on-surface mb-1">
-                            Ends At *
+                            {t.endsAt}
                           </label>
                           <input
                             name="ends_at"
@@ -526,11 +748,11 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                         </div>
                         <div>
                           <label className="block font-label-md text-label-md text-on-surface mb-1">
-                            Location
+                            {t.locationLabel}
                           </label>
                           <input
                             name="location"
-                            placeholder="e.g. Room 204 or a video-call link"
+                            placeholder={t.locationPlaceholder}
                             className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 font-body-md text-body-md min-h-[44px]"
                             type="text"
                           />
@@ -542,14 +764,14 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                           onClick={() => setShowSessionForm(false)}
                           className="px-4 py-2 rounded-lg font-label-md text-label-md border border-outline-variant min-h-[44px] hover:bg-surface-variant"
                         >
-                          Cancel
+                          {t.cancel}
                         </button>
                         <button
                           disabled={busy}
                           type="submit"
                           className="px-6 py-2 rounded-lg font-label-md text-label-md bg-cta text-on-primary min-h-[44px] hover:bg-cta-hover shadow-sm"
                         >
-                          {busy ? "Saving..." : "Save Session"}
+                          {busy ? t.saving : t.saveSession}
                         </button>
                       </div>
                     </form>
@@ -557,18 +779,18 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
 
                   {/* Sessions List */}
                   {sessions.length === 0 ? (
-                    <p className="font-body-sm text-on-surface-variant">No timetable sessions scheduled yet.</p>
+                    <p className="font-body-sm text-on-surface-variant">{t.noSessionsYet}</p>
                   ) : (
                     <div className="space-y-3">
                       {sessions.map((sess) => {
                         const start = new Date(sess.starts_at);
                         const end = new Date(sess.ends_at);
-                        const month = start.toLocaleDateString(undefined, { month: "short" });
+                        const month = start.toLocaleDateString(dateLocale, { month: "short" });
                         const day = String(start.getDate()).padStart(2, "0");
-                        const timeStr = `${start.toLocaleTimeString(undefined, {
+                        const timeStr = `${start.toLocaleTimeString(dateLocale, {
                           hour: "2-digit",
                           minute: "2-digit",
-                        })} - ${end.toLocaleTimeString(undefined, {
+                        })} - ${end.toLocaleTimeString(dateLocale, {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}`;
@@ -588,7 +810,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                             </div>
                             <div className="flex-1">
                               <h4 className="font-body-md font-semibold text-primary m-0">
-                                {sess.title || "Scheduled Session"}
+                                {sess.title || t.scheduledSessionFallback}
                               </h4>
                               <p className="font-body-sm text-on-surface-variant m-0 flex items-center gap-1.5 mt-0.5">
                                 <span className="material-symbols-outlined text-[16px]">schedule</span>
@@ -596,19 +818,19 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                                 {sess.location && <span className="ml-2">• {sess.location}</span>}
                               </p>
                               <div className="flex flex-wrap items-center gap-2 mt-2">
-                                <span className="font-body-sm text-on-surface-variant">Session UUID:</span>
+                                <span className="font-body-sm text-on-surface-variant">{t.sessionUuidLabel}</span>
                                 <code className="font-body-sm text-on-surface break-all select-all">{sess.id}</code>
                                 <button
                                   type="button"
                                   onClick={() => void handleCopySessionId(sess.id)}
-                                  title="Copy session UUID"
-                                  aria-label={`Copy session UUID ${sess.id}`}
+                                  title={t.copySessionUuidTitle}
+                                  aria-label={t.copySessionUuidAria(sess.id)}
                                   className="inline-flex items-center gap-1 px-2 py-1 rounded border border-outline-variant text-primary hover:bg-surface-variant font-label-sm text-label-sm"
                                 >
                                   <span className="material-symbols-outlined text-[16px]">
                                     {copiedSessionId === sess.id ? "check" : "content_copy"}
                                   </span>
-                                  {copiedSessionId === sess.id ? "Copied" : "Copy"}
+                                  {copiedSessionId === sess.id ? t.copied : t.copy}
                                 </button>
                               </div>
                             </div>
@@ -623,7 +845,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                 <div>
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="font-headline-md text-headline-md text-primary m-0">
-                      Skills Granted ({programmeSkillIds.size})
+                      {t.skillsGranted(programmeSkillIds.size)}
                     </h3>
                     <button
                       type="button"
@@ -631,14 +853,10 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                       disabled={savingSkills}
                       className="px-4 py-2 rounded-lg font-label-md text-label-md bg-cta text-on-primary min-h-[44px] hover:bg-cta-hover shadow-sm disabled:opacity-50"
                     >
-                      {savingSkills ? "Saving..." : "Save Skills"}
+                      {savingSkills ? t.saving : t.saveSkills}
                     </button>
                   </div>
-                  <p className="font-body-sm text-on-surface-variant mb-3">
-                    A trainee who earns a certificate under this programme is read as having acquired
-                    every skill tagged here — this is what the Skill-Gap Check compares a job's required
-                    skills against.
-                  </p>
+                  <p className="font-body-sm text-on-surface-variant mb-3">{t.skillsGrantedBody}</p>
                   <SkillPicker skills={skills} selectedIds={programmeSkillIds} onToggle={toggleProgrammeSkill} />
                   <div className="flex gap-2 mt-2">
                     <input
@@ -650,7 +868,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                           void handleCreateSkill();
                         }
                       }}
-                      placeholder="New skill, e.g. Bookkeeping"
+                      placeholder={t.newSkillPlaceholder}
                       className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
                       type="text"
                     />
@@ -659,7 +877,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                       onClick={() => void handleCreateSkill()}
                       className="px-4 h-touch-target bg-surface-container-highest text-on-surface rounded-lg font-label-sm text-label-sm hover:bg-surface-variant cursor-pointer"
                     >
-                      Add to Taxonomy
+                      {t.addToTaxonomy}
                     </button>
                   </div>
                 </div>
@@ -668,10 +886,8 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-on-surface-variant">
               <span className="material-symbols-outlined text-[64px] text-outline mb-4">school</span>
-              <h3 className="font-headline-sm text-headline-sm mb-2">No Programme Selected</h3>
-              <p className="font-body-md max-w-sm">
-                Select a programme from the list on the left to review nominations, timetable schedules, and participant details.
-              </p>
+              <h3 className="font-headline-sm text-headline-sm mb-2">{t.noProgrammeSelected}</h3>
+              <p className="font-body-md max-w-sm">{t.noProgrammeSelectedBody}</p>
             </div>
           )}
         </div>
@@ -682,7 +898,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
         <div className="fixed inset-0 bg-primary/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-surface-card rounded-xl border border-outline-variant shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden text-left">
             <div className="p-6 border-b border-outline-variant flex justify-between items-center bg-surface">
-              <h2 className="font-headline-md text-headline-md text-primary m-0">Create New Programme</h2>
+              <h2 className="font-headline-md text-headline-md text-primary m-0">{t.createNewProgramme}</h2>
               <button
                 type="button"
                 onClick={() => setShowCreateModal(false)}
@@ -694,12 +910,12 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
             <form onSubmit={(e) => void handleCreateProgramme(e)} className="p-6 overflow-y-auto flex-1 space-y-4">
               <div>
                 <label className="block font-label-md text-label-md text-on-surface mb-1">
-                  Programme Title *
+                  {t.programmeTitleLabel}
                 </label>
                 <input
                   name="title"
                   required
-                  placeholder="e.g. Sustainable Agri-Cooperative Management"
+                  placeholder={t.programmeTitlePlaceholder}
                   className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md min-h-[44px] focus:ring-1 focus:ring-cta focus:border-cta"
                   type="text"
                 />
@@ -708,14 +924,14 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block font-label-md text-label-md text-on-surface mb-1">
-                    Institution *
+                    {t.institutionLabel}
                   </label>
                   <select
                     name="institution_id"
                     required
                     className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md min-h-[44px]"
                   >
-                    <option value="">Select Institution...</option>
+                    <option value="">{t.selectInstitution}</option>
                     {institutions.map((i) => (
                       <option key={i.id} value={i.id}>
                         {i.name}
@@ -725,7 +941,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                 </div>
                 <div>
                   <label className="block font-label-md text-label-md text-on-surface mb-1">
-                    Mode *
+                    {t.modeLabel}
                   </label>
                   <select
                     name="mode"
@@ -734,7 +950,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                   >
                     {PROGRAMME_MODES.map((m) => (
                       <option key={m} value={m}>
-                        {m.charAt(0).toUpperCase() + m.slice(1)}
+                        {modeLabel(m)}
                       </option>
                     ))}
                   </select>
@@ -743,17 +959,17 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block font-label-md text-label-md text-on-surface mb-1">Capacity</label>
+                  <label className="block font-label-md text-label-md text-on-surface mb-1">{t.capacity}</label>
                   <input
                     name="capacity"
-                    placeholder="e.g. 30"
+                    placeholder={t.capacityPlaceholder}
                     type="number"
                     min="1"
                     className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md min-h-[44px]"
                   />
                 </div>
                 <div>
-                  <label className="block font-label-md text-label-md text-on-surface mb-1">Start Date</label>
+                  <label className="block font-label-md text-label-md text-on-surface mb-1">{t.startDate}</label>
                   <input
                     name="start_date"
                     type="date"
@@ -761,7 +977,7 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                   />
                 </div>
                 <div>
-                  <label className="block font-label-md text-label-md text-on-surface mb-1">End Date</label>
+                  <label className="block font-label-md text-label-md text-on-surface mb-1">{t.endDate}</label>
                   <input
                     name="end_date"
                     type="date"
@@ -772,22 +988,22 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
 
               <div>
                 <label className="block font-label-md text-label-md text-on-surface mb-1">
-                  Target Audience
+                  {t.targetAudience}
                 </label>
                 <input
                   name="target_audience"
-                  placeholder="e.g. Rural youth, cooperative society secretaries"
+                  placeholder={t.targetAudiencePlaceholder}
                   className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md min-h-[44px]"
                   type="text"
                 />
               </div>
 
               <div>
-                <label className="block font-label-md text-label-md text-on-surface mb-1">Description</label>
+                <label className="block font-label-md text-label-md text-on-surface mb-1">{t.description}</label>
                 <textarea
                   name="description"
                   rows={3}
-                  placeholder="Detailed course description, prerequisites, and learning outcomes..."
+                  placeholder={t.descriptionPlaceholder}
                   className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-3 font-body-md text-body-md"
                 />
               </div>
@@ -798,14 +1014,14 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                   onClick={() => setShowCreateModal(false)}
                   className="px-6 py-2 rounded-lg font-label-md text-label-md border border-outline-variant min-h-[44px] hover:bg-surface-variant"
                 >
-                  Cancel
+                  {t.cancel}
                 </button>
                 <button
                   disabled={busy}
                   type="submit"
                   className="px-6 py-2 rounded-lg font-label-md text-label-md bg-cta text-on-primary min-h-[44px] hover:bg-cta-hover shadow-sm"
                 >
-                  {busy ? "Creating..." : "Create Programme"}
+                  {busy ? t.creating : t.createProgramme}
                 </button>
               </div>
             </form>

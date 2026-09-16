@@ -7,6 +7,7 @@ import {
 } from "@ncct/api-client";
 import type { Certificate, JobInterest, Nomination, TimetableSession } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import { useLocale, type Locale } from "../i18n/LocaleContext.js";
 import { ErrorBanner } from "./pieces.js";
 import type { TraineeTab } from "./TraineeShell.js";
 
@@ -20,6 +21,150 @@ type MyNomination = Nomination & { programmes: { title: string; mode: string } |
 type MyInterest = JobInterest & { jobs: { title: string; location: string | null } | null };
 type ProgrammeProgress = { total_lessons: number; completed_lessons: number; percent: number };
 
+interface TraineeHomeText {
+  welcome: (firstName: string | null) => string;
+  heroWithProgramme: (title: string | undefined) => string;
+  heroNoProgramme: string;
+  resumeCourse: string;
+  browsePogrammes: string;
+  continueLearning: {
+    inProgress: string;
+    notStarted: string;
+    noActiveProgramme: string;
+    modeWithLessons: (mode: string | undefined, completed: number, total: number) => string;
+    modeOnly: (mode: string | undefined) => string;
+    nominatePrompt: string;
+    progress: string;
+    goToLessons: string;
+  };
+  nextSession: {
+    upcoming: string;
+    timetableSession: string;
+    noUpcoming: string;
+    scheduledCaption: string;
+    noneScheduledWithProgramme: string;
+    noneScheduledNoProgramme: string;
+    markAttendance: string;
+  };
+  employerMatch: {
+    title: string;
+    shortlisted: (count: number) => string;
+    none: string;
+    view: string;
+  };
+  nominations: {
+    title: string;
+    pending: (count: number) => string;
+    allCaughtUp: string;
+    browse: string;
+    view: string;
+  };
+  certificates: {
+    title: (count: number) => string;
+    verified: (count: number) => string;
+    none: string;
+    view: string;
+  };
+}
+
+const content: Record<Locale, TraineeHomeText> = {
+  en: {
+    welcome: (firstName) => `Welcome back${firstName ? `, ${firstName}` : ""}!`,
+    heroWithProgramme: (title) =>
+      `You're making great progress in your ${title} certification. Your next milestone is coming up next week.`,
+    heroNoProgramme: "Explore cooperative management programmes, track your progress, and earn verified certifications.",
+    resumeCourse: "Resume Course",
+    browsePogrammes: "Browse Programmes",
+    continueLearning: {
+      inProgress: "In Progress",
+      notStarted: "Not Started",
+      noActiveProgramme: "No active programme",
+      modeWithLessons: (mode, completed, total) => `Mode: ${mode} · ${completed}/${total} lessons complete`,
+      modeOnly: (mode) => `Mode: ${mode}`,
+      nominatePrompt: "Nominate for a programme to start learning.",
+      progress: "Progress",
+      goToLessons: "Go to Lessons",
+    },
+    nextSession: {
+      upcoming: "Upcoming",
+      timetableSession: "Timetable session",
+      noUpcoming: "No upcoming sessions",
+      scheduledCaption: "Your next scheduled session for this programme.",
+      noneScheduledWithProgramme: "Nothing scheduled yet for your programme — check back later.",
+      noneScheduledNoProgramme: "Nominate for a programme to see its timetable here.",
+      markAttendance: "Mark Attendance (QR / Face)",
+    },
+    employerMatch: {
+      title: "Employer Match",
+      shortlisted: (count) => `${count} employer${count === 1 ? "" : "s"} shortlisted your profile.`,
+      none: "No employer interest yet — turn on visibility to be discovered.",
+      view: "View Open Positions",
+    },
+    nominations: {
+      title: "Nominations",
+      pending: (count) => `${count} pending review.`,
+      allCaughtUp: "All caught up — no pending nominations.",
+      browse: "Browse open programmes to get started.",
+      view: "View Programmes",
+    },
+    certificates: {
+      title: (count) => `Certificates (${count})`,
+      verified: (count) => `${count} verified credential${count === 1 ? "" : "s"}`,
+      none: "Complete quizzes to earn certificates",
+      view: "View Certificates",
+    },
+  },
+  hi: {
+    welcome: (firstName) => `वापसी पर स्वागत है${firstName ? `, ${firstName}` : ""}!`,
+    heroWithProgramme: (title) =>
+      `आप अपने ${title} प्रमाणन में अच्छी प्रगति कर रहे हैं। आपका अगला पड़ाव अगले सप्ताह आने वाला है।`,
+    heroNoProgramme: "सहकारी प्रबंधन कार्यक्रमों को देखें, अपनी प्रगति ट्रैक करें, और सत्यापित प्रमाणपत्र अर्जित करें।",
+    resumeCourse: "पाठ्यक्रम जारी रखें",
+    browsePogrammes: "कार्यक्रम देखें",
+    continueLearning: {
+      inProgress: "प्रगति में",
+      notStarted: "शुरू नहीं हुआ",
+      noActiveProgramme: "कोई सक्रिय कार्यक्रम नहीं",
+      modeWithLessons: (mode, completed, total) => `मोड: ${mode} · ${completed}/${total} पाठ पूर्ण`,
+      modeOnly: (mode) => `मोड: ${mode}`,
+      nominatePrompt: "सीखना शुरू करने के लिए किसी कार्यक्रम हेतु नामांकन करें।",
+      progress: "प्रगति",
+      goToLessons: "पाठों पर जाएं",
+    },
+    nextSession: {
+      upcoming: "आगामी",
+      timetableSession: "समय-सारणी सत्र",
+      noUpcoming: "कोई आगामी सत्र नहीं",
+      scheduledCaption: "इस कार्यक्रम के लिए आपका अगला निर्धारित सत्र।",
+      noneScheduledWithProgramme: "आपके कार्यक्रम के लिए अभी कुछ भी निर्धारित नहीं है — बाद में फिर देखें।",
+      noneScheduledNoProgramme: "यहां समय-सारणी देखने के लिए किसी कार्यक्रम हेतु नामांकन करें।",
+      markAttendance: "उपस्थिति दर्ज करें (QR / चेहरा)",
+    },
+    employerMatch: {
+      title: "नियोक्ता मिलान",
+      shortlisted: (count) =>
+        count === 1
+          ? "1 नियोक्ता ने आपकी प्रोफ़ाइल शॉर्टलिस्ट की है।"
+          : `${count} नियोक्ताओं ने आपकी प्रोफ़ाइल शॉर्टलिस्ट की है।`,
+      none: "अभी तक किसी नियोक्ता की रुचि नहीं — खोजे जाने के लिए दृश्यता चालू करें।",
+      view: "खुली रिक्तियां देखें",
+    },
+    nominations: {
+      title: "नामांकन",
+      pending: (count) => `${count} समीक्षा हेतु लंबित।`,
+      allCaughtUp: "सब कुछ अद्यतन है — कोई लंबित नामांकन नहीं।",
+      browse: "शुरू करने के लिए खुले कार्यक्रम देखें।",
+      view: "कार्यक्रम देखें",
+    },
+    certificates: {
+      title: (count) => `प्रमाणपत्र (${count})`,
+      verified: (count) => `${count} सत्यापित प्रमाणपत्र`,
+      none: "प्रमाणपत्र अर्जित करने के लिए क्विज़ पूरी करें",
+      view: "प्रमाणपत्र देखें",
+    },
+  },
+};
+
 // Fits the Stitch "Trainee - Dashboard (Mega-Menu)" hero and Bento-grid layout,
 // dynamically wired to real own-row data (approved nomination for progress,
 // shortlisted jobs count, and earned certificates). The progress percentage
@@ -28,6 +173,8 @@ type ProgrammeProgress = { total_lessons: number; completed_lessons: number; per
 // (GET /programmes/:id/progress, GET /programmes/:id/timetable); see
 // docs/IMPLEMENTATION.md's change log.
 export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomeProps) {
+  const { locale } = useLocale();
+  const t = content[locale];
   const [nominations, setNominations] = useState<MyNomination[]>([]);
   const [interests, setInterests] = useState<MyInterest[]>([]);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
@@ -82,12 +229,12 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
         <div className="relative z-10 flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <div>
             <h1 className="font-headline text-headline-lg-mobile font-bold text-on-background md:text-headline-lg">
-              Welcome back{fullName ? `, ${fullName.split(" ")[0]}` : ""}!
+              {t.welcome(fullName ? fullName.split(" ")[0] : null)}
             </h1>
             <p className="mt-2 max-w-2xl text-body-md text-on-surface-variant md:text-body-lg">
               {currentProgramme
-                ? `You're making great progress in your ${currentProgramme.programmes?.title} certification. Your next milestone is coming up next week.`
-                : "Explore cooperative management programmes, track your progress, and earn verified certifications."}
+                ? t.heroWithProgramme(currentProgramme.programmes?.title)
+                : t.heroNoProgramme}
             </p>
           </div>
           <div className="flex shrink-0 gap-3">
@@ -97,7 +244,7 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
               className="flex min-h-touch-target items-center gap-2 rounded-lg bg-cta px-6 py-3 text-label-md font-bold text-white shadow-sm transition-colors hover:bg-cta-hover"
             >
               <span className="material-symbols-outlined text-[18px]">play_arrow</span>
-              {currentProgramme ? "Resume Course" : "Browse Programmes"}
+              {currentProgramme ? t.resumeCourse : t.browsePogrammes}
             </button>
           </div>
         </div>
@@ -120,23 +267,27 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
                   : "bg-surface-container-highest text-on-surface-variant"
               }`}
             >
-              {currentProgramme ? "In Progress" : "Not Started"}
+              {currentProgramme ? t.continueLearning.inProgress : t.continueLearning.notStarted}
             </span>
           </div>
           <h3 className="mb-1.5 font-headline text-headline-sm font-bold text-on-surface">
-            {currentProgramme?.programmes?.title ?? "No active programme"}
+            {currentProgramme?.programmes?.title ?? t.continueLearning.noActiveProgramme}
           </h3>
           <p className="mb-6 flex-1 text-body-md text-on-surface-variant">
             {currentProgramme
-              ? `Mode: ${currentProgramme.programmes?.mode}${
-                  progress ? ` · ${progress.completed_lessons}/${progress.total_lessons} lessons complete` : ""
-                }`
-              : "Nominate for a programme to start learning."}
+              ? progress
+                ? t.continueLearning.modeWithLessons(
+                    currentProgramme.programmes?.mode,
+                    progress.completed_lessons,
+                    progress.total_lessons,
+                  )
+                : t.continueLearning.modeOnly(currentProgramme.programmes?.mode)
+              : t.continueLearning.nominatePrompt}
           </p>
           <div className="mt-auto flex flex-col gap-3">
             <div>
               <div className="mb-1.5 flex justify-between text-label-sm text-on-surface-variant">
-                <span>Progress</span>
+                <span>{t.continueLearning.progress}</span>
                 <span className="font-bold text-interactive">{progress ? `${progress.percent}%` : "0%"}</span>
               </div>
               <div className="h-2 w-full rounded-full bg-surface-container">
@@ -151,7 +302,7 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
               onClick={() => onNavigate("learn", "lessons")}
               className="mt-2 min-h-touch-target rounded-lg border border-interactive px-4 py-2 text-label-md font-bold text-interactive transition-colors hover:bg-interactive hover:text-white"
             >
-              Go to Lessons
+              {t.continueLearning.goToLessons}
             </button>
           </div>
         </article>
@@ -164,26 +315,26 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
             </div>
             {nextSession && (
               <span className="rounded-full bg-status-pending/10 px-2.5 py-1 text-label-sm font-bold text-status-pending">
-                Upcoming
+                {t.nextSession.upcoming}
               </span>
             )}
           </div>
           <h3 className="mb-1.5 font-headline text-headline-sm font-bold text-on-surface">
-            {nextSession ? (nextSession.title ?? "Timetable session") : "No upcoming sessions"}
+            {nextSession ? (nextSession.title ?? t.nextSession.timetableSession) : t.nextSession.noUpcoming}
           </h3>
           <p className="mb-4 flex-1 text-body-md text-on-surface-variant">
             {nextSession
-              ? "Your next scheduled session for this programme."
+              ? t.nextSession.scheduledCaption
               : currentProgramme
-                ? "Nothing scheduled yet for your programme — check back later."
-                : "Nominate for a programme to see its timetable here."}
+                ? t.nextSession.noneScheduledWithProgramme
+                : t.nextSession.noneScheduledNoProgramme}
           </p>
           {nextSession && (
             <div className="mb-4 rounded-lg bg-surface-container p-3.5 flex items-center gap-3">
               <span className="material-symbols-outlined text-outline">schedule</span>
               <div>
                 <p className="text-label-md font-bold text-on-surface">
-                  {new Date(nextSession.starts_at).toLocaleString([], {
+                  {new Date(nextSession.starts_at).toLocaleString(locale === "hi" ? "hi-IN" : undefined, {
                     dateStyle: "medium",
                     timeStyle: "short",
                   })}
@@ -199,7 +350,7 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
             onClick={() => onNavigate("attendance")}
             className="mt-auto min-h-touch-target rounded-lg border border-interactive px-4 py-2 text-label-md font-bold text-interactive transition-colors hover:bg-interactive hover:text-white"
           >
-            Mark Attendance (QR / Face)
+            {t.nextSession.markAttendance}
           </button>
         </article>
 
@@ -211,19 +362,17 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
               <span className="material-symbols-outlined">business_center</span>
             </div>
             <div className="flex-1">
-              <h4 className="text-label-md font-bold text-on-surface">Employer Match</h4>
+              <h4 className="text-label-md font-bold text-on-surface">{t.employerMatch.title}</h4>
               <p className="text-label-sm text-on-surface-variant">
-                {shortlistCount > 0
-                  ? `${shortlistCount} employer${shortlistCount === 1 ? "" : "s"} shortlisted your profile.`
-                  : "No employer interest yet — turn on visibility to be discovered."}
+                {shortlistCount > 0 ? t.employerMatch.shortlisted(shortlistCount) : t.employerMatch.none}
               </p>
             </div>
             <button
               type="button"
               onClick={() => onNavigate("career", "jobs")}
               className="rounded-full p-2 text-interactive transition-colors hover:bg-surface-container"
-              title="View Open Positions"
-              aria-label="View Open Positions"
+              title={t.employerMatch.view}
+              aria-label={t.employerMatch.view}
             >
               <span className="material-symbols-outlined">arrow_forward</span>
             </button>
@@ -238,21 +387,21 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
               <span className="material-symbols-outlined">app_registration</span>
             </div>
             <div className="flex-1">
-              <h4 className="text-label-md font-bold text-on-surface">Nominations</h4>
+              <h4 className="text-label-md font-bold text-on-surface">{t.nominations.title}</h4>
               <p className="text-label-sm text-on-surface-variant">
                 {pendingNominationCount > 0
-                  ? `${pendingNominationCount} pending review.`
+                  ? t.nominations.pending(pendingNominationCount)
                   : nominations.length > 0
-                    ? "All caught up — no pending nominations."
-                    : "Browse open programmes to get started."}
+                    ? t.nominations.allCaughtUp
+                    : t.nominations.browse}
               </p>
             </div>
             <button
               type="button"
               onClick={() => onNavigate("learn", "nominate")}
               className="rounded-full p-2 text-interactive transition-colors hover:bg-surface-container"
-              title="View Programmes"
-              aria-label="View Programmes"
+              title={t.nominations.view}
+              aria-label={t.nominations.view}
             >
               <span className="material-symbols-outlined">arrow_forward</span>
             </button>
@@ -265,13 +414,9 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
                 <span className="material-symbols-outlined">workspace_premium</span>
               </div>
               <div>
-                <h4 className="text-label-md font-bold text-on-surface">
-                  Certificates ({certificates.length})
-                </h4>
+                <h4 className="text-label-md font-bold text-on-surface">{t.certificates.title(certificates.length)}</h4>
                 <p className="text-label-sm text-on-surface-variant">
-                  {certificates.length > 0
-                    ? `${certificates.length} verified credential${certificates.length === 1 ? "" : "s"}`
-                    : "Complete quizzes to earn certificates"}
+                  {certificates.length > 0 ? t.certificates.verified(certificates.length) : t.certificates.none}
                 </p>
               </div>
             </div>
@@ -279,8 +424,8 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
               type="button"
               onClick={() => onNavigate("learn", "certificates")}
               className="rounded-full p-2 text-interactive transition-colors hover:bg-surface-container"
-              title="View Certificates"
-              aria-label="View Certificates"
+              title={t.certificates.view}
+              aria-label={t.certificates.view}
             >
               <span className="material-symbols-outlined">arrow_forward</span>
             </button>

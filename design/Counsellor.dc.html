@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: system-ui, "Segoe UI", Roboto, sans-serif; }
+    a { color: #aa3bff; text-decoration: none; }
+    a:hover { color: #8f22e0; }
+    @keyframes dc-think { 0%, 80%, 100% { opacity: 0.25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+    .think-dot { width: 6px; height: 6px; border-radius: 999px; background: #aa3bff; display: inline-block; animation: dc-think 1.25s ease-in-out infinite; }
+  </style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;display:flex;flex-direction:column;background:#fff;font-size:16px;line-height:145%;letter-spacing:0.18px;color:#6b6375;">
+
+  <header style="display:flex;align-items:center;gap:10px;padding:20px 20px 14px;border-bottom:1px solid #e5e4e7;flex:none;">
+    <a href="#" style="display:inline-flex;color:#6b6375;flex:none;">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6l-6 6 6 6"/></svg>
+    </a>
+    <div style="display:flex;flex-direction:column;gap:1px;flex:1;">
+      <h1 style="margin:0;font-size:19px;font-weight:500;letter-spacing:-0.24px;color:#08060d;line-height:125%;">Ask a counsellor</h1>
+      <span style="font-size:12px;">Uses your courses, certificates and skill gaps</span>
+    </div>
+  </header>
+
+  <div style="flex:none;padding:12px 20px 0;">
+    <div style="display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border-radius:8px;background:#f4f3ec;">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#6b6375" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:2px;"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.75v.5"/></svg>
+      <span style="font-size:13px;line-height:145%;">Guidance based on your platform activity — not a substitute for professional career counselling.</span>
+    </div>
+  </div>
+
+  <main style="flex:1;overflow:auto;display:flex;flex-direction:column;gap:12px;padding:14px 20px 18px;">
+    <sc-for list="{{turns}}" as="turn" hint-placeholder-count="4">
+
+      <sc-if value="{{turn.isUser}}" hint-placeholder-val="{{true}}">
+        <div style="align-self:flex-end;max-width:290px;padding:11px 14px;border-radius:12px 12px 4px 12px;background:rgba(170,59,255,0.1);color:#08060d;font-size:15px;line-height:145%;">{{turn.text}}</div>
+      </sc-if>
+
+      <sc-if value="{{turn.isAgent}}" hint-placeholder-val="{{true}}">
+        <div style="align-self:flex-start;max-width:320px;border:1px solid #e5e4e7;border-radius:12px 12px 12px 4px;padding:13px 14px;display:flex;flex-direction:column;gap:10px;">
+          <span style="font-size:15px;line-height:150%;color:#08060d;white-space:pre-wrap;text-wrap:pretty;">{{turn.text}}</span>
+          <div style="display:flex;flex-direction:column;gap:5px;padding-top:9px;border-top:1px solid #e5e4e7;">
+            <span style="font-size:11px;letter-spacing:0.4px;text-transform:uppercase;">Checked</span>
+            <div style="display:flex;flex-wrap:wrap;gap:5px;">
+              <sc-for list="{{turn.tools}}" as="tool" hint-placeholder-count="2">
+                <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 9px;border-radius:999px;background:#f4f3ec;color:#08060d;">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#6b6375" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+                  {{tool.label}}
+                </span>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{turn.isThinking}}" hint-placeholder-val="{{false}}">
+        <div style="align-self:flex-start;border:1px solid #e5e4e7;border-radius:12px 12px 12px 4px;padding:14px 16px;display:flex;align-items:center;gap:10px;">
+          <span style="display:inline-flex;align-items:center;gap:4px;">
+            <span class="think-dot"></span>
+            <span class="think-dot" style="animation-delay:0.15s;"></span>
+            <span class="think-dot" style="animation-delay:0.3s;"></span>
+          </span>
+          <span style="font-size:13px;">Looking at your record…</span>
+        </div>
+      </sc-if>
+
+    </sc-for>
+  </main>
+
+  <div style="flex:none;display:flex;gap:8px;padding:12px 20px;border-top:1px solid #e5e4e7;">
+    <input type="text" value="{{draft}}" onChange="{{onDraft}}" placeholder="Ask about your own path" style="flex:1;min-width:0;font:inherit;font-size:15px;min-height:44px;padding:11px 14px;border:1px solid #e5e4e7;border-radius:6px;background:#fff;color:#08060d;box-sizing:border-box;">
+    <button type="button" onClick="{{send}}" style="font:inherit;font-size:15px;min-height:44px;padding:11px 16px;border-radius:6px;border:1px solid #aa3bff;background:#aa3bff;color:#fff;cursor:pointer;flex:none;">Ask</button>
+  </div>
+
+  <nav style="flex:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;border-top:1px solid #e5e4e7;background:#fff;padding:8px 10px 16px;">
+    <a href="#" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;min-height:48px;border-radius:8px;font-size:12px;color:#6b6375;">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M9.5 20v-6h5v6"/></svg>
+      Home
+    </a>
+    <a href="#" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;min-height:48px;border-radius:8px;font-size:12px;color:#6b6375;">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7.5S10 5.5 4.5 5.5v12C10 17.5 12 19.5 12 19.5"/><path d="M12 7.5s2-2 7.5-2v12c-5.5 0-7.5 2-7.5 2"/></svg>
+      Learn
+    </a>
+    <a href="#" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;min-height:48px;border-radius:8px;font-size:12px;color:#6b6375;">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5V6a2 2 0 0 1 2-2h2.5"/><path d="M15.5 4H18a2 2 0 0 1 2 2v2.5"/><path d="M20 15.5V18a2 2 0 0 1-2 2h-2.5"/><path d="M8.5 20H6a2 2 0 0 1-2-2v-2.5"/><path d="M4 12h16"/></svg>
+      Attendance
+    </a>
+    <a href="#" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;min-height:48px;border-radius:8px;font-size:12px;color:#aa3bff;background:rgba(170,59,255,0.1);">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7.5" width="17" height="12" rx="2"/><path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5"/><path d="M3.5 12.5h17"/></svg>
+      Career
+    </a>
+  </nav>
+
+</div>
+</x-dc>
+<script data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const seed = [
+      { kind: 'user', text: 'Am I ready to apply for the dairy plant technician job?' },
+      {
+        kind: 'agent',
+        text: 'Not quite yet, but you are close. You have 3 of the 5 skills that job asks for, from your Dairy Cooperative Management certificate.\n\nCold Chain Handling is the one worth doing first — it comes up in most plant roles near Pune. Food Safety Compliance is usually taught on the job.',
+        tools: ['your certificates', 'your skill gap for this job']
+      },
+      { kind: 'user', text: 'Which programme would close that gap?' },
+      { kind: 'thinking' }
+    ];
+    const extra = (this.state && this.state.extra) ? this.state.extra : [];
+    const all = seed.concat(extra);
+    const turns = all.map((t, i) => ({
+      id: 't' + i,
+      isUser: t.kind === 'user',
+      isAgent: t.kind === 'agent',
+      isThinking: t.kind === 'thinking',
+      text: t.text || '',
+      tools: (t.tools || []).map((label, j) => ({ id: 'tool' + i + '-' + j, label: label }))
+    }));
+    const draft = (this.state && this.state.draft) ? this.state.draft : '';
+    return {
+      turns: turns,
+      draft: draft,
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      send: () => {
+        const text = draft.trim();
+        if (!text) return;
+        this.setState({
+          extra: extra.concat([{ kind: 'user', text: text }, { kind: 'thinking' }]),
+          draft: ''
+        });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

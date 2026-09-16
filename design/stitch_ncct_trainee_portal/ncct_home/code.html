@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NCCT Trainee Dashboard - Home</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&amp;family=Noto+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error": "#ffffff",
+                        "error": "#ba1a1a",
+                        "status-rejected": "#991B1B",
+                        "surface-container-highest": "#e2e2e2",
+                        "secondary-fixed-dim": "#ffb599",
+                        "on-primary-container": "#768bad",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#44474d",
+                        "on-secondary-container": "#5a1c00",
+                        "inverse-surface": "#2f3131",
+                        "tertiary": "#000c25",
+                        "on-error-container": "#93000a",
+                        "surface": "#f9f9f9",
+                        "border-low-contrast": "#E5E7EB",
+                        "surface-dim": "#dadada",
+                        "primary-fixed": "#d5e3ff",
+                        "error-container": "#ffdad6",
+                        "secondary": "#a63b00",
+                        "inverse-primary": "#b2c8ed",
+                        "surface-bright": "#f9f9f9",
+                        "on-background": "#1a1c1c",
+                        "on-secondary-fixed-variant": "#7f2b00",
+                        "outline": "#74777e",
+                        "on-primary-fixed-variant": "#334866",
+                        "on-tertiary-fixed-variant": "#004494",
+                        "inverse-on-surface": "#f1f1f1",
+                        "secondary-fixed": "#ffdbce",
+                        "primary-fixed-dim": "#b2c8ed",
+                        "status-shortlisted": "#065F46",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "on-tertiary-fixed": "#001a42",
+                        "tertiary-container": "#00214f",
+                        "primary-container": "#0b2340",
+                        "on-tertiary-container": "#5288ea",
+                        "surface-container-low": "#f3f3f3",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "status-pending": "#92400E",
+                        "on-secondary-fixed": "#370e00",
+                        "surface-card": "#FFFFFF",
+                        "outline-variant": "#c4c6ce",
+                        "background": "#f9f9f9",
+                        "surface-tint": "#4b5f7f",
+                        "on-primary-fixed": "#031c39",
+                        "surface-container-high": "#e8e8e8",
+                        "on-surface": "#1a1c1c",
+                        "tertiary-fixed-dim": "#adc6ff",
+                        "secondary-container": "#fc6c29",
+                        "tertiary-fixed": "#d8e2ff",
+                        "primary": "#000d20",
+                        "surface-container": "#eeeeee"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "container-max": "1280px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "64px",
+                        "mobile-width": "390px",
+                        "touch-target": "44px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "body-md": ["Noto Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "label-sm": ["Noto Sans"],
+                        "body-lg": ["Noto Sans"],
+                        "label-md": ["Noto Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { background-color: theme('colors.background'); color: theme('colors.on-background'); }
+        .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-weight: normal; font-style: normal; font-size: 24px; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; word-wrap: normal; direction: ltr; -webkit-font-feature-settings: 'liga'; -webkit-font-smoothing: antialiased; }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col font-body-md text-body-md">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop h-14 bg-surface dark:bg-on-background border-b border-border-low-contrast dark:border-outline-variant flat no shadows docked full-width top-0 sticky z-40 hidden md:flex">
+<div class="flex items-center gap-4 transition-colors duration-200 cursor-pointer active:scale-95 hover:bg-surface-container-low dark:hover:bg-surface-variant p-2 rounded-lg">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed" data-icon="school">school</span>
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">NCCT Platform</span>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex gap-6">
+<a class="text-primary dark:text-primary-fixed font-bold font-label-md text-label-md transition-colors duration-200 cursor-pointer active:scale-95" href="#">Home</a>
+<a class="text-on-surface-variant dark:text-outline font-label-md text-label-md transition-colors duration-200 cursor-pointer active:scale-95 hover:bg-surface-container-low dark:hover:bg-surface-variant p-2 rounded-lg" href="#">Learn</a>
+<a class="text-on-surface-variant dark:text-outline font-label-md text-label-md transition-colors duration-200 cursor-pointer active:scale-95 hover:bg-surface-container-low dark:hover:bg-surface-variant p-2 rounded-lg" href="#">Attendance</a>
+<a class="text-on-surface-variant dark:text-outline font-label-md text-label-md transition-colors duration-200 cursor-pointer active:scale-95 hover:bg-surface-container-low dark:hover:bg-surface-variant p-2 rounded-lg" href="#">Career</a>
+</nav>
+<div class="flex items-center gap-4">
+<select class="bg-surface-container border border-border-low-contrast rounded px-2 py-1 font-label-sm text-label-sm min-h-[44px]">
+<option>English</option>
+<option>Hindi</option>
+</select>
+<button class="font-label-md text-label-md text-primary dark:text-primary-fixed transition-colors duration-200 cursor-pointer active:scale-95 hover:bg-surface-container-low dark:hover:bg-surface-variant px-4 py-2 rounded-lg">Sign Out</button>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 pb-[80px] md:pb-8 flex flex-col md:flex-row gap-gutter">
+<!-- Main Column -->
+<div class="flex-grow flex flex-col gap-6">
+<!-- Greeting Section -->
+<section class="mb-2">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-on-background mb-1">Namaste, Ramesh</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Welcome back to your Cooperative Training journey.</p>
+</section>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Current Programme Card (Deep Navy) -->
+<article class="bg-primary text-on-primary rounded-xl p-6 shadow-sm col-span-1 md:col-span-2 relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-30 transition-opacity">
+<span class="material-symbols-outlined text-[120px]" data-icon="agriculture" style="font-variation-settings: 'FILL' 1;">agriculture</span>
+</div>
+<div class="relative z-10 flex flex-col h-full justify-between">
+<div>
+<div class="flex items-center gap-2 mb-4">
+<span class="bg-primary-container text-primary-fixed px-3 py-1 rounded-full font-label-sm text-label-sm">Current Programme</span>
+</div>
+<h2 class="font-headline-md text-headline-md mb-2">Advanced Agricultural Cooperatives</h2>
+<p class="font-body-md text-body-md opacity-90 max-w-[80%]">Focusing on sustainable farming practices and modern supply chain management for rural cooperatives.</p>
+</div>
+<div class="mt-6 flex justify-between items-end">
+<div class="flex items-center gap-4">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm opacity-80">Duration</span>
+<span class="font-body-md text-body-md font-bold">6 Months</span>
+</div>
+<div class="w-px h-8 bg-on-primary opacity-20"></div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm opacity-80">Cohort</span>
+<span class="font-body-md text-body-md font-bold">Q3 2024</span>
+</div>
+</div>
+</div>
+</div>
+</article>
+<!-- Continue Learning Card -->
+<article class="bg-surface-card rounded-xl p-6 border border-border-low-contrast shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between group cursor-pointer">
+<div>
+<div class="flex items-start justify-between mb-4">
+<span class="material-symbols-outlined text-secondary" data-icon="play_lesson" style="font-variation-settings: 'FILL' 1;">play_lesson</span>
+<span class="bg-surface-container text-on-surface px-2 py-1 rounded font-label-sm text-label-sm">Module 3</span>
+</div>
+<h3 class="font-label-md text-label-md font-bold mb-1">Financial Management for Co-ops</h3>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mb-4">Understanding basic accounting principles and ledger management.</p>
+</div>
+<div>
+<div class="flex justify-between font-label-sm text-label-sm mb-2 text-on-surface-variant">
+<span>Progress</span>
+<span>65%</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-2 mb-4">
+<div class="bg-secondary h-2 rounded-full" style="width: 65%"></div>
+</div>
+<button class="w-full bg-secondary text-on-secondary font-label-md text-label-md py-3 rounded-lg min-h-[44px] hover:bg-secondary-container hover:text-on-secondary-container transition-colors font-bold">Resume Module</button>
+</div>
+</article>
+<!-- Next Session Card -->
+<article class="bg-surface-card rounded-xl p-6 border border-border-low-contrast shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between mb-4">
+<span class="material-symbols-outlined text-primary" data-icon="event" style="font-variation-settings: 'FILL' 1;">event</span>
+<span class="bg-surface-container text-on-surface px-2 py-1 rounded font-label-sm text-label-sm">Upcoming</span>
+</div>
+<h3 class="font-label-md text-label-md font-bold mb-2">Guest Lecture: Cooperative Leadership</h3>
+<div class="flex flex-col gap-2 mb-4">
+<div class="flex items-center gap-2 text-on-surface-variant font-body-md text-body-md text-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="schedule">schedule</span>
+<span>Tomorrow, 10:00 AM - 12:00 PM</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-body-md text-body-md text-sm">
+<span class="material-symbols-outlined text-[16px]" data-icon="location_on">location_on</span>
+<span>Hall B, Main Training Center</span>
+</div>
+</div>
+</div>
+<button class="w-full border border-primary text-primary font-label-md text-label-md py-3 rounded-lg min-h-[44px] hover:bg-primary hover:text-on-primary transition-colors font-bold">Check-in Open Soon</button>
+</article>
+</div>
+</div>
+<!-- Right Side / Secondary Column -->
+<aside class="w-full md:w-80 flex flex-col gap-6 shrink-0">
+<!-- Employer Interest Shortlist Card -->
+<article class="bg-surface-card rounded-xl p-6 border border-status-shortlisted/30 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 right-0 w-16 h-16 bg-status-shortlisted/10 rounded-bl-full"></div>
+<div class="flex items-center gap-3 mb-4 relative z-10">
+<div class="w-10 h-10 rounded-full bg-status-shortlisted/20 flex items-center justify-center text-status-shortlisted">
+<span class="material-symbols-outlined" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md font-bold">Employer Interest</h3>
+<span class="text-status-shortlisted font-label-sm text-label-sm font-bold">Shortlisted</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mb-4">You have been shortlisted by <strong>AgriVikas Coop Ltd.</strong> for the role of Field Supervisor based on your recent assessment scores.</p>
+<button class="text-primary font-label-md text-label-md font-bold hover:underline min-h-[44px] flex items-center gap-1">
+                    View Details <span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</article>
+<!-- Skill Check Teaser Card -->
+<article class="bg-surface-container-low rounded-xl p-6 border border-border-low-contrast shadow-sm text-center flex flex-col items-center justify-center min-h-[200px]">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant mb-4">
+<span class="material-symbols-outlined" data-icon="psychology">psychology</span>
+</div>
+<h3 class="font-label-md text-label-md font-bold mb-2">Weekly Skill Check</h3>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mb-4">Test your knowledge on Module 2 and earn a proficiency badge.</p>
+<button class="border border-outline text-on-surface font-label-md text-label-md py-2 px-6 rounded-lg min-h-[44px] hover:bg-surface-container-high transition-colors">Start Quiz</button>
+</article>
+</aside>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-[56px] px-2 bg-surface dark:bg-on-background border-t border-border-low-contrast dark:border-outline-variant shadow-sm md:hidden docked full-width">
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed relative after:content-[''] after:absolute after:top-0 after:w-12 after:h-1 after:bg-secondary dark:after:bg-secondary-fixed after:rounded-full min-h-[44px] min-w-[44px] active:scale-90 transition-transform duration-150 hover:bg-surface-container-low dark:hover:bg-surface-variant rounded-lg p-1" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline min-h-[44px] min-w-[44px] active:scale-90 transition-transform duration-150 hover:bg-surface-container-low dark:hover:bg-surface-variant rounded-lg p-1" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="menu_book">menu_book</span>
+<span class="font-label-sm text-label-sm">Learn</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline min-h-[44px] min-w-[44px] active:scale-90 transition-transform duration-150 hover:bg-surface-container-low dark:hover:bg-surface-variant rounded-lg p-1" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="calendar_today">calendar_today</span>
+<span class="font-label-sm text-label-sm">Attendance</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline min-h-[44px] min-w-[44px] active:scale-90 transition-transform duration-150 hover:bg-surface-container-low dark:hover:bg-surface-variant rounded-lg p-1" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="work">work</span>
+<span class="font-label-sm text-label-sm">Career</span>
+</a>
+</nav>
+</body></html>

@@ -1,0 +1,48 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 390, "h": 844, "title": "Home", "is_interactive": false },
+    { "file": "Learn.dc.html", "x": 470, "y": 0, "w": 390, "h": 844, "title": "Learn", "is_interactive": true },
+    { "file": "Attendance.dc.html", "x": 940, "y": 0, "w": 390, "h": 844, "title": "Attendance", "is_interactive": true },
+    { "file": "Career.dc.html", "x": 1410, "y": 0, "w": 390, "h": 844, "title": "Career", "is_interactive": true },
+    { "file": "Counsellor.dc.html", "x": 1880, "y": 0, "w": 390, "h": 844, "title": "Ask a counsellor", "is_interactive": true },
+    { "file": "Desktop.dc.html", "x": 0, "y": 974, "w": 1126, "h": 980, "title": "Desktop (1126px root)", "is_interactive": false }
+  ],
+  "annotations": [
+    {
+      "id": "ia-four-tabs",
+      "x": 0,
+      "y": -210,
+      "w": 830,
+      "text": "Four tabs, not six.\nToday the trainee gets one scrolling page with no navigation at all. Grouping into Home / Learn / Attendance / Career keeps the bar under the 5-item ceiling and leaves room for P1 and P2 without adding tabs."
+    },
+    {
+      "id": "career-consolidation",
+      "x": 1410,
+      "y": -210,
+      "w": 390,
+      "text": "Career absorbs four features behind one segmented control: Jobs, Skill gap (P1), Ask (P2). This is what stops the navbar overloading as Phase-2 lands."
+    },
+    {
+      "id": "counsellor-provenance",
+      "x": 1880,
+      "y": -210,
+      "w": 390,
+      "text": "Every answer shows what it actually looked up. P2 returns toolCalls for exactly this — the trainee can see the advice came from their own record, not a guess."
+    },
+    {
+      "id": "gap-fallback",
+      "x": 1410,
+      "y": 884,
+      "w": 390,
+      "text": "Tweak on this artboard: turn Show reasoning off to see the P1 fallback state, when the AI layer is unavailable and only the deterministic gap is shown."
+    },
+    {
+      "id": "desktop-nav",
+      "x": 1206,
+      "y": 974,
+      "w": 360,
+      "text": "Same four groups become a top nav at the real 1126px root width. Base type steps 16px to 18px here, matching the app breakpoint."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

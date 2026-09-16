@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Career - Skill-Gap Check</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&amp;family=Noto+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-error": "#ffffff",
+                      "error": "#ba1a1a",
+                      "status-rejected": "#991B1B",
+                      "surface-container-highest": "#e2e2e2",
+                      "secondary-fixed-dim": "#ffb599",
+                      "on-primary-container": "#768bad",
+                      "surface-container-lowest": "#ffffff",
+                      "on-surface-variant": "#44474d",
+                      "on-secondary-container": "#5a1c00",
+                      "inverse-surface": "#2f3131",
+                      "tertiary": "#000c25",
+                      "on-error-container": "#93000a",
+                      "surface": "#f9f9f9",
+                      "border-low-contrast": "#E5E7EB",
+                      "surface-dim": "#dadada",
+                      "primary-fixed": "#d5e3ff",
+                      "error-container": "#ffdad6",
+                      "secondary": "#a63b00",
+                      "inverse-primary": "#b2c8ed",
+                      "surface-bright": "#f9f9f9",
+                      "on-background": "#1a1c1c",
+                      "on-secondary-fixed-variant": "#7f2b00",
+                      "outline": "#74777e",
+                      "on-primary-fixed-variant": "#334866",
+                      "on-tertiary-fixed-variant": "#004494",
+                      "inverse-on-surface": "#f1f1f1",
+                      "secondary-fixed": "#ffdbce",
+                      "primary-fixed-dim": "#b2c8ed",
+                      "status-shortlisted": "#065F46",
+                      "on-primary": "#ffffff",
+                      "surface-variant": "#e2e2e2",
+                      "on-tertiary-fixed": "#001a42",
+                      "tertiary-container": "#00214f",
+                      "primary-container": "#0b2340",
+                      "on-tertiary-container": "#5288ea",
+                      "surface-container-low": "#f3f3f3",
+                      "on-secondary": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "status-pending": "#92400E",
+                      "on-secondary-fixed": "#370e00",
+                      "surface-card": "#FFFFFF",
+                      "outline-variant": "#c4c6ce",
+                      "background": "#f9f9f9",
+                      "surface-tint": "#4b5f7f",
+                      "on-primary-fixed": "#031c39",
+                      "surface-container-high": "#e8e8e8",
+                      "on-surface": "#1a1c1c",
+                      "tertiary-fixed-dim": "#adc6ff",
+                      "secondary-container": "#fc6c29",
+                      "tertiary-fixed": "#d8e2ff",
+                      "primary": "#000d20",
+                      "surface-container": "#eeeeee"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "base": "8px",
+                      "container-max": "1280px",
+                      "margin-mobile": "16px",
+                      "margin-desktop": "64px",
+                      "mobile-width": "390px",
+                      "touch-target": "44px",
+                      "gutter": "24px"
+              },
+              "fontFamily": {
+                      "headline-lg": ["Plus Jakarta Sans"],
+                      "body-md": ["Noto Sans"],
+                      "headline-md": ["Plus Jakarta Sans"],
+                      "headline-lg-mobile": ["Plus Jakarta Sans"],
+                      "label-sm": ["Noto Sans"],
+                      "body-lg": ["Noto Sans"],
+                      "label-md": ["Noto Sans"]
+              },
+              "fontSize": {
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "700"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-[72px] md:pb-0 font-body-md text-body-md">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-on-background text-primary dark:text-primary-fixed border-b border-border-low-contrast dark:border-outline-variant flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop h-14 sticky top-0 z-40 transition-colors duration-200">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined cursor-pointer hover:bg-surface-container-low dark:hover:bg-surface-variant active:scale-95 transition-all duration-200 p-2 rounded-full" data-icon="school">school</span>
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">NCCT Platform</h1>
+</div>
+<div class="flex items-center gap-4 hidden md:flex">
+<nav class="flex items-center gap-6">
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-variant transition-colors duration-200 px-3 py-2 rounded-md" href="#">Home</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-variant transition-colors duration-200 px-3 py-2 rounded-md" href="#">Learn</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-variant transition-colors duration-200 px-3 py-2 rounded-md" href="#">Attendance</a>
+<a class="font-label-md text-label-md text-primary dark:text-primary-fixed font-bold hover:bg-surface-container-low dark:hover:bg-surface-variant transition-colors duration-200 px-3 py-2 rounded-md" href="#">Career</a>
+</nav>
+</div>
+<button class="font-label-md text-label-md cursor-pointer hover:bg-surface-container-low dark:hover:bg-surface-variant active:scale-95 transition-all duration-200 px-4 py-2 rounded-full border border-border-low-contrast dark:border-outline-variant hidden md:block">
+            Sign Out
+        </button>
+</header>
+<main class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Left Column: Job Context & Skills -->
+<div class="md:col-span-7 flex flex-col gap-6">
+<section class="bg-surface-card border border-border-low-contrast rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+<div class="flex items-start justify-between mb-4">
+<div>
+<h2 class="font-headline-md text-headline-md text-primary mb-1">Senior Agricultural Technician</h2>
+<p class="text-on-surface-variant font-body-md text-body-md">Rural Development Cooperative</p>
+</div>
+<span class="material-symbols-outlined text-secondary text-3xl" data-icon="agriculture" data-weight="fill" style="font-variation-settings: 'FILL' 1;">agriculture</span>
+</div>
+<div class="flex items-center gap-2 mb-6">
+<span class="bg-surface-container-low text-on-surface-variant px-3 py-1 rounded-full font-label-sm text-label-sm">Field Work</span>
+<span class="bg-surface-container-low text-on-surface-variant px-3 py-1 rounded-full font-label-sm text-label-sm">Tech Integrated</span>
+</div>
+<p class="text-on-surface-variant mb-6">Analyzing your profile against the key requirements for this role to identify areas for upskilling and immediate strengths.</p>
+<div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+<div class="bg-secondary h-full rounded-full" style="width: 65%;"></div>
+</div>
+<div class="flex justify-between mt-2 font-label-sm text-label-sm text-on-surface-variant">
+<span>Profile Match</span>
+<span class="font-bold text-secondary">65%</span>
+</div>
+</section>
+<section class="bg-surface-card border border-border-low-contrast rounded-xl p-6 shadow-sm">
+<h3 class="font-headline-md text-headline-md text-primary mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-status-shortlisted" data-icon="check_circle">check_circle</span>
+                    Skills You Have
+                </h3>
+<div class="flex flex-wrap gap-3">
+<span class="bg-primary-fixed text-primary-container px-4 py-2 rounded-full font-label-md text-label-md border border-primary-fixed-dim">Crop Yield Analysis</span>
+<span class="bg-primary-fixed text-primary-container px-4 py-2 rounded-full font-label-md text-label-md border border-primary-fixed-dim">Basic Tractor Operation</span>
+<span class="bg-primary-fixed text-primary-container px-4 py-2 rounded-full font-label-md text-label-md border border-primary-fixed-dim">Local Language (Fluent)</span>
+<span class="bg-primary-fixed text-primary-container px-4 py-2 rounded-full font-label-md text-label-md border border-primary-fixed-dim">Community Engagement</span>
+</div>
+</section>
+<section class="bg-surface-card border border-border-low-contrast rounded-xl p-6 shadow-sm">
+<h3 class="font-headline-md text-headline-md text-primary mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="pending">pending</span>
+                    Skills Missing
+                </h3>
+<div class="flex flex-wrap gap-3">
+<span class="bg-transparent text-on-surface-variant px-4 py-2 rounded-full font-label-md text-label-md border border-dashed border-outline-variant">Advanced Drone Mapping</span>
+<span class="bg-transparent text-on-surface-variant px-4 py-2 rounded-full font-label-md text-label-md border border-dashed border-outline-variant">Automated Irrigation Systems</span>
+<span class="bg-transparent text-on-surface-variant px-4 py-2 rounded-full font-label-md text-label-md border border-dashed border-outline-variant">Data Logging Software</span>
+</div>
+</section>
+</div>
+<!-- Right Column: AI Reasoning -->
+<div class="md:col-span-5">
+<section class="bg-primary text-on-primary rounded-xl p-6 sticky top-24 shadow-lg overflow-hidden relative">
+<!-- Decorative element -->
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary-container rounded-bl-full opacity-50"></div>
+<div class="relative z-10">
+<div class="flex items-center gap-3 mb-6 border-b border-primary-container pb-4">
+<div class="w-10 h-10 bg-secondary rounded-full flex items-center justify-center shadow-inner">
+<span class="material-symbols-outlined text-white" data-icon="psychology">psychology</span>
+</div>
+<h3 class="font-headline-md text-headline-md">AI Gap Analysis</h3>
+</div>
+<div class="space-y-6">
+<div class="flex gap-4">
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold font-label-sm text-label-sm">1</div>
+<div class="w-px h-full bg-primary-container my-1"></div>
+</div>
+<div class="pb-4">
+<h4 class="font-label-md text-label-md font-bold mb-1">Priority: Advanced Drone Mapping</h4>
+<p class="text-inverse-primary font-body-md text-body-md opacity-90">The cooperative has recently acquired 5 new survey drones. This skill is critical for the upcoming planting season to map soil health efficiently.</p>
+<button class="mt-3 px-4 py-2 bg-secondary text-white rounded-lg font-label-md text-label-md hover:bg-secondary-fixed-dim hover:text-on-secondary-fixed transition-colors">Start Module</button>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-surface-container-low text-on-surface-variant flex items-center justify-center font-bold font-label-sm text-label-sm">2</div>
+<div class="w-px h-full bg-primary-container my-1"></div>
+</div>
+<div class="pb-4">
+<h4 class="font-label-md text-label-md font-bold mb-1">Priority: Data Logging Software</h4>
+<p class="text-inverse-primary font-body-md text-body-md opacity-90">While you understand yield analysis, digitizing this data is now mandatory for central reporting.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex flex-col items-center">
+<div class="w-8 h-8 rounded-full bg-surface-container-low text-on-surface-variant flex items-center justify-center font-bold font-label-sm text-label-sm">3</div>
+</div>
+<div>
+<h4 class="font-label-md text-label-md font-bold mb-1">Priority: Automated Irrigation</h4>
+<p class="text-inverse-primary font-body-md text-body-md opacity-90">Less urgent as the rollout is planned for next year, but beneficial for long-term career growth.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-[56px] px-2 bg-surface dark:bg-on-background border-t border-border-low-contrast dark:border-outline-variant shadow-sm">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline w-16 h-full hover:bg-surface-container-low dark:hover:bg-surface-variant active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline w-16 h-full hover:bg-surface-container-low dark:hover:bg-surface-variant active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+<span class="font-label-sm text-label-sm mt-1">Learn</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline w-16 h-full hover:bg-surface-container-low dark:hover:bg-surface-variant active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-label-sm text-label-sm mt-1">Attendance</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed relative after:content-[''] after:absolute after:top-0 after:w-12 after:h-1 after:bg-secondary dark:after:bg-secondary-fixed after:rounded-full w-16 h-full hover:bg-surface-container-low dark:hover:bg-surface-variant active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="work" data-weight="fill" style="font-variation-settings: 'FILL' 1;">work</span>
+<span class="font-label-sm text-label-sm mt-1">Career</span>
+</a>
+</nav>
+</body></html>

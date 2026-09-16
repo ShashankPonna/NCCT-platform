@@ -1,6 +1,7 @@
 import { getAttendanceQr, getAttendanceRoster } from "@ncct/api-client";
 import type { AttendanceRecord } from "@ncct/shared-types";
 import { useState } from "react";
+import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { KioskFaceCheckIn } from "./KioskFaceCheckIn.js";
 
 interface AttendanceManagerProps {
@@ -9,7 +10,85 @@ interface AttendanceManagerProps {
 
 type RosterRow = AttendanceRecord & { profiles: { full_name: string | null } | null };
 
+interface AttendanceManagerText {
+  heading: string;
+  subheading: string;
+  sessionControls: string;
+  sessionIdLabel: string;
+  sessionIdPlaceholder: string;
+  generateQr: string;
+  loadRoster: string;
+  liveRoster: string;
+  checkedIn: (count: number) => string;
+  noRecords: string;
+  colTraineeName: string;
+  colMethod: string;
+  colMatchScore: string;
+  colRecordedAt: string;
+  traineeFallback: (idPrefix: string) => string;
+  needsReview: string;
+  scanToCheckIn: string;
+  scanInstructions: string;
+  directUrl: string;
+  linkCopied: string;
+  copyLink: string;
+  method: Record<string, string>;
+}
+
+const content: Record<Locale, AttendanceManagerText> = {
+  en: {
+    heading: "Session Attendance",
+    subheading: "Manage live check-ins, generate QR passes, and verify trainee presence.",
+    sessionControls: "Session Controls",
+    sessionIdLabel: "Session ID / UUID",
+    sessionIdPlaceholder: "Enter timetable session UUID...",
+    generateQr: "Generate QR",
+    loadRoster: "Load Roster",
+    liveRoster: "Live Roster",
+    checkedIn: (count) => `${count} Checked In`,
+    noRecords: "No attendance records logged for this session yet.",
+    colTraineeName: "Trainee Name",
+    colMethod: "Method",
+    colMatchScore: "Match Score",
+    colRecordedAt: "Recorded At",
+    traineeFallback: (idPrefix) => `Trainee #${idPrefix}`,
+    needsReview: "(Needs Review)",
+    scanToCheckIn: "Scan to Check-in",
+    scanInstructions: "Trainees can scan this QR code with the camera or mobile app.",
+    directUrl: "Direct Check-in URL",
+    linkCopied: "Link Copied!",
+    copyLink: "Copy Check-in Link",
+    method: { qr: "QR", face: "Face" },
+  },
+  hi: {
+    heading: "सत्र उपस्थिति",
+    subheading: "लाइव चेक-इन प्रबंधित करें, QR पास बनाएं, और प्रशिक्षणार्थी उपस्थिति सत्यापित करें।",
+    sessionControls: "सत्र नियंत्रण",
+    sessionIdLabel: "सत्र आईडी / UUID",
+    sessionIdPlaceholder: "समय-सारणी सत्र UUID दर्ज करें...",
+    generateQr: "QR बनाएं",
+    loadRoster: "रोस्टर लोड करें",
+    liveRoster: "लाइव रोस्टर",
+    checkedIn: (count) => `${count} चेक-इन हुए`,
+    noRecords: "इस सत्र के लिए अभी तक कोई उपस्थिति रिकॉर्ड दर्ज नहीं हुआ है।",
+    colTraineeName: "प्रशिक्षणार्थी का नाम",
+    colMethod: "तरीका",
+    colMatchScore: "मिलान स्कोर",
+    colRecordedAt: "दर्ज समय",
+    traineeFallback: (idPrefix) => `प्रशिक्षणार्थी #${idPrefix}`,
+    needsReview: "(समीक्षा आवश्यक)",
+    scanToCheckIn: "चेक-इन के लिए स्कैन करें",
+    scanInstructions: "प्रशिक्षणार्थी कैमरे या मोबाइल ऐप से इस QR कोड को स्कैन कर सकते हैं।",
+    directUrl: "सीधा चेक-इन URL",
+    linkCopied: "लिंक कॉपी हो गया!",
+    copyLink: "चेक-इन लिंक कॉपी करें",
+    method: { qr: "QR", face: "फेस" },
+  },
+};
+
 export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
+  const { locale } = useLocale();
+  const t = content[locale];
   const [sessionId, setSessionId] = useState("");
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [checkInUrl, setCheckInUrl] = useState<string | null>(null);
@@ -59,11 +138,9 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
       {/* Page Header */}
       <header className="border-b border-outline-variant pb-4">
         <h1 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface m-0">
-          Session Attendance
+          {t.heading}
         </h1>
-        <p className="font-body-md text-body-md text-on-surface-variant mt-1">
-          Manage live check-ins, generate QR passes, and verify trainee presence.
-        </p>
+        <p className="font-body-md text-body-md text-on-surface-variant mt-1">{t.subheading}</p>
       </header>
 
       {error && (
@@ -81,12 +158,12 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
           <section className="bg-surface-card border border-outline-variant rounded-xl p-6 shadow-sm">
             <h2 className="font-headline-sm text-headline-sm text-on-surface mb-6 flex items-center gap-2 m-0">
               <span className="material-symbols-outlined text-primary">settings_suggest</span>
-              Session Controls
+              {t.sessionControls}
             </h2>
             <div className="flex flex-col md:flex-row gap-4 items-end">
               <div className="flex-1 w-full flex flex-col gap-2">
                 <label htmlFor="sessionId" className="font-label-md text-label-md text-on-surface">
-                  Session ID / UUID
+                  {t.sessionIdLabel}
                 </label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">
@@ -96,7 +173,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                     id="sessionId"
                     value={sessionId}
                     onChange={(e) => setSessionId(e.target.value)}
-                    placeholder="Enter timetable session UUID..."
+                    placeholder={t.sessionIdPlaceholder}
                     className="w-full h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 pl-10 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow"
                     type="text"
                   />
@@ -111,7 +188,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                   className="h-touch-target px-6 bg-cta text-on-primary hover:bg-cta-hover disabled:opacity-50 rounded-full font-label-md text-label-md transition-colors flex items-center justify-center gap-2 whitespace-nowrap shadow-sm cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[18px]">qr_code</span>
-                  Generate QR
+                  {t.generateQr}
                 </button>
                 <button
                   type="button"
@@ -120,7 +197,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                   className="h-touch-target px-6 bg-transparent border border-outline text-primary hover:bg-surface-container-high disabled:opacity-50 rounded-full font-label-md text-label-md transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[18px]">group</span>
-                  Load Roster
+                  {t.loadRoster}
                 </button>
               </div>
             </div>
@@ -134,39 +211,38 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
               <div className="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
                 <h2 className="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2 m-0">
                   <span className="material-symbols-outlined text-primary">fact_check</span>
-                  Live Roster
+                  {t.liveRoster}
                 </h2>
                 <span className="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm font-bold">
-                  {roster.length} Checked In
+                  {t.checkedIn(roster.length)}
                 </span>
               </div>
 
               {roster.length === 0 ? (
-                <div className="p-8 text-center text-on-surface-variant font-body-sm">
-                  No attendance records logged for this session yet.
-                </div>
+                <div className="p-8 text-center text-on-surface-variant font-body-sm">{t.noRecords}</div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-surface-container-low border-b border-outline-variant">
                         <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase font-medium">
-                          Trainee Name
+                          {t.colTraineeName}
                         </th>
                         <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase font-medium">
-                          Method
+                          {t.colMethod}
                         </th>
                         <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase font-medium">
-                          Match Score
+                          {t.colMatchScore}
                         </th>
                         <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase font-medium">
-                          Recorded At
+                          {t.colRecordedAt}
                         </th>
                       </tr>
                     </thead>
                     <tbody className="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant">
                       {roster.map((row) => {
-                        const traineeName = row.profiles?.full_name ?? `Trainee #${row.trainee_id.slice(0, 8)}`;
+                        const traineeName =
+                          row.profiles?.full_name ?? t.traineeFallback(row.trainee_id.slice(0, 8));
                         const initials = traineeName.slice(0, 2).toUpperCase();
                         const isFace = row.method === "face";
                         const isReview = isFace && (row.match_score ?? 1) < 0.6;
@@ -197,7 +273,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                                 <span className="material-symbols-outlined text-[14px]">
                                   {isFace ? "face" : "qr_code_2"}
                                 </span>
-                                {row.method}
+                                {t.method[row.method] ?? row.method}
                               </span>
                             </td>
                             <td className="p-4 font-mono">
@@ -210,13 +286,13 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                               )}
                             </td>
                             <td className="p-4 text-on-surface-variant">
-                              {new Date(row.recorded_at).toLocaleTimeString([], {
+                              {new Date(row.recorded_at).toLocaleTimeString(locale === "hi" ? "hi-IN" : undefined, {
                                 hour: "2-digit",
                                 minute: "2-digit",
                               })}
                               {isReview && (
                                 <span className="text-status-rejected font-bold ml-2 text-xs">
-                                  (Needs Review)
+                                  {t.needsReview}
                                 </span>
                               )}
                             </td>
@@ -235,12 +311,8 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
         {qrDataUrl && (
           <div className="lg:col-span-4">
             <section className="bg-surface-card border border-outline-variant rounded-xl p-6 flex flex-col items-center text-center shadow-sm">
-              <h2 className="font-headline-sm text-headline-sm text-on-surface mb-2 m-0">
-                Scan to Check-in
-              </h2>
-              <p className="font-body-sm text-body-sm text-on-surface-variant mb-6">
-                Trainees can scan this QR code with the camera or mobile app.
-              </p>
+              <h2 className="font-headline-sm text-headline-sm text-on-surface mb-2 m-0">{t.scanToCheckIn}</h2>
+              <p className="font-body-sm text-body-sm text-on-surface-variant mb-6">{t.scanInstructions}</p>
               <div className="bg-surface-container-lowest border-2 border-outline-variant p-4 rounded-xl mb-6 shadow-sm">
                 <img
                   src={qrDataUrl}
@@ -250,7 +322,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
               </div>
               <div className="w-full bg-surface-container p-4 rounded-lg text-left">
                 <p className="font-label-sm text-label-sm text-outline mb-1 uppercase tracking-wider">
-                  Direct Check-in URL
+                  {t.directUrl}
                 </p>
                 <p className="font-mono text-[12px] text-primary break-all bg-surface-container-lowest p-2 rounded border border-outline-variant select-all">
                   {checkInUrl}
@@ -264,7 +336,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                 <span className="material-symbols-outlined text-[18px]">
                   {copied ? "check" : "content_copy"}
                 </span>
-                {copied ? "Link Copied!" : "Copy Check-in Link"}
+                {copied ? t.linkCopied : t.copyLink}
               </button>
             </section>
           </div>

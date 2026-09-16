@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Career - Open Positions | NCCT Platform</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&amp;family=Plus+Jakarta+Sans:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error": "#ffffff",
+                        "error": "#ba1a1a",
+                        "status-rejected": "#991B1B",
+                        "surface-container-highest": "#e2e2e2",
+                        "secondary-fixed-dim": "#ffb599",
+                        "on-primary-container": "#768bad",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#44474d",
+                        "on-secondary-container": "#5a1c00",
+                        "inverse-surface": "#2f3131",
+                        "tertiary": "#000c25",
+                        "on-error-container": "#93000a",
+                        "surface": "#f9f9f9",
+                        "border-low-contrast": "#E5E7EB",
+                        "surface-dim": "#dadada",
+                        "primary-fixed": "#d5e3ff",
+                        "error-container": "#ffdad6",
+                        "secondary": "#a63b00",
+                        "inverse-primary": "#b2c8ed",
+                        "surface-bright": "#f9f9f9",
+                        "on-background": "#1a1c1c",
+                        "on-secondary-fixed-variant": "#7f2b00",
+                        "outline": "#74777e",
+                        "on-primary-fixed-variant": "#334866",
+                        "on-tertiary-fixed-variant": "#004494",
+                        "inverse-on-surface": "#f1f1f1",
+                        "secondary-fixed": "#ffdbce",
+                        "primary-fixed-dim": "#b2c8ed",
+                        "status-shortlisted": "#065F46",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "on-tertiary-fixed": "#001a42",
+                        "tertiary-container": "#00214f",
+                        "primary-container": "#0b2340",
+                        "on-tertiary-container": "#5288ea",
+                        "surface-container-low": "#f3f3f3",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "status-pending": "#92400E",
+                        "on-secondary-fixed": "#370e00",
+                        "surface-card": "#FFFFFF",
+                        "outline-variant": "#c4c6ce",
+                        "background": "#f9f9f9",
+                        "surface-tint": "#4b5f7f",
+                        "on-primary-fixed": "#031c39",
+                        "surface-container-high": "#e8e8e8",
+                        "on-surface": "#1a1c1c",
+                        "tertiary-fixed-dim": "#adc6ff",
+                        "secondary-container": "#fc6c29",
+                        "tertiary-fixed": "#d8e2ff",
+                        "primary": "#000d20",
+                        "surface-container": "#eeeeee"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "container-max": "1280px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "64px",
+                        "mobile-width": "390px",
+                        "touch-target": "44px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "body-md": ["Noto Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "label-sm": ["Noto Sans"],
+                        "body-lg": ["Noto Sans"],
+                        "label-md": ["Noto Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #f9f9f9; }
+        .toggle-checkbox:checked { right: 0; border-color: #1E5FBF; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #1E5FBF; }
+        .toggle-checkbox:checked + .toggle-label:after { transform: translateX(100%); border-color: white; }
+        .nav-indicator { bottom: -2px; left: 50%; transform: translateX(-50%); width: 24px; height: 3px; background-color: #1E5FBF; border-radius: 3px 3px 0 0; position: absolute; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface antialiased flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-on-background docked full-width top-0 border-b border-border-low-contrast dark:border-outline-variant flat no shadows flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop h-14 sticky z-50 transition-colors duration-200">
+<div class="flex items-center gap-2 cursor-pointer active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed" data-icon="school" style="font-variation-settings: 'FILL' 1;">school</span>
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">NCCT Platform</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex items-center gap-6 mr-4">
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-variant px-3 py-2 rounded transition-colors duration-200 cursor-pointer active:scale-95" href="#">Home</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-variant px-3 py-2 rounded transition-colors duration-200 cursor-pointer active:scale-95" href="#">Learn</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-variant px-3 py-2 rounded transition-colors duration-200 cursor-pointer active:scale-95" href="#">Attendance</a>
+<a class="font-label-md text-label-md text-primary dark:text-primary-fixed font-bold relative hover:bg-surface-container-low dark:hover:bg-surface-variant px-3 py-2 rounded transition-colors duration-200 cursor-pointer active:scale-95" href="#">Career<div class="nav-indicator"></div></a>
+</div>
+<button class="font-label-md text-label-md text-primary dark:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-variant px-3 py-2 rounded transition-colors duration-200 cursor-pointer active:scale-95 flex items-center gap-1">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+                Sign Out
+            </button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 pb-[88px] md:pb-8 flex flex-col gap-8">
+<!-- Page Header & Visibility Toggle -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-surface-card border border-border-low-contrast rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+<div>
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Open Positions</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Browse relevant jobs or let employers find you.</p>
+</div>
+<div class="flex items-center gap-3 bg-surface p-3 rounded-lg border border-border-low-contrast">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-primary">Visibility Status</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Let employers find me</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in h-[44px] flex items-center justify-center">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer z-10 transition-transform duration-200 ease-in-out left-0 top-1/2 -translate-y-1/2 checked:translate-x-full checked:border-[#1E5FBF]" id="visibility-toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-[#1E5FBF] cursor-pointer w-12" for="visibility-toggle"></label>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Sidebar / Shortlisted -->
+<div class="lg:col-span-1 flex flex-col gap-6">
+<div class="bg-surface-card border border-border-low-contrast rounded-xl p-6 shadow-sm">
+<div class="flex items-center gap-2 mb-4 pb-4 border-b border-border-low-contrast">
+<span class="material-symbols-outlined text-secondary" data-icon="star">star</span>
+<h2 class="font-headline-md text-headline-md text-primary">Shortlisted For</h2>
+</div>
+<div class="flex flex-col gap-4">
+<!-- Shortlist Item 1 -->
+<div class="flex flex-col gap-2 p-3 rounded-lg hover:bg-surface-container-low transition-colors duration-150 cursor-pointer border border-transparent hover:border-border-low-contrast">
+<div class="flex justify-between items-start">
+<h3 class="font-label-md text-label-md text-primary font-bold">Junior Agronomist</h3>
+<span class="bg-[#dcfce7] text-status-shortlisted font-label-sm text-label-sm px-2 py-1 rounded-full whitespace-nowrap">Interview Set</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Kisan Co-op • Rural District</span>
+</div>
+<!-- Shortlist Item 2 -->
+<div class="flex flex-col gap-2 p-3 rounded-lg hover:bg-surface-container-low transition-colors duration-150 cursor-pointer border border-transparent hover:border-border-low-contrast">
+<div class="flex justify-between items-start">
+<h3 class="font-label-md text-label-md text-primary font-bold">Field Technician</h3>
+<span class="bg-[#fef3c7] text-status-pending font-label-sm text-label-sm px-2 py-1 rounded-full whitespace-nowrap">Under Review</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">AgriTech Solutions • City Hub</span>
+</div>
+</div>
+</div>
+<div class="bg-[#000d20] rounded-xl p-6 shadow-sm text-white overflow-hidden relative">
+<img class="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-overlay" data-alt="A modern, abstract digital graphic representing career growth and networking, featuring intersecting bright blue lines and glowing nodes against a deep navy background. The style is clean, corporate, and technological, communicating stability and professional advancement in a light-mode friendly high-contrast palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZhG0Ls1pB1ILoo1-tUs5503434nE_4ii0Oi-q321jibfnxvu3BMYPL2DPnL1c_1jobudxICo6eLolVw72P3j_I-eEhDELF01loJu3LsqQS2nnOoq5LXAOkGfCMRzQrUgooeibCGF5X4oR0xIIUX2nAbojlbCvPQrKbuZ98XMimxD1lipjh8gikb_y05PfJjNx98CmihEPxsXySyXBB9KlHxm705KLadb8JycW4S1KrI2eP6Xs5ktq"/>
+<div class="relative z-10 flex flex-col gap-4">
+<span class="material-symbols-outlined text-white text-3xl" data-icon="trending_up">trending_up</span>
+<h3 class="font-headline-md text-headline-md font-bold">Profile Strength: High</h3>
+<p class="font-body-md text-body-md opacity-90">Your profile is visible to 45 active employers in your region.</p>
+<button class="mt-2 bg-[#F26522] text-white font-label-md text-label-md px-4 py-2 rounded-lg hover:bg-[#d95b1e] transition-colors self-start min-h-[44px]">Update Skills</button>
+</div>
+</div>
+</div>
+<!-- Main Job List -->
+<div class="lg:col-span-2 flex flex-col gap-6">
+<div class="flex justify-between items-end mb-2">
+<h2 class="font-headline-md text-headline-md text-primary">Open Jobs</h2>
+<div class="flex gap-2">
+<button class="text-on-surface-variant hover:text-primary p-2 rounded-lg hover:bg-surface-container-low transition-colors min-h-[44px] flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="filter_list">filter_list</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary p-2 rounded-lg hover:bg-surface-container-low transition-colors min-h-[44px] flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="sort">sort</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col gap-4">
+<!-- Job Card 1 -->
+<div class="bg-surface-card border border-border-low-contrast rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 group">
+<div class="flex flex-col md:flex-row gap-4 items-start md:items-center">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center flex-shrink-0 text-primary">
+<span class="material-symbols-outlined text-2xl" data-icon="local_florist">local_florist</span>
+</div>
+<div class="flex-grow">
+<h3 class="font-headline-md text-headline-md text-primary font-bold group-hover:text-[#1E5FBF] transition-colors">Sustainable Farming Associate</h3>
+<div class="flex flex-wrap gap-x-4 gap-y-1 mt-1 font-label-md text-label-md text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm" data-icon="business">business</span> EcoFarms Co-operative</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span> Northern District (On-site)</span>
+</div>
+</div>
+<button class="hidden md:block border border-[#1E5FBF] text-[#1E5FBF] font-label-md text-label-md px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors whitespace-nowrap min-h-[44px]">Apply Now</button>
+</div>
+<div class="mt-4 pt-4 border-t border-border-low-contrast flex flex-wrap gap-2">
+<span class="bg-[#e0f2fe] text-[#0369a1] font-label-sm text-label-sm px-3 py-1.5 rounded-full border border-[#bae6fd]">Soil Analysis</span>
+<span class="bg-[#e0f2fe] text-[#0369a1] font-label-sm text-label-sm px-3 py-1.5 rounded-full border border-[#bae6fd]">Crop Rotation</span>
+<span class="bg-transparent text-on-surface-variant font-label-sm text-label-sm px-3 py-1.5 rounded-full border border-dashed border-border-low-contrast">Drone Operation</span>
+</div>
+<button class="mt-4 w-full md:hidden border border-[#1E5FBF] text-[#1E5FBF] font-label-md text-label-md px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors min-h-[44px]">Apply Now</button>
+</div>
+<!-- Job Card 2 -->
+<div class="bg-surface-card border border-border-low-contrast rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 group">
+<div class="flex flex-col md:flex-row gap-4 items-start md:items-center">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center flex-shrink-0 text-primary">
+<span class="material-symbols-outlined text-2xl" data-icon="precision_manufacturing">precision_manufacturing</span>
+</div>
+<div class="flex-grow">
+<h3 class="font-headline-md text-headline-md text-primary font-bold group-hover:text-[#1E5FBF] transition-colors">Tractor Maintenance Technician</h3>
+<div class="flex flex-wrap gap-x-4 gap-y-1 mt-1 font-label-md text-label-md text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm" data-icon="business">business</span> Regional Mech Services</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span> Central Hub (Workshop)</span>
+</div>
+</div>
+<button class="hidden md:block border border-[#1E5FBF] text-[#1E5FBF] font-label-md text-label-md px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors whitespace-nowrap min-h-[44px]">Apply Now</button>
+</div>
+<div class="mt-4 pt-4 border-t border-border-low-contrast flex flex-wrap gap-2">
+<span class="bg-[#e0f2fe] text-[#0369a1] font-label-sm text-label-sm px-3 py-1.5 rounded-full border border-[#bae6fd]">Diesel Engines</span>
+<span class="bg-[#e0f2fe] text-[#0369a1] font-label-sm text-label-sm px-3 py-1.5 rounded-full border border-[#bae6fd]">Hydraulics</span>
+<span class="bg-[#e0f2fe] text-[#0369a1] font-label-sm text-label-sm px-3 py-1.5 rounded-full border border-[#bae6fd]">Basic Welding</span>
+</div>
+<button class="mt-4 w-full md:hidden border border-[#1E5FBF] text-[#1E5FBF] font-label-md text-label-md px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors min-h-[44px]">Apply Now</button>
+</div>
+<!-- Job Card 3 -->
+<div class="bg-surface-card border border-border-low-contrast rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 group">
+<div class="flex flex-col md:flex-row gap-4 items-start md:items-center">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center flex-shrink-0 text-primary">
+<span class="material-symbols-outlined text-2xl" data-icon="inventory">inventory</span>
+</div>
+<div class="flex-grow">
+<h3 class="font-headline-md text-headline-md text-primary font-bold group-hover:text-[#1E5FBF] transition-colors">Supply Chain Coordinator</h3>
+<div class="flex flex-wrap gap-x-4 gap-y-1 mt-1 font-label-md text-label-md text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm" data-icon="business">business</span> National Co-op Logistics</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span> Hybrid / Multiple</span>
+</div>
+</div>
+<button class="hidden md:block border border-[#1E5FBF] text-[#1E5FBF] font-label-md text-label-md px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors whitespace-nowrap min-h-[44px]">Apply Now</button>
+</div>
+<div class="mt-4 pt-4 border-t border-border-low-contrast flex flex-wrap gap-2">
+<span class="bg-[#e0f2fe] text-[#0369a1] font-label-sm text-label-sm px-3 py-1.5 rounded-full border border-[#bae6fd]">Inventory Mgmt</span>
+<span class="bg-transparent text-on-surface-variant font-label-sm text-label-sm px-3 py-1.5 rounded-full border border-dashed border-border-low-contrast">SAP / ERP</span>
+<span class="bg-[#e0f2fe] text-[#0369a1] font-label-sm text-label-sm px-3 py-1.5 rounded-full border border-[#bae6fd]">Logistics Planning</span>
+</div>
+<button class="mt-4 w-full md:hidden border border-[#1E5FBF] text-[#1E5FBF] font-label-md text-label-md px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors min-h-[44px]">Apply Now</button>
+</div>
+</div>
+<div class="flex justify-center mt-4">
+<button class="bg-surface-container-low text-primary font-label-md text-label-md px-6 py-2 rounded-lg hover:bg-surface-variant transition-colors min-h-[44px]">Load More Positions</button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-[56px] px-2 bg-surface dark:bg-on-background border-t border-border-low-contrast dark:border-outline-variant shadow-sm docked full-width bottom-0">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-variant active:scale-90 transition-transform duration-150 w-full h-full rounded-lg" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-variant active:scale-90 transition-transform duration-150 w-full h-full rounded-lg" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="menu_book">menu_book</span>
+<span class="font-label-sm text-label-sm">Learn</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-variant active:scale-90 transition-transform duration-150 w-full h-full rounded-lg" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="calendar_today">calendar_today</span>
+<span class="font-label-sm text-label-sm">Attendance</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed relative after:content-[''] after:absolute after:top-0 after:w-12 after:h-1 after:bg-secondary dark:after:bg-secondary-fixed after:rounded-full hover:bg-surface-container-low dark:hover:bg-surface-variant active:scale-90 transition-transform duration-150 w-full h-full rounded-lg" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="work" style="font-variation-settings: 'FILL' 1;">work</span>
+<span class="font-label-sm text-label-sm font-bold">Career</span>
+</a>
+</nav>
+<script>
+        document.getElementById('visibility-toggle').addEventListener('change', function(e) {
+            const label = e.target.closest('.flex.items-center').querySelector('.font-label-sm');
+            if(e.target.checked) {
+                label.textContent = 'Let employers find me';
+                label.classList.remove('text-on-surface-variant');
+                label.classList.add('text-primary');
+            } else {
+                label.textContent = 'Hidden from employers';
+                label.classList.add('text-on-surface-variant');
+                label.classList.remove('text-primary');
+            }
+        });
+    </script>
+</body></html>

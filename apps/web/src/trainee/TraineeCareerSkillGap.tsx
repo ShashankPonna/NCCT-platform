@@ -1,11 +1,57 @@
 import { getJobs, getSkillGap } from "@ncct/api-client";
 import type { Job, SkillGapResult } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import { useLocale, type Locale } from "../i18n/LocaleContext.js";
 import { ErrorBanner, SkillChip } from "./pieces.js";
 
 interface TraineeCareerSkillGapProps {
   accessToken: string;
 }
+
+interface TraineeCareerSkillGapText {
+  heading: string;
+  subheading: string;
+  jobLabel: string;
+  choosePrompt: string;
+  checking: string;
+  skillsYouHave: (count: number) => string;
+  noneYet: string;
+  skillsMissing: (count: number) => string;
+  allSkillsPresent: string;
+  learnFirst: string;
+  noSuggestionAvailable: string;
+}
+
+const content: Record<Locale, TraineeCareerSkillGapText> = {
+  en: {
+    heading: "Skill-Gap Check",
+    subheading: "Pick a job to see which of its required skills you already have.",
+    jobLabel: "Job",
+    choosePrompt: "Choose a job posting…",
+    checking: "Checking your skill gap…",
+    skillsYouHave: (count) => `Skills You Have (${count})`,
+    noneYet: "None yet — keep learning!",
+    skillsMissing: (count) => `Skills Missing (${count})`,
+    allSkillsPresent: "You have every skill this job requires!",
+    learnFirst: "What to learn first",
+    noSuggestionAvailable:
+      "A suggested learning order isn't available right now — your skill list above is still complete and correct.",
+  },
+  hi: {
+    heading: "कौशल-अंतर जांच",
+    subheading: "यह देखने के लिए एक नौकरी चुनें कि उसके आवश्यक कौशलों में से आपके पास पहले से कौन-से हैं।",
+    jobLabel: "नौकरी",
+    choosePrompt: "एक नौकरी पोस्टिंग चुनें…",
+    checking: "आपका कौशल-अंतर जांचा जा रहा है…",
+    skillsYouHave: (count) => `आपके पास मौजूद कौशल (${count})`,
+    noneYet: "अभी तक कोई नहीं — सीखते रहें!",
+    skillsMissing: (count) => `अनुपस्थित कौशल (${count})`,
+    allSkillsPresent: "इस नौकरी के लिए आवश्यक सभी कौशल आपके पास हैं!",
+    learnFirst: "पहले क्या सीखें",
+    noSuggestionAvailable:
+      "अभी सुझाया गया सीखने का क्रम उपलब्ध नहीं है — ऊपर आपकी कौशल सूची फिर भी पूर्ण और सही है।",
+  },
+};
 
 // P1 Skill-Gap Analysis (docs/PRD.md §6.11, promoted from Phase-2 — see
 // docs/DECISIONS.md #26), re-skinned
@@ -16,6 +62,8 @@ interface TraineeCareerSkillGapProps {
 // #26 for why that fallback exists and must stay visible as a distinct,
 // non-error state, not hidden.
 export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProps) {
+  const { locale } = useLocale();
+  const t = content[locale];
   const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedJobId, setSelectedJobId] = useState("");
   const [result, setResult] = useState<SkillGapResult | null>(null);
@@ -49,21 +97,19 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
     <div className="flex flex-col gap-6 py-6 md:py-8">
       <div>
         <h1 className="font-headline text-headline-lg-mobile text-primary md:text-headline-lg">
-          Skill-Gap Check
+          {t.heading}
         </h1>
-        <p className="mt-1 text-body-md text-on-surface-variant">
-          Pick a job to see which of its required skills you already have.
-        </p>
+        <p className="mt-1 text-body-md text-on-surface-variant">{t.subheading}</p>
       </div>
 
       <label className="flex flex-col gap-2 text-label-md text-on-surface-variant">
-        Job
+        {t.jobLabel}
         <select
           value={selectedJobId}
           onChange={(e) => handleSelectJob(e.target.value)}
           className="min-h-touch-target rounded border border-border-low-contrast bg-surface-container-lowest px-4 py-3 text-body-md focus:outline-none focus:ring-2 focus:ring-interactive"
         >
-          <option value="">Choose a job posting…</option>
+          <option value="">{t.choosePrompt}</option>
           {jobs.map((job) => (
             <option key={job.id} value={job.id}>
               {job.title}
@@ -75,7 +121,7 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
 
       <ErrorBanner message={error} />
 
-      {loading && <p className="text-body-md text-on-surface-variant">Checking your skill gap…</p>}
+      {loading && <p className="text-body-md text-on-surface-variant">{t.checking}</p>}
 
       {result && (
         <div className="grid grid-cols-1 gap-gutter md:grid-cols-12">
@@ -90,11 +136,11 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
             <section className="rounded-xl border border-border-low-contrast bg-surface-card p-6">
               <h3 className="mb-4 flex items-center gap-2 font-headline text-headline-md text-primary">
                 <span className="material-symbols-outlined text-status-shortlisted">check_circle</span>
-                Skills You Have ({result.acquired_skills.length})
+                {t.skillsYouHave(result.acquired_skills.length)}
               </h3>
               <div className="flex flex-wrap gap-3">
                 {result.acquired_skills.length === 0 ? (
-                  <p className="text-body-md text-on-surface-variant">None yet — keep learning!</p>
+                  <p className="text-body-md text-on-surface-variant">{t.noneYet}</p>
                 ) : (
                   result.acquired_skills.map((skill) => (
                     <SkillChip key={skill.id} label={skill.name} acquired />
@@ -106,13 +152,11 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
             <section className="rounded-xl border border-border-low-contrast bg-surface-card p-6">
               <h3 className="mb-4 flex items-center gap-2 font-headline text-headline-md text-primary">
                 <span className="material-symbols-outlined text-secondary">pending</span>
-                Skills Missing ({result.gap_skills.length})
+                {t.skillsMissing(result.gap_skills.length)}
               </h3>
               <div className="flex flex-wrap gap-3">
                 {result.gap_skills.length === 0 ? (
-                  <p className="text-body-md text-status-shortlisted">
-                    You have every skill this job requires!
-                  </p>
+                  <p className="text-body-md text-status-shortlisted">{t.allSkillsPresent}</p>
                 ) : (
                   result.gap_skills.map((skill) => (
                     <SkillChip key={skill.id} label={skill.name} acquired={false} />
@@ -129,7 +173,7 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary">
                     <span className="material-symbols-outlined text-white">psychology</span>
                   </div>
-                  <h3 className="font-headline text-headline-md">What to learn first</h3>
+                  <h3 className="font-headline text-headline-md">{t.learnFirst}</h3>
                 </div>
                 <div className="flex flex-col gap-6">
                   {[...result.reasoning]
@@ -150,8 +194,7 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
             ) : (
               result.gap_skills.length > 0 && (
                 <section className="rounded-xl border border-dashed border-outline-variant bg-surface-container-low p-6 text-center text-body-md text-on-surface-variant">
-                  A suggested learning order isn't available right now — your skill list above is still
-                  complete and correct.
+                  {t.noSuggestionAvailable}
                 </section>
               )
             )}

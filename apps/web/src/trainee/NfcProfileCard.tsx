@@ -5,11 +5,57 @@ import {
 } from "@ncct/api-client";
 import type { VisibilitySettings } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import { useLocale, type Locale } from "../i18n/LocaleContext.js";
 
 interface NfcProfileCardProps {
   accessToken: string;
   publicProfileCode: string | null;
 }
+
+interface NfcProfileCardText {
+  title: string;
+  description: string;
+  publicProfile: string;
+  visibleToAnyone: string;
+  notPublished: string;
+  linkLabel: string;
+  copied: string;
+  copy: string;
+  writeInstructions: string;
+  cardLost: string;
+  reissueConfirm: string;
+}
+
+const content: Record<Locale, NfcProfileCardText> = {
+  en: {
+    title: "NFC Profile Card",
+    description:
+      "Publish a card-tappable profile page showing your name, skills, and certifications — no login required to view it.",
+    publicProfile: "Public Profile",
+    visibleToAnyone: "Visible to anyone with the link",
+    notPublished: "Not published",
+    linkLabel: "Link written to your NFC card",
+    copied: "Copied",
+    copy: "Copy",
+    writeInstructions: "Write this URL as an NDEF record onto your card (e.g. with the NFC Tools app).",
+    cardLost: "Card lost? Generate a new link",
+    reissueConfirm: "This immediately breaks the link on your current card. Continue?",
+  },
+  hi: {
+    title: "NFC प्रोफ़ाइल कार्ड",
+    description:
+      "एक कार्ड-टैप करने योग्य प्रोफ़ाइल पेज प्रकाशित करें जो आपका नाम, कौशल और प्रमाणपत्र दिखाता है — इसे देखने के लिए लॉगिन की आवश्यकता नहीं है।",
+    publicProfile: "सार्वजनिक प्रोफ़ाइल",
+    visibleToAnyone: "लिंक रखने वाला कोई भी व्यक्ति देख सकता है",
+    notPublished: "प्रकाशित नहीं",
+    linkLabel: "आपके NFC कार्ड पर लिखा गया लिंक",
+    copied: "कॉपी किया गया",
+    copy: "कॉपी करें",
+    writeInstructions: "इस URL को अपने कार्ड पर NDEF रिकॉर्ड के रूप में लिखें (उदाहरण के लिए NFC Tools ऐप से)।",
+    cardLost: "कार्ड खो गया? नया लिंक बनाएं",
+    reissueConfirm: "यह तुरंत आपके वर्तमान कार्ड पर मौजूद लिंक को तोड़ देगा। जारी रखें?",
+  },
+};
 
 // F10 (docs/DECISIONS.md #30) — issuance UI for the trainee's own public
 // profile: opt-in toggle, the generated link an NFC card gets written with,
@@ -20,6 +66,8 @@ export function NfcProfileCard({
   accessToken,
   publicProfileCode: initialCode,
 }: NfcProfileCardProps) {
+  const { locale } = useLocale();
+  const t = content[locale];
   const [visibility, setVisibility] = useState<VisibilitySettings | null>(null);
   const [code, setCode] = useState(initialCode);
   const [copied, setCopied] = useState(false);
@@ -65,7 +113,7 @@ export function NfcProfileCard({
   // fine. Rotating the code is the stronger, explicit step for an actually
   // lost card.
   async function handleReissue() {
-    if (!window.confirm("This immediately breaks the link on your current card. Continue?")) return;
+    if (!window.confirm(t.reissueConfirm)) return;
     setError(null);
     setBusy(true);
     try {
@@ -83,23 +131,20 @@ export function NfcProfileCard({
       <div className="p-6 border-b border-outline-variant/50 bg-surface-container-lowest/50 flex items-center gap-2">
         <span className="material-symbols-outlined text-primary">nfc</span>
         <h3 className="font-headline-md text-[20px] leading-[26px] font-semibold text-primary m-0">
-          NFC Profile Card
+          {t.title}
         </h3>
       </div>
 
       <div className="p-6 flex flex-col gap-4">
-        <p className="font-body-md text-on-surface-variant m-0">
-          Publish a card-tappable profile page showing your name, skills, and certifications — no
-          login required to view it.
-        </p>
+        <p className="font-body-md text-on-surface-variant m-0">{t.description}</p>
 
         {error && <p className="font-body-sm text-error m-0">{error}</p>}
 
         <div className="flex items-center gap-3 rounded-lg border border-border-low-contrast bg-surface p-3">
           <div className="flex flex-col flex-1">
-            <span className="text-label-md text-primary">Public Profile</span>
+            <span className="text-label-md text-primary">{t.publicProfile}</span>
             <span className="text-label-sm text-on-surface-variant">
-              {enabled ? "Visible to anyone with the link" : "Not published"}
+              {enabled ? t.visibleToAnyone : t.notPublished}
             </span>
           </div>
           <button
@@ -122,9 +167,7 @@ export function NfcProfileCard({
 
         {enabled && profileUrl && (
           <div className="flex flex-col gap-2">
-            <label className="font-label-md text-label-md text-on-surface">
-              Link written to your NFC card
-            </label>
+            <label className="font-label-md text-label-md text-on-surface">{t.linkLabel}</label>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -140,19 +183,17 @@ export function NfcProfileCard({
                 <span className="material-symbols-outlined text-[18px]">
                   {copied ? "check" : "content_copy"}
                 </span>
-                {copied ? "Copied" : "Copy"}
+                {copied ? t.copied : t.copy}
               </button>
             </div>
-            <p className="font-body-sm text-on-surface-variant m-0">
-              Write this URL as an NDEF record onto your card (e.g. with the NFC Tools app).
-            </p>
+            <p className="font-body-sm text-on-surface-variant m-0">{t.writeInstructions}</p>
             <button
               type="button"
               onClick={() => void handleReissue()}
               disabled={busy}
               className="self-start font-label-sm text-label-sm text-error hover:underline disabled:opacity-50"
             >
-              Card lost? Generate a new link
+              {t.cardLost}
             </button>
           </div>
         )}

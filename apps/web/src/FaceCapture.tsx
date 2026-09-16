@@ -1,5 +1,6 @@
 import { FACE_EMBEDDING_DIMENSIONS } from "@ncct/constants";
 import { useEffect, useRef, useState } from "react";
+import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 
 interface FaceCaptureProps {
   actionLabel: string;
@@ -8,6 +9,36 @@ interface FaceCaptureProps {
 }
 
 type Status = "idle" | "starting-camera" | "loading-model" | "ready" | "capturing" | "error";
+
+interface FaceCaptureText {
+  startCamera: string;
+  startingCamera: string;
+  loadingModel: string;
+  capturing: string;
+  noFaceDetected: string;
+  noUsableDescriptor: string;
+}
+
+const content: Record<Locale, FaceCaptureText> = {
+  en: {
+    startCamera: "Start camera",
+    startingCamera: "Starting camera...",
+    loadingModel: "Loading face model...",
+    capturing: "Capturing...",
+    noFaceDetected: "No face detected — face the camera directly in good light and try again",
+    noUsableDescriptor:
+      "Your face was detected but the model didn't return a usable descriptor. Please try again, or use QR check-in.",
+  },
+  hi: {
+    startCamera: "कैमरा शुरू करें",
+    startingCamera: "कैमरा शुरू हो रहा है...",
+    loadingModel: "फेस मॉडल लोड हो रहा है...",
+    capturing: "कैप्चर हो रहा है...",
+    noFaceDetected: "कोई चेहरा नहीं मिला — अच्छी रोशनी में सीधे कैमरे की ओर देखें और पुनः प्रयास करें",
+    noUsableDescriptor:
+      "आपका चेहरा पहचाना गया लेकिन मॉडल ने उपयोग योग्य डिस्क्रिप्टर नहीं दिया। कृपया पुनः प्रयास करें, या QR चेक-इन का उपयोग करें।",
+  },
+};
 
 // Runs @vladmandic/human entirely in the browser (WebGL) — no image or
 // video frame is ever sent to Express, only the derived embedding. See
@@ -46,6 +77,8 @@ export async function getHuman() {
 // Reusable webcam capture + face-embedding extraction, shared by enrollment
 // and face check-in — both just need a 1024-number descriptor out of it.
 export function FaceCapture({ actionLabel, onCapture, disabled }: FaceCaptureProps) {
+  const { locale } = useLocale();
+  const t = content[locale];
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [status, setStatus] = useState<Status>("idle");
@@ -105,7 +138,7 @@ export function FaceCapture({ actionLabel, onCapture, disabled }: FaceCapturePro
         console.warn("FaceCapture: no face detected", {
           videoSize: [videoRef.current.videoWidth, videoRef.current.videoHeight],
         });
-        setError("No face detected — face the camera directly in good light and try again");
+        setError(t.noFaceDetected);
         setStatus("ready");
         return;
       }
@@ -115,9 +148,7 @@ export function FaceCapture({ actionLabel, onCapture, disabled }: FaceCapturePro
           embeddingLength: face.embedding?.length ?? null,
           expectedLength: FACE_EMBEDDING_DIMENSIONS,
         });
-        setError(
-          "Your face was detected but the model didn't return a usable descriptor. Please try again, or use QR check-in.",
-        );
+        setError(t.noUsableDescriptor);
         setStatus("ready");
         return;
       }
@@ -139,7 +170,7 @@ export function FaceCapture({ actionLabel, onCapture, disabled }: FaceCapturePro
       {error && <p className="form-error">{error}</p>}
       {status === "idle" || status === "error" ? (
         <button type="button" onClick={startCamera} disabled={disabled}>
-          Start camera
+          {t.startCamera}
         </button>
       ) : (
         <button
@@ -147,10 +178,10 @@ export function FaceCapture({ actionLabel, onCapture, disabled }: FaceCapturePro
           onClick={capture}
           disabled={disabled || status !== "ready"}
         >
-          {status === "starting-camera" && "Starting camera..."}
-          {status === "loading-model" && "Loading face model..."}
+          {status === "starting-camera" && t.startingCamera}
+          {status === "loading-model" && t.loadingModel}
           {status === "ready" && actionLabel}
-          {status === "capturing" && "Capturing..."}
+          {status === "capturing" && t.capturing}
         </button>
       )}
     </div>

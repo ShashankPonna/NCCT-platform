@@ -1,10 +1,33 @@
 import type { MatchingExerciseConfig } from "@ncct/shared-types";
 import { useMemo, useState } from "react";
+import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 import "./MatchingExercise.css";
 
 interface MatchingExerciseProps {
   config: MatchingExerciseConfig;
 }
+
+interface MatchingExerciseText {
+  tapPrompt: string;
+  checkAnswers: string;
+  reset: string;
+  scoreLine: (score: number, total: number) => string;
+}
+
+const content: Record<Locale, MatchingExerciseText> = {
+  en: {
+    tapPrompt: "tap, then pick a match →",
+    checkAnswers: "Check answers",
+    reset: "Reset",
+    scoreLine: (score, total) => `${score} / ${total} correct`,
+  },
+  hi: {
+    tapPrompt: "टैप करें, फिर एक मिलान चुनें →",
+    checkAnswers: "उत्तर जांचें",
+    reset: "रीसेट करें",
+    scoreLine: (score, total) => `${score} / ${total} सही`,
+  },
+};
 
 // Deterministic shuffle so the right-hand column isn't in the same order as
 // the left (which would make the exercise trivial), but also doesn't reshuffle
@@ -17,6 +40,8 @@ function shuffle<T>(items: T[]): T[] {
 }
 
 export function MatchingExercise({ config }: MatchingExerciseProps) {
+  const { locale } = useLocale();
+  const t = content[locale];
   const [selectedTerm, setSelectedTerm] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [checked, setChecked] = useState(false);
@@ -76,7 +101,7 @@ export function MatchingExercise({ config }: MatchingExerciseProps) {
                   onClick={() => setSelectedTerm(pair.term)}
                 >
                   <strong>{pair.term}</strong>
-                  <span>{answer ?? "tap, then pick a match →"}</span>
+                  <span>{answer ?? t.tapPrompt}</span>
                 </button>
               </li>
             );
@@ -101,16 +126,12 @@ export function MatchingExercise({ config }: MatchingExerciseProps) {
 
       <div className="matching-actions">
         <button type="button" onClick={() => setChecked(true)} disabled={!allAnswered}>
-          Check answers
+          {t.checkAnswers}
         </button>
         <button type="button" onClick={reset}>
-          Reset
+          {t.reset}
         </button>
-        {checked && (
-          <span className="matching-score">
-            {score} / {config.pairs.length} correct
-          </span>
-        )}
+        {checked && <span className="matching-score">{t.scoreLine(score, config.pairs.length)}</span>}
       </div>
     </div>
   );

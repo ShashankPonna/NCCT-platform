@@ -1,10 +1,27 @@
 import type { Skill } from "@ncct/shared-types";
+import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 
 interface SkillPickerProps {
   skills: Skill[];
   selectedIds: Set<string>;
   onToggle: (skillId: string) => void;
 }
+
+interface SkillPickerText {
+  empty: string;
+  otherCategory: string;
+}
+
+const content: Record<Locale, SkillPickerText> = {
+  en: {
+    empty: "No skills in the taxonomy yet.",
+    otherCategory: "Other",
+  },
+  hi: {
+    empty: "अभी तक वर्गीकरण में कोई कौशल नहीं है।",
+    otherCategory: "अन्य",
+  },
+};
 
 // Grouped checkbox multi-select against the skills taxonomy (P1 Skill-Gap
 // Analysis, docs/PRD.md §6.11) — reused wherever a caller needs to pick a
@@ -13,13 +30,16 @@ interface SkillPickerProps {
 // category collect under "Other" rather than being dropped or crashing the
 // group-by.
 export function SkillPicker({ skills, selectedIds, onToggle }: SkillPickerProps) {
+  const { locale } = useLocale();
+  const t = content[locale];
+
   if (skills.length === 0) {
-    return <p className="skill-picker-empty">No skills in the taxonomy yet.</p>;
+    return <p className="skill-picker-empty">{t.empty}</p>;
   }
 
   const byCategory = new Map<string, Skill[]>();
   for (const skill of skills) {
-    const key = skill.category ?? "Other";
+    const key = skill.category ?? t.otherCategory;
     if (!byCategory.has(key)) byCategory.set(key, []);
     byCategory.get(key)!.push(skill);
   }

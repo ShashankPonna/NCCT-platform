@@ -1,0 +1,231 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: system-ui, "Segoe UI", Roboto, sans-serif; }
+    a { color: #aa3bff; text-decoration: none; }
+    a:hover { color: #8f22e0; }
+  </style>
+</helmet>
+<div style="width:390px;min-height:844px;box-sizing:border-box;display:flex;flex-direction:column;background:#fff;font-size:16px;line-height:145%;letter-spacing:0.18px;color:#6b6375;">
+
+  <header style="padding:22px 20px 12px;">
+    <h1 style="margin:0 0 12px;font-size:22px;font-weight:500;letter-spacing:-0.24px;color:#08060d;">Career</h1>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;border-radius:8px;background:#f4f3ec;">
+      <sc-for list="{{tabs}}" as="tab" hint-placeholder-count="3">
+        <button type="button" onClick="{{tab.pick}}" style="font:inherit;font-size:13px;min-height:36px;padding:8px 6px;border-radius:6px;cursor:pointer;border:1px solid {{tab.borderColor}};background:{{tab.bg}};color:{{tab.fg}};">{{tab.label}}</button>
+      </sc-for>
+    </div>
+  </header>
+
+  <main style="flex:1;display:flex;flex-direction:column;gap:14px;padding:14px 20px 24px;border-top:1px solid #e5e4e7;">
+
+    <sc-if value="{{isJobs}}" hint-placeholder-val="{{true}}">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+
+        <section style="display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #e5e4e7;border-radius:8px;padding:14px 16px;">
+          <div style="display:flex;flex-direction:column;gap:2px;">
+            <span style="font-size:15px;color:#08060d;font-weight:600;">Let employers find me</span>
+            <span style="font-size:13px;">You appear in employer searches</span>
+          </div>
+          <span style="width:46px;height:28px;border-radius:999px;background:#aa3bff;position:relative;flex:none;">
+            <span style="position:absolute;top:3px;left:21px;width:22px;height:22px;border-radius:999px;background:#fff;"></span>
+          </span>
+        </section>
+
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <span style="font-size:12px;letter-spacing:0.4px;text-transform:uppercase;">Shortlisted you</span>
+          <section style="border:1px solid rgba(170,59,255,0.5);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+              <span style="font-size:15px;font-weight:600;color:#08060d;">Dairy Plant Technician</span>
+              <span style="font-size:12px;padding:2px 8px;border-radius:999px;background:rgba(170,59,255,0.1);color:#aa3bff;">shortlisted</span>
+            </div>
+            <span style="font-size:14px;">Sunrise Dairy Co-op · Pune</span>
+          </section>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <span style="font-size:12px;letter-spacing:0.4px;text-transform:uppercase;">Open positions</span>
+
+          <section style="border:1px solid #e5e4e7;border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;">
+            <span style="font-size:15px;font-weight:600;color:#08060d;">Quality Control Assistant</span>
+            <span style="font-size:14px;">Krishna Milk Union · Satara</span>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              <span style="font-size:12px;padding:3px 9px;border-radius:999px;background:rgba(170,59,255,0.1);color:#aa3bff;">Milk Quality Testing</span>
+              <span style="font-size:12px;padding:3px 9px;border-radius:999px;border:1px dashed #e5e4e7;background:#f4f3ec;color:#08060d;">Food Safety Compliance</span>
+            </div>
+          </section>
+
+          <section style="border:1px solid #e5e4e7;border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;">
+            <span style="font-size:15px;font-weight:600;color:#08060d;">PACS Field Officer</span>
+            <span style="font-size:14px;">Shri Ganesh PACS · Ahmednagar</span>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              <span style="font-size:12px;padding:3px 9px;border-radius:999px;border:1px dashed #e5e4e7;background:#f4f3ec;color:#08060d;">Cooperative Bookkeeping</span>
+            </div>
+          </section>
+        </div>
+
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isGap}}" hint-placeholder-val="{{true}}">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <span style="font-size:12px;letter-spacing:0.4px;text-transform:uppercase;">Checking against</span>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #e5e4e7;border-radius:6px;padding:11px 14px;min-height:44px;box-sizing:border-box;">
+            <span style="font-size:15px;color:#08060d;">Dairy Plant Technician</span>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></svg>
+          </div>
+        </div>
+
+        <section style="border:1px solid #e5e4e7;border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:9px;">
+          <div style="display:flex;align-items:center;gap:8px;color:#aa3bff;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+            <span style="font-size:12px;letter-spacing:0.4px;text-transform:uppercase;">You have · 3</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <span style="font-size:12px;padding:3px 9px;border-radius:999px;background:rgba(170,59,255,0.1);color:#aa3bff;">Milk Quality Testing</span>
+            <span style="font-size:12px;padding:3px 9px;border-radius:999px;background:rgba(170,59,255,0.1);color:#aa3bff;">Member Record Keeping</span>
+            <span style="font-size:12px;padding:3px 9px;border-radius:999px;background:rgba(170,59,255,0.1);color:#aa3bff;">Cooperative Bookkeeping</span>
+          </div>
+          <span style="font-size:13px;">From your certificate in Dairy Cooperative Management.</span>
+        </section>
+
+        <section style="border:1px solid #e5e4e7;border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:9px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 8.5v7M8.5 12h7"/></svg>
+            <span style="font-size:12px;letter-spacing:0.4px;text-transform:uppercase;">You are missing · 2</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <span style="font-size:12px;padding:3px 9px;border-radius:999px;border:1px dashed #e5e4e7;background:#f4f3ec;color:#08060d;">Cold Chain Handling</span>
+            <span style="font-size:12px;padding:3px 9px;border-radius:999px;border:1px dashed #e5e4e7;background:#f4f3ec;color:#08060d;">Food Safety Compliance</span>
+          </div>
+        </section>
+
+        <sc-if value="{{showReasoning}}" hint-placeholder-val="{{true}}">
+          <section style="border:1px solid rgba(170,59,255,0.5);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;align-items:center;gap:8px;color:#aa3bff;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5l1.7 4.3 4.3 1.7-4.3 1.7L12 16.5l-1.7-4.3L6 10.5l4.3-1.7z"/></svg>
+              <span style="font-size:12px;letter-spacing:0.4px;text-transform:uppercase;">What to learn first</span>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:rgba(170,59,255,0.1);color:#aa3bff;font-size:12px;font-weight:700;flex:none;">1</span>
+              <div style="display:flex;flex-direction:column;gap:1px;">
+                <span style="font-size:15px;color:#08060d;font-weight:600;">Cold Chain Handling</span>
+                <span style="font-size:14px;line-height:145%;">Named in most plant technician postings near you.</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:rgba(170,59,255,0.1);color:#aa3bff;font-size:12px;font-weight:700;flex:none;">2</span>
+              <div style="display:flex;flex-direction:column;gap:1px;">
+                <span style="font-size:15px;color:#08060d;font-weight:600;">Food Safety Compliance</span>
+                <span style="font-size:14px;line-height:145%;">Usually trained on the job once you are hired.</span>
+              </div>
+            </div>
+          </section>
+        </sc-if>
+
+        <sc-if value="{{hideReasoning}}" hint-placeholder-val="{{false}}">
+          <div style="display:flex;gap:8px;align-items:flex-start;padding:12px 14px;border-radius:8px;background:#f4f3ec;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#6b6375" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:2px;"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.75v.5"/></svg>
+            <span style="font-size:13px;line-height:145%;">Suggested learning order is unavailable right now. Your skill list above is complete and correct.</span>
+          </div>
+        </sc-if>
+
+        <button type="button" style="font:inherit;font-size:15px;min-height:44px;padding:11px 16px;border-radius:6px;border:1px solid #e5e4e7;background:#f4f3ec;color:#08060d;cursor:pointer;">Find programmes that teach these</button>
+
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isAsk}}" hint-placeholder-val="{{false}}">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+
+        <div style="display:flex;gap:8px;align-items:flex-start;padding:12px 14px;border-radius:8px;background:#f4f3ec;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#6b6375" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:2px;"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.75v.5"/></svg>
+          <span style="font-size:13px;line-height:145%;">Guidance is based on your own courses, certificates and skill gaps. It is not a substitute for professional career counselling.</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <span style="font-size:12px;letter-spacing:0.4px;text-transform:uppercase;">Try asking</span>
+          <button type="button" style="font:inherit;text-align:left;font-size:15px;min-height:44px;padding:12px 14px;border-radius:6px;border:1px solid #e5e4e7;background:#fff;color:#08060d;cursor:pointer;">Am I ready to apply for the plant technician job?</button>
+          <button type="button" style="font:inherit;text-align:left;font-size:15px;min-height:44px;padding:12px 14px;border-radius:6px;border:1px solid #e5e4e7;background:#fff;color:#08060d;cursor:pointer;">Which programme should I take next?</button>
+          <button type="button" style="font:inherit;text-align:left;font-size:15px;min-height:44px;padding:12px 14px;border-radius:6px;border:1px solid #e5e4e7;background:#fff;color:#08060d;cursor:pointer;">What jobs fit what I have already finished?</button>
+        </div>
+
+        <div style="display:flex;gap:8px;">
+          <input type="text" placeholder="Ask about your own path" style="flex:1;font:inherit;font-size:15px;min-height:44px;padding:11px 14px;border:1px solid #e5e4e7;border-radius:6px;background:#fff;color:#08060d;box-sizing:border-box;">
+          <button type="button" style="font:inherit;font-size:15px;min-height:44px;padding:11px 16px;border-radius:6px;border:1px solid #aa3bff;background:#aa3bff;color:#fff;cursor:pointer;">Ask</button>
+        </div>
+
+        <div style="height:1px;background:#e5e4e7;"></div>
+
+        <a href="#" style="font-size:14px;display:inline-flex;align-items:center;gap:5px;line-height:140%;">Just want programme facts — dates, fees, eligibility? Use Programme FAQ
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="M9.5 6l6 6-6 6"/></svg>
+        </a>
+
+      </div>
+    </sc-if>
+
+  </main>
+
+  <nav style="margin-top:auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;border-top:1px solid #e5e4e7;background:#fff;padding:8px 10px 16px;">
+    <a href="#" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;min-height:48px;border-radius:8px;font-size:12px;color:#6b6375;">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M9.5 20v-6h5v6"/></svg>
+      Home
+    </a>
+    <a href="#" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;min-height:48px;border-radius:8px;font-size:12px;color:#6b6375;">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7.5S10 5.5 4.5 5.5v12C10 17.5 12 19.5 12 19.5"/><path d="M12 7.5s2-2 7.5-2v12c-5.5 0-7.5 2-7.5 2"/></svg>
+      Learn
+    </a>
+    <a href="#" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;min-height:48px;border-radius:8px;font-size:12px;color:#6b6375;">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5V6a2 2 0 0 1 2-2h2.5"/><path d="M15.5 4H18a2 2 0 0 1 2 2v2.5"/><path d="M20 15.5V18a2 2 0 0 1-2 2h-2.5"/><path d="M8.5 20H6a2 2 0 0 1-2-2v-2.5"/><path d="M4 12h16"/></svg>
+      Attendance
+    </a>
+    <a href="#" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;min-height:48px;border-radius:8px;font-size:12px;color:#aa3bff;background:rgba(170,59,255,0.1);">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7.5" width="17" height="12" rx="2"/><path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5"/><path d="M3.5 12.5h17"/></svg>
+      Career
+    </a>
+  </nav>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"showReasoning":{"editor":"boolean","default":true,"section":"Skill gap"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const view = this.state && this.state.view ? this.state.view : 'jobs';
+    const showReasoning = this.props.showReasoning === undefined ? true : !!this.props.showReasoning;
+    const defs = [
+      { id: 'jobs', label: 'Jobs' },
+      { id: 'gap', label: 'Skill gap' },
+      { id: 'ask', label: 'Ask' }
+    ];
+    const tabs = defs.map((d) => {
+      const on = d.id === view;
+      return {
+        label: d.label,
+        pick: () => this.setState({ view: d.id }),
+        bg: on ? '#fff' : 'transparent',
+        fg: on ? '#08060d' : '#6b6375',
+        borderColor: on ? '#e5e4e7' : 'transparent'
+      };
+    });
+    return {
+      tabs: tabs,
+      isJobs: view === 'jobs',
+      isGap: view === 'gap',
+      isAsk: view === 'ask',
+      showReasoning: showReasoning,
+      hideReasoning: !showReasoning
+    };
+  }
+}
+</script>
+</body>
+</html>
