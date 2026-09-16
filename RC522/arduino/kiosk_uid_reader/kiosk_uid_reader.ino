@@ -5,15 +5,21 @@
 // page (apps/web/src/KioskNfcReader.tsx) reads raw serial lines over the
 // Web Serial API and only reacts to lines starting with "UID:".
 //
-// Wiring (ESP32 default VSPI pins for SCK/MISO/MOSI, arbitrary GPIOs for
-// SS/RST — RC522 is 3.3V-only, do not power it from 5V):
-//   RC522 SDA(SS) -> ESP32 GPIO21
+// Wiring — all four SPI lines are the ESP32's VSPI defaults, so SPI.begin()
+// needs no arguments. RC522 is 3.3V-only, do not power it from 5V:
+//   RC522 SDA(SS) -> ESP32 GPIO5   (VSPI default SS)
 //   RC522 SCK     -> ESP32 GPIO18
 //   RC522 MOSI    -> ESP32 GPIO23
 //   RC522 MISO    -> ESP32 GPIO19
-//   RC522 RST     -> ESP32 GPIO22
+//   RC522 RST     -> ESP32 GPIO4
 //   RC522 3.3V    -> 3.3V,  GND -> GND
 //   RC522 IRQ     -> not connected (unused by this sketch)
+//
+// SS/RST deliberately avoid GPIO21/22: those are the ESP32's default I2C
+// pins and this kiosk's SSD1306 OLED sits on them. An earlier revision of
+// this sketch used 21/22 for SS/RST, which drove the display's SDA/SCL
+// lines as chip-select and reset — the reader and the OLED cannot both
+// have those pins.
 //
 // Requires the "MFRC522" library by GithubCommunity/miguelbalboa
 // (Arduino IDE: Tools -> Manage Libraries -> search "MFRC522").
@@ -21,8 +27,8 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
-#define SS_PIN  21
-#define RST_PIN 22
+#define SS_PIN  5
+#define RST_PIN 4
 
 MFRC522 rfid(SS_PIN, RST_PIN);
 

@@ -1,5 +1,5 @@
 import { FACE_EMBEDDING_DIMENSIONS } from "@ncct/constants";
-import { kioskFaceCheckIn } from "@ncct/api-client";
+import { ApiError, kioskFaceCheckIn } from "@ncct/api-client";
 import type { AttendanceCheckInResult } from "@ncct/api-client";
 import { useRef, useState } from "react";
 import { getHuman } from "./FaceCapture.js";
@@ -17,9 +17,20 @@ type Status =
   | "no-face"
   | "matched"
   | "no-match"
+  | "duplicate"
   | "error";
 
-const MAX_ATTEMPTS_PER_CLICK = 3;
+// Two attempts, not three: with `Connection: close` on the firmware side the
+// truncated-frame problem that motivated retries is gone, and every retry is
+// another CAMERA_TIMEOUT_MS the operator waits through before seeing an error.
+const MAX_ATTEMPTS_PER_CLICK = 2;
+
+// Measured against the real board, not guessed: the same 4KB QVGA frame came
+// back in 2.5s, 4.7s and 11.0s on three consecutive requests over this
+// kiosk's WiFi. An 8s timeout (the previous value) would have aborted that
+// third transfer even though it was completing normally — the capture works
+// at this link speed, it is just slow, so the timeout has to allow for it.
+const CAMERA_TIMEOUT_MS = 20000;
 
 // F5 kiosk face check-in (docs/DECISIONS.md #21): a staff-operated terminal
 // has no trainee JWT to read an identity from, so trainee_id is typed here
@@ -63,7 +74,7 @@ export function KioskFaceCheckIn({ accessToken, sessionId }: KioskFaceCheckInPro
   // caller decides how many times to retry.
   async function fetchFrameToCanvas(): Promise<HTMLCanvasElement> {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+    const timeout = setTimeout(() => controller.abort(), CAMERA_TIMEOUT_MS);
     let res: Response;
     try {
       res = await fetch(`${camBase()}/capture`, { cache: "no-store", signal: controller.signal });
@@ -164,6 +175,17 @@ export function KioskFaceCheckIn({ accessToken, sessionId }: KioskFaceCheckInPro
       setResult(res);
       setStatus(res.matched ? "matched" : "no-match");
     } catch (err) {
+      // A 409 means this trainee already has an attendance record for this
+      // session — not a camera/network/match failure. Without checking the
+      // status specifically, this used to look identical to every other
+      // error (a bare Error with no status attached), so an already-marked
+      // trainee saw the same red failure message as a real problem and had
+      // no reason to stop retrying.
+      if (err instanceof ApiError && err.status === 409) {
+        setStatus("duplicate");
+        setError(null);
+        return;
+      }
       setError((err as Error).message);
       setStatus("error");
     }
@@ -206,6 +228,12 @@ export function KioskFaceCheckIn({ accessToken, sessionId }: KioskFaceCheckInPro
       />
 
       {error && <p className="form-error">{error}</p>}
+
+      {status === "duplicate" && (
+        <div className="rounded-lg p-3 font-body-sm bg-status-pending/15 text-status-pending">
+          Already checked in for this session — no action needed.
+        </div>
+      )}
 
       {result &&
         ("fallbackToQr" in result ? (

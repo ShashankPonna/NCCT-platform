@@ -57,6 +57,21 @@ export async function getHealth(): Promise<{ status: string }> {
   return res.json();
 }
 
+// Thrown by apiFetch instead of a bare Error so callers can branch on the
+// HTTP status, not just the message string — e.g. distinguishing a 409
+// "already checked in" from a genuine failure, which a plain Error made
+// impossible (every non-ok response looked identical to a catch block).
+// A plain `catch (err) { (err as Error).message }` still works unchanged
+// everywhere this isn't specifically handled, since ApiError is an Error.
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 async function apiFetch<T>(
   path: string,
   accessToken: string,
@@ -72,7 +87,8 @@ async function apiFetch<T>(
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(
+    throw new ApiError(
+      res.status,
       typeof body === "object" && body && "error" in body
         ? JSON.stringify((body as { error: unknown }).error)
         : `Request failed: ${res.status}`,

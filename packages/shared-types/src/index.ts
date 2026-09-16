@@ -298,6 +298,12 @@ export interface KioskProfileProgramme {
 }
 
 export interface KioskProfileResult extends PublicProfileResult {
+  // Present here but deliberately absent from PublicProfileResult — the
+  // no-login public route has no legitimate caller for a trainee's raw id,
+  // but the staff-only kiosk does: it's what lets an NFC lookup hand a
+  // trainee_id straight to POST /timetable/:sessionId/kiosk-face-checkin
+  // without a human re-typing a UUID by hand.
+  id: string;
   phone: string | null;
   cooperative_affiliation: string | null;
   member_since: string;

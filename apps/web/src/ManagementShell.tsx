@@ -9,6 +9,7 @@ export type ManagementTab =
   | "content"
   | "attendance"
   | "kiosk"
+  | "terminal"
   | "chatbot"
   | "profile"
   | "employer";
@@ -27,6 +28,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { id: "content", label: "Content", icon: "description", roles: ["admin", "trainer"] },
   { id: "attendance", label: "Attendance", icon: "calendar_today", roles: ["admin", "trainer"] },
   { id: "kiosk", label: "NFC Kiosk", icon: "nfc", roles: ["admin", "trainer"] },
+  { id: "terminal", label: "Kiosk Terminal", icon: "point_of_sale", roles: ["admin", "trainer"] },
   {
     id: "chatbot",
     label: "Chatbot Knowledge Base",

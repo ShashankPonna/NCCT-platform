@@ -234,6 +234,7 @@ describe("GET /api/kiosk/nfc-lookup/:uid", () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
+      id: TRAINEE_ID,
       full_name: "Arjun Patil",
       phone: "9876543210",
       cooperative_affiliation: "Sahyadri Farmers Cooperative",

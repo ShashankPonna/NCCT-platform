@@ -11,6 +11,7 @@ import { EmployerDashboard } from "./EmployerDashboard.js";
 import { ForgotPasswordForm } from "./ForgotPasswordForm.js";
 import { LoginForm } from "./LoginForm.js";
 import { KioskNfcReader } from "./KioskNfcReader.js";
+import { KioskTerminal } from "./KioskTerminal.js";
 import { ManagementShell, type ManagementTab } from "./ManagementShell.js";
 import { ProfileEditor } from "./ProfileEditor.js";
 import { PublicProfile } from "./PublicProfile.js";
@@ -139,6 +140,7 @@ function App() {
         {currentTab === "content" && <AdminCourseManager accessToken={session.accessToken} />}
         {currentTab === "attendance" && <AttendanceManager accessToken={session.accessToken} />}
         {currentTab === "kiosk" && <KioskNfcReader accessToken={session.accessToken} />}
+        {currentTab === "terminal" && <KioskTerminal accessToken={session.accessToken} />}
         {currentTab === "chatbot" && <ChatbotCorpusManager accessToken={session.accessToken} />}
         {currentTab === "profile" && (
           <ProfileEditor

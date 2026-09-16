@@ -91,6 +91,7 @@ async function buildKioskProfileResult(profile: KioskProfileRow): Promise<KioskP
 
   return {
     ...base,
+    id: profile.id,
     phone: profile.phone,
     cooperative_affiliation: profile.cooperative_affiliation,
     member_since: profile.created_at,
