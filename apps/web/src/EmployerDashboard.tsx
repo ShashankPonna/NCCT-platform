@@ -11,6 +11,7 @@ import {
 } from "@ncct/api-client";
 import type { Job, JobInterest, Skill, TraineeSearchResult } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { SkillChips, SkillPicker } from "./SkillPicker.js";
 
 interface EmployerDashboardProps {
@@ -19,7 +20,125 @@ interface EmployerDashboardProps {
 
 type InterestRow = JobInterest & { profiles: { full_name: string | null } | null };
 
+interface EmployerDashboardText {
+  heading: string;
+  subheading: string;
+  postOpportunity: string;
+  jobTitleLabel: string;
+  jobTitlePlaceholder: string;
+  locationLabel: string;
+  locationPlaceholder: string;
+  requiredSkillsLabel: string;
+  requiredSkillsPlaceholder: string;
+  tagSkillsLabel: string;
+  newSkillPlaceholder: string;
+  addToTaxonomy: string;
+  posting: string;
+  activePostings: (count: number) => string;
+  noJobsYet: string;
+  flexible: string;
+  candidateResponses: string;
+  forJob: (title: string | undefined) => string;
+  candidatesCount: (count: number) => string;
+  taggedSkills: string;
+  noApplicants: string;
+  candidateFallback: (idPrefix: string) => string;
+  statusLabel: string;
+  searchCertifiedTrainees: string;
+  searchSubheading: string;
+  searchKeywordPlaceholder: string;
+  searchLocationPlaceholder: string;
+  searchTrainees: string;
+  shortlistCandidate: string;
+  status: Record<string, string>;
+}
+
+const content: Record<Locale, EmployerDashboardText> = {
+  en: {
+    heading: "Employer & Placement Exchange",
+    subheading: "Post career opportunities, review interested candidates, and search certified rural talent.",
+    postOpportunity: "Post Opportunity",
+    jobTitleLabel: "Job / Role Title *",
+    jobTitlePlaceholder: "e.g. Cooperative Accounts Officer",
+    locationLabel: "Location",
+    locationPlaceholder: "e.g. Pune, Maharashtra / Remote",
+    requiredSkillsLabel: "Required Skills (Comma-separated)",
+    requiredSkillsPlaceholder: "e.g. Bookkeeping, Tally, Agronomy",
+    tagSkillsLabel: "Tag Skills (for Skill-Gap matching)",
+    newSkillPlaceholder: "New skill, e.g. Tally",
+    addToTaxonomy: "Add to Taxonomy",
+    posting: "Posting...",
+    activePostings: (count) => `Active Postings (${count})`,
+    noJobsYet: "No jobs posted yet.",
+    flexible: "Flexible",
+    candidateResponses: "Candidate Responses",
+    forJob: (title) => `for "${title}"`,
+    candidatesCount: (count) => `${count} Candidates`,
+    taggedSkills: "Tagged skills:",
+    noApplicants: "No applicants or shortlist entries for this role yet. Search verified trainees below.",
+    candidateFallback: (idPrefix) => `Candidate #${idPrefix}`,
+    statusLabel: "Status:",
+    searchCertifiedTrainees: "Search Certified Trainees",
+    searchSubheading: "Explore candidates certified by NCCT / VAMNICOM / RICM cooperative institutions.",
+    searchKeywordPlaceholder: "Skill or course keyword...",
+    searchLocationPlaceholder: "Location (e.g. Pune)...",
+    searchTrainees: "Search Trainees",
+    shortlistCandidate: "Shortlist Candidate",
+    status: {
+      approved: "Approved",
+      shortlisted: "Shortlisted",
+      pending: "Pending",
+      waitlisted: "Waitlisted",
+      viewed: "Viewed",
+      rejected: "Rejected",
+      contacted: "Contacted",
+    },
+  },
+  hi: {
+    heading: "नियोक्ता एवं प्लेसमेंट एक्सचेंज",
+    subheading: "करियर अवसर पोस्ट करें, रुचि रखने वाले उम्मीदवारों की समीक्षा करें, और प्रमाणित ग्रामीण प्रतिभा खोजें।",
+    postOpportunity: "अवसर पोस्ट करें",
+    jobTitleLabel: "नौकरी / पद शीर्षक *",
+    jobTitlePlaceholder: "उदा. सहकारी लेखा अधिकारी",
+    locationLabel: "स्थान",
+    locationPlaceholder: "उदा. पुणे, महाराष्ट्र / रिमोट",
+    requiredSkillsLabel: "आवश्यक कौशल (अल्पविराम से अलग करें)",
+    requiredSkillsPlaceholder: "उदा. बहीखाता, टैली, कृषि विज्ञान",
+    tagSkillsLabel: "कौशल टैग करें (कौशल-अंतर मिलान हेतु)",
+    newSkillPlaceholder: "नया कौशल, उदा. टैली",
+    addToTaxonomy: "वर्गीकरण में जोड़ें",
+    posting: "पोस्ट हो रहा है...",
+    activePostings: (count) => `सक्रिय पोस्टिंग (${count})`,
+    noJobsYet: "अभी तक कोई नौकरी पोस्ट नहीं की गई है।",
+    flexible: "लचीला",
+    candidateResponses: "उम्मीदवार प्रतिक्रियाएं",
+    forJob: (title) => `"${title}" के लिए`,
+    candidatesCount: (count) => `${count} उम्मीदवार`,
+    taggedSkills: "टैग किए गए कौशल:",
+    noApplicants: "इस भूमिका के लिए अभी तक कोई आवेदक या शॉर्टलिस्ट प्रविष्टि नहीं है। नीचे सत्यापित प्रशिक्षणार्थियों को खोजें।",
+    candidateFallback: (idPrefix) => `उम्मीदवार #${idPrefix}`,
+    statusLabel: "स्थिति:",
+    searchCertifiedTrainees: "सत्यापित प्रशिक्षणार्थी खोजें",
+    searchSubheading: "NCCT / VAMNICOM / RICM सहकारी संस्थानों द्वारा प्रमाणित उम्मीदवारों को देखें।",
+    searchKeywordPlaceholder: "कौशल या पाठ्यक्रम कीवर्ड...",
+    searchLocationPlaceholder: "स्थान (उदा. पुणे)...",
+    searchTrainees: "प्रशिक्षणार्थी खोजें",
+    shortlistCandidate: "उम्मीदवार को शॉर्टलिस्ट करें",
+    status: {
+      approved: "स्वीकृत",
+      shortlisted: "शॉर्टलिस्ट किया गया",
+      pending: "लंबित",
+      waitlisted: "प्रतीक्षा सूची में",
+      viewed: "देखा गया",
+      rejected: "अस्वीकृत",
+      contacted: "संपर्क किया गया",
+    },
+  },
+};
+
 export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
+  const { locale } = useLocale();
+  const t = content[locale];
   const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [interests, setInterests] = useState<InterestRow[]>([]);
@@ -157,17 +276,16 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
   }
 
   const selectedJob = jobs.find((j) => j.id === selectedJobId);
+  const statusLabel = (status: string) => t.status[status] ?? status;
 
   return (
     <div className="p-margin-mobile md:p-margin-desktop max-w-max-width-desktop mx-auto w-full flex flex-col gap-8 text-left">
       {/* Page Header */}
       <header className="border-b border-outline-variant pb-4">
         <h1 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface m-0">
-          Employer &amp; Placement Exchange
+          {t.heading}
         </h1>
-        <p className="font-body-md text-body-md text-on-surface-variant mt-1">
-          Post career opportunities, review interested candidates, and search certified rural talent.
-        </p>
+        <p className="font-body-md text-body-md text-on-surface-variant mt-1">{t.subheading}</p>
       </header>
 
       {error && (
@@ -185,27 +303,27 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
           <div className="bg-surface-card border border-outline-variant rounded-xl p-6 shadow-sm">
             <h3 className="font-headline-sm text-headline-sm text-on-surface mb-4 flex items-center gap-2 m-0">
               <span className="material-symbols-outlined text-primary">add_circle</span>
-              Post Opportunity
+              {t.postOpportunity}
             </h3>
             <form onSubmit={(e) => void handleCreateJob(e)} className="space-y-4">
               <div>
                 <label className="block font-label-md text-label-md text-on-surface mb-1">
-                  Job / Role Title *
+                  {t.jobTitleLabel}
                 </label>
                 <input
                   name="title"
                   required
-                  placeholder="e.g. Cooperative Accounts Officer"
+                  placeholder={t.jobTitlePlaceholder}
                   className="w-full h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
                   type="text"
                 />
               </div>
 
               <div>
-                <label className="block font-label-md text-label-md text-on-surface mb-1">Location</label>
+                <label className="block font-label-md text-label-md text-on-surface mb-1">{t.locationLabel}</label>
                 <input
                   name="location"
-                  placeholder="e.g. Pune, Maharashtra / Remote"
+                  placeholder={t.locationPlaceholder}
                   className="w-full h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
                   type="text"
                 />
@@ -213,11 +331,11 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
 
               <div>
                 <label className="block font-label-md text-label-md text-on-surface mb-1">
-                  Required Skills (Comma-separated)
+                  {t.requiredSkillsLabel}
                 </label>
                 <input
                   name="required_skills"
-                  placeholder="e.g. Bookkeeping, Tally, Agronomy"
+                  placeholder={t.requiredSkillsPlaceholder}
                   className="w-full h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
                   type="text"
                 />
@@ -225,7 +343,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
 
               <div>
                 <label className="skill-picker-label block font-label-md text-label-md text-on-surface mb-1">
-                  Tag Skills (for Skill-Gap matching)
+                  {t.tagSkillsLabel}
                 </label>
                 <SkillPicker skills={skills} selectedIds={selectedSkillIds} onToggle={toggleSkillSelection} />
                 <div className="flex gap-2">
@@ -238,7 +356,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                         void handleCreateSkill();
                       }
                     }}
-                    placeholder="New skill, e.g. Tally"
+                    placeholder={t.newSkillPlaceholder}
                     className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
                     type="text"
                   />
@@ -247,7 +365,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                     onClick={() => void handleCreateSkill()}
                     className="px-4 h-touch-target bg-surface-container-highest text-on-surface rounded-lg font-label-sm text-label-sm hover:bg-surface-variant cursor-pointer"
                   >
-                    Add to Taxonomy
+                    {t.addToTaxonomy}
                   </button>
                 </div>
               </div>
@@ -258,7 +376,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                 className="w-full h-touch-target bg-cta text-on-primary hover:bg-cta-hover rounded-full font-label-md text-label-md transition-colors flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
               >
                 <span className="material-symbols-outlined text-[18px]">send</span>
-                <span>{busy ? "Posting..." : "Post Opportunity"}</span>
+                <span>{busy ? t.posting : t.postOpportunity}</span>
               </button>
             </form>
           </div>
@@ -267,10 +385,10 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
           <div className="bg-surface-card border border-outline-variant rounded-xl p-6 shadow-sm">
             <h3 className="font-headline-sm text-headline-sm text-on-surface mb-4 flex items-center gap-2 m-0">
               <span className="material-symbols-outlined text-secondary">work</span>
-              Active Postings ({jobs.length})
+              {t.activePostings(jobs.length)}
             </h3>
             {jobs.length === 0 ? (
-              <p className="text-sm text-on-surface-variant">No jobs posted yet.</p>
+              <p className="text-sm text-on-surface-variant">{t.noJobsYet}</p>
             ) : (
               <ul className="flex flex-col gap-2 max-h-72 overflow-y-auto pr-1 list-none p-0 m-0">
                 {jobs.map((job) => {
@@ -288,7 +406,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                       <div className="font-body-md font-bold text-primary">{job.title}</div>
                       <div className="font-label-sm text-on-surface-variant flex items-center gap-2 mt-1">
                         <span className="material-symbols-outlined text-[14px]">location_on</span>
-                        <span>{job.location || "Flexible"}</span>
+                        <span>{job.location || t.flexible}</span>
                       </div>
                     </li>
                   );
@@ -306,27 +424,25 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
               <div className="flex justify-between items-center mb-4">
                 <div>
                   <h3 className="font-headline-sm text-headline-sm text-on-surface m-0">
-                    Candidate Responses
+                    {t.candidateResponses}
                   </h3>
-                  <p className="font-label-sm text-on-surface-variant mt-0.5">
-                    for &ldquo;{selectedJob?.title}&rdquo;
-                  </p>
+                  <p className="font-label-sm text-on-surface-variant mt-0.5">{t.forJob(selectedJob?.title)}</p>
                 </div>
                 <span className="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-sm font-bold">
-                  {interests.length} Candidates
+                  {t.candidatesCount(interests.length)}
                 </span>
               </div>
 
               {selectedJobSkills.length > 0 && (
                 <div className="mb-4 flex items-center gap-2 text-sm">
-                  <span className="font-label-sm text-on-surface-variant">Tagged skills:</span>
+                  <span className="font-label-sm text-on-surface-variant">{t.taggedSkills}</span>
                   <SkillChips skills={selectedJobSkills} />
                 </div>
               )}
 
               {interests.length === 0 ? (
                 <div className="p-6 text-center text-on-surface-variant text-sm bg-surface-container-low rounded-lg">
-                  No applicants or shortlist entries for this role yet. Search verified trainees below.
+                  {t.noApplicants}
                 </div>
               ) : (
                 <ul className="flex flex-col gap-2 list-none p-0 m-0">
@@ -337,14 +453,14 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                     >
                       <div>
                         <p className="font-body-md font-semibold text-primary m-0">
-                          {interest.profiles?.full_name ?? `Candidate #${interest.trainee_id.slice(0, 8)}`}
+                          {interest.profiles?.full_name ?? t.candidateFallback(interest.trainee_id.slice(0, 8))}
                         </p>
                         <p className="font-label-sm text-on-surface-variant m-0 mt-0.5">
-                          Status: <span className="capitalize font-bold text-primary">{interest.status}</span>
+                          {t.statusLabel} <span className="font-bold text-primary">{statusLabel(interest.status)}</span>
                         </p>
                       </div>
                       <span className="bg-status-success/15 text-status-success px-2.5 py-1 rounded-full font-label-sm font-bold uppercase">
-                        {interest.status}
+                        {statusLabel(interest.status)}
                       </span>
                     </li>
                   ))}
@@ -357,23 +473,21 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
           <div className="bg-surface-card border border-outline-variant rounded-xl p-6 shadow-sm">
             <h3 className="font-headline-sm text-headline-sm text-on-surface mb-2 flex items-center gap-2 m-0">
               <span className="material-symbols-outlined text-primary">person_search</span>
-              Search Certified Trainees
+              {t.searchCertifiedTrainees}
             </h3>
-            <p className="font-body-sm text-on-surface-variant mb-4">
-              Explore candidates certified by NCCT / VAMNICOM / RICM cooperative institutions.
-            </p>
+            <p className="font-body-sm text-on-surface-variant mb-4">{t.searchSubheading}</p>
 
             <form onSubmit={(e) => void handleSearch(e)} className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Skill or course keyword..."
+                placeholder={t.searchKeywordPlaceholder}
                 className="h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 text-sm focus:border-primary outline-none"
               />
               <input
                 value={searchLocation}
                 onChange={(e) => setSearchLocation(e.target.value)}
-                placeholder="Location (e.g. Pune)..."
+                placeholder={t.searchLocationPlaceholder}
                 className="h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 text-sm focus:border-primary outline-none"
               />
               <div className="sm:col-span-2 flex justify-end">
@@ -383,7 +497,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                   className="px-6 h-touch-target bg-primary text-on-primary rounded-full font-label-md text-label-md hover:bg-primary/90 transition-colors flex items-center gap-2 cursor-pointer shadow-sm"
                 >
                   <span className="material-symbols-outlined text-[18px]">search</span>
-                  Search Trainees
+                  {t.searchTrainees}
                 </button>
               </div>
             </form>
@@ -413,7 +527,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                         onClick={() => void handleShortlist(result.trainee_id)}
                         className="px-4 py-2 bg-cta text-on-primary hover:bg-cta-hover rounded-full font-label-md text-xs font-semibold shrink-0 cursor-pointer shadow-xs"
                       >
-                        Shortlist Candidate
+                        {t.shortlistCandidate}
                       </button>
                     )}
                   </div>

@@ -216,6 +216,7 @@
   --color-error-container: #ffdad6;
   --color-on-error-container: #93000a;
 
+  --font-heading: "Plus Jakarta Sans", var(--ncct-heading-font);
   --font-headline: "Hanken Grotesk", var(--ncct-heading-font);
   --font-body: "Fira Sans", var(--ncct-body-font);
   --font-headline-lg: "Hanken Grotesk", sans-serif;
@@ -256,6 +257,7 @@
   --text-label-sm--font-weight: 700;
 
   --radius-DEFAULT: 0.25rem;
+  --radius-std: 8px;
   --radius-lg: 0.5rem;
   --radius-xl: 0.75rem;
 

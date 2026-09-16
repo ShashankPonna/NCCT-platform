@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NCCT Trainee Platform - Desktop Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600&amp;family=Hanken+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "surface-container-low": "#f4f4ef",
+                "on-error-container": "#93000a",
+                "surface-container": "#eeeee9",
+                "on-primary-fixed": "#031c39",
+                "error": "#ba1a1a",
+                "on-surface-variant": "#44474d",
+                "secondary-fixed-dim": "#ffb599",
+                "surface-white": "#FFFFFF",
+                "primary": "#000d20",
+                "surface-dim": "#dadad5",
+                "on-primary": "#ffffff",
+                "primary-fixed": "#d5e3ff",
+                "error-container": "#ffdad6",
+                "surface": "#fafaf5",
+                "on-primary-container": "#768bad",
+                "secondary": "#a63b00",
+                "tertiary-fixed": "#d8e2ff",
+                "primary-fixed-dim": "#b2c8ed",
+                "surface-tint": "#4b5f7f",
+                "background": "#fafaf5",
+                "surface-container-lowest": "#ffffff",
+                "text-main": "#333333",
+                "on-background": "#1a1c19",
+                "outline": "#74777e",
+                "surface-bright": "#fafaf5",
+                "on-primary-fixed-variant": "#334866",
+                "on-tertiary-fixed": "#001a42",
+                "primary-container": "#0b2340",
+                "on-error": "#ffffff",
+                "inverse-surface": "#2f312e",
+                "inverse-on-surface": "#f1f1ec",
+                "on-secondary-fixed-variant": "#7f2b00",
+                "tertiary-fixed-dim": "#adc6ff",
+                "status-pending": "#EAB308",
+                "surface-variant": "#e3e3de",
+                "on-tertiary": "#ffffff",
+                "on-secondary": "#ffffff",
+                "tertiary": "#000c25",
+                "on-secondary-container": "#5a1c00",
+                "surface-container-high": "#e8e8e3",
+                "inverse-primary": "#b2c8ed",
+                "status-approved": "#128C7E",
+                "status-shortlisted": "#7C3AED",
+                "tertiary-container": "#00214f",
+                "surface-container-highest": "#e3e3de",
+                "outline-variant": "#c4c6ce",
+                "on-tertiary-fixed-variant": "#004494",
+                "secondary-fixed": "#ffdbce",
+                "on-secondary-fixed": "#370e00",
+                "on-tertiary-container": "#5288ea",
+                "on-surface": "#1a1c19",
+                "secondary-container": "#fc6c29"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+        },
+        "spacing": {
+                "touch-target": "44px",
+                "margin-mobile": "16px",
+                "base": "4px",
+                "margin-desktop": "32px",
+                "gutter": "16px"
+        },
+        "fontFamily": {
+                "label-sm": [
+                        "Fira Sans"
+                ],
+                "headline-md": [
+                        "Hanken Grotesk"
+                ],
+                "body-lg": [
+                        "Fira Sans"
+                ],
+                "headline-lg-mobile": [
+                        "Hanken Grotesk"
+                ],
+                "body-md": [
+                        "Fira Sans"
+                ],
+                "label-md": [
+                        "Fira Sans"
+                ],
+                "headline-sm": [
+                        "Hanken Grotesk"
+                ],
+                "headline-lg": [
+                        "Hanken Grotesk"
+                ]
+        },
+        "fontSize": {
+                "label-sm": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-md": [
+                        "24px",
+                        {
+                                "lineHeight": "30px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-lg": [
+                        "18px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-lg-mobile": [
+                        "26px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "700"
+                        }
+                ],
+                "body-md": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "label-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "letterSpacing": "0.02em",
+                                "fontWeight": "500"
+                        }
+                ],
+                "headline-sm": [
+                        "20px",
+                        {
+                                "lineHeight": "26px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "40px",
+                                "fontWeight": "700"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md text-body-md min-h-screen flex flex-col antialiased">
+<!-- Top Thin Bar -->
+<div class="bg-surface-container-low border-b border-outline-variant py-1.5">
+<div class="max-w-[1280px] mx-auto px-margin-desktop flex justify-between items-center h-8">
+<!-- Left Side: Government Branding -->
+<div class="flex items-center gap-3 text-label-sm font-label-sm text-on-surface-variant">
+<img alt="Flag of India" class="w-4 h-3 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWOL7_JwRsO7_J2OOvsgJKSIfpHGPo4pxpldXGNEcgzNdEkctgVNkWnDDds1sm52Vfp9r4JinD-tA9nFgtS1_Ri8Nl0PdECZ4EAkUNtY_TS5-eGUhaAn_zhHFLvklfuhsmqNGyFxeJvTL3TNanhVnU1J4O8xFqW8ThxAOY4mY6vwv4NGGo70i3u8DG9mCw1lICcpcelrjP0ApQCgcRs3I_gXXjw6g4uWSQMTc-pmFLcaQmToWsXBVj"/>
+<span class="font-medium">भारत सरकार | Government of India</span>
+</div>
+<!-- Right Side: Accessibility & Utilities -->
+<div class="flex items-center gap-4 text-label-sm font-label-sm text-on-surface-variant">
+<a class="hover:text-primary transition-colors" href="#">Skip To Main Content</a>
+<div class="h-4 w-px bg-outline-variant"></div>
+<!-- Language Selector -->
+<div class="flex items-center gap-1 cursor-pointer hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[16px]">language</span>
+<span>English / हिन्दी</span>
+<span class="material-symbols-outlined text-[16px]">expand_more</span>
+</div>
+<div class="h-4 w-px bg-outline-variant"></div>
+<!-- Accessibility Controls -->
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2">
+<button class="hover:text-primary font-bold px-1">A-</button>
+<button class="hover:text-primary font-bold px-1 border-x border-outline-variant">A</button>
+<button class="hover:text-primary font-bold px-1">A+</button>
+</div>
+<button class="material-symbols-outlined text-[18px] cursor-pointer hover:text-primary" title="Contrast Toggle">contrast</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Navigation Bar -->
+<header class="bg-surface-white border-b border-outline-variant sticky top-0 z-50 shadow-sm">
+<div class="max-w-[1280px] mx-auto px-margin-desktop py-4 flex items-center justify-between gap-8">
+<!-- Brand Logo -->
+<div class="flex items-center gap-4 shrink-0">
+<img class="h-12 object-contain" data-alt="The official emblem of the Government of India alongside a stylized logo for the Ministry of Skill Development, representing national authority and vocational training." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbYZOCKxrshMjM8CYBRU6eZc8CbGAEJUFHp5wyRzU8EWSBU3NBlK_lAl_2o6UbGpKA3WiRkZbiAt9DNgkqhbPKxzghWXbT5ZFVl3bsH16P6CczLfM8dWELnGhVjp3hGAonLqrs20_P4cb4E2sRW31qDCiCN-QrMIYRdsfiHMtwqBAJL2BLZNuQeu9p-iMwyPqE8B3qX17Wc6mnMKrjIrOD8Ud6OKrou95K1vIzoAN7FdB0bqa2Ov7C"/>
+<div class="h-10 w-px bg-outline-variant mx-2"></div>
+<div class="flex items-center gap-2">
+<div class="w-10 h-10 bg-primary-container rounded flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined filled-icon">school</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-primary">NCCT Platform</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">National Council for Vocational Training</span>
+</div>
+</div>
+</div>
+<!-- Search Bar -->
+<div class="flex-1 max-w-xl mx-auto relative group hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full h-touch-target pl-10 pr-4 rounded border border-outline-variant bg-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container text-body-md transition-all outline-none" placeholder="Search Courses &amp; Modules" type="text"/>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-3 shrink-0">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="flex items-center gap-3 ml-2">
+<img class="w-10 h-10 rounded-full object-cover shadow-sm" data-alt="Professional headshot of an Indian trainee in a modern corporate setting. Warm, natural lighting highlights a determined expression. Professional yet accessible aesthetic with subtle primary blue tones in the background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAiIyz-eWvM1Ek89sYQXr-5n05V2oZ4dBLJFIkUN0Ic9qfpGU2yXCP5DQNusWC7oqW2wsOfhn3zGX3Kj5QWVSUrzPW5tjMUtw4ERKCFCBwRW3HC3WHzKJ2BEL4p6ryw-XKBJVuQ0Pt9TnwcBfqCXwlrUsA_LFUy6kksJcJ24rEGpcEYlc-78DO-Ank_FUIQduUD9trPdrZCpxHnOA7dD5nqtngihfbFBEi3obWKvbYO5OKotIjs7tN_"/>
+<div class="hidden md:flex flex-col">
+<span class="font-label-md text-label-md font-bold text-on-surface">Rahul Sharma</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Trainee</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Mega Menu Navigation Row -->
+<div class="border-t border-outline-variant bg-surface-white hidden md:block relative">
+<nav class="max-w-[1280px] mx-auto px-margin-desktop flex items-center gap-6 overflow-x-auto no-scrollbar">
+<a class="h-12 flex items-center text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" href="#">Home</a>
+<!-- Learn Hover Menu Item -->
+<div class="relative group h-12 flex items-center">
+<a class="text-on-surface-variant hover:text-primary font-bold text-label-md font-label-md flex items-center h-full whitespace-nowrap transition-colors" href="#">
+                        Learn <span class="material-symbols-outlined text-[16px] ml-1">expand_more</span>
+</a>
+<!-- Mega Menu Dropdown -->
+<div class="absolute top-full left-0 mt-0 w-[400px] bg-surface-white border border-outline-variant shadow-lg rounded-b-xl overflow-hidden z-50 flex hidden group-hover:flex">
+<div class="w-full p-2 flex flex-col">
+<a class="flex items-center gap-4 p-3 hover:bg-surface-container rounded-lg transition-colors group/link" href="#">
+<div class="w-8 h-8 rounded bg-primary-fixed/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">local_library</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface group-hover/link:text-primary">My Lessons</span>
+</a>
+<a class="flex items-center gap-4 p-3 hover:bg-surface-container rounded-lg transition-colors group/link" href="#">
+<div class="w-8 h-8 rounded bg-primary-fixed/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">workspace_premium</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface group-hover/link:text-primary">My Certificates</span>
+</a>
+<a class="flex items-center gap-4 p-3 hover:bg-surface-container rounded-lg transition-colors group/link" href="#">
+<div class="w-8 h-8 rounded bg-primary-fixed/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">app_registration</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface group-hover/link:text-primary">Nominate/Enroll</span>
+</a>
+</div>
+</div>
+</div>
+<a class="h-12 flex items-center text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" href="#">Attendance</a>
+<!-- Career Hover Menu Item -->
+<div class="relative group h-12 flex items-center">
+<a class="text-on-surface-variant hover:text-primary font-bold text-label-md font-label-md flex items-center h-full whitespace-nowrap transition-colors" href="#">
+                        Career <span class="material-symbols-outlined text-[16px] ml-1">expand_more</span>
+</a>
+<!-- Mega Menu Dropdown -->
+<div class="absolute top-full left-0 mt-0 w-[400px] bg-surface-white border border-outline-variant shadow-lg rounded-b-xl overflow-hidden z-50 flex hidden group-hover:flex">
+<div class="w-full p-2 flex flex-col">
+<a class="flex items-center gap-4 p-3 hover:bg-surface-container rounded-lg transition-colors group/link" href="#">
+<div class="w-8 h-8 rounded bg-primary-fixed/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">work</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface group-hover/link:text-primary">Open Positions</span>
+</a>
+<a class="flex items-center gap-4 p-3 hover:bg-surface-container rounded-lg transition-colors group/link" href="#">
+<div class="w-8 h-8 rounded bg-primary-fixed/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">trending_up</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface group-hover/link:text-primary">Skill-Gap Check</span>
+</a>
+<a class="flex items-center gap-4 p-3 hover:bg-surface-container rounded-lg transition-colors group/link" href="#">
+<div class="w-8 h-8 rounded bg-primary-fixed/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">support_agent</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface group-hover/link:text-primary">Ask a Counsellor</span>
+</a>
+<a class="flex items-center gap-4 p-3 hover:bg-surface-container rounded-lg transition-colors group/link" href="#">
+<div class="w-8 h-8 rounded bg-primary-fixed/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">help_center</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface group-hover/link:text-primary">FAQ</span>
+</a>
+</div>
+</div>
+</div>
+</nav>
+</div>
+</header>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col w-full max-w-[1280px] mx-auto">
+<!-- Main Canvas -->
+<main class="flex-1 p-margin-mobile md:p-margin-desktop bg-surface-container-low w-full">
+<!-- Hero Section -->
+<section class="mb-8">
+<div class="relative bg-surface-white rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.05)] border border-[#E5E5E0] overflow-hidden">
+<div class="absolute inset-0 z-0">
+<div class="w-full h-full bg-gradient-to-r from-primary-container/20 to-transparent"></div>
+</div>
+<div class="relative z-10 p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">Welcome back, Rahul!</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">You're making great progress in your Advanced Cooperative Management certification. Your next milestone is coming up next week.</p>
+</div>
+<div class="shrink-0 flex gap-4">
+<button class="min-h-[44px] px-6 py-2 bg-[#F26522] text-surface-white font-label-md text-label-md rounded font-bold hover:bg-[#d6571a] shadow-sm transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">play_arrow</span>
+                                Resume Course
+                            </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+<!-- Continue Learning Card -->
+<article class="bg-surface-white rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.05)] border border-[#E5E5E0] p-6 flex flex-col transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+<div class="flex items-start justify-between mb-4">
+<div class="w-12 h-12 rounded-lg bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[24px]">local_library</span>
+</div>
+<span class="bg-[#128C7E]/10 text-[#128C7E] px-2 py-1 rounded-full font-label-sm text-label-sm">In Progress</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Financial Management</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6 flex-1">Module 3: Rural Credit Structures and Cooperative Banking.</p>
+<div class="mt-auto">
+<div class="flex justify-between font-label-sm text-label-sm text-on-surface-variant mb-1">
+<span>Progress</span>
+<span>65%</span>
+</div>
+<div class="w-full bg-surface-variant rounded-full h-2">
+<div class="bg-[#1E5FBF] h-2 rounded-full" style="width: 65%"></div>
+</div>
+</div>
+</article>
+<!-- Next Session Card -->
+<article class="bg-surface-white rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.05)] border border-[#E5E5E0] p-6 flex flex-col transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+<div class="flex items-start justify-between mb-4">
+<div class="w-12 h-12 rounded-lg bg-secondary-fixed flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[24px]">event</span>
+</div>
+<span class="bg-[#EAB308]/10 text-[#a17a04] px-2 py-1 rounded-full font-label-sm text-label-sm">Upcoming</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Live Workshop</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4">Leadership in Cooperative Societies with Dr. Sharma.</p>
+<div class="mt-auto bg-surface-container p-3 rounded-lg flex items-center gap-3">
+<span class="material-symbols-outlined text-outline">schedule</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Today, 2:00 PM</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Online via Zoom</p>
+</div>
+</div>
+</article>
+<!-- Employer Interest / Skill Check Bento Box -->
+<div class="flex flex-col gap-6">
+<!-- Employer Interest -->
+<article class="bg-surface-white rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.05)] border border-[#E5E5E0] p-5 flex items-center gap-4 transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">business_center</span>
+</div>
+<div class="flex-1">
+<h4 class="font-label-md text-label-md font-bold text-on-surface">Employer Match</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">2 new opportunities match your profile.</p>
+</div>
+<button class="text-[#1E5FBF] hover:bg-surface-container-low p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</article>
+<!-- Skill Check -->
+<article class="bg-surface-white rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.05)] border border-[#E5E5E0] p-5 flex flex-col gap-3 transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-outline text-sm">checklist</span>
+<h4 class="font-label-md text-label-md font-bold text-on-surface">Skills Profile</h4>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-primary text-on-primary rounded-full font-label-sm text-label-sm">Accounting</span>
+<span class="px-3 py-1 bg-primary text-on-primary rounded-full font-label-sm text-label-sm">Mgmt</span>
+<span class="px-3 py-1 border border-dashed border-[#1E5FBF] bg-surface-white text-on-surface-variant rounded-full font-label-sm text-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">add</span> Add Skill
+                            </span>
+</div>
+</article>
+</div>
+</div>
+</main>
+</div>
+<!-- Footer -->
+<footer class="bg-surface-white border-t border-outline-variant mt-auto py-8 px-margin-mobile md:px-margin-desktop w-full">
+<div class="max-w-[1280px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-sm">copyright</span>
+<span class="font-label-sm text-label-sm">2024 National Council for Cooperative Training. All rights reserved.</span>
+</div>
+<div class="flex gap-6 font-label-sm text-label-sm text-[#1E5FBF]">
+<a class="hover:underline" href="#">Privacy Policy</a>
+<a class="hover:underline" href="#">Terms of Service</a>
+<a class="hover:underline" href="#">Support</a>
+</div>
+</div>
+</footer>
+<!-- Bottom Nav Bar (Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 md:hidden flex justify-around items-center px-margin-mobile pb-2 pt-1 bg-surface-white shadow-lg border-t border-outline-variant rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-secondary bg-secondary-fixed rounded-full px-4 py-1 scale-90 duration-150" href="#">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors px-4 py-1 rounded-full" href="#">
+<span class="material-symbols-outlined text-[24px]">menu_book</span>
+<span class="font-label-sm text-label-sm mt-1">Learn</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors px-4 py-1 rounded-full" href="#">
+<span class="material-symbols-outlined text-[24px]">calendar_today</span>
+<span class="font-label-sm text-label-sm mt-1">Attendance</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors px-4 py-1 rounded-full" href="#">
+<span class="material-symbols-outlined text-[24px]">work</span>
+<span class="font-label-sm text-label-sm mt-1">Career</span>
+</a>
+</nav>
+</body></html>

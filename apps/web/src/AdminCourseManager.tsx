@@ -17,12 +17,175 @@ import type { ContentType, Course, Lesson, Module, Programme } from "@ncct/share
 import { createLessonSchema, localeSchema, youtubeVideoIdSchema } from "@ncct/validation";
 import { useEffect, useState } from "react";
 import { AssessmentBuilder } from "./AssessmentBuilder.js";
+import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 
 interface AdminCourseManagerProps {
   accessToken: string;
 }
 
+interface AdminCourseManagerText {
+  heading: string;
+  subheading: string;
+  selectProgramme: string;
+  courses: string;
+  addCourseAria: string;
+  courseTitlePlaceholder: string;
+  createCourse: string;
+  noCoursesYet: string;
+  modules: string;
+  addModuleAria: string;
+  inContext: (title: string) => string;
+  selectACourse: string;
+  moduleTitlePlaceholder: string;
+  createModule: string;
+  selectCourseToViewModules: string;
+  noModulesYet: string;
+  lessonsAndAssessments: string;
+  selectAModule: string;
+  cancel: string;
+  addItem: string;
+  createNewLesson: string;
+  lessonTitlePlaceholder: string;
+  contentTypeVideo: string;
+  contentTypePdf: string;
+  contentTypeSlides: string;
+  contentTypeArticle: string;
+  youtubeIdOptionalPlaceholder: string;
+  saveLesson: string;
+  selectModuleToView: string;
+  noLessonsYet: string;
+  contentType: Record<string, string>;
+  ytPrefix: (id: string) => string;
+  hideDetails: string;
+  manage: string;
+  attachFile: string;
+  uploading: string;
+  fileAttached: string;
+  uploadVideoFile: string;
+  selfHostedVideoAttached: string;
+  youtubeIdLabel: string;
+  setId: string;
+  addUpdateTranslation: string;
+  selectLanguage: string;
+  localizedTitlePlaceholder: string;
+  localizedBodyPlaceholder: string;
+  saveTranslation: string;
+  moduleAssessments: string;
+  invalidLessonPayload: string;
+  invalidYoutubeId: string;
+  invalidLocale: string;
+}
+
+const content: Record<Locale, AdminCourseManagerText> = {
+  en: {
+    heading: "Content Management",
+    subheading: "Manage courses, modules, lessons, and assessments.",
+    selectProgramme: "Select Programme",
+    courses: "Courses",
+    addCourseAria: "Add Course",
+    courseTitlePlaceholder: "Course Title",
+    createCourse: "Create Course",
+    noCoursesYet: "No courses in this programme.",
+    modules: "Modules",
+    addModuleAria: "Add Module",
+    inContext: (title) => `in ${title}`,
+    selectACourse: "Select a course",
+    moduleTitlePlaceholder: "Module Title",
+    createModule: "Create Module",
+    selectCourseToViewModules: "Select a course to view modules.",
+    noModulesYet: "No modules created yet.",
+    lessonsAndAssessments: "Lessons & Assessments",
+    selectAModule: "Select a module",
+    cancel: "Cancel",
+    addItem: "Add Item",
+    createNewLesson: "Create New Lesson",
+    lessonTitlePlaceholder: "Lesson Title *",
+    contentTypeVideo: "Video",
+    contentTypePdf: "PDF Document",
+    contentTypeSlides: "Slides",
+    contentTypeArticle: "Article / Text",
+    youtubeIdOptionalPlaceholder: "YouTube Video ID (optional)",
+    saveLesson: "Save Lesson",
+    selectModuleToView: "Select a module to view lessons and assessments.",
+    noLessonsYet: 'No lessons or assessments added yet. Click "Add Item" above.',
+    contentType: { video: "VIDEO", pdf: "PDF", slides: "SLIDES", article: "ARTICLE" },
+    ytPrefix: (id) => `YT: ${id}`,
+    hideDetails: "Hide Details",
+    manage: "Manage",
+    attachFile: "Attach File:",
+    uploading: "Uploading…",
+    fileAttached: "File attached",
+    uploadVideoFile: "Upload Video File:",
+    selfHostedVideoAttached: "Self-hosted video attached",
+    youtubeIdLabel: "YouTube ID:",
+    setId: "Set ID",
+    addUpdateTranslation: "Add / Update Translation",
+    selectLanguage: "Select language...",
+    localizedTitlePlaceholder: "Localized Title",
+    localizedBodyPlaceholder: "Localized body text (optional)",
+    saveTranslation: "Save Translation",
+    moduleAssessments: "Module Assessments",
+    invalidLessonPayload: "Invalid lesson payload",
+    invalidYoutubeId: "Invalid YouTube ID",
+    invalidLocale: "Locale must be a valid BCP 47 code (e.g. 'hi-IN')",
+  },
+  hi: {
+    heading: "सामग्री प्रबंधन",
+    subheading: "पाठ्यक्रम, मॉड्यूल, पाठ और मूल्यांकन प्रबंधित करें।",
+    selectProgramme: "कार्यक्रम चुनें",
+    courses: "पाठ्यक्रम",
+    addCourseAria: "पाठ्यक्रम जोड़ें",
+    courseTitlePlaceholder: "पाठ्यक्रम शीर्षक",
+    createCourse: "पाठ्यक्रम बनाएं",
+    noCoursesYet: "इस कार्यक्रम में कोई पाठ्यक्रम नहीं है।",
+    modules: "मॉड्यूल",
+    addModuleAria: "मॉड्यूल जोड़ें",
+    inContext: (title) => `इसमें: ${title}`,
+    selectACourse: "एक पाठ्यक्रम चुनें",
+    moduleTitlePlaceholder: "मॉड्यूल शीर्षक",
+    createModule: "मॉड्यूल बनाएं",
+    selectCourseToViewModules: "मॉड्यूल देखने के लिए एक पाठ्यक्रम चुनें।",
+    noModulesYet: "अभी तक कोई मॉड्यूल नहीं बनाया गया है।",
+    lessonsAndAssessments: "पाठ एवं मूल्यांकन",
+    selectAModule: "एक मॉड्यूल चुनें",
+    cancel: "रद्द करें",
+    addItem: "आइटम जोड़ें",
+    createNewLesson: "नया पाठ बनाएं",
+    lessonTitlePlaceholder: "पाठ शीर्षक *",
+    contentTypeVideo: "वीडियो",
+    contentTypePdf: "PDF दस्तावेज़",
+    contentTypeSlides: "स्लाइड्स",
+    contentTypeArticle: "लेख / टेक्स्ट",
+    youtubeIdOptionalPlaceholder: "YouTube वीडियो आईडी (वैकल्पिक)",
+    saveLesson: "पाठ सहेजें",
+    selectModuleToView: "पाठ एवं मूल्यांकन देखने के लिए एक मॉड्यूल चुनें।",
+    noLessonsYet: 'अभी तक कोई पाठ या मूल्यांकन नहीं जोड़ा गया है। ऊपर "आइटम जोड़ें" पर क्लिक करें।',
+    contentType: { video: "वीडियो", pdf: "PDF", slides: "स्लाइड्स", article: "लेख" },
+    ytPrefix: (id) => `YT: ${id}`,
+    hideDetails: "विवरण छिपाएं",
+    manage: "प्रबंधित करें",
+    attachFile: "फ़ाइल संलग्न करें:",
+    uploading: "अपलोड हो रहा है…",
+    fileAttached: "फ़ाइल संलग्न है",
+    uploadVideoFile: "वीडियो फ़ाइल अपलोड करें:",
+    selfHostedVideoAttached: "स्व-होस्टेड वीडियो संलग्न है",
+    youtubeIdLabel: "YouTube आईडी:",
+    setId: "आईडी सेट करें",
+    addUpdateTranslation: "अनुवाद जोड़ें / अपडेट करें",
+    selectLanguage: "भाषा चुनें...",
+    localizedTitlePlaceholder: "स्थानीयकृत शीर्षक",
+    localizedBodyPlaceholder: "स्थानीयकृत मुख्य पाठ (वैकल्पिक)",
+    saveTranslation: "अनुवाद सहेजें",
+    moduleAssessments: "मॉड्यूल मूल्यांकन",
+    invalidLessonPayload: "अमान्य पाठ डेटा",
+    invalidYoutubeId: "अमान्य YouTube आईडी",
+    invalidLocale: "भाषा एक मान्य BCP 47 कोड होनी चाहिए (उदा. 'hi-IN')",
+  },
+};
+
 export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
+  const { locale } = useLocale();
+  const t = content[locale];
   const [programmes, setProgrammes] = useState<Programme[]>([]);
   const [programmeId, setProgrammeId] = useState("");
   const [courses, setCourses] = useState<Course[]>([]);
@@ -160,7 +323,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
     });
 
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? "Invalid lesson payload");
+      setError(parsed.error.issues[0]?.message ?? t.invalidLessonPayload);
       return;
     }
 
@@ -233,7 +396,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
     const raw = youtubeInputs[lessonId] ?? "";
     const parsed = youtubeVideoIdSchema.safeParse(raw);
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? "Invalid YouTube ID");
+      setError(parsed.error.issues[0]?.message ?? t.invalidYoutubeId);
       return;
     }
     setError(null);
@@ -253,7 +416,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
     if (!input?.locale || !input?.title) return;
     const locParsed = localeSchema.safeParse(input.locale);
     if (!locParsed.success) {
-      setError("Locale must be a valid BCP 47 code (e.g. 'hi-IN')");
+      setError(t.invalidLocale);
       return;
     }
     setError(null);
@@ -283,17 +446,15 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-outline-variant pb-4">
         <div>
           <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg font-bold text-on-surface m-0">
-            Content Management
+            {t.heading}
           </h2>
-          <p className="font-body-md text-body-md text-on-surface-variant mt-1">
-            Manage courses, modules, lessons, and assessments.
-          </p>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-1">{t.subheading}</p>
         </div>
 
         {/* Programme Picker */}
         <div className="w-full md:w-80">
           <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1">
-            Select Programme
+            {t.selectProgramme}
           </label>
           <div className="relative">
             <select
@@ -327,11 +488,11 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
         <div className="lg:col-span-3 flex flex-col gap-4">
           <div className="bg-surface-card border border-outline-variant rounded-xl p-4 shadow-sm flex flex-col min-h-[520px]">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-headline-sm text-headline-sm font-semibold m-0 text-primary">Courses</h3>
+              <h3 className="font-headline-sm text-headline-sm font-semibold m-0 text-primary">{t.courses}</h3>
               <button
                 type="button"
                 onClick={() => setShowAddCourse(!showAddCourse)}
-                aria-label="Add Course"
+                aria-label={t.addCourseAria}
                 className="h-8 w-8 rounded-full hover:bg-surface-container flex items-center justify-center text-primary cursor-pointer transition-colors"
               >
                 <span className="material-symbols-outlined text-[20px]">
@@ -346,7 +507,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                 <input
                   name="title"
                   required
-                  placeholder="Course Title"
+                  placeholder={t.courseTitlePlaceholder}
                   className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-sm"
                 />
                 <button
@@ -354,14 +515,14 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                   disabled={busy}
                   className="w-full bg-cta text-on-primary py-1.5 rounded text-xs font-semibold hover:bg-cta-hover"
                 >
-                  Create Course
+                  {t.createCourse}
                 </button>
               </form>
             )}
 
             <div className="space-y-2 flex-1 overflow-y-auto pr-1 custom-scrollbar">
               {courses.length === 0 ? (
-                <p className="text-xs text-on-surface-variant p-4 text-center">No courses in this programme.</p>
+                <p className="text-xs text-on-surface-variant p-4 text-center">{t.noCoursesYet}</p>
               ) : (
                 courses.map((c) => {
                   const isSelected = c.id === selectedCourseId;
@@ -393,12 +554,12 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
         <div className="lg:col-span-3 flex flex-col gap-4">
           <div className="bg-surface-card border border-outline-variant rounded-xl p-4 shadow-sm flex flex-col min-h-[520px]">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-headline-sm text-headline-sm font-semibold m-0 text-primary">Modules</h3>
+              <h3 className="font-headline-sm text-headline-sm font-semibold m-0 text-primary">{t.modules}</h3>
               {selectedCourseId && (
                 <button
                   type="button"
                   onClick={() => setShowAddModule(!showAddModule)}
-                  aria-label="Add Module"
+                  aria-label={t.addModuleAria}
                   className="h-8 w-8 rounded-full hover:bg-surface-container flex items-center justify-center text-primary cursor-pointer transition-colors"
                 >
                   <span className="material-symbols-outlined text-[20px]">
@@ -409,7 +570,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
             </div>
 
             <div className="font-label-sm text-label-sm text-on-surface-variant mb-4 pb-2 border-b border-outline-variant truncate">
-              {selectedCourse ? `in ${selectedCourse.title}` : "Select a course"}
+              {selectedCourse ? t.inContext(selectedCourse.title) : t.selectACourse}
             </div>
 
             {/* Inline Add Module */}
@@ -418,7 +579,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                 <input
                   name="title"
                   required
-                  placeholder="Module Title"
+                  placeholder={t.moduleTitlePlaceholder}
                   className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-sm"
                 />
                 <button
@@ -426,16 +587,16 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                   disabled={busy}
                   className="w-full bg-cta text-on-primary py-1.5 rounded text-xs font-semibold hover:bg-cta-hover"
                 >
-                  Create Module
+                  {t.createModule}
                 </button>
               </form>
             )}
 
             <div className="space-y-2 flex-1 overflow-y-auto pr-1 custom-scrollbar">
               {!selectedCourseId ? (
-                <p className="text-xs text-on-surface-variant p-4 text-center">Select a course to view modules.</p>
+                <p className="text-xs text-on-surface-variant p-4 text-center">{t.selectCourseToViewModules}</p>
               ) : modules.length === 0 ? (
-                <p className="text-xs text-on-surface-variant p-4 text-center">No modules created yet.</p>
+                <p className="text-xs text-on-surface-variant p-4 text-center">{t.noModulesYet}</p>
               ) : (
                 modules.map((m) => {
                   const isSelected = m.id === selectedModuleId;
@@ -469,10 +630,10 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
             <div className="p-4 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
               <div>
                 <h3 className="font-headline-sm text-headline-sm font-semibold m-0 text-primary">
-                  Lessons &amp; Assessments
+                  {t.lessonsAndAssessments}
                 </h3>
                 <div className="font-label-sm text-label-sm text-on-surface-variant truncate max-w-sm">
-                  {selectedModule ? `in ${selectedModule.title}` : "Select a module"}
+                  {selectedModule ? t.inContext(selectedModule.title) : t.selectAModule}
                 </div>
               </div>
 
@@ -485,7 +646,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                   <span className="material-symbols-outlined text-[18px]">
                     {showAddLesson ? "close" : "add"}
                   </span>
-                  {showAddLesson ? "Cancel" : "Add Item"}
+                  {showAddLesson ? t.cancel : t.addItem}
                 </button>
               )}
             </div>
@@ -496,12 +657,12 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                 onSubmit={(e) => void handleCreateLesson(e)}
                 className="p-4 bg-surface-container-low border-b border-outline-variant space-y-3"
               >
-                <h4 className="font-headline-sm text-[16px] m-0 text-primary">Create New Lesson</h4>
+                <h4 className="font-headline-sm text-[16px] m-0 text-primary">{t.createNewLesson}</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input
                     name="title"
                     required
-                    placeholder="Lesson Title *"
+                    placeholder={t.lessonTitlePlaceholder}
                     className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-sm"
                   />
                   <select
@@ -509,15 +670,15 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                     defaultValue="video"
                     className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-sm"
                   >
-                    <option value="video">Video</option>
-                    <option value="pdf">PDF Document</option>
-                    <option value="slides">Slides</option>
-                    <option value="article">Article / Text</option>
+                    <option value="video">{t.contentTypeVideo}</option>
+                    <option value="pdf">{t.contentTypePdf}</option>
+                    <option value="slides">{t.contentTypeSlides}</option>
+                    <option value="article">{t.contentTypeArticle}</option>
                   </select>
                 </div>
                 <input
                   name="video_id"
-                  placeholder="YouTube Video ID (optional)"
+                  placeholder={t.youtubeIdOptionalPlaceholder}
                   className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-sm"
                 />
                 <div className="flex justify-end">
@@ -526,7 +687,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                     type="submit"
                     className="px-4 py-2 bg-cta text-on-primary rounded text-xs font-semibold hover:bg-cta-hover"
                   >
-                    Save Lesson
+                    {t.saveLesson}
                   </button>
                 </div>
               </form>
@@ -539,12 +700,10 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                   <span className="material-symbols-outlined text-[48px] text-outline opacity-40 mb-2">
                     menu_book
                   </span>
-                  <p className="font-body-md">Select a module to view lessons and assessments.</p>
+                  <p className="font-body-md">{t.selectModuleToView}</p>
                 </div>
               ) : lessons.length === 0 ? (
-                <p className="text-sm text-on-surface-variant p-4 text-center">
-                  No lessons or assessments added yet. Click &ldquo;Add Item&rdquo; above.
-                </p>
+                <p className="text-sm text-on-surface-variant p-4 text-center">{t.noLessonsYet}</p>
               ) : (
                 lessons.map((lesson) => (
                   <div
@@ -565,9 +724,11 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                         <div>
                           <h4 className="font-body-md font-semibold text-primary m-0">{lesson.title}</h4>
                           <p className="font-label-sm text-label-sm text-on-surface-variant m-0 flex items-center gap-2 mt-0.5">
-                            <span className="uppercase font-bold">{lesson.content_type}</span>
+                            <span className="uppercase font-bold">
+                              {t.contentType[lesson.content_type] ?? lesson.content_type}
+                            </span>
                             {lesson.video_id && (
-                              <span className="text-cta font-mono">YT: {lesson.video_id}</span>
+                              <span className="text-cta font-mono">{t.ytPrefix(lesson.video_id)}</span>
                             )}
                           </p>
                         </div>
@@ -578,7 +739,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                         onClick={() => setActiveLessonId(activeLessonId === lesson.id ? null : lesson.id)}
                         className="text-xs text-cta hover:underline font-semibold"
                       >
-                        {activeLessonId === lesson.id ? "Hide Details" : "Manage"}
+                        {activeLessonId === lesson.id ? t.hideDetails : t.manage}
                       </button>
                     </div>
 
@@ -593,7 +754,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                         {lesson.content_type !== "video" && (
                           <div className="flex items-center gap-2">
                             <label className="font-label-sm text-on-surface-variant uppercase">
-                              Attach File:
+                              {t.attachFile}
                             </label>
                             <input
                               type="file"
@@ -605,14 +766,10 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                               className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-surface-container-high disabled:opacity-50"
                             />
                             {fileUploading[lesson.id] === true && (
-                              <span className="text-on-surface-variant font-semibold">
-                                Uploading…
-                              </span>
+                              <span className="text-on-surface-variant font-semibold">{t.uploading}</span>
                             )}
                             {fileUploading[lesson.id] !== true && lesson.storage_path && (
-                              <span className="text-status-shortlisted font-semibold">
-                                File attached
-                              </span>
+                              <span className="text-status-shortlisted font-semibold">{t.fileAttached}</span>
                             )}
                           </div>
                         )}
@@ -628,7 +785,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2">
                               <label className="font-label-sm text-on-surface-variant uppercase">
-                                Upload Video File:
+                                {t.uploadVideoFile}
                               </label>
                               <input
                                 type="file"
@@ -642,7 +799,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                               />
                               {lesson.storage_path && videoUploadProgress[lesson.id] === undefined && (
                                 <span className="text-status-shortlisted font-semibold">
-                                  Self-hosted video attached
+                                  {t.selfHostedVideoAttached}
                                 </span>
                               )}
                             </div>
@@ -659,7 +816,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
 
                         {/* YouTube ID Updater */}
                         <div className="flex items-center gap-2">
-                          <label className="font-label-sm text-on-surface-variant uppercase">YouTube ID:</label>
+                          <label className="font-label-sm text-on-surface-variant uppercase">{t.youtubeIdLabel}</label>
                           <input
                             value={youtubeInputs[lesson.id] ?? ""}
                             onChange={(e) =>
@@ -673,14 +830,14 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                             onClick={() => void handleAttachYoutube(lesson.id)}
                             className="px-2 py-1 bg-primary text-on-primary rounded text-xs"
                           >
-                            Set ID
+                            {t.setId}
                           </button>
                         </div>
 
                         {/* Locale Translation */}
                         <div className="p-2 bg-surface-container-low rounded space-y-2">
                           <span className="font-label-sm uppercase font-bold text-on-surface-variant">
-                            Add / Update Translation
+                            {t.addUpdateTranslation}
                           </span>
                           <div className="grid grid-cols-2 gap-2">
                             <select
@@ -696,7 +853,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                               }
                               className="border border-outline-variant rounded p-1 text-xs"
                             >
-                              <option value="">Select language...</option>
+                              <option value="">{t.selectLanguage}</option>
                               {SUGGESTED_LOCALES.map((l) => (
                                 <option key={l} value={l}>
                                   {l}
@@ -714,7 +871,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                                   },
                                 }))
                               }
-                              placeholder="Localized Title"
+                              placeholder={t.localizedTitlePlaceholder}
                               className="border border-outline-variant rounded p-1 text-xs"
                             />
                           </div>
@@ -729,7 +886,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                                 },
                               }))
                             }
-                            placeholder="Localized body text (optional)"
+                            placeholder={t.localizedBodyPlaceholder}
                             rows={2}
                             className="w-full border border-outline-variant rounded p-1 text-xs"
                           />
@@ -738,7 +895,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                             onClick={() => void handleSaveTranslation(lesson.id)}
                             className="px-3 py-1 bg-secondary-container text-on-secondary-container rounded font-bold text-xs"
                           >
-                            Save Translation
+                            {t.saveTranslation}
                           </button>
                         </div>
                       </div>
@@ -752,7 +909,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                 <div className="mt-6 pt-4 border-t border-outline-variant">
                   <h4 className="font-headline-sm text-[16px] text-primary mb-3 flex items-center gap-2">
                     <span className="material-symbols-outlined text-secondary">quiz</span>
-                    Module Assessments
+                    {t.moduleAssessments}
                   </h4>
                   <AssessmentBuilder accessToken={accessToken} moduleId={selectedModuleId} />
                 </div>

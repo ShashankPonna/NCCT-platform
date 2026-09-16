@@ -1,14 +1,147 @@
 import { useEffect, useState } from "react";
+import { LocaleToggle, useLocale, type Locale } from "../i18n/LocaleContext.js";
 import { supabase } from "../supabaseClient.js";
 
 export type TraineeTab = "home" | "learn" | "attendance" | "career" | "profile";
 
-const NAV_ITEMS: { id: TraineeTab; label: string; icon: string }[] = [
-  { id: "home", label: "Home", icon: "home" },
-  { id: "learn", label: "Learn", icon: "menu_book" },
-  { id: "attendance", label: "Attendance", icon: "calendar_today" },
-  { id: "career", label: "Career", icon: "work" },
-];
+interface TraineeShellText {
+  nav: {
+    home: string;
+    learn: string;
+    attendance: string;
+    career: string;
+  };
+  portalTag: string;
+  tagline: string;
+  skipToContent: string;
+  decreaseText: string;
+  normalText: string;
+  increaseText: string;
+  lightMode: string;
+  darkMode: string;
+  highContrast: string;
+  searchPlaceholder: string;
+  toggleTheme: string;
+  notifications: string;
+  myProfile: string;
+  signOut: string;
+  trainee: string;
+  learnMenu: {
+    lessonsTitle: string;
+    lessonsDesc: string;
+    certificatesTitle: string;
+    certificatesDesc: string;
+    nominateTitle: string;
+    nominateDesc: string;
+  };
+  careerMenu: {
+    jobsTitle: string;
+    jobsDesc: string;
+    skillGapTitle: string;
+    skillGapDesc: string;
+    askTitle: string;
+    askDesc: string;
+    faqTitle: string;
+    faqDesc: string;
+  };
+  footerCopyright: string;
+  footerPrivacy: string;
+  footerTerms: string;
+  footerSupport: string;
+}
+
+const content: Record<Locale, TraineeShellText> = {
+  en: {
+    nav: {
+      home: "Home",
+      learn: "Learn",
+      attendance: "Attendance",
+      career: "Career",
+    },
+    portalTag: "NCCT PORTAL",
+    tagline: "Cooperative Training & Certification",
+    skipToContent: "Skip To Main Content",
+    decreaseText: "Decrease text size",
+    normalText: "Normal text size",
+    increaseText: "Increase text size",
+    lightMode: "Switch to Light Mode",
+    darkMode: "Switch to Dark Mode",
+    highContrast: "High Contrast Toggle",
+    searchPlaceholder: "Search Courses & Modules...",
+    toggleTheme: "Toggle Theme",
+    notifications: "Notifications",
+    myProfile: "My profile",
+    signOut: "Sign Out",
+    trainee: "Trainee",
+    learnMenu: {
+      lessonsTitle: "My Lessons",
+      lessonsDesc: "Interactive modules, video player, and quizzes",
+      certificatesTitle: "My Certificates",
+      certificatesDesc: "Download verified certificates with QR validation",
+      nominateTitle: "Nominate / Enroll",
+      nominateDesc: "Explore and apply for new cooperative programmes",
+    },
+    careerMenu: {
+      jobsTitle: "Open Positions",
+      jobsDesc: "Employer listings & visibility preferences",
+      skillGapTitle: "Skill-Gap Check",
+      skillGapDesc: "See what a job needs that you don't have yet",
+      askTitle: "Ask a Counsellor",
+      askDesc: "Personalized guidance based on your own profile",
+      faqTitle: "Programme FAQ",
+      faqDesc: "Official guidelines and curriculum chatbot",
+    },
+    footerCopyright: "2026 National Council for Cooperative Training. All rights reserved.",
+    footerPrivacy: "Privacy Policy",
+    footerTerms: "Terms of Service",
+    footerSupport: "Support",
+  },
+  hi: {
+    nav: {
+      home: "होम",
+      learn: "सीखें",
+      attendance: "उपस्थिति",
+      career: "करियर",
+    },
+    portalTag: "NCCT पोर्टल",
+    tagline: "सहकारी प्रशिक्षण एवं प्रमाणन",
+    skipToContent: "मुख्य सामग्री पर जाएं",
+    decreaseText: "फ़ॉन्ट आकार घटाएं",
+    normalText: "सामान्य फ़ॉन्ट आकार",
+    increaseText: "फ़ॉन्ट आकार बढ़ाएं",
+    lightMode: "लाइट मोड में बदलें",
+    darkMode: "डार्क मोड में बदलें",
+    highContrast: "उच्च कंट्रास्ट टॉगल",
+    searchPlaceholder: "पाठ्यक्रम एवं मॉड्यूल खोजें...",
+    toggleTheme: "थीम टॉगल करें",
+    notifications: "सूचनाएं",
+    myProfile: "मेरी प्रोफ़ाइल",
+    signOut: "साइन आउट",
+    trainee: "प्रशिक्षणार्थी",
+    learnMenu: {
+      lessonsTitle: "मेरे पाठ",
+      lessonsDesc: "इंटरैक्टिव मॉड्यूल, वीडियो प्लेयर और क्विज़",
+      certificatesTitle: "मेरे प्रमाणपत्र",
+      certificatesDesc: "QR सत्यापन के साथ सत्यापित प्रमाणपत्र डाउनलोड करें",
+      nominateTitle: "नामांकन / दाखिला",
+      nominateDesc: "नए सहकारी कार्यक्रमों को देखें और आवेदन करें",
+    },
+    careerMenu: {
+      jobsTitle: "खुली रिक्तियां",
+      jobsDesc: "नियोक्ता सूचियां एवं दृश्यता प्राथमिकताएं",
+      skillGapTitle: "कौशल-अंतर जांच",
+      skillGapDesc: "देखें कि नौकरी को किन कौशलों की आवश्यकता है जो अभी आपके पास नहीं हैं",
+      askTitle: "काउंसलर से पूछें",
+      askDesc: "आपकी अपनी प्रोफ़ाइल के आधार पर व्यक्तिगत मार्गदर्शन",
+      faqTitle: "कार्यक्रम सामान्य प्रश्न",
+      faqDesc: "आधिकारिक दिशानिर्देश एवं पाठ्यक्रम चैटबॉट",
+    },
+    footerCopyright: "2026 राष्ट्रीय सहकारी प्रशिक्षण परिषद। सर्वाधिकार सुरक्षित।",
+    footerPrivacy: "गोपनीयता नीति",
+    footerTerms: "सेवा की शर्तें",
+    footerSupport: "सहायता",
+  },
+};
 
 interface TraineeShellProps {
   active: TraineeTab;
@@ -20,6 +153,8 @@ interface TraineeShellProps {
 // Nav shell for the trainee portal with cohesive light & dark modes, accessibility controls,
 // sticky main header with search & profile, and desktop mega-menu navigation bar with dropdown sub-destinations.
 export function TraineeShell({ active, onNavigate, fullName, children }: TraineeShellProps) {
+  const { locale } = useLocale();
+  const t = content[locale];
   const [searchQuery, setSearchQuery] = useState("");
   const [contrastHigh, setContrastHigh] = useState(false);
   const [isDark, setIsDark] = useState<boolean>(() => {
@@ -74,36 +209,38 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
     setIsDark((prev) => !prev);
   }
 
+  const NAV_ITEMS: { id: TraineeTab; label: string; icon: string }[] = [
+    { id: "home", label: t.nav.home, icon: "home" },
+    { id: "learn", label: t.nav.learn, icon: "menu_book" },
+    { id: "attendance", label: t.nav.attendance, icon: "calendar_today" },
+    { id: "career", label: t.nav.career, icon: "work" },
+  ];
+
   return (
     <div className={`flex min-h-screen flex-col bg-background font-body text-body-md text-on-background transition-colors duration-200 ${contrastHigh ? "contrast-125" : ""}`}>
       {/* Top Utility Bar */}
       <div className="border-b border-outline-variant bg-surface-container-low py-1.5 text-xs transition-colors">
         <div className="mx-auto flex min-h-7 max-w-container-max flex-wrap items-center justify-between gap-y-1 px-margin-mobile md:h-7 md:px-margin-desktop">
           <div className="flex items-center gap-2 text-label-sm text-on-surface-variant">
-            <span className="text-xs font-bold text-primary tracking-wide">NCCT PORTAL</span>
+            <span className="text-xs font-bold text-primary tracking-wide">{t.portalTag}</span>
             {/* See ManagementShell.tsx's identical fix and comment — this bar
                 is duplicated between the two shells, not shared. */}
             <span className="hidden text-outline-variant text-[10px] sm:inline">●</span>
-            <span className="hidden text-xs text-on-surface-variant sm:inline">
-              Cooperative Training &amp; Certification
-            </span>
+            <span className="hidden text-xs text-on-surface-variant sm:inline">{t.tagline}</span>
           </div>
           <div className="flex items-center gap-4 text-xs text-on-surface-variant">
             <a href="#main-content" className="hidden transition-colors hover:text-interactive sm:inline">
-              Skip To Main Content
+              {t.skipToContent}
             </a>
             <div className="hidden h-3.5 w-px bg-outline-variant sm:block" />
-            <div className="flex cursor-pointer items-center gap-1 transition-colors hover:text-interactive">
-              <span className="material-symbols-outlined text-[16px]">language</span>
-              <span>English / हिन्दी</span>
-            </div>
+            <LocaleToggle className="flex items-center gap-1 transition-colors" />
             <div className="h-3.5 w-px bg-outline-variant" />
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => adjustFontSize(-1)}
                 className="px-1 font-bold hover:text-interactive"
-                title="Decrease text size"
+                title={t.decreaseText}
               >
                 A-
               </button>
@@ -111,7 +248,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                 type="button"
                 onClick={() => adjustFontSize(0)}
                 className="border-x border-outline-variant px-1 font-bold hover:text-interactive"
-                title="Normal text size"
+                title={t.normalText}
               >
                 A
               </button>
@@ -119,7 +256,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                 type="button"
                 onClick={() => adjustFontSize(1)}
                 className="px-1 font-bold hover:text-interactive"
-                title="Increase text size"
+                title={t.increaseText}
               >
                 A+
               </button>
@@ -127,7 +264,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                 type="button"
                 onClick={toggleTheme}
                 className="material-symbols-outlined ml-1 cursor-pointer text-[16px] hover:text-interactive"
-                title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                title={isDark ? t.lightMode : t.darkMode}
               >
                 {isDark ? "light_mode" : "dark_mode"}
               </button>
@@ -135,7 +272,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                 type="button"
                 onClick={toggleContrast}
                 className="material-symbols-outlined ml-1 cursor-pointer text-[16px] hover:text-interactive"
-                title="High Contrast Toggle"
+                title={t.highContrast}
               >
                 contrast
               </button>
@@ -165,7 +302,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                   NCCT Platform
                 </span>
                 <span className="hidden text-[11px] font-medium leading-tight text-on-surface-variant md:block">
-                  National Council for Cooperative Training
+                  {t.tagline}
                 </span>
               </div>
             </button>
@@ -180,7 +317,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search Courses & Modules..."
+              placeholder={t.searchPlaceholder}
               className="h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest pl-9 pr-4 text-sm text-on-surface transition-all outline-none focus:border-interactive focus:ring-1 focus:ring-interactive placeholder:text-on-surface-variant/60"
             />
           </form>
@@ -191,8 +328,8 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
             <button
               type="button"
               onClick={toggleTheme}
-              title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              aria-label="Toggle Theme"
+              title={isDark ? t.lightMode : t.darkMode}
+              aria-label={t.toggleTheme}
               className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container md:h-9 md:w-9"
             >
               <span className="material-symbols-outlined text-[18px] md:text-[20px]">
@@ -205,7 +342,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                 isn't wired to a real notification system yet. */}
             <button
               type="button"
-              aria-label="Notifications"
+              aria-label={t.notifications}
               className="relative hidden h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container md:flex md:h-9 md:w-9"
             >
               <span className="material-symbols-outlined text-[18px] md:text-[20px]">notifications</span>
@@ -214,8 +351,8 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
 
             <button
               type="button"
-              aria-label="My profile"
-              title="My profile"
+              aria-label={t.myProfile}
+              title={t.myProfile}
               onClick={() => onNavigate("profile")}
               className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-surface-container md:h-9 md:w-9 ${
                 active === "profile" ? "text-interactive" : "text-on-surface-variant"
@@ -236,16 +373,16 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                 className="hidden flex-col text-left sm:flex"
               >
                 <span className="text-label-md font-bold leading-tight text-on-surface hover:text-interactive">
-                  {fullName || "Trainee"}
+                  {fullName || t.trainee}
                 </span>
-                <span className="text-[11px] leading-tight text-on-surface-variant">Trainee</span>
+                <span className="text-[11px] leading-tight text-on-surface-variant">{t.trainee}</span>
               </button>
               <button
                 type="button"
                 onClick={() => void supabase.auth.signOut()}
-                title="Sign Out"
+                title={t.signOut}
                 className="ml-1 rounded p-1.5 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-status-rejected"
-                aria-label="Sign Out"
+                aria-label={t.signOut}
               >
                 <span className="material-symbols-outlined text-[20px]">logout</span>
               </button>
@@ -267,7 +404,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
               }`}
             >
               <span className="material-symbols-outlined text-[18px]">home</span>
-              Home
+              {t.nav.home}
             </button>
 
             {/* Learn Mega Menu */}
@@ -282,7 +419,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                 }`}
               >
                 <span className="material-symbols-outlined text-[18px]">local_library</span>
-                Learn
+                {t.nav.learn}
                 <span className="material-symbols-outlined ml-0.5 text-[16px] transition-transform group-hover:rotate-180">
                   expand_more
                 </span>
@@ -300,11 +437,9 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                   </div>
                   <div>
                     <div className="text-label-md font-bold text-on-surface group-hover/item:text-interactive">
-                      My Lessons
+                      {t.learnMenu.lessonsTitle}
                     </div>
-                    <div className="text-[11px] text-on-surface-variant">
-                      Interactive modules, video player, and quizzes
-                    </div>
+                    <div className="text-[11px] text-on-surface-variant">{t.learnMenu.lessonsDesc}</div>
                   </div>
                 </button>
                 <button
@@ -317,11 +452,9 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                   </div>
                   <div>
                     <div className="text-label-md font-bold text-on-surface group-hover/item:text-interactive">
-                      My Certificates
+                      {t.learnMenu.certificatesTitle}
                     </div>
-                    <div className="text-[11px] text-on-surface-variant">
-                      Download verified certificates with QR validation
-                    </div>
+                    <div className="text-[11px] text-on-surface-variant">{t.learnMenu.certificatesDesc}</div>
                   </div>
                 </button>
                 <button
@@ -334,11 +467,9 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                   </div>
                   <div>
                     <div className="text-label-md font-bold text-on-surface group-hover/item:text-interactive">
-                      Nominate / Enroll
+                      {t.learnMenu.nominateTitle}
                     </div>
-                    <div className="text-[11px] text-on-surface-variant">
-                      Explore and apply for new cooperative programmes
-                    </div>
+                    <div className="text-[11px] text-on-surface-variant">{t.learnMenu.nominateDesc}</div>
                   </div>
                 </button>
               </div>
@@ -355,7 +486,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
               }`}
             >
               <span className="material-symbols-outlined text-[18px]">calendar_today</span>
-              Attendance
+              {t.nav.attendance}
             </button>
 
             {/* Career Mega Menu */}
@@ -370,7 +501,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                 }`}
               >
                 <span className="material-symbols-outlined text-[18px]">work</span>
-                Career
+                {t.nav.career}
                 <span className="material-symbols-outlined ml-0.5 text-[16px] transition-transform group-hover:rotate-180">
                   expand_more
                 </span>
@@ -391,11 +522,9 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                   </div>
                   <div>
                     <div className="text-label-md font-bold text-on-surface group-hover/item:text-interactive">
-                      Open Positions
+                      {t.careerMenu.jobsTitle}
                     </div>
-                    <div className="text-[11px] text-on-surface-variant">
-                      Employer listings & visibility preferences
-                    </div>
+                    <div className="text-[11px] text-on-surface-variant">{t.careerMenu.jobsDesc}</div>
                   </div>
                 </button>
                 <button
@@ -408,11 +537,9 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                   </div>
                   <div>
                     <div className="text-label-md font-bold text-on-surface group-hover/item:text-interactive">
-                      Skill-Gap Check
+                      {t.careerMenu.skillGapTitle}
                     </div>
-                    <div className="text-[11px] text-on-surface-variant">
-                      See what a job needs that you don&apos;t have yet
-                    </div>
+                    <div className="text-[11px] text-on-surface-variant">{t.careerMenu.skillGapDesc}</div>
                   </div>
                 </button>
                 <button
@@ -425,11 +552,9 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                   </div>
                   <div>
                     <div className="text-label-md font-bold text-on-surface group-hover/item:text-interactive">
-                      Ask a Counsellor
+                      {t.careerMenu.askTitle}
                     </div>
-                    <div className="text-[11px] text-on-surface-variant">
-                      Personalized guidance based on your own profile
-                    </div>
+                    <div className="text-[11px] text-on-surface-variant">{t.careerMenu.askDesc}</div>
                   </div>
                 </button>
                 <button
@@ -442,11 +567,9 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                   </div>
                   <div>
                     <div className="text-label-md font-bold text-on-surface group-hover/item:text-interactive">
-                      Programme FAQ
+                      {t.careerMenu.faqTitle}
                     </div>
-                    <div className="text-[11px] text-on-surface-variant">
-                      Official guidelines and curriculum chatbot
-                    </div>
+                    <div className="text-[11px] text-on-surface-variant">{t.careerMenu.faqDesc}</div>
                   </div>
                 </button>
               </div>
@@ -465,19 +588,17 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
         <div className="mx-auto flex max-w-container-max flex-col items-center justify-between gap-4 md:flex-row">
           <div className="flex items-center gap-2 text-on-surface-variant">
             <span className="material-symbols-outlined text-sm">copyright</span>
-            <span className="text-label-sm">
-              2026 National Council for Cooperative Training. All rights reserved.
-            </span>
+            <span className="text-label-sm">{t.footerCopyright}</span>
           </div>
           <div className="flex gap-6 text-label-sm text-interactive">
             <a href="#" className="hover:underline">
-              Privacy Policy
+              {t.footerPrivacy}
             </a>
             <a href="#" className="hover:underline">
-              Terms of Service
+              {t.footerTerms}
             </a>
             <a href="#" className="hover:underline">
-              Support
+              {t.footerSupport}
             </a>
           </div>
         </div>

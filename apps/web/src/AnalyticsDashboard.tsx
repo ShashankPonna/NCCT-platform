@@ -1,6 +1,7 @@
 import { getDashboardAnalytics } from "@ncct/api-client";
 import type { DashboardAnalytics, DropoutRiskLevel } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 
 interface AnalyticsDashboardProps {
   accessToken: string;
@@ -23,6 +24,130 @@ const RISK_LEVEL_STYLES: Record<DropoutRiskLevel, { text: string; bg: string; bo
   high: { text: "text-status-rejected", bg: "bg-status-rejected/10", border: "border-status-rejected/30", icon: "error" },
 };
 
+interface AnalyticsDashboardText {
+  heading: string;
+  subheading: string;
+  currentQuarter: string;
+  export: string;
+  loading: string;
+  statProgrammesRun: string;
+  statCertificatesIssued: string;
+  statOverallCompletion: string;
+  statJobsPosted: string;
+  trendUp: (percent: string) => string;
+  trendStable: string;
+  programmesByMode: string;
+  mode: Record<string, string>;
+  traineesByRegion: string;
+  noDataAvailable: string;
+  noRegionData: string;
+  certificatesByMonth: string;
+  awaitingCertData: string;
+  noCertDataForPeriod: string;
+  completionRateByProgramme: string;
+  noApprovedNominations: string;
+  colProgramme: string;
+  colApprovedNominations: string;
+  colCertificatesIssued: string;
+  colCompletionRate: string;
+  dropoutRisk: string;
+  dropoutRiskSubheading: string;
+  riskLevel: Record<DropoutRiskLevel, string>;
+  noFlagged: string;
+  noFlaggedBody: string;
+  colTrainee: string;
+  colRisk: string;
+  colCompletion: string;
+  colAttendance: string;
+  colInactiveDays: string;
+  traineeFallback: (idPrefix: string) => string;
+}
+
+const content: Record<Locale, AnalyticsDashboardText> = {
+  en: {
+    heading: "Admin Dashboard",
+    subheading: "Overview of institutional performance and programme metrics.",
+    currentQuarter: "Current Quarter",
+    export: "Export",
+    loading: "Loading analytics...",
+    statProgrammesRun: "Programmes Run",
+    statCertificatesIssued: "Certificates Issued",
+    statOverallCompletion: "Overall Completion",
+    statJobsPosted: "Jobs Posted",
+    trendUp: (percent) => `+${percent}% vs last period`,
+    trendStable: "Stable vs last period",
+    programmesByMode: "Programmes by Mode",
+    mode: { online: "online", hybrid: "hybrid", offline: "offline" },
+    traineesByRegion: "Trainees by Region",
+    noDataAvailable: "No data available",
+    noRegionData: "No nominations recorded yet. Regional distribution will appear here once trainees are enrolled.",
+    certificatesByMonth: "Certificates Issued by Month",
+    awaitingCertData: "Awaiting Certification Data",
+    noCertDataForPeriod:
+      "No certificates issued yet for the selected period. The monthly breakdown chart will generate automatically upon issuance.",
+    completionRateByProgramme: "Completion Rate by Programme",
+    noApprovedNominations: "No approved nominations or certificates yet.",
+    colProgramme: "Programme",
+    colApprovedNominations: "Approved Nominations",
+    colCertificatesIssued: "Certificates Issued",
+    colCompletionRate: "Completion Rate",
+    dropoutRisk: "Dropout Risk",
+    dropoutRiskSubheading:
+      "Heuristic flags from lesson progress, session attendance, and failed attempts — not a trained prediction.",
+    riskLevel: { low: "low", medium: "medium", high: "high" },
+    noFlagged: "No trainees currently flagged",
+    noFlaggedBody:
+      "Every approved trainee is either progressing well or there isn't enough activity data yet to flag anyone.",
+    colTrainee: "Trainee",
+    colRisk: "Risk",
+    colCompletion: "Completion",
+    colAttendance: "Attendance",
+    colInactiveDays: "Inactive (days)",
+    traineeFallback: (idPrefix) => `Trainee #${idPrefix}`,
+  },
+  hi: {
+    heading: "प्रशासक डैशबोर्ड",
+    subheading: "संस्थागत प्रदर्शन और कार्यक्रम मेट्रिक्स का अवलोकन।",
+    currentQuarter: "वर्तमान तिमाही",
+    export: "निर्यात करें",
+    loading: "एनालिटिक्स लोड हो रहा है...",
+    statProgrammesRun: "चलाए गए कार्यक्रम",
+    statCertificatesIssued: "जारी प्रमाणपत्र",
+    statOverallCompletion: "समग्र पूर्णता",
+    statJobsPosted: "पोस्ट की गई नौकरियां",
+    trendUp: (percent) => `+${percent}% पिछली अवधि की तुलना में`,
+    trendStable: "पिछली अवधि की तुलना में स्थिर",
+    programmesByMode: "मोड के अनुसार कार्यक्रम",
+    mode: { online: "ऑनलाइन", hybrid: "हाइब्रिड", offline: "ऑफ़लाइन" },
+    traineesByRegion: "क्षेत्र के अनुसार प्रशिक्षणार्थी",
+    noDataAvailable: "कोई डेटा उपलब्ध नहीं",
+    noRegionData: "अभी तक कोई नामांकन दर्ज नहीं हुआ है। प्रशिक्षणार्थियों के नामांकन होते ही क्षेत्रीय वितरण यहां दिखाई देगा।",
+    certificatesByMonth: "माह के अनुसार जारी प्रमाणपत्र",
+    awaitingCertData: "प्रमाणन डेटा की प्रतीक्षा",
+    noCertDataForPeriod:
+      "चयनित अवधि के लिए अभी तक कोई प्रमाणपत्र जारी नहीं किया गया है। जारी होते ही मासिक विवरण चार्ट स्वचालित रूप से बन जाएगा।",
+    completionRateByProgramme: "कार्यक्रम के अनुसार पूर्णता दर",
+    noApprovedNominations: "अभी तक कोई स्वीकृत नामांकन या प्रमाणपत्र नहीं है।",
+    colProgramme: "कार्यक्रम",
+    colApprovedNominations: "स्वीकृत नामांकन",
+    colCertificatesIssued: "जारी प्रमाणपत्र",
+    colCompletionRate: "पूर्णता दर",
+    dropoutRisk: "ड्रॉपआउट जोखिम",
+    dropoutRiskSubheading:
+      "पाठ प्रगति, सत्र उपस्थिति और असफल प्रयासों से ह्यूरिस्टिक फ़्लैग — यह कोई प्रशिक्षित भविष्यवाणी नहीं है।",
+    riskLevel: { low: "कम", medium: "मध्यम", high: "उच्च" },
+    noFlagged: "वर्तमान में कोई प्रशिक्षणार्थी फ़्लैग नहीं किया गया",
+    noFlaggedBody:
+      "हर स्वीकृत प्रशिक्षणार्थी या तो अच्छी प्रगति कर रहा है या किसी को फ़्लैग करने के लिए अभी पर्याप्त गतिविधि डेटा नहीं है।",
+    colTrainee: "प्रशिक्षणार्थी",
+    colRisk: "जोखिम",
+    colCompletion: "पूर्णता",
+    colAttendance: "उपस्थिति",
+    colInactiveDays: "निष्क्रिय (दिन)",
+    traineeFallback: (idPrefix) => `प्रशिक्षणार्थी #${idPrefix}`,
+  },
+};
+
 function formatPercent(rate: number): string {
   return `${Math.round(rate * 100)}%`;
 }
@@ -34,13 +159,15 @@ function formatMaybePercent(rate: number | null): string {
   return rate === null ? "—" : formatPercent(rate);
 }
 
-function formatMonth(month: string): string {
+function formatMonth(month: string, locale: Locale): string {
   const [year, monthNum] = month.split("-");
   const date = new Date(Number(year), Number(monthNum) - 1, 1);
-  return date.toLocaleDateString(undefined, { month: "short", year: "numeric" });
+  return date.toLocaleDateString(locale === "hi" ? "hi-IN" : undefined, { month: "short", year: "numeric" });
 }
 
 export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
+  const { locale } = useLocale();
+  const t = content[locale];
   const [data, setData] = useState<DashboardAnalytics | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedYear, setSelectedYear] = useState<string>("2026");
@@ -79,7 +206,7 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
         <div className="animate-spin text-cta material-symbols-outlined text-[36px] mb-3">
           progress_activity
         </div>
-        <p className="font-body-md text-body-md text-on-surface-variant">Loading analytics...</p>
+        <p className="font-body-md text-body-md text-on-surface-variant">{t.loading}</p>
       </div>
     );
   }
@@ -87,6 +214,8 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
   const modeTotal = data.programmesRun.byMode.reduce((acc, curr) => acc + curr.count, 0) || 1;
   const maxRegionCount = Math.max(1, ...data.traineesByRegion.map((r) => r.traineeCount));
   const maxCertCount = Math.max(1, ...data.certificatesIssued.byMonth.map((m) => m.count));
+  const modeLabel = (mode: string) => t.mode[mode.toLowerCase()] ?? mode;
+  const riskLabel = (level: DropoutRiskLevel) => t.riskLevel[level];
 
   return (
     <div className="p-margin-mobile md:p-margin-desktop max-w-max-width-desktop mx-auto w-full flex flex-col gap-6 text-left">
@@ -94,16 +223,14 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-outline-variant pb-4">
         <div>
           <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary m-0">
-            Admin Dashboard
+            {t.heading}
           </h2>
-          <p className="font-body-md text-body-md text-on-surface-variant mt-1">
-            Overview of institutional performance and programme metrics.
-          </p>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-1">{t.subheading}</p>
         </div>
         <div className="flex items-center gap-2">
           <span className="px-3 py-1 bg-surface-container-highest text-on-surface font-label-sm text-label-sm rounded-full flex items-center gap-1">
             <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-            Current Quarter
+            {t.currentQuarter}
           </span>
           <button
             onClick={handleExport}
@@ -111,7 +238,7 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
             className="h-[44px] px-4 border border-outline text-primary rounded font-label-md text-label-md hover:bg-surface-container-high transition-colors flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-[18px]">download</span>
-            Export
+            {t.export}
           </button>
         </div>
       </div>
@@ -122,7 +249,7 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
         <div className="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col gap-2 relative overflow-hidden group shadow-sm">
           <div className="flex justify-between items-start">
             <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
-              Programmes Run
+              {t.statProgrammesRun}
             </p>
             <span className="material-symbols-outlined text-primary-container bg-surface-container-high rounded-full p-1 text-[20px]">
               school
@@ -133,7 +260,7 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
           </p>
           <div className="flex items-center gap-1 text-status-success font-label-sm text-label-sm mt-auto">
             <span className="material-symbols-outlined text-[14px]">trending_up</span>
-            <span>+12% vs last period</span>
+            <span>{t.trendUp("12")}</span>
           </div>
           <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-container to-secondary-container transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
         </div>
@@ -142,7 +269,7 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
         <div className="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col gap-2 relative overflow-hidden group shadow-sm">
           <div className="flex justify-between items-start">
             <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
-              Certificates Issued
+              {t.statCertificatesIssued}
             </p>
             <span className="material-symbols-outlined text-primary-container bg-surface-container-high rounded-full p-1 text-[20px]">
               workspace_premium
@@ -153,7 +280,7 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
           </p>
           <div className="flex items-center gap-1 text-status-success font-label-sm text-label-sm mt-auto">
             <span className="material-symbols-outlined text-[14px]">trending_up</span>
-            <span>+5.4% vs last period</span>
+            <span>{t.trendUp("5.4")}</span>
           </div>
           <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-container to-secondary-container transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
         </div>
@@ -162,7 +289,7 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
         <div className="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col gap-2 relative overflow-hidden group shadow-sm">
           <div className="flex justify-between items-start">
             <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
-              Overall Completion
+              {t.statOverallCompletion}
             </p>
             <span className="material-symbols-outlined text-primary-container bg-surface-container-high rounded-full p-1 text-[20px]">
               donut_large
@@ -173,7 +300,7 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
           </p>
           <div className="flex items-center gap-1 text-status-pending font-label-sm text-label-sm mt-auto">
             <span className="material-symbols-outlined text-[14px]">trending_flat</span>
-            <span>Stable vs last period</span>
+            <span>{t.trendStable}</span>
           </div>
           <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-container to-secondary-container transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
         </div>
@@ -182,7 +309,7 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
         <div className="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col gap-2 relative overflow-hidden group shadow-sm">
           <div className="flex justify-between items-start">
             <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
-              Jobs Posted
+              {t.statJobsPosted}
             </p>
             <span className="material-symbols-outlined text-primary-container bg-surface-container-high rounded-full p-1 text-[20px]">
               work
@@ -193,7 +320,7 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
           </p>
           <div className="flex items-center gap-1 text-status-success font-label-sm text-label-sm mt-auto">
             <span className="material-symbols-outlined text-[14px]">trending_up</span>
-            <span>+24% vs last period</span>
+            <span>{t.trendUp("24")}</span>
           </div>
           <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-container to-secondary-container transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
         </div>
@@ -203,7 +330,7 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Block 1: Programmes by mode */}
         <div className="bg-surface-card border border-outline-variant rounded-lg p-6 flex flex-col shadow-sm">
-          <h3 className="font-headline-sm text-headline-sm text-primary mb-4">Programmes by Mode</h3>
+          <h3 className="font-headline-sm text-headline-sm text-primary mb-4">{t.programmesByMode}</h3>
           <div className="flex-grow flex flex-col justify-center py-4">
             <div className="space-y-4">
               {data.programmesRun.byMode.map((row) => {
@@ -211,8 +338,8 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
                 const fillColor = MODE_FILL_COLORS[row.mode.toLowerCase()] ?? "#fd7a41";
                 return (
                   <div key={row.mode}>
-                    <div className="flex justify-between font-label-md text-label-md mb-1 capitalize">
-                      <span>{row.mode}</span>
+                    <div className="flex justify-between font-label-md text-label-md mb-1">
+                      <span>{modeLabel(row.mode)}</span>
                       <span>
                         {row.count} ({percent}%)
                       </span>
@@ -230,14 +357,14 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
           </div>
           <div className="flex gap-4 mt-auto pt-4 border-t border-outline-variant font-label-sm text-label-sm justify-center flex-wrap">
             {data.programmesRun.byMode.map((row) => (
-              <div key={row.mode} className="flex items-center gap-1.5 capitalize">
+              <div key={row.mode} className="flex items-center gap-1.5">
                 <span
                   className="w-3 h-3 rounded-full inline-block"
                   style={{
                     backgroundColor: MODE_FILL_COLORS[row.mode.toLowerCase()] ?? "#fd7a41",
                   }}
                 />
-                {row.mode}
+                {modeLabel(row.mode)}
               </div>
             ))}
           </div>
@@ -245,18 +372,16 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
 
         {/* Block 2: Trainees by region */}
         <div className="bg-surface-card border border-outline-variant rounded-lg p-6 flex flex-col shadow-sm">
-          <h3 className="font-headline-sm text-headline-sm text-primary mb-4">Trainees by Region</h3>
+          <h3 className="font-headline-sm text-headline-sm text-primary mb-4">{t.traineesByRegion}</h3>
           {data.traineesByRegion.length === 0 ? (
             <div className="flex-grow flex flex-col items-center justify-center text-center p-6 bg-surface-container-low rounded border border-dashed border-outline-variant min-h-[220px]">
               <span className="material-symbols-outlined text-[48px] text-outline opacity-50 mb-3">
                 map
               </span>
               <h4 className="font-headline-sm text-headline-sm text-on-surface-variant mb-2">
-                No data available
+                {t.noDataAvailable}
               </h4>
-              <p className="font-body-sm text-body-sm text-outline max-w-xs">
-                No nominations recorded yet. Regional distribution will appear here once trainees are enrolled.
-              </p>
+              <p className="font-body-sm text-body-sm text-outline max-w-xs">{t.noRegionData}</p>
             </div>
           ) : (
             <div className="space-y-3 py-2 flex-1">
@@ -284,7 +409,7 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
         {/* Block 3: Certificates by month */}
         <div className="bg-surface-card border border-outline-variant rounded-lg p-6 flex flex-col lg:col-span-2 shadow-sm">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-headline-sm text-headline-sm text-primary">Certificates Issued by Month</h3>
+            <h3 className="font-headline-sm text-headline-sm text-primary">{t.certificatesByMonth}</h3>
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
@@ -300,11 +425,9 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
                 bar_chart
               </span>
               <h4 className="font-headline-sm text-headline-sm text-on-surface-variant mb-2">
-                Awaiting Certification Data
+                {t.awaitingCertData}
               </h4>
-              <p className="font-body-sm text-body-sm text-outline max-w-sm">
-                No certificates issued yet for the selected period. The monthly breakdown chart will generate automatically upon issuance.
-              </p>
+              <p className="font-body-sm text-body-sm text-outline max-w-sm">{t.noCertDataForPeriod}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 py-4">
@@ -319,7 +442,7 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
                       />
                     </div>
                     <span className="font-label-sm text-label-sm text-on-surface-variant">
-                      {formatMonth(row.month)}
+                      {formatMonth(row.month, locale)}
                     </span>
                     <span className="font-body-sm font-semibold">{row.count}</span>
                   </div>
@@ -331,29 +454,25 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
 
         {/* Block 4: Completion Rate by Programme Table */}
         <div className="bg-surface-card border border-outline-variant rounded-lg p-6 flex flex-col lg:col-span-2 shadow-sm">
-          <h3 className="font-headline-sm text-headline-sm text-primary mb-4">
-            Completion Rate by Programme
-          </h3>
+          <h3 className="font-headline-sm text-headline-sm text-primary mb-4">{t.completionRateByProgramme}</h3>
           {data.completionRates.byProgramme.length === 0 ? (
-            <p className="font-body-sm text-on-surface-variant">
-              No approved nominations or certificates yet.
-            </p>
+            <p className="font-body-sm text-on-surface-variant">{t.noApprovedNominations}</p>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-outline-variant">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-surface-container-low border-b border-outline-variant">
                     <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase">
-                      Programme
+                      {t.colProgramme}
                     </th>
                     <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
-                      Approved Nominations
+                      {t.colApprovedNominations}
                     </th>
                     <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
-                      Certificates Issued
+                      {t.colCertificatesIssued}
                     </th>
                     <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-right">
-                      Completion Rate
+                      {t.colCompletionRate}
                     </th>
                   </tr>
                 </thead>
@@ -378,11 +497,8 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
 
         {/* Block 5: Dropout Risk (P6, DECISIONS.md #29) */}
         <div className="bg-surface-card border border-outline-variant rounded-lg p-6 flex flex-col lg:col-span-2 shadow-sm">
-          <h3 className="font-headline-sm text-headline-sm text-primary mb-1">Dropout Risk</h3>
-          <p className="font-body-sm text-body-sm text-on-surface-variant mb-4">
-            Heuristic flags from lesson progress, session attendance, and failed attempts — not a trained
-            prediction.
-          </p>
+          <h3 className="font-headline-sm text-headline-sm text-primary mb-1">{t.dropoutRisk}</h3>
+          <p className="font-body-sm text-body-sm text-on-surface-variant mb-4">{t.dropoutRiskSubheading}</p>
 
           <div className="flex flex-wrap gap-3 mb-4">
             {data.dropoutRisk.byLevel.map((row) => {
@@ -393,8 +509,8 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
                   className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${style.border} ${style.bg}`}
                 >
                   <span className={`material-symbols-outlined text-[18px] ${style.text}`}>{style.icon}</span>
-                  <span className={`font-label-md text-label-md font-bold capitalize ${style.text}`}>
-                    {row.level}
+                  <span className={`font-label-md text-label-md font-bold ${style.text}`}>
+                    {riskLabel(row.level)}
                   </span>
                   <span className="font-body-sm text-on-surface-variant">{row.count}</span>
                 </div>
@@ -407,13 +523,8 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
               <span className="material-symbols-outlined text-[48px] text-outline opacity-50 mb-3">
                 task_alt
               </span>
-              <h4 className="font-headline-sm text-headline-sm text-on-surface-variant mb-2">
-                No trainees currently flagged
-              </h4>
-              <p className="font-body-sm text-body-sm text-outline max-w-sm">
-                Every approved trainee is either progressing well or there isn&apos;t enough activity data yet
-                to flag anyone.
-              </p>
+              <h4 className="font-headline-sm text-headline-sm text-on-surface-variant mb-2">{t.noFlagged}</h4>
+              <p className="font-body-sm text-body-sm text-outline max-w-sm">{t.noFlaggedBody}</p>
             </div>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-outline-variant">
@@ -421,22 +532,22 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
                 <thead>
                   <tr className="bg-surface-container-low border-b border-outline-variant">
                     <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase">
-                      Trainee
+                      {t.colTrainee}
                     </th>
                     <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase">
-                      Programme
+                      {t.colProgramme}
                     </th>
                     <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
-                      Risk
+                      {t.colRisk}
                     </th>
                     <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
-                      Completion
+                      {t.colCompletion}
                     </th>
                     <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
-                      Attendance
+                      {t.colAttendance}
                     </th>
                     <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
-                      Inactive (days)
+                      {t.colInactiveDays}
                     </th>
                   </tr>
                 </thead>
@@ -449,15 +560,15 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
                         className="hover:bg-surface-container-lowest transition-colors"
                       >
                         <td className="p-4 font-medium text-primary">
-                          {flag.traineeName ?? `Trainee #${flag.traineeId.slice(0, 8)}`}
+                          {flag.traineeName ?? t.traineeFallback(flag.traineeId.slice(0, 8))}
                         </td>
                         <td className="p-4">{flag.programmeTitle}</td>
                         <td className="p-4 text-center">
                           <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-label-sm font-bold capitalize ${style.bg} ${style.text}`}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-label-sm font-bold ${style.bg} ${style.text}`}
                           >
                             <span className="material-symbols-outlined text-[14px]">{style.icon}</span>
-                            {flag.riskLevel}
+                            {riskLabel(flag.riskLevel)}
                           </span>
                         </td>
                         <td className="p-4 text-center">{formatMaybePercent(flag.completionRate)}</td>

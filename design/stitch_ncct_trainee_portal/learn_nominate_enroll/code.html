@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Learn - Nominate/Enroll</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&amp;family=Noto+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error": "#ffffff",
+                        "error": "#ba1a1a",
+                        "status-rejected": "#991B1B",
+                        "surface-container-highest": "#e2e2e2",
+                        "secondary-fixed-dim": "#ffb599",
+                        "on-primary-container": "#768bad",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#44474d",
+                        "on-secondary-container": "#5a1c00",
+                        "inverse-surface": "#2f3131",
+                        "tertiary": "#000c25",
+                        "on-error-container": "#93000a",
+                        "surface": "#f9f9f9",
+                        "border-low-contrast": "#E5E7EB",
+                        "surface-dim": "#dadada",
+                        "primary-fixed": "#d5e3ff",
+                        "error-container": "#ffdad6",
+                        "secondary": "#a63b00",
+                        "inverse-primary": "#b2c8ed",
+                        "surface-bright": "#f9f9f9",
+                        "on-background": "#1a1c1c",
+                        "on-secondary-fixed-variant": "#7f2b00",
+                        "outline": "#74777e",
+                        "on-primary-fixed-variant": "#334866",
+                        "on-tertiary-fixed-variant": "#004494",
+                        "inverse-on-surface": "#f1f1f1",
+                        "secondary-fixed": "#ffdbce",
+                        "primary-fixed-dim": "#b2c8ed",
+                        "status-shortlisted": "#065F46",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "on-tertiary-fixed": "#001a42",
+                        "tertiary-container": "#00214f",
+                        "primary-container": "#0b2340",
+                        "on-tertiary-container": "#5288ea",
+                        "surface-container-low": "#f3f3f3",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "status-pending": "#92400E",
+                        "on-secondary-fixed": "#370e00",
+                        "surface-card": "#FFFFFF",
+                        "outline-variant": "#c4c6ce",
+                        "background": "#f9f9f9",
+                        "surface-tint": "#4b5f7f",
+                        "on-primary-fixed": "#031c39",
+                        "surface-container-high": "#e8e8e8",
+                        "on-surface": "#1a1c1c",
+                        "tertiary-fixed-dim": "#adc6ff",
+                        "secondary-container": "#fc6c29",
+                        "tertiary-fixed": "#d8e2ff",
+                        "primary": "#000d20",
+                        "surface-container": "#eeeeee"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "container-max": "1280px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "64px",
+                        "mobile-width": "390px",
+                        "touch-target": "44px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "body-md": ["Noto Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "label-sm": ["Noto Sans"],
+                        "body-lg": ["Noto Sans"],
+                        "label-md": ["Noto Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col pb-[56px] md:pb-0">
+<!-- TopAppBar (Hidden on Mobile, Visible on Desktop) -->
+<header class="hidden md:flex justify-between items-center w-full px-margin-desktop h-14 bg-surface dark:bg-on-background border-b border-border-low-contrast dark:border-outline-variant docked full-width top-0 z-50">
+<div class="flex items-center gap-2 hover:bg-surface-container-low dark:hover:bg-surface-variant transition-colors duration-200 cursor-pointer active:scale-95 p-2 rounded-DEFAULT">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed" data-icon="school">school</span>
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">NCCT Platform</span>
+</div>
+<nav class="flex gap-4">
+<!-- Active: Learn -->
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-variant transition-colors duration-200 cursor-pointer active:scale-95 px-3 py-2 rounded-DEFAULT" href="#">Home</a>
+<a class="font-label-md text-label-md text-primary dark:text-primary-fixed font-bold hover:bg-surface-container-low dark:hover:bg-surface-variant transition-colors duration-200 cursor-pointer active:scale-95 px-3 py-2 rounded-DEFAULT" href="#">Learn</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-variant transition-colors duration-200 cursor-pointer active:scale-95 px-3 py-2 rounded-DEFAULT" href="#">Attendance</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-variant transition-colors duration-200 cursor-pointer active:scale-95 px-3 py-2 rounded-DEFAULT" href="#">Career</a>
+</nav>
+<div class="hover:bg-surface-container-low dark:hover:bg-surface-variant transition-colors duration-200 cursor-pointer active:scale-95 p-2 rounded-DEFAULT">
+<span class="font-label-md text-label-md text-primary dark:text-primary-fixed">Sign Out</span>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow max-w-container-max mx-auto w-full px-margin-mobile md:px-margin-desktop py-8">
+<div class="mb-8 flex justify-between items-end">
+<div>
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-2">Learn Programmes</h1>
+<p class="text-on-surface-variant font-body-md">Browse and enroll in available training programmes.</p>
+</div>
+<div class="hidden md:block">
+<button class="bg-secondary-container text-on-secondary-container font-label-md text-label-md px-6 py-3 rounded-DEFAULT hover:bg-secondary hover:text-on-secondary transition-colors duration-200 min-h-[44px]">My Nominations</button>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Filter Section (Side Panel on Desktop) -->
+<aside class="md:col-span-3 bg-surface-card rounded-xl border border-border-low-contrast p-6 self-start sticky top-[80px]">
+<h3 class="font-headline-md text-headline-md text-primary mb-4">Filters</h3>
+<div class="space-y-4">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Status</label>
+<select class="w-full h-[48px] rounded-DEFAULT border-border-low-contrast bg-surface text-on-surface focus:ring-2 focus:ring-tertiary-container focus:border-tertiary-container font-body-md px-3">
+<option>All Programmes</option>
+<option>Open for Nomination</option>
+<option>My Enrolled</option>
+</select>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Mode</label>
+<div class="flex gap-2 flex-wrap">
+<button class="px-3 py-1 rounded-full border border-border-low-contrast font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container-low bg-surface">Online</button>
+<button class="px-3 py-1 rounded-full border border-border-low-contrast font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container-low bg-surface">In-Person</button>
+<button class="px-3 py-1 rounded-full border border-border-low-contrast font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container-low bg-surface">Hybrid</button>
+</div>
+</div>
+</div>
+</aside>
+<!-- Programme List -->
+<div class="md:col-span-9 space-y-6">
+<!-- Programme Card 1: Open for Nomination -->
+<div class="bg-surface-card rounded-xl border border-border-low-contrast p-6 hover:shadow-md transition-shadow duration-200">
+<div class="flex flex-col md:flex-row justify-between gap-4">
+<div class="flex-grow">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-secondary" data-icon="computer">computer</span>
+<span class="font-label-sm text-label-sm bg-surface-container-highest text-on-surface px-2 py-1 rounded-DEFAULT">Online</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-primary mb-1">Advanced Cooperative Management</h2>
+<p class="text-on-surface-variant font-body-md mb-4">VAMNICOM, Pune</p>
+<div class="grid grid-cols-2 gap-4 mb-4">
+<div>
+<span class="block font-label-sm text-label-sm text-outline">Dates</span>
+<span class="font-body-md text-on-surface">Oct 15 - Nov 20, 2024</span>
+</div>
+<div>
+<span class="block font-label-sm text-label-sm text-outline">Capacity</span>
+<span class="font-body-md text-on-surface">15 / 50 seats available</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col justify-between items-start md:items-end min-w-[150px]">
+<div class="hidden md:block"></div> <!-- Spacer -->
+<button class="w-full md:w-auto bg-secondary-container text-on-secondary-container font-label-md text-label-md px-6 py-3 rounded-DEFAULT hover:bg-secondary hover:text-on-secondary transition-colors duration-200 min-h-[44px]">Nominate me</button>
+</div>
+</div>
+</div>
+<!-- Programme Card 2: Pending Status -->
+<div class="bg-surface-card rounded-xl border border-border-low-contrast p-6">
+<div class="flex flex-col md:flex-row justify-between gap-4">
+<div class="flex-grow">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-tertiary-container" data-icon="groups">groups</span>
+<span class="font-label-sm text-label-sm bg-surface-container-highest text-on-surface px-2 py-1 rounded-DEFAULT">In-Person</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-primary mb-1">Rural Leadership Workshop</h2>
+<p class="text-on-surface-variant font-body-md mb-4">RICM, Chandigarh</p>
+<div class="grid grid-cols-2 gap-4 mb-4">
+<div>
+<span class="block font-label-sm text-label-sm text-outline">Dates</span>
+<span class="font-body-md text-on-surface">Nov 01 - Nov 05, 2024</span>
+</div>
+<div>
+<span class="block font-label-sm text-label-sm text-outline">Capacity</span>
+<span class="font-body-md text-on-surface">Waitlist Active</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col justify-between items-start md:items-end min-w-[150px]">
+<!-- Status Pill Warning -->
+<div class="bg-amber-100 text-status-pending font-label-sm text-label-sm px-3 py-1 rounded-full border border-amber-200 flex items-center gap-1 mb-4 md:mb-0">
+<span class="material-symbols-outlined text-[16px]" data-icon="pending">pending</span>
+                                Pending Approval
+                            </div>
+<button class="w-full md:w-auto bg-surface-container-low text-on-surface-variant font-label-md text-label-md px-6 py-3 rounded-DEFAULT hover:bg-surface-variant transition-colors duration-200 min-h-[44px] border border-border-low-contrast">Withdraw</button>
+</div>
+</div>
+</div>
+<!-- Programme Card 3: Approved Status -->
+<div class="bg-surface-card rounded-xl border border-border-low-contrast p-6">
+<div class="flex flex-col md:flex-row justify-between gap-4">
+<div class="flex-grow">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-secondary" data-icon="cast_for_education">cast_for_education</span>
+<span class="font-label-sm text-label-sm bg-surface-container-highest text-on-surface px-2 py-1 rounded-DEFAULT">Hybrid</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-primary mb-1">Financial Literacy for Co-ops</h2>
+<p class="text-on-surface-variant font-body-md mb-4">ICM, Bhopal</p>
+<div class="grid grid-cols-2 gap-4 mb-4">
+<div>
+<span class="block font-label-sm text-label-sm text-outline">Dates</span>
+<span class="font-body-md text-on-surface">Sep 10 - Oct 10, 2024</span>
+</div>
+<div>
+<span class="block font-label-sm text-label-sm text-outline">Progress</span>
+<span class="font-body-md text-on-surface">In Progress</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col justify-between items-start md:items-end min-w-[150px]">
+<!-- Status Pill Success -->
+<div class="bg-emerald-100 text-status-shortlisted font-label-sm text-label-sm px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1 mb-4 md:mb-0">
+<span class="material-symbols-outlined text-[16px]" data-icon="check_circle">check_circle</span>
+                                Approved
+                            </div>
+<button class="w-full md:w-auto bg-tertiary-container text-on-tertiary-container font-label-md text-label-md px-6 py-3 rounded-DEFAULT hover:bg-tertiary hover:text-on-tertiary transition-colors duration-200 min-h-[44px]">Go to Course</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Visible on Mobile, Hidden on Desktop) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-[56px] px-2 bg-surface dark:bg-on-background border-t border-border-low-contrast dark:border-outline-variant shadow-sm docked full-width bottom-0">
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline active:scale-90 transition-transform duration-150 hover:bg-surface-container-low dark:hover:bg-surface-variant w-full h-full rounded-DEFAULT" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm">Home</span>
+</a>
+<!-- Active: Learn -->
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed relative after:content-[''] after:absolute after:top-0 after:w-12 after:h-1 after:bg-secondary dark:after:bg-secondary-fixed after:rounded-full active:scale-90 transition-transform duration-150 hover:bg-surface-container-low dark:hover:bg-surface-variant w-full h-full rounded-DEFAULT" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+<span class="font-label-sm text-label-sm">Learn</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline active:scale-90 transition-transform duration-150 hover:bg-surface-container-low dark:hover:bg-surface-variant w-full h-full rounded-DEFAULT" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-label-sm text-label-sm">Attendance</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline active:scale-90 transition-transform duration-150 hover:bg-surface-container-low dark:hover:bg-surface-variant w-full h-full rounded-DEFAULT" href="#">
+<span class="material-symbols-outlined" data-icon="work">work</span>
+<span class="font-label-sm text-label-sm">Career</span>
+</a>
+</nav>
+</body></html>

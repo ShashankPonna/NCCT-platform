@@ -1,0 +1,152 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: system-ui, "Segoe UI", Roboto, sans-serif; }
+    a { color: #aa3bff; text-decoration: none; }
+    a:hover { color: #8f22e0; }
+  </style>
+</helmet>
+<div style="width:390px;min-height:844px;box-sizing:border-box;display:flex;flex-direction:column;background:#fff;font-size:16px;line-height:145%;letter-spacing:0.18px;color:#6b6375;">
+
+  <header style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 20px 14px;border-bottom:1px solid #e5e4e7;">
+    <h1 style="margin:0;font-size:22px;font-weight:500;letter-spacing:-0.24px;color:#08060d;">Learn</h1>
+    <a href="#" style="font-size:14px;display:inline-flex;align-items:center;gap:5px;">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="M8.5 13.5L7 20.5l5-2.5 5 2.5-1.5-7"/></svg>
+      Certificates
+    </a>
+  </header>
+
+  <main style="flex:1;display:flex;flex-direction:column;gap:16px;padding:16px 20px 24px;">
+
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <span style="font-size:12px;letter-spacing:0.4px;text-transform:uppercase;">Programme</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #e5e4e7;border-radius:6px;padding:11px 14px;min-height:44px;box-sizing:border-box;">
+        <span style="font-size:15px;color:#08060d;">Dairy Cooperative Management</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9.5l6 6 6-6"/></svg>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;">
+        <span style="font-size:12px;letter-spacing:0.4px;text-transform:uppercase;">Module 2 · Quality &amp; Testing</span>
+        <span style="font-size:13px;">3 / 8</span>
+      </div>
+
+      <div style="display:flex;flex-direction:column;">
+        <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #e5e4e7;min-height:44px;box-sizing:border-box;">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:999px;background:rgba(170,59,255,0.1);color:#aa3bff;flex:none;">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+          </span>
+          <span style="flex:1;font-size:15px;color:#08060d;">Cooperative Milk Collection</span>
+          <span style="font-size:12px;">video</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #e5e4e7;min-height:44px;box-sizing:border-box;">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:999px;background:rgba(170,59,255,0.1);color:#aa3bff;flex:none;">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+          </span>
+          <span style="flex:1;font-size:15px;color:#08060d;">Fat &amp; SNF Basics</span>
+          <span style="font-size:12px;">pdf</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #aa3bff;min-height:44px;box-sizing:border-box;">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:999px;border:1.5px solid #aa3bff;color:#aa3bff;flex:none;">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" stroke="none"><path d="M8 5.5v13l11-6.5z"/></svg>
+          </span>
+          <span style="flex:1;font-size:15px;color:#08060d;font-weight:600;">Milk Quality Testing</span>
+          <span style="font-size:12px;color:#aa3bff;">now</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:11px 0;min-height:44px;box-sizing:border-box;">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:999px;border:1px solid #e5e4e7;flex:none;"></span>
+          <span style="flex:1;font-size:15px;">Adulteration Checks</span>
+          <span style="font-size:12px;">interactive</span>
+        </div>
+      </div>
+    </div>
+
+    <section style="border:1px solid #e5e4e7;border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;gap:6px;">
+        <sc-for list="{{locales}}" as="loc" hint-placeholder-count="3">
+          <button type="button" onClick="{{loc.pick}}" style="font:inherit;font-size:13px;min-height:34px;padding:6px 12px;border-radius:999px;cursor:pointer;border:1px solid {{loc.borderColor}};background:{{loc.bg}};color:{{loc.fg}};">{{loc.label}}</button>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <span style="font-size:17px;font-weight:600;color:#08060d;line-height:130%;">{{title}}</span>
+        <span style="font-size:15px;line-height:150%;text-wrap:pretty;">{{body}}</span>
+      </div>
+
+      <div style="height:1px;background:#e5e4e7;"></div>
+
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button type="button" style="flex:1;font:inherit;font-size:15px;min-height:44px;padding:11px 16px;border-radius:6px;border:1px solid #aa3bff;background:#aa3bff;color:#fff;cursor:pointer;">Mark complete</button>
+        <button type="button" style="font:inherit;font-size:15px;min-height:44px;padding:11px 16px;border-radius:6px;border:1px solid #e5e4e7;background:#f4f3ec;color:#08060d;cursor:pointer;">Quiz</button>
+      </div>
+    </section>
+
+  </main>
+
+  <nav style="margin-top:auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;border-top:1px solid #e5e4e7;background:#fff;padding:8px 10px 16px;">
+    <a href="#" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;min-height:48px;border-radius:8px;font-size:12px;color:#6b6375;">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M9.5 20v-6h5v6"/></svg>
+      Home
+    </a>
+    <a href="#" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;min-height:48px;border-radius:8px;font-size:12px;color:#aa3bff;background:rgba(170,59,255,0.1);">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7.5S10 5.5 4.5 5.5v12C10 17.5 12 19.5 12 19.5"/><path d="M12 7.5s2-2 7.5-2v12c-5.5 0-7.5 2-7.5 2"/></svg>
+      Learn
+    </a>
+    <a href="#" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;min-height:48px;border-radius:8px;font-size:12px;color:#6b6375;">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5V6a2 2 0 0 1 2-2h2.5"/><path d="M15.5 4H18a2 2 0 0 1 2 2v2.5"/><path d="M20 15.5V18a2 2 0 0 1-2 2h-2.5"/><path d="M8.5 20H6a2 2 0 0 1-2-2v-2.5"/><path d="M4 12h16"/></svg>
+      Attendance
+    </a>
+    <a href="#" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;min-height:48px;border-radius:8px;font-size:12px;color:#6b6375;">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="7.5" width="17" height="12" rx="2"/><path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5"/><path d="M3.5 12.5h17"/></svg>
+      Career
+    </a>
+  </nav>
+
+</div>
+</x-dc>
+<script data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const active = this.state && this.state.locale ? this.state.locale : 'en';
+    const copy = {
+      en: {
+        label: 'English',
+        title: 'Milk Quality Testing',
+        body: 'Learn the three checks every collection centre runs before milk is accepted: temperature, clot-on-boiling, and fat content. Each one takes under two minutes.'
+      },
+      hi: {
+        label: 'हिंदी',
+        title: 'दूध गुणवत्ता परीक्षण',
+        body: 'दूध स्वीकार करने से पहले हर संग्रह केंद्र तीन जाँच करता है: तापमान, उबालने पर फटना, और वसा की मात्रा। हर जाँच में दो मिनट से भी कम समय लगता है।'
+      },
+      mr: {
+        label: 'मराठी',
+        title: 'दूध गुणवत्ता चाचणी',
+        body: 'दूध स्वीकारण्यापूर्वी प्रत्येक संकलन केंद्र तीन चाचण्या करते: तापमान, उकळल्यावर फाटणे, आणि स्निग्धांश. प्रत्येक चाचणीला दोन मिनिटांपेक्षा कमी वेळ लागतो.'
+      }
+    };
+    const locales = ['en', 'hi', 'mr'].map((code) => {
+      const on = code === active;
+      return {
+        code: code,
+        label: copy[code].label,
+        pick: () => this.setState({ locale: code }),
+        bg: on ? 'rgba(170,59,255,0.1)' : '#fff',
+        fg: on ? '#aa3bff' : '#6b6375',
+        borderColor: on ? 'rgba(170,59,255,0.5)' : '#e5e4e7'
+      };
+    });
+    return { locales: locales, title: copy[active].title, body: copy[active].body };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,3 +1,4 @@
+import { Capacitor } from "@capacitor/core";
 import { useState } from "react";
 import { AdminCourseManager } from "./AdminCourseManager.js";
 import { AdminProgrammeManager } from "./AdminProgrammeManager.js";
@@ -8,9 +9,9 @@ import { AttendanceManager } from "./AttendanceManager.js";
 import { CertificateVerification } from "./CertificateVerification.js";
 import { ChatbotCorpusManager } from "./ChatbotCorpusManager.js";
 import { EmployerDashboard } from "./EmployerDashboard.js";
-import { ForgotPasswordForm } from "./ForgotPasswordForm.js";
-import { LoginForm } from "./LoginForm.js";
+import { HomePage } from "./HomePage.js";
 import { KioskNfcReader } from "./KioskNfcReader.js";
+import { LoginPage } from "./LoginPage.js";
 import { ManagementShell, type ManagementTab } from "./ManagementShell.js";
 import { ProfileEditor } from "./ProfileEditor.js";
 import { PublicProfile } from "./PublicProfile.js";
@@ -19,11 +20,28 @@ import { TraineeApp } from "./trainee/TraineeApp.js";
 import { usePasswordRecovery } from "./usePasswordRecovery.js";
 import { useSession } from "./useSession.js";
 
+// The native (Capacitor) shell has no marketing landing page to show — its
+// users are already-enrolled people opening an app to log in, not first-time
+// visitors browsing programme info — so it skips straight to the login page.
+// See docs/ARCHITECTURE.md: apps/mobile wraps this exact web build, so this
+// is the only place that distinguishes the two targets.
+const IS_NATIVE = Capacitor.isNativePlatform();
+
 function App() {
   const { session, loading, error } = useSession();
   const { isRecovery, clearRecovery } = usePasswordRecovery();
   const [activeTab, setActiveTab] = useState<ManagementTab | null>(null);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [view, setView] = useState<"home" | "login">(() =>
+    IS_NATIVE ||
+    window.location.hash === "#signin" ||
+    new URLSearchParams(window.location.search).get("login") === "true"
+      ? "login"
+      : "home",
+  );
+  // Tracks an `error` string the user has already dismissed, so a stale-session
+  // failure takes them to the login page once but going back to home still
+  // works (otherwise the login page would immediately reopen on every re-render).
+  const [dismissedError, setDismissedError] = useState<string | null>(null);
 
   // Checked before the auth gate below, not after: certificate verification
   // is explicitly no-login (PRD §6.4), so it must never depend on — or wait
@@ -50,8 +68,6 @@ function App() {
   // of letting them set a new password.
   if (isRecovery) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <ResetPasswordForm onDone={clearRecovery} />
       </div>
     );
   }
@@ -70,21 +86,31 @@ function App() {
   }
 
   if (!session) {
+    const showLogin = IS_NATIVE || view === "login" || Boolean(error && error !== dismissedError);
+
+    if (showLogin) {
+      return (
+        <LoginPage
+          error={error}
+          onBack={
+            IS_NATIVE
+              ? undefined
+              : () => {
+                  setView("home");
+                  setDismissedError(error);
+                }
+          }
+        />
+      );
+    }
+
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <div className="w-full max-w-md">
-          {error && (
-            <div className="mb-4 bg-error-container text-on-error-container p-3 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-          {showForgotPassword ? (
-            <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />
-          ) : (
-            <LoginForm onForgotPassword={() => setShowForgotPassword(true)} />
-          )}
-        </div>
-      </div>
+      <HomePage
+        onSignIn={() => setView("login")}
+        onVerify={(code: string) => {
+          window.location.search = `?verify=${encodeURIComponent(code)}`;
+        }}
+      />
     );
   }
 

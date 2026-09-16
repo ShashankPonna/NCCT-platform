@@ -1,0 +1,607 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NCCT Platform - National Cooperative Training &amp; Employment Portal</title>
+  
+  <!-- Fonts: Plus Jakarta Sans & Noto Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet">
+  
+  <!-- Material Symbols Outlined -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#000d20',
+            'primary-container': '#0b2340',
+            'on-primary': '#ffffff',
+            secondary: '#a63b00',
+            'secondary-container': '#fc6c29',
+            'secondary-accent': '#F26522',
+            'on-secondary': '#ffffff',
+            background: '#f9f9f9',
+            'surface-card': '#ffffff',
+            'border-low-contrast': '#e5e7eb',
+            'on-background': '#1a1c1c',
+            'on-surface-variant': '#44474d',
+            'status-shortlisted': '#065F46',
+            'status-pending': '#92400E',
+            'interactive-blue': '#1E5FBF'
+          },
+          fontFamily: {
+            heading: ['"Plus Jakarta Sans"', 'sans-serif'],
+            body: ['"Noto Sans"', 'sans-serif']
+          },
+          borderRadius: {
+            'std': '8px'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    body {
+      font-family: 'Noto Sans', sans-serif;
+      background-color: #f9f9f9;
+      color: #1a1c1c;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-background text-on-background">
+
+  <!-- Government Masthead Strip (Official Portal Aesthetic) -->
+  
+
+  <!-- Primary Sticky Header -->
+  <header class="sticky top-0 z-40 bg-surface-card border-b border-border-low-contrast shadow-sm">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-8 md:px-16 h-20 flex items-center justify-between">
+      <!-- Left: Logo & Wordmark -->
+      <a href="#" class="flex items-center gap-3.5 group">
+        <div class="w-11 h-11 rounded-std bg-primary flex items-center justify-center text-on-primary shadow-sm group-hover:bg-primary-container transition-colors">
+          <span class="material-symbols-outlined text-[26px]">school</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-heading font-extrabold text-xl md:text-2xl text-primary leading-tight tracking-tight">NCCT Platform</span>
+          <span class="text-[11px] font-medium text-on-surface-variant hidden sm:block">National Council for Cooperative Training</span>
+        </div>
+      </a>
+
+      <!-- Center: Public Navigation (Desktop) -->
+      <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-on-surface-variant">
+        <a href="#about" class="hover:text-primary transition-colors py-2">About</a>
+        <a href="#roles" class="hover:text-primary transition-colors py-2">Ecosystem</a>
+        <a href="#features" class="hover:text-primary transition-colors py-2">Key Features</a>
+        <a href="#verify" class="hover:text-primary flex items-center gap-1 transition-colors py-2 text-interactive-blue">
+          <span class="material-symbols-outlined text-base">verified_user</span>
+          <span class="">Verify Certificate</span>
+        </a>
+      </nav>
+
+      <!-- Right: Action CTA Buttons -->
+      <div class="flex items-center gap-3"><div class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border-low-contrast bg-surface-card text-xs font-semibold text-primary hover:bg-gray-50 transition-colors cursor-pointer"><span class="material-symbols-outlined text-base text-interactive-blue">translate</span><span class="">English</span><span class="text-gray-300">|</span><span class="text-on-surface-variant hover:text-primary">हिन्दी</span></div>
+        <a href="#verify" class="hidden sm:inline-flex items-center gap-1.5 px-4 h-11 rounded-std border border-border-low-contrast bg-surface-card text-on-background text-sm font-semibold hover:bg-gray-50 transition-colors">
+          <span class="material-symbols-outlined text-lg text-interactive-blue">qr_code_scanner</span>
+          <span class="">Verify</span>
+        </a>
+        <a href="#signin" class="inline-flex items-center justify-center px-6 h-11 rounded-std bg-[#F26522] hover:bg-[#a63b00] text-white text-sm font-bold shadow-sm hover:shadow transition-all min-w-[104px]">
+          Sign In
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="relative pt-12 pb-16 md:pt-20 md:pb-24 overflow-hidden border-b border-border-low-contrast bg-gradient-to-b from-white to-[#f4f4f2]/40">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-8 md:px-16">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        
+        <!-- Left Hero Content -->
+        <div class="lg:col-span-7 flex flex-col items-start">
+          
+          <!-- Trust Badge Pill -->
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/5 border border-primary/10 text-primary text-xs font-semibold mb-6">
+            <span class="material-symbols-outlined text-base text-[#F26522]">verified</span>
+            <span class="">Ministry of Cooperation, Government of India Initiative</span>
+          </div>
+
+          <!-- Headline -->
+          <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-[52px] font-heading font-extrabold text-primary leading-[1.15] tracking-tight mb-6">
+            A digital ecosystem for cooperative training, certification, and employment.
+          </h1>
+
+          <!-- Subheadline -->
+          <p class="text-base sm:text-lg text-on-surface-variant leading-relaxed mb-8 max-w-2xl font-normal">
+            Empowering rural youth, PACS staff, and cooperative workers across India through specialized programmes from <span class="font-semibold text-primary">NCCT, VAMNICOM, RICMs, and ICMs</span> — bridging classroom training to verified career opportunities.
+          </p>
+
+          <!-- CTAs -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
+            <a href="#signin" class="inline-flex items-center justify-center gap-2.5 px-8 h-12 rounded-std bg-[#F26522] hover:bg-[#a63b00] text-white text-base font-bold shadow-md hover:shadow-lg transition-all">
+              <span class="">Sign In to Dashboard</span>
+              <span class="material-symbols-outlined text-xl">arrow_forward</span>
+            </a>
+            <a href="#verify" class="inline-flex items-center justify-center gap-2 px-6 h-12 rounded-std border-2 border-primary/20 bg-surface-card hover:bg-primary/5 text-primary text-base font-bold transition-colors">
+              <span class="material-symbols-outlined text-xl text-interactive-blue">search_check</span>
+              <span class="">Verify a Certificate</span>
+            </a>
+          </div>
+
+          <!-- Quick Metrics Bar -->
+          <div class="grid grid-cols-3 gap-6 sm:gap-10 pt-10 mt-10 border-t border-border-low-contrast w-full">
+            <div>
+              <p class="font-heading font-extrabold text-2xl sm:text-3xl text-primary">140+</p>
+              <p class="text-xs sm:text-sm text-on-surface-variant font-medium mt-0.5">Partner Institutions</p>
+            </div>
+            <div>
+              <p class="font-heading font-extrabold text-2xl sm:text-3xl text-primary">50,000+</p>
+              <p class="text-xs sm:text-sm text-on-surface-variant font-medium mt-0.5">Certified Trainees</p>
+            </div>
+            <div>
+              <p class="font-heading font-extrabold text-2xl sm:text-3xl text-[#065F46]">100%</p>
+              <p class="text-xs sm:text-sm text-on-surface-variant font-medium mt-0.5">Verifiable via QR</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Hero Visual Card -->
+        <div class="lg:col-span-5 relative">
+          <div class="bg-surface-card border border-border-low-contrast rounded-std p-6 sm:p-7 shadow-sm relative z-10">
+            <div class="flex items-center justify-between pb-4 mb-5 border-b border-border-low-contrast">
+              <div class="flex items-center gap-2.5">
+                <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                <span class="font-heading font-bold text-sm text-primary">Live National Network</span>
+              </div>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-status-shortlisted border border-emerald-200">Active</span>
+            </div>
+
+            <!-- Mini verification demo teaser inside hero -->
+            <div class="bg-background rounded-std p-4 border border-border-low-contrast mb-5">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-9 h-9 rounded-std bg-primary text-white flex items-center justify-center">
+                  <span class="material-symbols-outlined text-xl">workspace_premium</span>
+                </div>
+                <div>
+                  <h2 class="text-xs font-bold text-primary">Tamper-Proof Credentials</h2>
+                  <p class="text-[11px] text-on-surface-variant">Instant public validity checks</p>
+                </div>
+              </div>
+              <div class="mt-2 bg-white rounded p-2.5 border border-border-low-contrast flex items-center justify-between text-xs">
+                <span class="font-mono text-gray-600">NCCT-2024-8A9X</span>
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-status-shortlisted">
+                  <span class="material-symbols-outlined text-sm">check_circle</span>
+                  Valid
+                </span>
+              </div>
+            </div>
+
+            <!-- Role Quick-Link List -->
+            <p class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-3">Portal Access Channels</p>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between p-3 rounded-std bg-white hover:bg-gray-50 border border-border-low-contrast transition-colors cursor-pointer">
+                <div class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-primary text-xl">person</span>
+                  <span class="text-xs font-bold text-primary">Trainee &amp; Student Portal</span>
+                </div>
+                <span class="material-symbols-outlined text-gray-400 text-sm">arrow_forward_ios</span>
+              </div>
+              <div class="flex items-center justify-between p-3 rounded-std bg-white hover:bg-gray-50 border border-border-low-contrast transition-colors cursor-pointer">
+                <div class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-primary text-xl">co_present</span>
+                  <span class="text-xs font-bold text-primary">Trainer &amp; Faculty Workspace</span>
+                </div>
+                <span class="material-symbols-outlined text-gray-400 text-sm">arrow_forward_ios</span>
+              </div>
+              <div class="flex items-center justify-between p-3 rounded-std bg-white hover:bg-gray-50 border border-border-low-contrast transition-colors cursor-pointer">
+                <div class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-primary text-xl">business_center</span>
+                  <span class="text-xs font-bold text-primary">Cooperative Employer Exchange</span>
+                </div>
+                <span class="material-symbols-outlined text-gray-400 text-sm">arrow_forward_ios</span>
+              </div>
+            </div>
+
+            <div class="mt-5 pt-4 border-t border-border-low-contrast text-center">
+              <span class="text-xs text-on-surface-variant">Admin or Institution Coordinator? <a href="#signin" class="font-bold text-interactive-blue hover:underline">Access Management ERP</a></span>
+            </div>
+          </div>
+          <!-- Decorative Background Element -->
+          <div class="absolute -bottom-6 -right-6 w-full h-full bg-[#0b2340]/5 rounded-std -z-0 hidden sm:block"></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Participating Cooperative Apex Institutions -->
+  <section class="py-8 bg-surface-card border-b border-border-low-contrast">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-8 md:px-16 text-center">
+      <p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-6">Supported By Leading National Cooperative Organizations</p>
+      <div class="flex flex-wrap items-center justify-center gap-8 sm:gap-16 opacity-80">
+        <div class="flex items-center gap-2 font-heading font-extrabold text-lg text-primary">
+          <span class="material-symbols-outlined text-2xl text-[#F26522]">agriculture</span>
+          <span class="">IFFCO</span>
+        </div>
+        <div class="flex items-center gap-2 font-heading font-extrabold text-lg text-primary">
+          <span class="material-symbols-outlined text-2xl text-[#F26522]">water_drop</span>
+          <span class="">AMUL</span>
+        </div>
+        <div class="flex items-center gap-2 font-heading font-extrabold text-lg text-primary">
+          <span class="material-symbols-outlined text-2xl text-[#F26522]">account_balance</span>
+          <span class="">NABARD</span>
+        </div>
+        <div class="flex items-center gap-2 font-heading font-extrabold text-lg text-primary">
+          <span class="material-symbols-outlined text-2xl text-[#F26522]">storefront</span>
+          <span class="">NCDC</span>
+        </div>
+        <div class="flex items-center gap-2 font-heading font-extrabold text-lg text-primary">
+          <span class="material-symbols-outlined text-2xl text-[#F26522]">school</span>
+          <span class="">VAMNICOM</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section: Four Core Personas / Roles (Bento-style Grid) -->
+  <section id="roles" class="py-16 md:py-24 bg-background">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-8 md:px-16">
+      
+      <!-- Section Header -->
+      <div class="text-center max-w-3xl mx-auto mb-14">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1E5FBF]/10 text-interactive-blue text-xs font-bold mb-3">
+          <span class="">Unified Multi-Persona ERP</span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-heading font-extrabold text-primary tracking-tight">
+          Tailored interfaces for every cooperative stakeholder.
+        </h2>
+        <p class="text-sm sm:text-base text-on-surface-variant mt-3 font-normal">
+          A single platform connecting training administrators, certified educators, grassroots trainees, and recruiting cooperative employers.
+        </p>
+      </div>
+
+      <!-- 4 Bento-style Role Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <!-- Card 1: Admin -->
+        <div class="bg-surface-card border border-border-low-contrast rounded-std p-6 hover:shadow-md transition-shadow flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-std bg-primary/5 border border-border-low-contrast flex items-center justify-center text-primary mb-5">
+              <span class="material-symbols-outlined text-2xl">admin_panel_settings</span>
+            </div>
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary text-white mb-2">Governance</span>
+            <h3 class="text-lg font-heading font-bold text-primary mb-2">Admin</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">
+              Institutional CRUD management, batch timetable creation, national nomination approvals, and skill taxonomy oversight.
+            </p>
+          </div>
+          <div class="pt-6 mt-6 border-t border-border-low-contrast flex items-center justify-between text-xs font-semibold text-primary">
+            <span class="">Regional &amp; Apex Level</span>
+            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Trainer -->
+        <div class="bg-surface-card border border-border-low-contrast rounded-std p-6 hover:shadow-md transition-shadow flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-std bg-primary/5 border border-border-low-contrast flex items-center justify-center text-primary mb-5">
+              <span class="material-symbols-outlined text-2xl">co_present</span>
+            </div>
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary text-white mb-2">Faculty</span>
+            <h3 class="text-lg font-heading font-bold text-primary mb-2">Trainer</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">
+              Publish course modules, build interactive quizzes, trigger biometric session rosters, and issue verifiable digital credentials.
+            </p>
+          </div>
+          <div class="pt-6 mt-6 border-t border-border-low-contrast flex items-center justify-between text-xs font-semibold text-primary">
+            <span class="">Institute Instructors</span>
+            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </div>
+        </div>
+
+        <!-- Card 3: Trainee -->
+        <div class="bg-surface-card border border-border-low-contrast rounded-std p-6 hover:shadow-md transition-shadow flex flex-col justify-between ring-1 ring-primary/10">
+          <div>
+            <div class="w-12 h-12 rounded-std bg-[#F26522]/10 border border-[#F26522]/20 flex items-center justify-center text-[#F26522] mb-5">
+              <span class="material-symbols-outlined text-2xl">school</span>
+            </div>
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#F26522] text-white mb-2">Learner</span>
+            <h3 class="text-lg font-heading font-bold text-primary mb-2">Trainee</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">
+              Bilingual video lessons, consent-based attendance checks, instant QR certificate downloads, and AI counsellor guidance.
+            </p>
+          </div>
+          <div class="pt-6 mt-6 border-t border-border-low-contrast flex items-center justify-between text-xs font-semibold text-[#F26522]">
+            <span class="">PACS &amp; Rural Youth</span>
+            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </div>
+        </div>
+
+        <!-- Card 4: Employer -->
+        <div class="bg-surface-card border border-border-low-contrast rounded-std p-6 hover:shadow-md transition-shadow flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-std bg-primary/5 border border-border-low-contrast flex items-center justify-center text-primary mb-5">
+              <span class="material-symbols-outlined text-2xl">business_center</span>
+            </div>
+            <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-primary text-white mb-2">Recruiter</span>
+            <h3 class="text-lg font-heading font-bold text-primary mb-2">Employer</h3>
+            <p class="text-sm text-on-surface-variant leading-relaxed">
+              Post skill-tagged cooperative openings, search verified candidate rosters, shortlist certified graduates, and fill rural vacancies.
+            </p>
+          </div>
+          <div class="pt-6 mt-6 border-t border-border-low-contrast flex items-center justify-between text-xs font-semibold text-primary">
+            <span class="">Dairies, PACs &amp; Banks</span>
+            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Section: Feature Highlights Grid (8 Cards) -->
+  <section id="features" class="py-16 md:py-24 bg-surface-card border-y border-border-low-contrast">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-8 md:px-16">
+      
+      <!-- Section Header -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-14">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-widest text-[#F26522]">Engineered For Indian Cooperatives</span>
+          <h2 class="text-2xl sm:text-3xl md:text-4xl font-heading font-extrabold text-primary tracking-tight mt-2">
+            Features built for low-connectivity &amp; high trust.
+          </h2>
+        </div>
+        <p class="text-sm text-on-surface-variant max-w-md mt-4 md:mt-0">
+          From rural PACS connectivity barriers to high-stakes recruitment, our technical capabilities respect operational realities.
+        </p>
+      </div>
+
+      <!-- Grid of 8 Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        <!-- 1. E-Learning & Offline Access -->
+        <div class="bg-background border border-border-low-contrast rounded-std p-6 hover:shadow-md transition-shadow">
+          <div class="w-11 h-11 rounded-std bg-surface-card border border-border-low-contrast flex items-center justify-center text-primary mb-4 shadow-sm">
+            <span class="material-symbols-outlined text-2xl text-interactive-blue">cloud_download</span>
+          </div>
+          <h3 class="font-heading font-bold text-base text-primary mb-2">E-Learning &amp; Offline Access</h3>
+          <p class="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+            Lightweight, multilingual video and PDF modules optimized for low-bandwidth 2G/4G rural networks with offline caching.
+          </p>
+        </div>
+
+        <!-- 2. Auto-Graded Assessments & Certificates -->
+        <div class="bg-background border border-border-low-contrast rounded-std p-6 hover:shadow-md transition-shadow">
+          <div class="w-11 h-11 rounded-std bg-surface-card border border-border-low-contrast flex items-center justify-center text-primary mb-4 shadow-sm">
+            <span class="material-symbols-outlined text-2xl text-interactive-blue">verified</span>
+          </div>
+          <h3 class="font-heading font-bold text-base text-primary mb-2">Verifiable Certificates</h3>
+          <p class="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+            Automated grading with tamper-proof, cryptographic digital certificates that can be instantly scanned and authenticated.
+          </p>
+        </div>
+
+        <!-- 3. QR & Face-Recognition Attendance -->
+        <div class="bg-background border border-border-low-contrast rounded-std p-6 hover:shadow-md transition-shadow">
+          <div class="w-11 h-11 rounded-std bg-surface-card border border-border-low-contrast flex items-center justify-center text-primary mb-4 shadow-sm">
+            <span class="material-symbols-outlined text-2xl text-interactive-blue">face</span>
+          </div>
+          <h3 class="font-heading font-bold text-base text-primary mb-2">Biometric Attendance</h3>
+          <p class="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+            Legally compliant one-time consent biometric face check-in combined with fallback QR scanning for classroom rosters.
+          </p>
+        </div>
+
+        <!-- 4. NFC Profile Sharing -->
+        <div class="bg-background border border-border-low-contrast rounded-std p-6 hover:shadow-md transition-shadow">
+          <div class="w-11 h-11 rounded-std bg-surface-card border border-border-low-contrast flex items-center justify-center text-primary mb-4 shadow-sm">
+            <span class="material-symbols-outlined text-2xl text-interactive-blue">contactless</span>
+          </div>
+          <h3 class="font-heading font-bold text-base text-primary mb-2">NFC Profile Sharing</h3>
+          <p class="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+            Tap-to-verify trainee digital identity cards, enabling instant physical verification during recruitment drives and exams.
+          </p>
+        </div>
+
+        <!-- 5. Employer Exchange -->
+        <div class="bg-background border border-border-low-contrast rounded-std p-6 hover:shadow-md transition-shadow">
+          <div class="w-11 h-11 rounded-std bg-surface-card border border-border-low-contrast flex items-center justify-center text-primary mb-4 shadow-sm">
+            <span class="material-symbols-outlined text-2xl text-interactive-blue">handshake</span>
+          </div>
+          <h3 class="font-heading font-bold text-base text-primary mb-2">Employment Exchange</h3>
+          <p class="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+            A direct pipeline between certified cooperative graduates and open positions across Dairy Unions, Sugar Mills, and PACS.
+          </p>
+        </div>
+
+        <!-- 6. AI Career Counsellor -->
+        <div class="bg-background border border-border-low-contrast rounded-std p-6 hover:shadow-md transition-shadow">
+          <div class="w-11 h-11 rounded-std bg-surface-card border border-border-low-contrast flex items-center justify-center text-primary mb-4 shadow-sm">
+            <span class="material-symbols-outlined text-2xl text-[#F26522]">smart_toy</span>
+          </div>
+          <h3 class="font-heading font-bold text-base text-primary mb-2">AI Career Counsellor</h3>
+          <p class="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+            Multilingual AI assistant providing career guidance with explicit provenance tags linking back to completed certifications.
+          </p>
+        </div>
+
+        <!-- 7. Skill-Gap Analysis -->
+        <div class="bg-background border border-border-low-contrast rounded-std p-6 hover:shadow-md transition-shadow">
+          <div class="w-11 h-11 rounded-std bg-surface-card border border-border-low-contrast flex items-center justify-center text-primary mb-4 shadow-sm">
+            <span class="material-symbols-outlined text-2xl text-interactive-blue">troubleshoot</span>
+          </div>
+          <h3 class="font-heading font-bold text-base text-primary mb-2">Skill-Gap Analysis</h3>
+          <p class="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+            Target role comparison showing acquired vs. missing skills with AI-recommended sequential courses to bridge qualifications.
+          </p>
+        </div>
+
+        <!-- 8. AI Job Matching -->
+        <div class="bg-background border border-border-low-contrast rounded-std p-6 hover:shadow-md transition-shadow">
+          <div class="w-11 h-11 rounded-std bg-surface-card border border-border-low-contrast flex items-center justify-center text-primary mb-4 shadow-sm">
+            <span class="material-symbols-outlined text-2xl text-interactive-blue">badge</span>
+          </div>
+          <h3 class="font-heading font-bold text-base text-primary mb-2">Automated Talent Match</h3>
+          <p class="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+            Standardized skills taxonomy automatically pairs qualified candidates with employer job postings based on verified credentials.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Section: Public Trust & Certificate Verification Strip -->
+  <section id="verify" class="py-16 bg-gradient-to-r from-primary to-primary-container text-on-primary">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-8 md:px-16">
+      <div class="bg-white/5 border border-white/10 rounded-std p-8 md:p-12 flex flex-col lg:flex-row items-center justify-between gap-8">
+        
+        <div class="max-w-2xl">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold mb-4">
+            <span class="material-symbols-outlined text-sm">lock_open</span>
+            <span class="">Zero-Login Public Credential Audit</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-heading font-extrabold text-white tracking-tight">
+            Verify any NCCT certificate instantly without signing in.
+          </h2>
+          <p class="text-white/80 text-sm sm:text-base mt-3 leading-relaxed">
+            Employers, banks, and government inspectors can authenticate certificates directly by entering the unique credential code or scanning the printed QR code. Zero login, zero friction, 100% authoritative.
+          </p>
+        </div>
+
+        <!-- Verification Quick Input Box -->
+        <div class="w-full lg:w-[420px] bg-surface-card rounded-std p-5 text-on-background shadow-xl">
+          <label for="cert-id" class="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Certificate ID or Roll Number</label>
+          <div class="flex gap-2">
+            <div class="relative flex-1">
+              <span class="material-symbols-outlined absolute left-3 top-3 text-gray-400 text-lg">search</span>
+              <input id="cert-id" type="text" placeholder="e.g. NCCT-2024-8A9X" value="NCCT-2024-8A9X" class="w-full h-11 pl-9 pr-3 rounded-std border border-border-low-contrast text-sm focus:outline-none focus:border-primary font-mono">
+            </div>
+            <a href="#verification-result" class="h-11 px-5 rounded-std bg-[#F26522] hover:bg-[#a63b00] text-white text-xs font-bold flex items-center justify-center transition-colors">
+              Verify
+            </a>
+          </div>
+          <p class="text-[11px] text-on-surface-variant mt-2.5 flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm text-status-shortlisted">check_circle</span>
+            <span class="">Connected to Central Registry of Cooperative Training</span>
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Banner Section -->
+  <section class="py-16 md:py-20 bg-background border-b border-border-low-contrast">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-8 md:px-16 text-center">
+      <div class="max-w-2xl mx-auto">
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-heading font-extrabold text-primary tracking-tight mb-4">
+          Ready to access your training dashboard?
+        </h2>
+        <p class="text-sm sm:text-base text-on-surface-variant mb-8">
+          Sign in with your registered mobile number, email, or institutional credentials to continue your certified learning path.
+        </p>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a href="#signin" class="w-full sm:w-auto px-8 h-12 rounded-std bg-[#F26522] hover:bg-[#a63b00] text-white font-bold text-sm shadow-md hover:shadow transition-all inline-flex items-center justify-center gap-2">
+            <span class="">Sign In to NCCT Platform</span>
+            <span class="material-symbols-outlined text-lg">login</span>
+          </a>
+          <a href="#help" class="w-full sm:w-auto px-6 h-12 rounded-std border border-border-low-contrast bg-surface-card hover:bg-gray-50 text-primary font-semibold text-sm transition-colors inline-flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-lg">support_agent</span>
+            <span class="">Help &amp; Registration Support</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Official Footer -->
+  <footer class="bg-surface-card text-on-background border-t border-border-low-contrast pt-12 pb-8">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-8 md:px-16">
+      
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 pb-12 border-b border-border-low-contrast">
+        
+        <!-- Col 1: Brand & Ministry Info -->
+        <div class="md:col-span-2 pr-4">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-9 h-9 rounded-std bg-primary flex items-center justify-center text-on-primary">
+              <span class="material-symbols-outlined text-xl">school</span>
+            </div>
+            <span class="font-heading font-extrabold text-xl text-primary tracking-tight">NCCT Platform</span>
+          </div>
+          <p class="text-xs sm:text-sm text-on-surface-variant leading-relaxed mb-4 max-w-md">
+            National Council for Cooperative Training (NCCT) is an autonomous society promoted by the Ministry of Cooperation, Government of India, dedicated to organizing cooperative education and leadership programmes.
+          </p>
+          <div class="flex items-center gap-2 text-xs text-on-surface-variant">
+            <span class="font-semibold text-primary">Headquarters:</span> 3, Siri Institutional Area, August Kranti Marg, New Delhi - 110016
+          </div>
+        </div>
+
+        <!-- Col 2: Navigation Links -->
+        <div>
+          <h4 class="font-heading font-bold text-sm text-primary uppercase tracking-wider mb-4">Quick Links</h4>
+          <ul class="space-y-2.5 text-xs sm:text-sm text-on-surface-variant font-medium">
+            <li class=""><a href="#about" class="hover:text-primary transition-colors">About NCCT</a></li>
+            <li class=""><a href="#roles" class="hover:text-primary transition-colors">Programmes &amp; Syllabus</a></li>
+            <li class=""><a href="#verify" class="hover:text-primary transition-colors">Certificate Verification</a></li>
+            <li class=""><a href="#institutes" class="hover:text-primary transition-colors">RICM &amp; ICM Network</a></li>
+            <li class=""><a href="#signin" class="hover:text-primary transition-colors">Portal Login</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Support & Policies -->
+        <div>
+          <h4 class="font-heading font-bold text-sm text-primary uppercase tracking-wider mb-4">Support &amp; Legal</h4>
+          <ul class="space-y-2.5 text-xs sm:text-sm text-on-surface-variant font-medium">
+            <li class=""><a href="#privacy" class="hover:text-primary transition-colors">Privacy Policy</a></li>
+            <li class=""><a href="#terms" class="hover:text-primary transition-colors">Terms of Service</a></li>
+            <li class=""><a href="#biometrics" class="hover:text-primary transition-colors">Biometric Consent Policy</a></li>
+            <li class=""><a href="#help" class="hover:text-primary transition-colors">Help Center &amp; FAQs</a></li>
+            <li class=""><a href="#contact" class="hover:text-primary transition-colors">Contact Nodal Officer</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- Bottom Bar with Locale Selector -->
+      <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-on-surface-variant">
+        <div class="">
+          © 2024 National Council for Cooperative Training (NCCT). All rights reserved.
+        </div>
+        
+        <!-- Locale Switcher Pill (Matching Header) -->
+        <div class="flex items-center gap-3">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border-low-contrast bg-background text-xs font-semibold text-primary">
+            <span class="material-symbols-outlined text-sm">translate</span>
+            <span class="">English</span>
+            <span class="text-gray-300">|</span>
+            <span class="text-on-surface-variant hover:text-primary cursor-pointer">हिन्दी</span>
+          </div>
+          <span class="text-gray-400">|</span>
+          <span class="font-medium">Version 2.4.0</span>
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+
+
+
+
+</body></html>

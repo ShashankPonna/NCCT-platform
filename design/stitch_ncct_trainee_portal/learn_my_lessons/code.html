@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Learn - My Lessons</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&amp;family=Plus+Jakarta+Sans:wght@700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error": "#ffffff",
+                        "error": "#ba1a1a",
+                        "status-rejected": "#991B1B",
+                        "surface-container-highest": "#e2e2e2",
+                        "secondary-fixed-dim": "#ffb599",
+                        "on-primary-container": "#768bad",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#44474d",
+                        "on-secondary-container": "#5a1c00",
+                        "inverse-surface": "#2f3131",
+                        "tertiary": "#000c25",
+                        "on-error-container": "#93000a",
+                        "surface": "#f9f9f9",
+                        "border-low-contrast": "#E5E7EB",
+                        "surface-dim": "#dadada",
+                        "primary-fixed": "#d5e3ff",
+                        "error-container": "#ffdad6",
+                        "secondary": "#a63b00",
+                        "inverse-primary": "#b2c8ed",
+                        "surface-bright": "#f9f9f9",
+                        "on-background": "#1a1c1c",
+                        "on-secondary-fixed-variant": "#7f2b00",
+                        "outline": "#74777e",
+                        "on-primary-fixed-variant": "#334866",
+                        "on-tertiary-fixed-variant": "#004494",
+                        "inverse-on-surface": "#f1f1f1",
+                        "secondary-fixed": "#ffdbce",
+                        "primary-fixed-dim": "#b2c8ed",
+                        "status-shortlisted": "#065F46",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#e2e2e2",
+                        "on-tertiary-fixed": "#001a42",
+                        "tertiary-container": "#00214f",
+                        "primary-container": "#0b2340",
+                        "on-tertiary-container": "#5288ea",
+                        "surface-container-low": "#f3f3f3",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "status-pending": "#92400E",
+                        "on-secondary-fixed": "#370e00",
+                        "surface-card": "#FFFFFF",
+                        "outline-variant": "#c4c6ce",
+                        "background": "#f9f9f9",
+                        "surface-tint": "#4b5f7f",
+                        "on-primary-fixed": "#031c39",
+                        "surface-container-high": "#e8e8e8",
+                        "on-surface": "#1a1c1c",
+                        "tertiary-fixed-dim": "#adc6ff",
+                        "secondary-container": "#fc6c29",
+                        "tertiary-fixed": "#d8e2ff",
+                        "primary": "#000d20",
+                        "surface-container": "#eeeeee"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "container-max": "1280px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "64px",
+                        "mobile-width": "390px",
+                        "touch-target": "44px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "body-md": ["Noto Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "label-sm": ["Noto Sans"],
+                        "body-lg": ["Noto Sans"],
+                        "label-md": ["Noto Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Noto Sans', sans-serif; }
+        h1, h2, h3, h4, h5, h6, .font-headline-lg, .font-headline-md, .font-headline-lg-mobile { font-family: 'Plus Jakarta Sans', sans-serif; }
+        /* Ambient Shadow Utility for Hover states as per guidelines */
+        .ambient-shadow:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen pb-20 md:pb-0 font-body-md text-body-md antialiased">
+<!-- TopAppBar (Web) / Hidden on Mobile -->
+<header class="hidden md:flex justify-between items-center w-full px-margin-desktop h-14 bg-surface border-b border-border-low-contrast docked full-width top-0 z-50">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="school">school</span>
+<span class="font-headline-md text-headline-md font-bold text-primary">NCCT Platform</span>
+</div>
+<div class="flex items-center gap-6">
+<nav class="flex gap-6">
+<!-- Using intent to match "Learn" -->
+<a class="text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 cursor-pointer active:scale-95 font-label-md text-label-md py-1" href="#">Home</a>
+<a class="text-primary font-bold hover:bg-surface-container-low transition-colors duration-200 cursor-pointer active:scale-95 font-label-md text-label-md py-1 border-b-2 border-primary" href="#">Learn</a>
+<a class="text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 cursor-pointer active:scale-95 font-label-md text-label-md py-1" href="#">Attendance</a>
+<a class="text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 cursor-pointer active:scale-95 font-label-md text-label-md py-1" href="#">Career</a>
+</nav>
+<div class="flex items-center gap-4 border-l border-border-low-contrast pl-6">
+<!-- Locale Pill Selector -->
+<button class="flex items-center gap-1 border border-border-low-contrast rounded-full px-3 py-1 bg-surface-card hover:bg-surface-container-low text-label-sm font-label-sm min-h-[44px]">
+<span class="material-symbols-outlined text-[16px]" data-icon="language">language</span>
+                    EN/HI
+                </button>
+<button class="text-primary font-label-md text-label-md hover:bg-surface-container-low px-3 py-1 rounded transition-colors duration-200 cursor-pointer active:scale-95 min-h-[44px]">Sign Out</button>
+</div>
+</div>
+</header>
+<!-- Mobile Header (Simplified) -->
+<header class="md:hidden flex justify-between items-center w-full px-margin-mobile h-14 bg-surface border-b border-border-low-contrast sticky top-0 z-40">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="school">school</span>
+<span class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary truncate">NCCT</span>
+</div>
+<!-- Locale Pill Selector Mobile -->
+<button class="flex items-center gap-1 border border-border-low-contrast rounded-full px-3 py-1 bg-surface-card text-label-sm font-label-sm min-h-[44px]">
+<span class="material-symbols-outlined text-[16px]" data-icon="language">language</span>
+            EN
+        </button>
+</header>
+<!-- Main Content Area -->
+<main class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Left Column: Navigation & Module List -->
+<div class="md:col-span-4 flex flex-col gap-6">
+<!-- Programme Picker Dropdown Area -->
+<div class="bg-surface-card rounded-lg border border-border-low-contrast p-4 ambient-shadow transition-shadow">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Current Programme</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface-container-lowest border border-border-low-contrast rounded px-4 py-3 min-h-[48px] font-body-md text-body-md text-on-background focus:ring-2 focus:ring-[#1E5FBF] focus:outline-none">
+<option>Dairy Cooperative Management</option>
+<option>Agricultural Finance</option>
+<option>Rural Leadership Fundamentals</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant">
+<span class="material-symbols-outlined" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Module Lesson List Bento Box -->
+<div class="bg-surface-card rounded-xl border border-border-low-contrast overflow-hidden ambient-shadow flex flex-col">
+<div class="p-4 border-b border-border-low-contrast bg-surface-container-low">
+<h2 class="font-headline-md text-headline-md text-primary">Module 2: Quality Control</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1 text-sm">3 of 5 lessons completed</p>
+<div class="w-full bg-surface-dim h-2 rounded-full mt-3 overflow-hidden">
+<div class="bg-status-shortlisted h-full w-[60%]"></div>
+</div>
+</div>
+<ul class="flex flex-col">
+<!-- Lesson 1: Done -->
+<li class="flex items-center gap-3 p-4 border-b border-border-low-contrast hover:bg-surface-container-lowest cursor-pointer transition-colors group">
+<div class="w-8 h-8 rounded-full bg-status-shortlisted flex items-center justify-center flex-shrink-0 text-on-primary">
+<span class="material-symbols-outlined text-[18px]" data-icon="check">check</span>
+</div>
+<div class="flex-grow">
+<h3 class="font-label-md text-label-md text-on-background line-through opacity-70 group-hover:opacity-100 transition-opacity">1. Intro to Milk Testing</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Video • 5 min</p>
+</div>
+</li>
+<!-- Lesson 2: Done -->
+<li class="flex items-center gap-3 p-4 border-b border-border-low-contrast hover:bg-surface-container-lowest cursor-pointer transition-colors group">
+<div class="w-8 h-8 rounded-full bg-status-shortlisted flex items-center justify-center flex-shrink-0 text-on-primary">
+<span class="material-symbols-outlined text-[18px]" data-icon="check">check</span>
+</div>
+<div class="flex-grow">
+<h3 class="font-label-md text-label-md text-on-background line-through opacity-70 group-hover:opacity-100 transition-opacity">2. Hygiene Standards</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Reading • 10 min</p>
+</div>
+</li>
+<!-- Lesson 3: Active -->
+<li class="flex items-center gap-3 p-4 border-b-2 border-primary bg-primary-fixed-dim bg-opacity-20 relative overflow-hidden">
+<!-- Active Indicator Bar -->
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-[#1E5FBF]"></div>
+<div class="w-8 h-8 rounded-full border-2 border-[#1E5FBF] flex items-center justify-center flex-shrink-0 bg-surface-card">
+<div class="w-3 h-3 rounded-full bg-[#1E5FBF]"></div>
+</div>
+<div class="flex-grow">
+<h3 class="font-label-md text-label-md text-primary font-bold">3. Adulteration Detection</h3>
+<p class="font-label-sm text-label-sm text-[#1E5FBF]">Video • 12 min</p>
+</div>
+<span class="material-symbols-outlined text-[#1E5FBF]" data-icon="play_circle">play_circle</span>
+</li>
+<!-- Lesson 4: Locked -->
+<li class="flex items-center gap-3 p-4 border-b border-border-low-contrast bg-surface opacity-50 cursor-not-allowed">
+<div class="w-8 h-8 rounded-full border border-outline flex items-center justify-center flex-shrink-0 text-outline">
+<span class="material-symbols-outlined text-[18px]" data-icon="lock">lock</span>
+</div>
+<div class="flex-grow">
+<h3 class="font-label-md text-label-md text-on-surface-variant">4. Equipment Maintenance</h3>
+<p class="font-label-sm text-label-sm text-outline">Reading • 8 min</p>
+</div>
+</li>
+<!-- Quiz Entry -->
+<li class="flex items-center gap-3 p-4 bg-surface opacity-50 cursor-not-allowed">
+<div class="w-8 h-8 rounded-full border border-outline flex items-center justify-center flex-shrink-0 text-outline">
+<span class="material-symbols-outlined text-[18px]" data-icon="lock">lock</span>
+</div>
+<div class="flex-grow">
+<h3 class="font-label-md text-label-md text-secondary-container">Module 2 Quiz</h3>
+<p class="font-label-sm text-label-sm text-outline">Assessment • 15 min</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<!-- Right Column: Content Viewer -->
+<div class="md:col-span-8 flex flex-col gap-6">
+<!-- Content Area Bento Card -->
+<div class="bg-surface-card rounded-xl border border-border-low-contrast p-6 ambient-shadow flex flex-col h-full min-h-[500px]">
+<!-- Lesson Header -->
+<div class="mb-4">
+<div class="flex items-center gap-2 mb-2">
+<span class="px-2 py-1 bg-tertiary-fixed-dim text-tertiary-container rounded text-[10px] font-bold uppercase tracking-wider">Current Lesson</span>
+<span class="text-on-surface-variant font-label-sm text-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span> 12 min
+                        </span>
+</div>
+<h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">3. Adulteration Detection Methods</h1>
+</div>
+<!-- Video / Media Placeholder -->
+<div class="w-full aspect-video bg-surface-container-highest rounded-lg mb-6 relative overflow-hidden flex items-center justify-center group cursor-pointer border border-border-low-contrast">
+<div class="absolute inset-0 bg-cover bg-center opacity-80 group-hover:opacity-100 transition-opacity" data-alt="A modern, high-quality photograph of a rural dairy cooperative laboratory in India. Bright, natural lighting illuminates clean steel equipment and glass vials. A young technician in a neat uniform is carefully examining a milk sample. The aesthetic is clean, professional, and optimistic, matching a corporate-plus government educational style. Warm-gray background elements with mid-blue and white accents." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC9Vtmq8-4G0BbgKT2zG8tgMihuYopAo6ibWrTwgAJ9VGA9KdOE8yK5StBLVa026ht_75kpNVPwNV0-Fvuw6D-LrgGTyQ2DpYhzYfNzy5cymQl0vukkDpt_Sd_tdFQwY3W-e13-ZfMtPcljlnd9JT8OI6MeIok-H3EF3zV3pHibtFfZmOe6NSbTs-RJqe9rBzwRDMFYxWq9etZcuXlDMmMV249Ga8517Pl9hy1GKyiohixN43FP5S02')"></div>
+<!-- Play Button Overlay -->
+<div class="absolute inset-0 bg-primary/20 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+<div class="w-16 h-16 bg-surface-card rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[#1E5FBF] text-[32px] ml-1" data-icon="play_arrow">play_arrow</span>
+</div>
+</div>
+<!-- Progress Bar fake -->
+<div class="absolute bottom-0 left-0 right-0 h-1 bg-surface/50">
+<div class="h-full w-1/3 bg-[#F26522]"></div>
+</div>
+</div>
+<!-- Text / Description -->
+<div class="flex-grow mb-8 font-body-md text-body-md text-on-surface-variant space-y-4">
+<p>In this crucial lesson, we cover the standard chemical and physical tests used at the village collection center to detect common adulterants such as water, urea, and starch in raw milk.</p>
+<p>Review the supporting PDF materials below before attempting the practical exercises. Accurate detection ensures fair payment for farmers and maintains cooperative integrity.</p>
+<!-- Supporting PDF Resource -->
+<div class="flex items-center p-3 border border-border-low-contrast rounded bg-surface-container-lowest gap-3 max-w-sm mt-4 hover:border-[#1E5FBF] cursor-pointer transition-colors">
+<span class="material-symbols-outlined text-secondary-container" data-icon="picture_as_pdf">picture_as_pdf</span>
+<div class="flex-grow">
+<div class="font-label-md text-label-md text-on-background">Standard Operating Procedure</div>
+<div class="font-label-sm text-label-sm text-outline">PDF • 2.4 MB</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="download">download</span>
+</div>
+</div>
+<!-- Action Footer -->
+<div class="mt-auto pt-4 border-t border-border-low-contrast flex justify-between items-center">
+<button class="font-label-md text-label-md text-on-surface-variant flex items-center gap-1 hover:text-primary min-h-[44px]">
+<span class="material-symbols-outlined text-[20px]" data-icon="arrow_back">arrow_back</span>
+                        Previous
+                    </button>
+<!-- CTA Button -->
+<button class="bg-[#F26522] hover:bg-[#d5581c] text-white font-label-md text-label-md px-6 py-2 rounded font-bold min-h-[44px] flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="check_circle">check_circle</span>
+                        Mark Complete
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) / Hidden on Desktop -->
+<!-- Destination context: "Learn" -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-[56px] px-2 bg-surface border-t border-border-low-contrast shadow-sm docked full-width bottom-0">
+<!-- Home -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant w-1/4 h-full active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm mt-1">Home</span>
+</a>
+<!-- Learn (Active) -->
+<a class="flex flex-col items-center justify-center text-secondary relative w-1/4 h-full active:scale-90 transition-transform duration-150 after:content-[''] after:absolute after:top-0 after:w-12 after:h-1 after:bg-secondary after:rounded-full" href="#">
+<span class="material-symbols-outlined" data-icon="menu_book" data-weight="fill" style="font-variation-settings: 'FILL' 1;">menu_book</span>
+<span class="font-label-sm text-label-sm mt-1">Learn</span>
+</a>
+<!-- Attendance -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant w-1/4 h-full active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-label-sm text-label-sm mt-1">Attendance</span>
+</a>
+<!-- Career -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant w-1/4 h-full active:scale-90 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="work">work</span>
+<span class="font-label-sm text-label-sm mt-1">Career</span>
+</a>
+</nav>
+</body></html>

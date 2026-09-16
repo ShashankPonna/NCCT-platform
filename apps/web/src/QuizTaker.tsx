@@ -6,6 +6,7 @@ import type {
   Certificate,
 } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { useOnlineStatus } from "./offline/network.js";
 import { enqueueWrite } from "./offline/syncManager.js";
 
@@ -20,7 +21,49 @@ interface SubmitResult {
   certificateError?: string;
 }
 
+interface QuizTakerText {
+  assessments: string;
+  offlineNotice: string;
+  submitOnline: string;
+  submitOffline: string;
+  queuedNotice: string;
+  score: (percent: number) => string;
+  passed: string;
+  notPassed: string;
+  viewCertificate: (code: string) => string;
+  certificateError: (message: string) => string;
+}
+
+const content: Record<Locale, QuizTakerText> = {
+  en: {
+    assessments: "Assessments",
+    offlineNotice: "You're offline — your answers will be saved and graded once you're back online.",
+    submitOnline: "Submit answers",
+    submitOffline: "Save answers offline",
+    queuedNotice: "Your answers are saved and will be graded once you're back online.",
+    score: (percent) => `Score: ${percent}% — `,
+    passed: "Passed",
+    notPassed: "Not passed",
+    viewCertificate: (code) => `View your certificate (${code})`,
+    certificateError: (message) => `Certificate could not be generated: ${message}`,
+  },
+  hi: {
+    assessments: "मूल्यांकन",
+    offlineNotice: "आप ऑफ़लाइन हैं — ऑनलाइन आते ही आपके उत्तर सहेजे जाएंगे और उनका मूल्यांकन किया जाएगा।",
+    submitOnline: "उत्तर जमा करें",
+    submitOffline: "उत्तर ऑफ़लाइन सहेजें",
+    queuedNotice: "आपके उत्तर सहेजे गए हैं और ऑनलाइन आते ही उनका मूल्यांकन किया जाएगा।",
+    score: (percent) => `स्कोर: ${percent}% — `,
+    passed: "उत्तीर्ण",
+    notPassed: "अनुत्तीर्ण",
+    viewCertificate: (code) => `अपना प्रमाणपत्र देखें (${code})`,
+    certificateError: (message) => `प्रमाणपत्र उत्पन्न नहीं किया जा सका: ${message}`,
+  },
+};
+
 export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
+  const { locale } = useLocale();
+  const t = content[locale];
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
   const [questions, setQuestions] = useState<AssessmentQuestionForTrainee[]>([]);
@@ -83,7 +126,7 @@ export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
     // doesn't wrap this one), so the quiz's radio/text inputs get real
     // styling and don't trigger iOS's zoom-on-focus behavior on mobile.
     <div className="quiz-taker legacy-ui">
-      <h3>Assessments</h3>
+      <h3>{t.assessments}</h3>
       {error && <p className="form-error">{error}</p>}
 
       <ul>
@@ -98,11 +141,7 @@ export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
 
       {selectedAssessment && questions.length > 0 && !result && !queued && (
         <form onSubmit={handleSubmit} className="quiz-form">
-          {!online && (
-            <p className="quiz-offline-notice">
-              You&apos;re offline — your answers will be saved and graded once you&apos;re back online.
-            </p>
-          )}
+          {!online && <p className="quiz-offline-notice">{t.offlineNotice}</p>}
           {questions.map((q, i) => (
             <fieldset key={q.id}>
               <legend>
@@ -122,33 +161,31 @@ export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
               ))}
             </fieldset>
           ))}
-          <button type="submit">{online ? "Submit answers" : "Save answers offline"}</button>
+          <button type="submit">{online ? t.submitOnline : t.submitOffline}</button>
         </form>
       )}
 
       {queued && (
         <div className="quiz-result">
-          <p>Your answers are saved and will be graded once you&apos;re back online.</p>
+          <p>{t.queuedNotice}</p>
         </div>
       )}
 
       {result && (
         <div className="quiz-result">
           <p>
-            Score: {result.attempt.score_percent}% —{" "}
-            <strong>{result.attempt.passed ? "Passed" : "Not passed"}</strong>
+            {t.score(result.attempt.score_percent)}
+            <strong>{result.attempt.passed ? t.passed : t.notPassed}</strong>
           </p>
           {result.certificate && (
             <p>
               <a href={`?verify=${result.certificate.certificate_code}`}>
-                View your certificate ({result.certificate.certificate_code})
+                {t.viewCertificate(result.certificate.certificate_code)}
               </a>
             </p>
           )}
           {result.certificateError && (
-            <p className="form-error">
-              Certificate could not be generated: {result.certificateError}
-            </p>
+            <p className="form-error">{t.certificateError(result.certificateError)}</p>
           )}
         </div>
       )}
