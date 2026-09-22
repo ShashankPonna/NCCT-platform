@@ -77,6 +77,27 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
           return;
         }
         setUnboundUid(null);
+
+        // The consent gate, enforced before the camera is ever touched.
+        // face_embeddings.consent_given_at is NOT NULL and stamped
+        // server-side at enrollment, so "no enrolled face" and "has not
+        // consented to biometric processing" are the same state
+        // (ARCHITECTURE.md §13, DPDP Act 2023). Without this the trainee
+        // still fails — the check-in route 400s at the very end — but only
+        // after the board has told them to look at the camera and a frame
+        // of their face has been fetched and run through Human. Refusing
+        // here means no biometric capture happens at all for someone who
+        // never agreed to it, which is the whole point of the rule.
+        //
+        // traineeRef deliberately stays null: a BTN:CAPTURE that arrives
+        // anyway (a button press racing this reply) then hits the
+        // "no card scanned" guard rather than proceeding.
+        if (!profile.face_enrolled) {
+          addLog(`${profile.full_name}: no face enrolled — use QR check-in`, "bad");
+          await sendRef.current("ERR:face not enrolled");
+          return;
+        }
+
         traineeRef.current = { id: profile.id, name: profile.full_name };
         setCurrent({ id: profile.id, name: profile.full_name });
         addLog(`Identified: ${profile.full_name}`, "good");

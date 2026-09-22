@@ -24,3 +24,6 @@ pnpm-debug.log*
 
 # Claude Code local session config (personal, not shared)
 .claude/settings.local.json
+
+# Firmware logic-harness build output (ESP32-CONTROLLER/test)
+ESP32-CONTROLLER/test/simtest

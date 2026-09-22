@@ -17,6 +17,20 @@ export const CAMERA_TIMEOUT_MS = 20000;
 // another CAMERA_TIMEOUT_MS the person in front of the kiosk waits through.
 export const MAX_CAPTURE_ATTEMPTS = 2;
 
+// The worst case a whole BTN:CAPTURE -> verdict round takes, and the number
+// the controller firmware's VERIFY_TIMEOUT_MS has to sit at or above:
+// every capture attempt can burn a full CAMERA_TIMEOUT_MS, and Human's
+// detect pass plus the kiosk-face-checkin round trip add roughly 10s more.
+//
+// This is not a timeout anything here enforces — it exists so the firmware
+// number has one documented source. A board that gives up first is actively
+// harmful: it shows "no response" and returns to idle while the browser is
+// still working, so the OK that follows arrives in RESULT_HOLD and is
+// ignored, leaving the student reading an error for attendance that was in
+// fact recorded. See ESP32-CONTROLLER/arduino/kiosk_controller/ — change
+// these together or not at all.
+export const VERIFY_BUDGET_MS = MAX_CAPTURE_ATTEMPTS * CAMERA_TIMEOUT_MS + 10_000;
+
 /**
  * Tolerates either "http://<ip>" or "http://<ip>/capture" — pasting the exact
  * "Frame endpoint: ..." line the firmware prints on boot (which already ends

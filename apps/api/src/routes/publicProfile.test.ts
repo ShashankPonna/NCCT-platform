@@ -10,6 +10,7 @@ const {
   certificatesMock,
   nominationsMock,
   attendanceMock,
+  faceEmbeddingsMock,
   fromMock,
 } = vi.hoisted(() => {
   // `profiles` is queried twice per request on every authenticated route
@@ -24,7 +25,7 @@ const {
     const builder: Record<string, ReturnType<typeof vi.fn>> = {
       then: vi.fn((resolve: (value: typeof result) => void) => resolve(queue.shift() ?? result)),
     };
-    for (const method of ["select", "update", "eq", "order", "single", "maybeSingle"]) {
+    for (const method of ["select", "update", "eq", "order", "limit", "single", "maybeSingle"]) {
       builder[method] = vi.fn(() => builder);
     }
     return { builder, result, queue };
@@ -35,12 +36,14 @@ const {
   const certificatesMock = createTableMock();
   const nominationsMock = createTableMock();
   const attendanceMock = createTableMock();
+  const faceEmbeddingsMock = createTableMock();
   const tables: Record<string, ReturnType<typeof createTableMock>> = {
     profiles: profilesMock,
     visibility_settings: visibilityMock,
     certificates: certificatesMock,
     nominations: nominationsMock,
     attendance_records: attendanceMock,
+    face_embeddings: faceEmbeddingsMock,
   };
   const fromMock = vi.fn((table: string) => tables[table].builder);
   const getUserMock = vi.fn();
@@ -51,6 +54,7 @@ const {
     certificatesMock,
     nominationsMock,
     attendanceMock,
+    faceEmbeddingsMock,
     fromMock,
   };
 });
@@ -79,7 +83,14 @@ beforeEach(() => {
   getUserMock.mockReset();
   profilesMock.builder.eq.mockClear();
   fromMock.mockClear();
-  for (const mock of [profilesMock, visibilityMock, certificatesMock, nominationsMock, attendanceMock]) {
+  for (const mock of [
+    profilesMock,
+    visibilityMock,
+    certificatesMock,
+    nominationsMock,
+    attendanceMock,
+    faceEmbeddingsMock,
+  ]) {
     mock.queue.length = 0;
     mock.result.data = null;
     mock.result.error = null;
@@ -245,6 +256,51 @@ describe("GET /api/kiosk/nfc-lookup/:uid", () => {
         { title: "Dairy Supply Chain Management", status: "pending" },
       ],
     });
+  });
+
+  it("reports face_enrolled true when the trainee has an embedding row", async () => {
+    authenticateAs("trainer-1", "trainer");
+    profilesMock.result.data = { id: TRAINEE_ID, full_name: "Arjun Patil" };
+    certificatesMock.result.data = [];
+    faceEmbeddingsMock.result.data = [{ id: "fe-1" }];
+
+    const res = await request(buildApp())
+      .get("/api/kiosk/nfc-lookup/04A22B9C")
+      .set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(200);
+    expect(res.body.face_enrolled).toBe(true);
+  });
+
+  it("reports face_enrolled false when the trainee has never enrolled a face", async () => {
+    // The kiosk's consent gate: face_embeddings.consent_given_at is NOT NULL
+    // and stamped at enrollment, so no row means no recorded consent, and
+    // KioskTerminal refuses to send this trainee to the camera at all.
+    authenticateAs("trainer-1", "trainer");
+    profilesMock.result.data = { id: TRAINEE_ID, full_name: "Arjun Patil" };
+    certificatesMock.result.data = [];
+    faceEmbeddingsMock.result.data = [];
+
+    const res = await request(buildApp())
+      .get("/api/kiosk/nfc-lookup/04A22B9C")
+      .set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(200);
+    expect(res.body.face_enrolled).toBe(false);
+  });
+
+  it("never returns the embedding vector itself, only whether one exists", async () => {
+    authenticateAs("trainer-1", "trainer");
+    profilesMock.result.data = { id: TRAINEE_ID, full_name: "Arjun Patil" };
+    certificatesMock.result.data = [];
+    faceEmbeddingsMock.result.data = [{ id: "fe-1" }];
+
+    const res = await request(buildApp())
+      .get("/api/kiosk/nfc-lookup/04A22B9C")
+      .set("Authorization", "Bearer token");
+
+    expect(faceEmbeddingsMock.builder.select).toHaveBeenCalledWith("id");
+    expect(JSON.stringify(res.body)).not.toContain("embedding");
   });
 
   it("normalises separators and case before looking up the uid", async () => {

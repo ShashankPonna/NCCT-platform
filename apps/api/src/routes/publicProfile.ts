@@ -76,16 +76,27 @@ interface NominationRow {
 async function buildKioskProfileResult(profile: KioskProfileRow): Promise<KioskProfileResult> {
   const base = await buildProfileResult(profile.id, profile.full_name);
 
-  const [{ data: nominations, error: nominationsError }, { data: attendance, error: attendanceError }] =
-    await Promise.all([
-      supabaseAdmin
-        .from("nominations")
-        .select("status, programmes(title)")
-        .eq("trainee_id", profile.id),
-      supabaseAdmin.from("attendance_records").select("id").eq("trainee_id", profile.id),
-    ]);
+  const [
+    { data: nominations, error: nominationsError },
+    { data: attendance, error: attendanceError },
+    { data: faceEmbeddings, error: faceEmbeddingsError },
+  ] = await Promise.all([
+    supabaseAdmin
+      .from("nominations")
+      .select("status, programmes(title)")
+      .eq("trainee_id", profile.id),
+    supabaseAdmin.from("attendance_records").select("id").eq("trainee_id", profile.id),
+    // `id` only — the embedding vector itself must never leave the server
+    // (same rule FaceEmbedding's type comment states), and the kiosk only
+    // needs to know whether a row exists. Because consent_given_at is NOT
+    // NULL on this table and is stamped server-side at enrollment, a row
+    // existing IS the recorded consent; there is no "enrolled but not
+    // consented" state to distinguish.
+    supabaseAdmin.from("face_embeddings").select("id").eq("trainee_id", profile.id).limit(1),
+  ]);
   if (nominationsError) throw new Error(nominationsError.message);
   if (attendanceError) throw new Error(attendanceError.message);
+  if (faceEmbeddingsError) throw new Error(faceEmbeddingsError.message);
 
   const nominationRows = (nominations ?? []) as unknown as NominationRow[];
 
@@ -99,6 +110,7 @@ async function buildKioskProfileResult(profile: KioskProfileRow): Promise<KioskP
       .filter((row) => row.programmes)
       .map((row) => ({ title: row.programmes!.title, status: row.status })),
     attendance_count: (attendance ?? []).length,
+    face_enrolled: (faceEmbeddings ?? []).length > 0,
   };
 }
 

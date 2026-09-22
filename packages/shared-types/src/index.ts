@@ -309,6 +309,13 @@ export interface KioskProfileResult extends PublicProfileResult {
   member_since: string;
   programmes: KioskProfileProgramme[];
   attendance_count: number;
+  // Whether this trainee has a face enrolled, which — because
+  // face_embeddings.consent_given_at is NOT NULL and is stamped server-side
+  // at enrollment — is the same question as "has this trainee consented to
+  // biometric processing" (ARCHITECTURE.md §13, DPDP Act 2023). The kiosk
+  // reads it to avoid sending a non-consented trainee to the camera at all;
+  // the embedding itself is never returned, only this boolean.
+  face_enrolled: boolean;
 }
 
 // The embedding itself is never returned to a client — it exists only for
