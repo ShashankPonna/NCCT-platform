@@ -16,39 +16,127 @@ function generateCertificateCode(): string {
   return `NCCT-${generateCode(8)}`;
 }
 
-interface IssueCertificateParams {
-  attemptId: string;
-  assessmentId: string;
+/**
+ * Checks whether a trainee has now completed an entire course — every lesson
+ * across every module marked complete, and every module assessment (if any)
+ * passed — and, if so, issues the course's certificate. Idempotent: a course
+ * already certified for this trainee is a no-op, and this can safely be
+ * called repeatedly from every event that could be the *last* one to
+ * complete a course (a lesson marked done, or an assessment passed).
+ *
+ * Replaces the previous per-assessment-pass trigger (one certificate per
+ * passed quiz) per direct user request — see docs/DECISIONS.md #37, which
+ * also resolves the open question docs/DATABASE.md's certificates entry
+ * used to flag about this.
+ */
+export async function checkAndIssueCourseCertificate({
+  traineeId,
+  courseId,
+}: {
   traineeId: string;
-  /** Server-computed score (assessmentAttempts.ts already derives this before
-   * calling here); optional so existing callers/tests that don't have it
-   * still render a certificate, just without the score line on the badge. */
-  scorePercent?: number;
+  courseId: string;
+}) {
+  const { data: existing, error: existingError } = await supabaseAdmin
+    .from("certificates")
+    .select("id")
+    .eq("trainee_id", traineeId)
+    .eq("course_id", courseId)
+    .maybeSingle();
+  if (existingError) throw new Error(existingError.message);
+  if (existing) return null;
+
+  const { data: modules, error: modulesError } = await supabaseAdmin
+    .from("modules")
+    .select("id")
+    .eq("course_id", courseId);
+  if (modulesError) throw new Error(modulesError.message);
+  const moduleIds = (modules ?? []).map((m) => m.id as string);
+  if (moduleIds.length === 0) return null;
+
+  const { data: lessons, error: lessonsError } = await supabaseAdmin
+    .from("lessons")
+    .select("id")
+    .in("module_id", moduleIds);
+  if (lessonsError) throw new Error(lessonsError.message);
+  const lessonIds = (lessons ?? []).map((l) => l.id as string);
+
+  if (lessonIds.length > 0) {
+    const { data: completed, error: completedError } = await supabaseAdmin
+      .from("lesson_progress")
+      .select("lesson_id")
+      .eq("trainee_id", traineeId)
+      .in("lesson_id", lessonIds)
+      .not("completed_at", "is", null);
+    if (completedError) throw new Error(completedError.message);
+    if ((completed ?? []).length < lessonIds.length) return null;
+  }
+
+  const { data: assessments, error: assessmentsError } = await supabaseAdmin
+    .from("assessments")
+    .select("id")
+    .in("module_id", moduleIds);
+  if (assessmentsError) throw new Error(assessmentsError.message);
+  const assessmentIds = (assessments ?? []).map((a) => a.id as string);
+
+  let lastPassingAttemptId: string | null = null;
+  if (assessmentIds.length > 0) {
+    const { data: attempts, error: attemptsError } = await supabaseAdmin
+      .from("assessment_attempts")
+      .select("id, assessment_id, submitted_at")
+      .eq("trainee_id", traineeId)
+      .eq("passed", true)
+      .in("assessment_id", assessmentIds)
+      .order("submitted_at", { ascending: true });
+    if (attemptsError) throw new Error(attemptsError.message);
+    const passedAssessmentIds = new Set((attempts ?? []).map((a) => a.assessment_id as string));
+    if (passedAssessmentIds.size < assessmentIds.length) return null;
+    lastPassingAttemptId =
+      attempts && attempts.length > 0 ? (attempts[attempts.length - 1].id as string) : null;
+  }
+
+  return issueCertificateForCourse({ traineeId, courseId, lastPassingAttemptId });
 }
 
-/**
- * Called after a passing assessment_attempts insert. Derives the owning
- * programme/institution via assessment → module → course → programme,
- * builds a PDF (with an embedded QR linking to the public verification
- * page) and a unique certificate_code, uploads the PDF to the public
- * `certificates` Storage bucket, and inserts the certificate row.
- *
- * PRD only says "on pass" — it doesn't specify whether every passing
- * assessment (this repo's current per-module quizzes) should mint its own
- * certificate, or only a designated programme-capstone assessment. This
- * implements the literal reading (every pass certifies) since no
- * "capstone" concept exists anywhere in the schema; see docs/DATABASE.md's
- * Open Items if that turns out to be wrong.
- */
-export async function issueCertificateForPassingAttempt({
-  attemptId,
-  assessmentId,
+/** Resolves a lesson to its course, then delegates to
+ * checkAndIssueCourseCertificate — called after lessonProgress.ts marks a
+ * lesson complete. */
+export async function checkAndIssueCourseCertificateForLesson({
   traineeId,
-  scorePercent,
-}: IssueCertificateParams) {
+  lessonId,
+}: {
+  traineeId: string;
+  lessonId: string;
+}) {
+  const { data: lesson, error: lessonError } = await supabaseAdmin
+    .from("lessons")
+    .select("module_id")
+    .eq("id", lessonId)
+    .single();
+  if (lessonError) throw new Error(lessonError.message);
+
+  const { data: module_, error: moduleError } = await supabaseAdmin
+    .from("modules")
+    .select("course_id")
+    .eq("id", lesson.module_id)
+    .single();
+  if (moduleError) throw new Error(moduleError.message);
+
+  return checkAndIssueCourseCertificate({ traineeId, courseId: module_.course_id });
+}
+
+/** Resolves an assessment to its course, then delegates to
+ * checkAndIssueCourseCertificate — called after assessmentAttempts.ts
+ * records a passing attempt. */
+export async function checkAndIssueCourseCertificateForAssessment({
+  traineeId,
+  assessmentId,
+}: {
+  traineeId: string;
+  assessmentId: string;
+}) {
   const { data: assessment, error: assessmentError } = await supabaseAdmin
     .from("assessments")
-    .select("module_id, title")
+    .select("module_id")
     .eq("id", assessmentId)
     .single();
   if (assessmentError) throw new Error(assessmentError.message);
@@ -60,10 +148,22 @@ export async function issueCertificateForPassingAttempt({
     .single();
   if (moduleError) throw new Error(moduleError.message);
 
+  return checkAndIssueCourseCertificate({ traineeId, courseId: module_.course_id });
+}
+
+async function issueCertificateForCourse({
+  traineeId,
+  courseId,
+  lastPassingAttemptId,
+}: {
+  traineeId: string;
+  courseId: string;
+  lastPassingAttemptId: string | null;
+}) {
   const { data: course, error: courseError } = await supabaseAdmin
     .from("courses")
-    .select("programme_id")
-    .eq("id", module_.course_id)
+    .select("title, programme_id")
+    .eq("id", courseId)
     .single();
   if (courseError) throw new Error(courseError.message);
 
@@ -97,12 +197,11 @@ export async function issueCertificateForPassingAttempt({
     traineeName: trainee.full_name || "Trainee",
     programmeTitle: programme.title,
     institutionName: institution.name,
-    assessmentTitle: assessment.title,
+    courseTitle: course.title,
     certificateCode,
     issuedAt: new Date(),
     qrPng,
     verificationUrl,
-    scorePercent,
   });
 
   const pdfPath = `${certificateCode}.pdf`;
@@ -115,7 +214,8 @@ export async function issueCertificateForPassingAttempt({
     .from("certificates")
     .insert({
       certificate_code: certificateCode,
-      assessment_attempt_id: attemptId,
+      assessment_attempt_id: lastPassingAttemptId,
+      course_id: courseId,
       trainee_id: traineeId,
       programme_id: course.programme_id,
       issuing_institution_id: programme.institution_id,
@@ -132,12 +232,11 @@ interface RenderCertificateParams {
   traineeName: string;
   programmeTitle: string;
   institutionName: string;
-  assessmentTitle: string;
+  courseTitle: string;
   certificateCode: string;
   issuedAt: Date;
   qrPng: Buffer;
   verificationUrl: string;
-  scorePercent?: number;
 }
 
 // Palette matches the approved certificate design
@@ -537,11 +636,14 @@ function renderCertificatePdf(params: RenderCertificateParams): Promise<Buffer> 
 
     by += 20;
     doc.font("Body").fontSize(11).fillColor(SLATE_700);
-    doc.text("has successfully passed", contentX, by, { width: contentWidth, align: "center" });
+    doc.text("has successfully completed the course", contentX, by, {
+      width: contentWidth,
+      align: "center",
+    });
     doc
       .font("BodyBold")
       .fillColor(NAVY)
-      .text(params.assessmentTitle, contentX, doc.y, { width: contentWidth, align: "center" });
+      .text(params.courseTitle, contentX, doc.y, { width: contentWidth, align: "center" });
     doc
       .font("Body")
       .fillColor(SLATE_700)
@@ -555,10 +657,7 @@ function renderCertificatePdf(params: RenderCertificateParams): Promise<Buffer> 
       .text(params.programmeTitle, contentX, doc.y, { width: contentWidth, align: "center" });
 
     const badgeY = doc.y + 14;
-    const badgeLabel =
-      params.scorePercent !== undefined
-        ? `Credential Status: PASSED — Score ${params.scorePercent}%`
-        : "Credential Status: PASSED";
+    const badgeLabel = "Credential Status: COURSE COMPLETED";
     doc.font("BodyBold").fontSize(9);
     // widthOfString ignores characterSpacing, so the render call below must
     // not use it either — otherwise the box is sized too small and the

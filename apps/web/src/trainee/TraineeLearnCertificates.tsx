@@ -10,6 +10,7 @@ interface TraineeLearnCertificatesProps {
 
 type MyCertificate = Certificate & {
   pdf_url: string;
+  course_title: string | null;
   programme_title: string | null;
   institution_name: string | null;
 };
@@ -32,7 +33,8 @@ const content: Record<Locale, TraineeLearnCertificatesText> = {
     heading: "My Certificates",
     subheading: "Your earned, verifiable credentials.",
     emptyTitle: "No certificates yet",
-    emptyBody: "Complete a programme's assessment to earn your first verifiable certificate.",
+    emptyBody:
+      "Complete every lesson and assessment in a course to earn your first verifiable certificate.",
     verified: "Verified",
     certificateFallback: "Certificate",
     institutionFallback: "NCCT",
@@ -44,7 +46,8 @@ const content: Record<Locale, TraineeLearnCertificatesText> = {
     heading: "मेरे प्रमाणपत्र",
     subheading: "आपके अर्जित, सत्यापन योग्य प्रमाणपत्र।",
     emptyTitle: "अभी तक कोई प्रमाणपत्र नहीं",
-    emptyBody: "अपना पहला सत्यापन योग्य प्रमाणपत्र अर्जित करने के लिए किसी कार्यक्रम का मूल्यांकन पूरा करें।",
+    emptyBody:
+      "अपना पहला सत्यापन योग्य प्रमाणपत्र अर्जित करने के लिए किसी कोर्स के सभी पाठ और मूल्यांकन पूरे करें।",
     verified: "सत्यापित",
     certificateFallback: "प्रमाणपत्र",
     institutionFallback: "NCCT",
@@ -96,7 +99,10 @@ export function TraineeLearnCertificates({ accessToken }: TraineeLearnCertificat
                   workspace_premium
                 </span>
                 <span className="absolute top-4 right-4 flex items-center gap-1 rounded-full border border-status-shortlisted/20 bg-status-shortlisted/10 px-2 py-1 text-label-sm text-status-shortlisted">
-                  <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  <span
+                    className="material-symbols-outlined text-[14px]"
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
                     verified
                   </span>
                   {t.verified}
@@ -104,9 +110,13 @@ export function TraineeLearnCertificates({ accessToken }: TraineeLearnCertificat
               </div>
               <div className="flex flex-grow flex-col p-6">
                 <h3 className="mb-1 font-headline text-headline-md text-on-background">
-                  {cert.programme_title ?? t.certificateFallback}
+                  {cert.course_title ?? t.certificateFallback}
                 </h3>
-                <p className="text-body-md text-on-surface-variant">{cert.institution_name ?? t.institutionFallback}</p>
+                <p className="text-body-md text-on-surface-variant">
+                  {[cert.programme_title, cert.institution_name ?? t.institutionFallback]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
 
                 <div className="mt-auto flex flex-col gap-4">
                   <div className="flex items-center justify-between border-t border-border-low-contrast pt-4 text-sm">
@@ -115,7 +125,9 @@ export function TraineeLearnCertificates({ accessToken }: TraineeLearnCertificat
                         {t.issuedOn}
                       </span>
                       <span className="text-label-md text-on-background">
-                        {new Date(cert.issued_at).toLocaleDateString(locale === "hi" ? "hi-IN" : undefined)}
+                        {new Date(cert.issued_at).toLocaleDateString(
+                          locale === "hi" ? "hi-IN" : undefined,
+                        )}
                       </span>
                     </div>
                     <div className="flex flex-col text-right">

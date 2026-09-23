@@ -134,6 +134,7 @@ describe("GET /api/public-profiles/:code", () => {
       {
         certificate_code: "NCCT-ABC12345",
         issued_at: "2026-07-01T00:00:00.000Z",
+        courses: { title: "Intro to Cooperative Banking" },
         programmes: { title: "Cooperative Banking Operations" },
         institutions: { name: "VAMNICOM" },
       },
@@ -148,6 +149,7 @@ describe("GET /api/public-profiles/:code", () => {
       certificates: [
         {
           certificate_code: "NCCT-ABC12345",
+          course_title: "Intro to Cooperative Banking",
           programme_title: "Cooperative Banking Operations",
           institution_name: "VAMNICOM",
         },
