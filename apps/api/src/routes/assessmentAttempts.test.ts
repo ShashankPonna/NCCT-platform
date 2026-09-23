@@ -186,6 +186,7 @@ describe("POST /api/assessments/:id/attempts", () => {
       attemptId: "attempt-1",
       assessmentId: "assess-1",
       traineeId: "trainee-1",
+      scorePercent: 50,
     });
   });
 

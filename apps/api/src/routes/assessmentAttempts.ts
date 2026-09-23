@@ -83,6 +83,7 @@ assessmentAttemptsRouter.post(
         attemptId: attempt.id,
         assessmentId: req.params.id,
         traineeId: req.user!.id,
+        scorePercent,
       });
       res.status(201).json({ attempt, certificate });
     } catch (err) {

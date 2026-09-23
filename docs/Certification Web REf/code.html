@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Official Certificate of Completion - NCCT</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,500&family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    @page {
+      size: A4 landscape;
+      margin: 0;
+    }
+    body {
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background-color: #e2e8f0;
+      color: #0f172a;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .cert-title-font {
+      font-family: 'Cinzel', -apple-system, BlinkMacSystemFont, "Segoe UI", serif;
+      letter-spacing: 0.15em;
+    }
+    .cert-name-font {
+      font-family: 'Playfair Display', Georgia, serif;
+    }
+    /* Guilloche & security background simulation */
+    .bg-security-pattern {
+      background-color: #ffffff;
+      background-image: 
+        radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.015) 0%, transparent 60%),
+        repeating-linear-gradient(45deg, rgba(242, 101, 34, 0.012) 0px, rgba(242, 101, 34, 0.012) 1px, transparent 1px, transparent 14px),
+        repeating-linear-gradient(-45deg, rgba(15, 23, 42, 0.012) 0px, rgba(15, 23, 42, 0.012) 1px, transparent 1px, transparent 14px);
+    }
+    .watermark-emblem {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.035;
+      pointer-events: none;
+      user-select: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 md:p-8 bg-slate-200">
+
+  <!-- Certificate Canvas Container (A4 Landscape aspect ratio: 297mm x 210mm ≈ 1.414 ratio) -->
+  <div class="relative w-full max-w-[1140px] aspect-[1.414/1] bg-white shadow-2xl rounded-sm overflow-hidden flex flex-col justify-between p-6 sm:p-9 md:p-12 text-[#0f172a] bg-security-pattern border border-slate-300">
+    
+    <!-- Watermark Background -->
+    <div class="watermark-emblem w-[480px] h-[480px]">
+      <svg viewBox="0 0 200 200" fill="none" stroke="#0f172a" class="w-full h-full">
+        <circle cx="100" cy="100" r="92" stroke-width="2"/>
+        <circle cx="100" cy="100" r="84" stroke-width="1" stroke-dasharray="3 3"/>
+        <circle cx="100" cy="100" r="68" stroke-width="1.5"/>
+        <polygon points="100,28 118,78 172,78 128,110 145,162 100,130 55,162 72,110 28,78 82,78" stroke-width="1.5"/>
+        <circle cx="100" cy="100" r="28" stroke-width="1.5"/>
+      </svg>
+    </div>
+
+    <!-- Outer Multi-Layer Border Frame -->
+    <div class="absolute inset-3 md:inset-4 border-2 border-[#0f172a] pointer-events-none"></div>
+    <div class="absolute inset-[15px] md:inset-[20px] border border-[#f26522]/40 pointer-events-none"></div>
+    <div class="absolute inset-[18px] md:inset-[24px] border-[0.75px] border-[#0f172a]/30 pointer-events-none"></div>
+
+    <!-- Corner Decorative Accents -->
+    <!-- Top-Left -->
+    <div class="absolute top-[18px] left-[18px] md:top-[24px] md:left-[24px] w-8 h-8 pointer-events-none border-t-2 border-l-2 border-[#f26522]"></div>
+    <!-- Top-Right -->
+    <div class="absolute top-[18px] right-[18px] md:top-[24px] md:right-[24px] w-8 h-8 pointer-events-none border-t-2 border-r-2 border-[#f26522]"></div>
+    <!-- Bottom-Left -->
+    <div class="absolute bottom-[18px] left-[18px] md:bottom-[24px] md:left-[24px] w-8 h-8 pointer-events-none border-b-2 border-l-2 border-[#f26522]"></div>
+    <!-- Bottom-Right -->
+    <div class="absolute bottom-[18px] right-[18px] md:bottom-[24px] md:right-[24px] w-8 h-8 pointer-events-none border-b-2 border-r-2 border-[#f26522]"></div>
+
+    <!-- HEADER SECTION -->
+    <header class="relative z-10 text-center pt-2 sm:pt-4">
+      <div class="flex items-center justify-center gap-4 sm:gap-6 mb-3">
+        <!-- Official Crest / Logo Placeholder Icon -->
+        <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-[#0f172a] flex items-center justify-center bg-white shadow-sm p-1.5 flex-shrink-0">
+          <svg viewBox="0 0 100 100" class="w-full h-full text-[#0f172a]" fill="currentColor">
+            <!-- Emulated Ashok Chakra / Institutional Gear & Wheats Emblem -->
+            <circle cx="50" cy="50" r="44" fill="none" stroke="#0f172a" stroke-width="2"/>
+            <circle cx="50" cy="50" r="39" fill="none" stroke="#f26522" stroke-width="1.5" stroke-dasharray="2 2"/>
+            <circle cx="50" cy="50" r="16" fill="none" stroke="#0f172a" stroke-width="2.5"/>
+            <circle cx="50" cy="50" r="6" fill="#f26522"/>
+            <!-- 16 spokes -->
+            <path d="M50 6 L50 94 M6 50 L94 50 M19 19 L81 81 M19 81 L81 19 M50 20 L50 34 M50 66 L50 80 M20 50 L34 50 M66 50 L80 50" stroke="#0f172a" stroke-width="1.2"/>
+            <!-- Wheat / Leaf garland hints -->
+            <path d="M22 65 C18 50 22 35 32 25 M78 65 C82 50 78 35 68 25" fill="none" stroke="#f26522" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <div class="text-left">
+          <!-- Institutional Hierarchy -->
+          <div class="text-[10px] sm:text-xs font-semibold tracking-[0.2em] text-slate-500 uppercase">
+            National Council for Cooperative Training (NCCT)
+          </div>
+          <!-- Issuing Institution Name -->
+          <h2 class="text-base sm:text-lg md:text-xl font-bold tracking-wide text-[#0f172a] uppercase leading-tight">
+            Vaikunth Mehta National Institute of Cooperative Management (VAMNICOM)
+          </h2>
+          <div class="text-[9px] sm:text-[11px] font-medium text-slate-600 tracking-wider uppercase flex items-center gap-2">
+            <span>An Autonomous Institution Promoted by Ministry of Cooperation, Govt. of India</span>
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#f26522]"></span>
+            <span class="text-[#f26522] font-semibold">RICM / ICM Network</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accent Ribbon Divider -->
+      <div class="flex items-center justify-center gap-3 my-2 md:my-3">
+        <div class="h-[1px] w-20 md:w-36 bg-gradient-to-r from-transparent via-[#f26522] to-[#0f172a]"></div>
+        <div class="w-2 h-2 rotate-45 bg-[#f26522]"></div>
+        <div class="h-[1px] w-20 md:w-36 bg-gradient-to-l from-transparent via-[#f26522] to-[#0f172a]"></div>
+      </div>
+
+      <!-- Certificate Title -->
+      <h1 class="cert-title-font text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#0f172a] tracking-[0.2em] uppercase mt-1">
+        Certificate of Completion
+      </h1>
+    </header>
+
+    <!-- CORE BODY / CREDENTIAL STATEMENT -->
+    <main class="relative z-10 text-center my-auto py-2 sm:py-3">
+      <!-- Formal Preamble -->
+      <p class="text-xs sm:text-sm md:text-base font-normal text-slate-600 tracking-wider uppercase mb-1 sm:mb-2">
+        This certifies that
+      </p>
+
+      <!-- Prominent Trainee Name -->
+      <div class="my-2 sm:my-3">
+        <h3 class="cert-name-font text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-bold text-[#0f172a] tracking-normal leading-tight px-4 inline-block relative">
+          SURESH CHANDRA SHARMA
+          <!-- Subtle underline flourish with accent diamond -->
+          <div class="w-full flex items-center justify-center mt-1.5 sm:mt-2">
+            <span class="h-[1.5px] w-1/3 bg-gradient-to-r from-transparent to-[#0f172a]"></span>
+            <span class="mx-2 w-1.5 h-1.5 rotate-45 bg-[#f26522]"></span>
+            <span class="h-[1.5px] w-1/3 bg-gradient-to-l from-transparent to-[#0f172a]"></span>
+          </div>
+        </h3>
+      </div>
+
+      <!-- Completion Details & Programme Info -->
+      <div class="max-w-2xl mx-auto px-4 mt-2 sm:mt-3 text-slate-700 text-xs sm:text-sm md:text-base leading-relaxed font-normal">
+        <p>
+          has successfully passed
+          <span class="font-bold text-[#0f172a] uppercase tracking-wide">
+            Comprehensive Assessment in Cooperative Banking &amp; Statutory Governance (Level III)
+          </span>
+        </p>
+        <p class="mt-1">
+          in the programme
+          <span class="font-semibold text-[#0f172a] tracking-wide">
+            Management Development Programme on Cooperative Financial Management
+          </span>
+        </p>
+      </div>
+
+      <!-- Grading or Competency Badge (Official Ribbon element) -->
+      <div class="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded bg-slate-50 border border-slate-200 shadow-xs">
+        <span class="w-2 h-2 rounded-full bg-[#f26522]"></span>
+        <span class="text-[11px] sm:text-xs font-medium tracking-wider text-slate-600 uppercase">
+          Credential Status: <strong class="text-[#0f172a] font-bold">Passed with Distinction (Grade A)</strong>
+        </span>
+      </div>
+    </main>
+
+    <!-- FOOTER SECTION: VERIFICATION, IDS & AUTHORIZED SIGNATORY -->
+    <footer class="relative z-10 pt-2 sm:pt-4 border-t border-slate-200/80">
+      <div class="grid grid-cols-3 items-end gap-4">
+        
+        <!-- Left Column: Verification QR Code & Seal -->
+        <div class="flex items-end gap-3 text-left">
+          <!-- Placeholder QR Code Square -->
+          <div class="w-16 h-16 sm:w-20 sm:h-20 bg-white p-1.5 border border-slate-300 shadow-xs flex-shrink-0 relative flex flex-col justify-between">
+            <div class="w-full h-full border border-dashed border-slate-400 bg-slate-50 flex flex-col items-center justify-center p-1 text-center">
+              <!-- SVG simulated QR pattern -->
+              <svg viewBox="0 0 32 32" class="w-full h-full text-[#0f172a]" fill="currentColor">
+                <rect x="2" y="2" width="8" height="8" rx="1"/>
+                <rect x="4" y="4" width="4" height="4" fill="#fff"/>
+                <rect x="5" y="5" width="2" height="2"/>
+                
+                <rect x="22" y="2" width="8" height="8" rx="1"/>
+                <rect x="24" y="4" width="4" height="4" fill="#fff"/>
+                <rect x="25" y="5" width="2" height="2"/>
+                
+                <rect x="2" y="22" width="8" height="8" rx="1"/>
+                <rect x="4" y="24" width="4" height="4" fill="#fff"/>
+                <rect x="5" y="25" width="2" height="2"/>
+                
+                <rect x="13" y="3" width="2" height="6"/>
+                <rect x="17" y="5" width="2" height="4"/>
+                <rect x="12" y="12" width="8" height="8"/>
+                <rect x="14" y="14" width="4" height="4" fill="#fff"/>
+                
+                <rect x="23" y="13" width="6" height="2"/>
+                <rect x="22" y="17" width="2" height="5"/>
+                <rect x="26" y="22" width="4" height="4"/>
+                <rect x="13" y="23" width="6" height="2"/>
+                <rect x="17" y="26" width="3" height="4"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="text-[9px] sm:text-[10px] text-slate-500 leading-tight">
+            <div class="font-bold text-[#0f172a] uppercase tracking-wider mb-0.5">Scan to Verify</div>
+            <p class="max-w-[120px] text-slate-500">Public Verification Portal</p>
+            <p class="text-[8px] text-[#f26522] font-medium font-mono mt-0.5">ncct.gov.in/verify</p>
+          </div>
+        </div>
+
+        <!-- Center Column: Certificate ID, Issue Date & Official Em印 -->
+        <div class="text-center pb-1">
+          <!-- Institutional Stamp / Seal Graphic -->
+          <div class="mx-auto w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-dashed border-[#f26522]/60 flex items-center justify-center p-1 mb-1.5 opacity-90">
+            <div class="w-full h-full rounded-full border border-[#0f172a]/40 flex flex-col items-center justify-center text-[7px] font-bold text-[#0f172a] uppercase tracking-tighter leading-none text-center">
+              <span>NCCT</span>
+              <span class="text-[#f26522] font-extrabold my-0.5">★ SEAL ★</span>
+              <span>OFFICIAL</span>
+            </div>
+          </div>
+          
+          <div class="space-y-0.5">
+            <div class="text-[10px] sm:text-xs text-slate-500 font-medium">
+              Certificate ID: 
+              <span class="font-mono font-bold text-[#0f172a] tracking-wider bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                NCCT-95KVDB4U
+              </span>
+            </div>
+            <div class="text-[9px] sm:text-[11px] text-slate-500 font-medium">
+              Issue Date: 
+              <span class="font-semibold text-slate-800">October 24, 2024</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Authorized Signatory -->
+        <div class="text-right pb-1 flex flex-col items-end">
+          <div class="w-48 sm:w-56 text-center">
+            <!-- Simulated Signature / Signature Mark Space -->
+            <div class="h-10 sm:h-12 flex items-center justify-center mb-1">
+              <svg viewBox="0 0 160 50" class="w-32 sm:w-36 h-full text-slate-800" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <!-- Graceful formal fountain pen signature stroke -->
+                <path d="M15 35 C30 20, 25 10, 40 18 C55 26, 45 42, 60 30 C75 18, 70 38, 85 24 C100 10, 95 32, 110 26 C120 22, 135 15, 145 28 M45 28 L140 28" opacity="0.85"/>
+              </svg>
+            </div>
+            
+            <!-- Signature Placeholder Line -->
+            <div class="border-b border-[#0f172a] w-full mb-1.5"></div>
+            
+            <!-- Label exactly as requested -->
+            <div class="text-xs sm:text-sm font-bold text-[#0f172a] uppercase tracking-wider">
+              Authorized Signatory
+            </div>
+            <div class="text-[9px] sm:text-[10px] text-slate-500 font-medium uppercase tracking-tight">
+              Director / Secretary, NCCT
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Legal Footnote & Accreditation -->
+      <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[8px] sm:text-[9px] text-slate-400 font-medium tracking-wider uppercase">
+        <span>National Council for Cooperative Training (NCCT) &bull; Ministry of Cooperation, Government of India</span>
+        <span>A4 Print Ready &bull; Credential Integrity Standard ISO/IEC 17024 Compliant</span>
+      </div>
+    </footer>
+
+  </div>
+
+</body>
+</html>
