@@ -1,7 +1,7 @@
 import { ApiError, bindNfcTag, kioskFaceCheckIn, kioskNfcLookup } from "@ncct/api-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { captureFrame, extractEmbedding, withCaptureRetries } from "./kioskCapture.js";
-import { useKioskSerial } from "./useKioskSerial.js";
+import { useKioskReader } from "./useKioskReader.js";
 
 interface KioskTerminalProps {
   accessToken: string;
@@ -16,10 +16,10 @@ interface LogEntry {
 // The hardware-driven kiosk: a student taps, positions, presses the button,
 // and gets a verdict on the OLED — no staff interaction per student.
 //
-// This screen exists as one component because a serial port can only be held
-// open by one holder, and both card taps and button presses arrive on that
-// same cable (see useKioskSerial.ts). Splitting NFC and face capture across
-// two tabs, as they were before, makes the hardware flow impossible.
+// This screen exists as one component because the reader (card taps, button
+// presses) and the camera both need to be resolved into one linear
+// conversation per student — splitting NFC and face capture across two tabs,
+// as they were before, makes that flow impossible.
 //
 // The browser is the only part that can run @vladmandic/human, so it stays in
 // the loop: it resolves the card, extracts the embedding, and relays the
@@ -27,21 +27,21 @@ interface LogEntry {
 // server-side — this screen never decides it (CLAUDE.md).
 export function KioskTerminal({ accessToken }: KioskTerminalProps) {
   const [sessionId, setSessionId] = useState("");
+  const [readerUrl, setReaderUrl] = useState("");
   const [camUrl, setCamUrl] = useState("");
   const [log, setLog] = useState<LogEntry[]>([]);
   const [busy, setBusy] = useState(false);
   const [current, setCurrent] = useState<{ id: string; name: string } | null>(null);
 
-  // Binding lives here rather than only on the NFC Kiosk tab because a serial
-  // port can only be held by one screen: switching tabs to bind a new card
-  // would mean disconnecting the reader and reconnecting afterwards.
+  // Binding lives here rather than only on the NFC Kiosk tab so a student
+  // whose card isn't registered can be handled without leaving this screen.
   const [unboundUid, setUnboundUid] = useState<string | null>(null);
   const [bindTraineeId, setBindTraineeId] = useState("");
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Read inside the serial callback, which would otherwise capture whatever
-  // these were when the connection opened. Synced in an effect rather than
+  // Read inside the poll callback, which would otherwise capture whatever
+  // these were when polling started. Synced in an effect rather than
   // assigned during render — a render-phase ref write is what React warns
   // about, and these are only ever read later, from an async callback.
   const sessionIdRef = useRef(sessionId);
@@ -201,12 +201,12 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
     [handleCard, handleCapture, addLog],
   );
 
-  const { connected, error, connect, disconnect, send } = useKioskSerial(handleLine);
+  const { connected, error, start, stop, send } = useKioskReader(readerUrl, handleLine);
   useEffect(() => {
     sendRef.current = send;
   }, [send]);
 
-  const configured = sessionId.trim() !== "" && camUrl.trim() !== "";
+  const configured = sessionId.trim() !== "" && readerUrl.trim() !== "" && camUrl.trim() !== "";
 
   return (
     <div className="p-margin-mobile md:p-margin-desktop max-w-5xl mx-auto w-full flex flex-col gap-6 text-left">
@@ -215,8 +215,9 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
           Kiosk Terminal
         </h1>
         <p className="font-body-md text-body-md text-on-surface-variant mt-1">
-          Set the session and camera once, connect the reader, then leave it running. Students tap,
-          position themselves and press the button &mdash; no action needed here per student.
+          Set the session, reader and camera addresses once, start it, then leave it running.
+          Students tap, position themselves and press the button &mdash; no action needed here per
+          student.
         </p>
       </div>
 
@@ -239,6 +240,14 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
             className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 font-mono text-body-sm disabled:opacity-50"
           />
           <input
+            id="kiosk-reader"
+            value={readerUrl}
+            onChange={(e) => setReaderUrl(e.target.value)}
+            placeholder="http://<reader-ip>"
+            disabled={busy || connected}
+            className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 font-mono text-body-sm disabled:opacity-50"
+          />
+          <input
             id="kiosk-cam"
             value={camUrl}
             onChange={(e) => setCamUrl(e.target.value)}
@@ -252,12 +261,12 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
           {!connected ? (
             <button
               type="button"
-              onClick={() => void connect()}
+              onClick={start}
               disabled={!configured}
               className="h-touch-target px-6 bg-cta text-on-primary hover:bg-cta-hover disabled:opacity-50 rounded-full font-label-md text-label-md flex items-center gap-2"
             >
-              <span className="material-symbols-outlined text-[18px]">usb</span>
-              Connect Reader
+              <span className="material-symbols-outlined text-[18px]">wifi</span>
+              Start
             </button>
           ) : (
             <>
@@ -267,16 +276,16 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
               </span>
               <button
                 type="button"
-                onClick={() => void disconnect()}
+                onClick={stop}
                 className="h-touch-target px-5 border border-outline text-primary hover:bg-surface-container-highest rounded-full font-label-md text-label-md"
               >
-                Disconnect
+                Stop
               </button>
             </>
           )}
           {!configured && (
             <span className="font-body-sm text-on-surface-variant">
-              Enter a session ID and camera address first.
+              Enter a session ID, reader address and camera address first.
             </span>
           )}
         </div>
