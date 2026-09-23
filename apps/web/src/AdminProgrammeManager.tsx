@@ -77,7 +77,7 @@ interface AdminProgrammeManagerText {
   scheduledSessionFallback: string;
   sessionUuidLabel: string;
   copySessionUuidTitle: string;
-  copySessionUuidAria: (id: string) => string;
+  copySessionUuidAria: (code: string) => string;
   copied: string;
   copy: string;
   copyFailedError: string;
@@ -148,9 +148,9 @@ const content: Record<Locale, AdminProgrammeManagerText> = {
     saveSession: "Save Session",
     noSessionsYet: "No timetable sessions scheduled yet.",
     scheduledSessionFallback: "Scheduled Session",
-    sessionUuidLabel: "Session UUID:",
-    copySessionUuidTitle: "Copy session UUID",
-    copySessionUuidAria: (id) => `Copy session UUID ${id}`,
+    sessionUuidLabel: "Session Code:",
+    copySessionUuidTitle: "Copy session code",
+    copySessionUuidAria: (code) => `Copy session code ${code}`,
     copied: "Copied",
     copy: "Copy",
     copyFailedError: "Could not copy the session UUID. Please select and copy it manually.",
@@ -221,9 +221,9 @@ const content: Record<Locale, AdminProgrammeManagerText> = {
     saveSession: "सत्र सहेजें",
     noSessionsYet: "अभी तक कोई समय-सारणी सत्र निर्धारित नहीं है।",
     scheduledSessionFallback: "निर्धारित सत्र",
-    sessionUuidLabel: "सत्र UUID:",
-    copySessionUuidTitle: "सत्र UUID कॉपी करें",
-    copySessionUuidAria: (id) => `सत्र UUID ${id} कॉपी करें`,
+    sessionUuidLabel: "सत्र कोड:",
+    copySessionUuidTitle: "सत्र कोड कॉपी करें",
+    copySessionUuidAria: (code) => `सत्र कोड ${code} कॉपी करें`,
     copied: "कॉपी किया गया",
     copy: "कॉपी करें",
     copyFailedError: "सत्र UUID कॉपी नहीं हो सका। कृपया इसे मैन्युअल रूप से चुनें और कॉपी करें।",
@@ -831,18 +831,20 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                               </p>
                               <div className="flex flex-wrap items-center gap-2 mt-2">
                                 <span className="font-body-sm text-on-surface-variant">{t.sessionUuidLabel}</span>
-                                <code className="font-body-sm text-on-surface break-all select-all">{sess.id}</code>
+                                <code className="font-body-sm text-on-surface break-all select-all">
+                                  {sess.check_in_code}
+                                </code>
                                 <button
                                   type="button"
-                                  onClick={() => void handleCopySessionId(sess.id)}
+                                  onClick={() => void handleCopySessionId(sess.check_in_code)}
                                   title={t.copySessionUuidTitle}
-                                  aria-label={t.copySessionUuidAria(sess.id)}
+                                  aria-label={t.copySessionUuidAria(sess.check_in_code)}
                                   className="inline-flex items-center gap-1 px-2 py-1 rounded border border-outline-variant text-primary hover:bg-surface-variant font-label-sm text-label-sm"
                                 >
                                   <span className="material-symbols-outlined text-[16px]">
-                                    {copiedSessionId === sess.id ? "check" : "content_copy"}
+                                    {copiedSessionId === sess.check_in_code ? "check" : "content_copy"}
                                   </span>
-                                  {copiedSessionId === sess.id ? t.copied : t.copy}
+                                  {copiedSessionId === sess.check_in_code ? t.copied : t.copy}
                                 </button>
                               </div>
                             </div>

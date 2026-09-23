@@ -1,4 +1,10 @@
-import { ApiError, bindNfcTag, kioskFaceCheckIn, kioskNfcLookup } from "@ncct/api-client";
+import {
+  ApiError,
+  bindNfcTag,
+  getSessionByCode,
+  kioskFaceCheckIn,
+  kioskNfcLookup,
+} from "@ncct/api-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { captureFrame, extractEmbedding, withCaptureRetries } from "./kioskCapture.js";
 import { useKioskReader } from "./useKioskReader.js";
@@ -41,7 +47,12 @@ const READER_URL = "http://ncct-kiosk-reader.local";
 const CAM_URL = "http://ncct-kiosk-cam.local";
 
 export function KioskTerminal({ accessToken }: KioskTerminalProps) {
-  const [sessionId, setSessionId] = useState("");
+  // Staff type the short 6-digit check-in code, same as AttendanceManager /
+  // TraineeAttendance (docs/DECISIONS.md #38) — never the session's real
+  // UUID by hand. Resolved to the real id once, when Start is pressed
+  // (below), and held in sessionIdRef for the rest of the run.
+  const [sessionCode, setSessionCode] = useState("");
+  const [resolvingSession, setResolvingSession] = useState(false);
   const [log, setLog] = useState<LogEntry[]>([]);
   const [busy, setBusy] = useState(false);
   const [current, setCurrent] = useState<{ id: string; name: string } | null>(null);
@@ -53,17 +64,11 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Read inside the poll callback, which would otherwise capture whatever
-  // these were when polling started. Synced in an effect rather than
-  // assigned during render — a render-phase ref write is what React warns
-  // about, and these are only ever read later, from an async callback.
-  const sessionIdRef = useRef(sessionId);
+  // The real session UUID, resolved from sessionCode at Start — read inside
+  // the poll callback, which is why this lives in a ref rather than state.
+  const sessionIdRef = useRef<string | null>(null);
   const traineeRef = useRef<{ id: string; name: string } | null>(null);
   const busyRef = useRef(false);
-
-  useEffect(() => {
-    sessionIdRef.current = sessionId;
-  }, [sessionId]);
 
   const addLog = useCallback((text: string, kind: LogEntry["kind"] = "info") => {
     const at = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -121,14 +126,14 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
 
   const handleCapture = useCallback(async () => {
     const trainee = traineeRef.current;
-    const session = sessionIdRef.current.trim();
+    const session = sessionIdRef.current;
 
     if (!trainee) {
       await sendRef.current("ERR:no card scanned");
       return;
     }
     if (!session) {
-      addLog("Session ID not set", "bad");
+      addLog("Session code not resolved — press Start first", "bad");
       await sendRef.current("ERR:kiosk not configured");
       return;
     }
@@ -214,7 +219,31 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
     sendRef.current = send;
   }, [send]);
 
-  const configured = sessionId.trim() !== "";
+  const configured = sessionCode.trim() !== "";
+
+  // Resolves the 6-digit code to the real session id before actually
+  // connecting to the reader — a bad/unknown code should never get as far
+  // as "Live", it should fail right here with a clear reason.
+  const handleStart = useCallback(async () => {
+    const code = sessionCode.trim();
+    if (!code) return;
+    setResolvingSession(true);
+    try {
+      const session = await getSessionByCode(accessToken, code);
+      sessionIdRef.current = session.id;
+      addLog(`Session ${code} resolved`, "info");
+      start();
+    } catch (err) {
+      addLog(`Invalid session code: ${(err as Error).message}`, "bad");
+    } finally {
+      setResolvingSession(false);
+    }
+  }, [accessToken, sessionCode, start, addLog]);
+
+  const handleStop = useCallback(() => {
+    sessionIdRef.current = null;
+    stop();
+  }, [stop]);
 
   return (
     <div className="p-margin-mobile md:p-margin-desktop max-w-5xl mx-auto w-full flex flex-col gap-6 text-left">
@@ -223,7 +252,7 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
           Kiosk Terminal
         </h1>
         <p className="font-body-md text-body-md text-on-surface-variant mt-1">
-          Set the session ID, start it, then leave it running. Students tap, position themselves
+          Set the session code, start it, then leave it running. Students tap, position themselves
           and press the button &mdash; no action needed here per student.
         </p>
       </div>
@@ -240,10 +269,12 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
         <div className="flex flex-col md:flex-row gap-3">
           <input
             id="kiosk-session"
-            value={sessionId}
-            onChange={(e) => setSessionId(e.target.value)}
-            placeholder="Session ID (UUID)"
-            disabled={busy}
+            value={sessionCode}
+            onChange={(e) => setSessionCode(e.target.value)}
+            placeholder="Session code (6 digits)"
+            inputMode="numeric"
+            maxLength={6}
+            disabled={busy || connected || resolvingSession}
             className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 font-mono text-body-sm disabled:opacity-50"
           />
         </div>
@@ -252,12 +283,12 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
           {!connected ? (
             <button
               type="button"
-              onClick={start}
-              disabled={!configured}
+              onClick={() => void handleStart()}
+              disabled={!configured || resolvingSession}
               className="h-touch-target px-6 bg-cta text-on-primary hover:bg-cta-hover disabled:opacity-50 rounded-full font-label-md text-label-md flex items-center gap-2"
             >
               <span className="material-symbols-outlined text-[18px]">wifi</span>
-              Start
+              {resolvingSession ? "Resolving..." : "Start"}
             </button>
           ) : (
             <>
@@ -267,7 +298,7 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
               </span>
               <button
                 type="button"
-                onClick={stop}
+                onClick={handleStop}
                 className="h-touch-target px-5 border border-outline text-primary hover:bg-surface-container-highest rounded-full font-label-md text-label-md"
               >
                 Stop
@@ -275,7 +306,7 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
             </>
           )}
           {!configured && (
-            <span className="font-body-sm text-on-surface-variant">Enter a session ID first.</span>
+            <span className="font-body-sm text-on-surface-variant">Enter a session code first.</span>
           )}
         </div>
       </section>

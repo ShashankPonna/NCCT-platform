@@ -505,6 +505,11 @@ void setup() {
     Serial.println("ERR:OLED not found - check wiring/address");
     while (true) { delay(1000); } // stop here so the problem is obvious
   }
+  // The panel is physically mounted upside down in the enclosure — rotate
+  // the whole framebuffer 180° in software rather than reflow the wiring.
+  // Must come after begin() (it resets rotation) and before the first
+  // showStatus() call, since every draw after this uses the rotated frame.
+  display.setRotation(2);
 
   // Prints the RC522's own firmware register. 0x00 or 0xFF means the reader
   // isn't actually talking over SPI — worth knowing before a card tap

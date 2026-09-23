@@ -3,8 +3,10 @@ import {
   createLesson,
   createModule,
   getCourses,
+  getLessonContentUrl,
   getLessons,
   getLessonVideoUploadUrl,
+  getLessonVideoUrl,
   getModules,
   getProgrammes,
   updateLesson,
@@ -18,6 +20,8 @@ import { createLessonSchema, localeSchema, youtubeVideoIdSchema } from "@ncct/va
 import { useEffect, useState } from "react";
 import { AssessmentBuilder } from "./AssessmentBuilder.js";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
+import { SelfHostedVideoPlayer } from "./SelfHostedVideoPlayer.js";
+import { YouTubeVideoPlayer } from "./YouTubeVideoPlayer.js";
 
 interface AdminCourseManagerProps {
   accessToken: string;
@@ -58,6 +62,12 @@ interface AdminCourseManagerText {
   ytPrefix: (id: string) => string;
   hideDetails: string;
   manage: string;
+  preview: string;
+  hidePreview: string;
+  loadingPreview: string;
+  noContentYet: string;
+  cannotPreviewInline: string;
+  openInNewTab: string;
   attachFile: string;
   uploading: string;
   fileAttached: string;
@@ -112,6 +122,12 @@ const content: Record<Locale, AdminCourseManagerText> = {
     ytPrefix: (id) => `YT: ${id}`,
     hideDetails: "Hide Details",
     manage: "Manage",
+    preview: "Preview",
+    hidePreview: "Hide Preview",
+    loadingPreview: "Loading preview…",
+    noContentYet: "Nothing uploaded yet.",
+    cannotPreviewInline: "This file type can't be previewed inline.",
+    openInNewTab: "Open in new tab",
     attachFile: "Attach File:",
     uploading: "Uploading…",
     fileAttached: "File attached",
@@ -164,6 +180,12 @@ const content: Record<Locale, AdminCourseManagerText> = {
     ytPrefix: (id) => `YT: ${id}`,
     hideDetails: "विवरण छिपाएं",
     manage: "प्रबंधित करें",
+    preview: "पूर्वावलोकन",
+    hidePreview: "पूर्वावलोकन छिपाएं",
+    loadingPreview: "पूर्वावलोकन लोड हो रहा है…",
+    noContentYet: "अभी तक कुछ भी अपलोड नहीं किया गया है।",
+    cannotPreviewInline: "इस फ़ाइल प्रकार का इनलाइन पूर्वावलोकन नहीं किया जा सकता।",
+    openInNewTab: "नए टैब में खोलें",
     attachFile: "फ़ाइल संलग्न करें:",
     uploading: "अपलोड हो रहा है…",
     fileAttached: "फ़ाइल संलग्न है",
@@ -183,6 +205,16 @@ const content: Record<Locale, AdminCourseManagerText> = {
   },
 };
 
+// Only a real PDF renders inline in an <iframe> across browsers — a .ppt/
+// .pptx "slides" upload (both accepted by LESSON_FILE_MIME_TYPES) just
+// triggers a download or a blank frame, since no browser ships a native
+// PowerPoint viewer. storage_path keeps the original filename's extension
+// (`${lessonId}/${timestamp}-${originalname}`, see lessonContent.ts), so the
+// extension alone is enough to tell without adding a viewer dependency.
+function canInlinePreview(storagePath: string | null): boolean {
+  return storagePath != null && storagePath.toLowerCase().endsWith(".pdf");
+}
+
 export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
   const { locale } = useLocale();
   const t = content[locale];
@@ -201,6 +233,11 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
   const [showAddModule, setShowAddModule] = useState(false);
   const [showAddLesson, setShowAddLesson] = useState(false);
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+  // Only one lesson's content preview is fetched/shown at a time — a fresh
+  // signed URL per open, not cached, so it can't go stale mid-session.
+  const [previewLessonId, setPreviewLessonId] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   // Lesson sub-actions
   const [youtubeInputs, setYoutubeInputs] = useState<Record<string, string>>({});
@@ -408,6 +445,38 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
       }
     } catch (err) {
       setError((err as Error).message);
+    }
+  }
+
+  // Fetches whatever signed URL the content actually needs and toggles the
+  // preview panel — a YouTube-hosted video needs no fetch at all (the id
+  // alone is enough for YouTubeVideoPlayer), everything else (self-hosted
+  // video, PDF/slides) goes through the same short-lived signed-URL routes
+  // the trainee side already uses (getLessonVideoUrl/getLessonContentUrl).
+  async function handleTogglePreview(lesson: Lesson) {
+    if (previewLessonId === lesson.id) {
+      setPreviewLessonId(null);
+      setPreviewUrl(null);
+      return;
+    }
+    setPreviewLessonId(lesson.id);
+    setPreviewUrl(null);
+    setError(null);
+
+    if (lesson.content_type === "video" && lesson.video_id) return;
+    if (!lesson.storage_path) return; // nothing uploaded yet — empty state renders as-is
+
+    setPreviewLoading(true);
+    try {
+      const { url } =
+        lesson.content_type === "video"
+          ? await getLessonVideoUrl(accessToken, lesson.id)
+          : await getLessonContentUrl(accessToken, lesson.id);
+      setPreviewUrl(url);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setPreviewLoading(false);
     }
   }
 
@@ -734,14 +803,67 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setActiveLessonId(activeLessonId === lesson.id ? null : lesson.id)}
-                        className="text-xs text-cta hover:underline font-semibold"
-                      >
-                        {activeLessonId === lesson.id ? t.hideDetails : t.manage}
-                      </button>
+                      <div className="flex items-center gap-3 shrink-0">
+                        {(lesson.content_type === "video" ||
+                          lesson.content_type === "pdf" ||
+                          lesson.content_type === "slides") && (
+                          <button
+                            type="button"
+                            onClick={() => void handleTogglePreview(lesson)}
+                            className="text-xs text-cta hover:underline font-semibold"
+                          >
+                            {previewLessonId === lesson.id ? t.hidePreview : t.preview}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setActiveLessonId(activeLessonId === lesson.id ? null : lesson.id)}
+                          className="text-xs text-cta hover:underline font-semibold"
+                        >
+                          {activeLessonId === lesson.id ? t.hideDetails : t.manage}
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Content Preview (When toggled) — reuses the same
+                        signed-URL players the trainee side renders lessons
+                        with, so what a trainer/admin sees here is exactly
+                        what a trainee would see, not a stand-in. */}
+                    {previewLessonId === lesson.id && (
+                      <div className="pt-3 border-t border-outline-variant/40">
+                        {previewLoading ? (
+                          <p className="text-xs text-on-surface-variant">{t.loadingPreview}</p>
+                        ) : lesson.content_type === "video" ? (
+                          lesson.video_id ? (
+                            <YouTubeVideoPlayer videoId={lesson.video_id} />
+                          ) : (
+                            <SelfHostedVideoPlayer url={previewUrl} />
+                          )
+                        ) : previewUrl ? (
+                          canInlinePreview(lesson.storage_path) ? (
+                            <iframe
+                              src={previewUrl}
+                              title={lesson.title}
+                              className="w-full h-96 rounded border border-outline-variant bg-surface-container-lowest"
+                            />
+                          ) : (
+                            <p className="text-xs text-on-surface-variant">
+                              {t.cannotPreviewInline}{" "}
+                              <a
+                                href={previewUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-cta hover:underline font-semibold"
+                              >
+                                {t.openInNewTab}
+                              </a>
+                            </p>
+                          )
+                        ) : (
+                          <p className="text-xs text-on-surface-variant">{t.noContentYet}</p>
+                        )}
+                      </div>
+                    )}
 
                     {/* Extended Controls (When expanded) */}
                     {activeLessonId === lesson.id && (
