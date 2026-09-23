@@ -100,7 +100,7 @@ describe("POST /api/programmes/:id/nominations", () => {
 });
 
 describe("GET /api/programmes/:id/nominations", () => {
-  it("returns 403 for a non-admin role", async () => {
+  it("returns 403 for a trainee", async () => {
     authenticateAs("trainee-1", "trainee");
 
     const res = await request(buildApp())
@@ -112,6 +112,18 @@ describe("GET /api/programmes/:id/nominations", () => {
 
   it("lists nominations for an admin", async () => {
     authenticateAs("admin-1", "admin");
+    nominationsMock.result.data = [{ id: "nom-1", status: "pending" }];
+
+    const res = await request(buildApp())
+      .get("/api/programmes/prog-1/nominations")
+      .set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+  });
+
+  it("also lists nominations for a trainer (read-only roster access)", async () => {
+    authenticateAs("trainer-1", "trainer");
     nominationsMock.result.data = [{ id: "nom-1", status: "pending" }];
 
     const res = await request(buildApp())

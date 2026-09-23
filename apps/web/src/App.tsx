@@ -164,7 +164,12 @@ function App() {
         {currentTab === "users" && (
           <AdminUserManager accessToken={session.accessToken} currentUserId={session.userId} />
         )}
-        {currentTab === "programmes" && <AdminProgrammeManager accessToken={session.accessToken} />}
+        {currentTab === "programmes" && (
+          <AdminProgrammeManager
+            accessToken={session.accessToken}
+            role={session.role === "trainer" ? "trainer" : "admin"}
+          />
+        )}
         {currentTab === "content" && <AdminCourseManager accessToken={session.accessToken} />}
         {currentTab === "attendance" && <AttendanceManager accessToken={session.accessToken} />}
         {currentTab === "kiosk" && <KioskNfcReader accessToken={session.accessToken} />}

@@ -620,10 +620,18 @@ export function getAttendanceRoster(accessToken: string, sessionId: string) {
 }
 
 export function getAttendanceQr(accessToken: string, sessionId: string) {
-  return apiFetch<{ qrDataUrl: string; checkInUrl: string }>(
+  return apiFetch<{ qrDataUrl: string; checkInUrl: string; checkInCode: string }>(
     `/timetable/${sessionId}/qr`,
     accessToken,
   );
+}
+
+// Resolves a session's short numeric check_in_code to the real session row —
+// what both AttendanceManager's (faculty) and TraineeAttendance's (trainee
+// manual fallback) code-entry fields call before acting on the real id, so
+// neither ever has to handle a raw session UUID by hand.
+export function getSessionByCode(accessToken: string, code: string) {
+  return apiFetch<TimetableSession>(`/timetable-sessions/code/${code}`, accessToken);
 }
 
 // Job listings are public data (no requireAuth on the API side, matching

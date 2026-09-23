@@ -57,6 +57,9 @@ beforeEach(() => {
   profilesMock.result.error = null;
   timetableMock.result.data = null;
   timetableMock.result.error = null;
+  // A test overriding .single() directly (the check_in_code collision-retry
+  // test below) must not leak its mock into later tests.
+  timetableMock.builder.single = vi.fn(() => Promise.resolve(timetableMock.result));
 });
 
 describe("POST /api/programmes/:id/timetable", () => {
@@ -67,7 +70,7 @@ describe("POST /api/programmes/:id/timetable", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 403 for a non-admin role", async () => {
+  it("returns 403 for a trainee", async () => {
     authenticateAs("trainee-1", "trainee");
 
     const res = await request(buildApp())
@@ -76,6 +79,24 @@ describe("POST /api/programmes/:id/timetable", () => {
       .send(validSession);
 
     expect(res.status).toBe(403);
+  });
+
+  it("creates the session for a trainer, not just an admin", async () => {
+    authenticateAs("trainer-1", "trainer");
+    timetableMock.result.data = {
+      id: "sess-2",
+      programme_id: "prog-1",
+      check_in_code: "601122",
+      ...validSession,
+    };
+
+    const res = await request(buildApp())
+      .post("/api/programmes/prog-1/timetable")
+      .set("Authorization", "Bearer token")
+      .send(validSession);
+
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({ id: "sess-2", programme_id: "prog-1" });
   });
 
   it("returns 400 when ends_at is before starts_at", async () => {
@@ -89,9 +110,14 @@ describe("POST /api/programmes/:id/timetable", () => {
     expect(res.status).toBe(400);
   });
 
-  it("creates the session for an admin", async () => {
+  it("creates the session for an admin, with a generated check_in_code", async () => {
     authenticateAs("admin-1", "admin");
-    timetableMock.result.data = { id: "sess-1", programme_id: "prog-1", ...validSession };
+    timetableMock.result.data = {
+      id: "sess-1",
+      programme_id: "prog-1",
+      check_in_code: "482913",
+      ...validSession,
+    };
 
     const res = await request(buildApp())
       .post("/api/programmes/prog-1/timetable")
@@ -100,6 +126,85 @@ describe("POST /api/programmes/:id/timetable", () => {
 
     expect(res.status).toBe(201);
     expect(res.body).toMatchObject({ id: "sess-1", programme_id: "prog-1" });
+    expect(timetableMock.builder.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ check_in_code: expect.stringMatching(/^\d{6}$/) }),
+    );
+  });
+
+  it("regenerates the code and retries on a check_in_code collision", async () => {
+    authenticateAs("admin-1", "admin");
+    const single = vi
+      .fn()
+      .mockResolvedValueOnce({ data: null, error: { code: "23505", message: "duplicate key" } })
+      .mockResolvedValueOnce({
+        data: { id: "sess-1", programme_id: "prog-1", check_in_code: "112233", ...validSession },
+        error: null,
+      });
+    timetableMock.builder.single = single;
+
+    const res = await request(buildApp())
+      .post("/api/programmes/prog-1/timetable")
+      .set("Authorization", "Bearer token")
+      .send(validSession);
+
+    expect(res.status).toBe(201);
+    expect(single).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns 400 immediately for a non-collision insert error", async () => {
+    authenticateAs("admin-1", "admin");
+    timetableMock.result.data = null;
+    timetableMock.result.error = { code: "23503", message: "programme not found" };
+
+    const res = await request(buildApp())
+      .post("/api/programmes/prog-1/timetable")
+      .set("Authorization", "Bearer token")
+      .send(validSession);
+
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("GET /api/timetable-sessions/code/:code", () => {
+  it("returns 401 with no bearer token", async () => {
+    const res = await request(buildApp()).get("/api/timetable-sessions/code/482913");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 400 for a malformed code", async () => {
+    authenticateAs("trainee-1", "trainee");
+    const res = await request(buildApp())
+      .get("/api/timetable-sessions/code/abc")
+      .set("Authorization", "Bearer token");
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 404 when no session matches the code", async () => {
+    authenticateAs("trainee-1", "trainee");
+    timetableMock.result.data = null;
+
+    const res = await request(buildApp())
+      .get("/api/timetable-sessions/code/482913")
+      .set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(404);
+  });
+
+  it("resolves a valid code to its session for any authenticated role", async () => {
+    authenticateAs("trainee-1", "trainee");
+    timetableMock.result.data = {
+      id: "sess-1",
+      programme_id: "prog-1",
+      check_in_code: "482913",
+      ...validSession,
+    };
+
+    const res = await request(buildApp())
+      .get("/api/timetable-sessions/code/482913")
+      .set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ id: "sess-1", check_in_code: "482913" });
   });
 });
 

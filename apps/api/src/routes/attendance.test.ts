@@ -408,9 +408,12 @@ describe("GET /api/timetable/:sessionId/qr", () => {
     expect(res.status).toBe(404);
   });
 
-  it("returns a QR data URL for trainer", async () => {
+  it("returns a QR data URL and the session's check-in code for trainer", async () => {
     authenticateAs("trainer-1", "trainer");
-    sessionsMock.result.data = { id: "11111111-1111-1111-1111-111111111111" };
+    sessionsMock.result.data = {
+      id: "11111111-1111-1111-1111-111111111111",
+      check_in_code: "482913",
+    };
 
     const res = await request(buildApp())
       .get("/api/timetable/11111111-1111-1111-1111-111111111111/qr")
@@ -419,5 +422,6 @@ describe("GET /api/timetable/:sessionId/qr", () => {
     expect(res.status).toBe(200);
     expect(res.body.qrDataUrl).toMatch(/^data:image\/png;base64,/);
     expect(res.body.checkInUrl).toContain("11111111-1111-1111-1111-111111111111");
+    expect(res.body.checkInCode).toBe("482913");
   });
 });

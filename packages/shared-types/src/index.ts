@@ -111,6 +111,7 @@ export interface TimetableSession {
   starts_at: string;
   ends_at: string;
   location: string | null;
+  check_in_code: string;
   created_at: string;
 }
 

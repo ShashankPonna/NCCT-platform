@@ -25,7 +25,7 @@ interface NavItem {
 const ALL_NAV_ITEMS: NavItem[] = [
   { id: "dashboard", labelKey: "dashboard", icon: "dashboard", roles: ["admin"] },
   { id: "users", labelKey: "users", icon: "domain", roles: ["admin"] },
-  { id: "programmes", labelKey: "programmes", icon: "school", roles: ["admin"] },
+  { id: "programmes", labelKey: "programmes", icon: "school", roles: ["admin", "trainer"] },
   { id: "content", labelKey: "content", icon: "description", roles: ["admin", "trainer"] },
   { id: "attendance", labelKey: "attendance", icon: "calendar_today", roles: ["admin", "trainer"] },
   { id: "kiosk", labelKey: "kiosk", icon: "nfc", roles: ["admin", "trainer"] },
