@@ -27,12 +27,18 @@
 //           nothing about their wiring changes.
 //
 // Libraries needed: MFRC522 (GithubCommunity) | Adafruit SSD1306 |
-//                    Adafruit GFX | WiFi + WebServer (bundled with the
-//                    ESP32 board package, nothing extra to install)
+//                    Adafruit GFX | WiFi + WebServer + ESPmDNS (all bundled
+//                    with the ESP32 board package, nothing extra to install)
 //
 // Board settings (Arduino IDE): Tools -> Board -> "ESP32 Dev Module",
 // default partition scheme (this sketch has no camera buffers, unlike
 // ESP32-CAM, so it doesn't need the Huge APP scheme).
+//
+// Address: this board advertises itself via mDNS as
+// http://ncct-kiosk-reader.local — the Kiosk Terminal's Reader field
+// defaults to exactly this, so on most networks nothing needs to be typed
+// in at all. Falls back to the raw numeric IP (shown on the OLED and
+// printed to Serial at boot) only if mDNS is blocked on a given network.
 //
 // Wire protocol — plain HTTP, port 80, this board is the SERVER:
 //   GET  /          -> plain-text liveness check ("NCCT kiosk reader alive")
@@ -64,17 +70,41 @@
 #include <Adafruit_SSD1306.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include <ESPmDNS.h>
 
-// ---- WiFi credentials — edit these before flashing ----
-const char* ssid = "YOUR_WIFI_NAME";
-const char* password = "YOUR_WIFI_PASSWORD";
+// ---- WiFi credentials ----
+// Real values live in wifi_credentials.h, gitignored — never commit an
+// actual WiFi password. Copy wifi_credentials.h.example to
+// wifi_credentials.h (same folder) and fill it in before flashing.
+#include "wifi_credentials.h"
 
 // Left on DHCP (same as the ESP32-CAM sketch) rather than a hardcoded static
-// IP, since the venue's WiFi details aren't known ahead of time. The OLED
-// shows whatever address it gets at boot — read it there and type it into
-// the Kiosk Terminal's "Reader address" box, same as the camera's address.
-// If you DO want a fixed address on a network you control, add a
-// WiFi.config(local_IP, gateway, subnet) call right before WiFi.begin().
+// IP, since the venue's WiFi details aren't known ahead of time — the actual
+// numeric address can still change on every reboot (DHCP lease reassigned)
+// or on a different network entirely, which used to mean re-reading it off
+// the OLED and retyping it into the Kiosk Terminal every time.
+//
+// mDNS fixes that: this board advertises the fixed hostname below regardless
+// of whatever numeric IP DHCP hands it, so "http://ncct-kiosk-reader.local"
+// works on any network without ever needing to look up an address again —
+// the Kiosk Terminal's Reader field defaults to exactly this hostname now.
+// Requires the browser's OS to have mDNS/Bonjour support: built into macOS
+// and Linux, and into Chrome/Edge on Windows too (they bundle their own
+// mDNS resolution), so this works without any extra install on the machines
+// this kiosk is actually built for. If mDNS is ever blocked on a given
+// network (some locked-down corporate WiFi disables multicast), the OLED
+// still prints the raw numeric IP at boot as a fallback — same as before.
+//
+// Change MDNS_HOSTNAME below (not just here) if you run more than one
+// reader on the same network — two boards both claiming
+// "ncct-kiosk-reader.local" is exactly the kind of collision mDNS can't
+// resolve for you.
+#define MDNS_HOSTNAME "ncct-kiosk-reader"
+
+// If you DO want a fixed numeric address too, on a network you control, add
+// a WiFi.config(local_IP, gateway, subnet) call right before WiFi.begin() —
+// not required now that mDNS covers the same problem without per-network
+// router configuration.
 
 WebServer server(80);
 
@@ -442,6 +472,20 @@ void connectWiFi() {
   Serial.println();
   Serial.print("WiFi connected. IP address: ");
   Serial.println(WiFi.localIP());
+
+  // Re-started on every reconnect (loop() calls connectWiFi() again if WiFi
+  // drops), not just once in setup() — mDNS.begin() must be re-issued after
+  // any reconnect for the advertisement to keep working, same reasoning as
+  // an mDNS responder needing to re-announce itself after any address
+  // change. Non-fatal if it fails: the OLED below still shows the raw IP
+  // either way, so the kiosk stays usable through it.
+  if (MDNS.begin(MDNS_HOSTNAME)) {
+    MDNS.addService("http", "tcp", 80);
+    Serial.println("mDNS ready: http://" MDNS_HOSTNAME ".local");
+  } else {
+    Serial.println("mDNS.begin() failed — use the numeric IP below instead");
+  }
+
   showMessage("WiFi connected", WiFi.localIP().toString());
   delay(1500); // let the person setting up actually read the IP off the screen
 }

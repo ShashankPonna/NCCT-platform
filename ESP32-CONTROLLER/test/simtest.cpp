@@ -16,8 +16,9 @@
 #include "stubs.h"
 #include "WiFi.h"
 #include "WebServer.h"
+#include "ESPmDNS.h"
 
-SerialClass Serial; SPIClass SPI; TwoWire Wire; WiFiClass WiFi;
+SerialClass Serial; SPIClass SPI; TwoWire Wire; WiFiClass WiFi; MDNSResponder MDNS;
 bool g_cardPresent = false; std::string g_oled; static int g_button = HIGH;
 static unsigned long _t = 1;
 unsigned long millis() { return _t; }

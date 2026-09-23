@@ -25,10 +25,47 @@ interface LogEntry {
 // the loop: it resolves the card, extracts the embedding, and relays the
 // server's verdict back to the ESP32. The match itself is always recomputed
 // server-side — this screen never decides it (CLAUDE.md).
+// The reader/camera addresses are the kiosk's own local hardware endpoints.
+// Both boards now advertise themselves via mDNS (see the firmware's own
+// MDNS_HOSTNAME, ESP32-CONTROLLER/arduino/kiosk_controller and
+// ESP32-CAM/arduino/kiosk_capture_server) at the fixed hostnames below,
+// which keep working across DHCP lease changes and even a different network
+// entirely — unlike a raw numeric IP, which changes with both. That's why
+// these are real, working defaults, not just placeholder text: on a network
+// where mDNS resolves normally (true out of the box on macOS/Linux, and in
+// Chrome/Edge on Windows without any extra install), the kiosk needs zero
+// typing on a first-ever visit. If mDNS is ever blocked on a given network,
+// each board still prints its raw numeric IP to Serial/OLED at boot as a
+// fallback — typing that in over these defaults still works exactly as
+// before.
+const READER_MDNS_DEFAULT = "http://ncct-kiosk-reader.local";
+const CAM_MDNS_DEFAULT = "http://ncct-kiosk-cam.local";
+
+// Remembers whatever the user last actually typed (e.g. a fallback numeric
+// IP on a network where mDNS didn't resolve) ahead of the mDNS default
+// above — plain localStorage rather than Capacitor's Preferences plugin,
+// since this screen only ever runs in a desktop browser (Chrome/Edge, per
+// DECISIONS.md #30/#33's Web Serial/mixed-content constraints), never
+// inside the mobile app.
+const READER_URL_STORAGE_KEY = "ncct_kiosk_reader_url";
+const CAM_URL_STORAGE_KEY = "ncct_kiosk_cam_url";
+
+function readStoredUrl(key: string, fallback: string): string {
+  try {
+    return localStorage.getItem(key) || fallback;
+  } catch {
+    // Private browsing / blocked storage — fall back to the mDNS default,
+    // same as a first-ever visit. Never worth crashing the kiosk over.
+    return fallback;
+  }
+}
+
 export function KioskTerminal({ accessToken }: KioskTerminalProps) {
   const [sessionId, setSessionId] = useState("");
-  const [readerUrl, setReaderUrl] = useState("");
-  const [camUrl, setCamUrl] = useState("");
+  const [readerUrl, setReaderUrl] = useState(() =>
+    readStoredUrl(READER_URL_STORAGE_KEY, READER_MDNS_DEFAULT),
+  );
+  const [camUrl, setCamUrl] = useState(() => readStoredUrl(CAM_URL_STORAGE_KEY, CAM_MDNS_DEFAULT));
   const [log, setLog] = useState<LogEntry[]>([]);
   const [busy, setBusy] = useState(false);
   const [current, setCurrent] = useState<{ id: string; name: string } | null>(null);
@@ -242,7 +279,17 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
           <input
             id="kiosk-reader"
             value={readerUrl}
-            onChange={(e) => setReaderUrl(e.target.value)}
+            onChange={(e) => {
+              const next = e.target.value;
+              setReaderUrl(next);
+              try {
+                localStorage.setItem(READER_URL_STORAGE_KEY, next);
+              } catch {
+                // Storage blocked — the field still works this session, it
+                // just won't be remembered next time. Not worth surfacing
+                // as an error for a pure convenience feature.
+              }
+            }}
             placeholder="http://<reader-ip>"
             disabled={busy || connected}
             className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 font-mono text-body-sm disabled:opacity-50"
@@ -250,7 +297,15 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
           <input
             id="kiosk-cam"
             value={camUrl}
-            onChange={(e) => setCamUrl(e.target.value)}
+            onChange={(e) => {
+              const next = e.target.value;
+              setCamUrl(next);
+              try {
+                localStorage.setItem(CAM_URL_STORAGE_KEY, next);
+              } catch {
+                // See the reader field's identical comment above.
+              }
+            }}
             placeholder="http://<esp32-cam-ip>"
             disabled={busy}
             className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 font-mono text-body-sm disabled:opacity-50"
