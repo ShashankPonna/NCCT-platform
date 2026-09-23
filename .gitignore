@@ -27,3 +27,4 @@ pnpm-debug.log*
 
 # Firmware logic-harness build output (ESP32-CONTROLLER/test)
 ESP32-CONTROLLER/test/simtest
+ESP32-CONTROLLER/test/simtest.exe
