@@ -26,46 +26,22 @@ interface LogEntry {
 // server's verdict back to the ESP32. The match itself is always recomputed
 // server-side — this screen never decides it (CLAUDE.md).
 // The reader/camera addresses are the kiosk's own local hardware endpoints.
-// Both boards now advertise themselves via mDNS (see the firmware's own
-// MDNS_HOSTNAME, ESP32-CONTROLLER/arduino/kiosk_controller and
-// ESP32-CAM/arduino/kiosk_capture_server) at the fixed hostnames below,
-// which keep working across DHCP lease changes and even a different network
-// entirely — unlike a raw numeric IP, which changes with both. That's why
-// these are real, working defaults, not just placeholder text: on a network
-// where mDNS resolves normally (true out of the box on macOS/Linux, and in
-// Chrome/Edge on Windows without any extra install), the kiosk needs zero
-// typing on a first-ever visit. If mDNS is ever blocked on a given network,
-// each board still prints its raw numeric IP to Serial/OLED at boot as a
-// fallback — typing that in over these defaults still works exactly as
-// before.
-const READER_MDNS_DEFAULT = "http://ncct-kiosk-reader.local";
-const CAM_MDNS_DEFAULT = "http://ncct-kiosk-cam.local";
-
-// Remembers whatever the user last actually typed (e.g. a fallback numeric
-// IP on a network where mDNS didn't resolve) ahead of the mDNS default
-// above — plain localStorage rather than Capacitor's Preferences plugin,
-// since this screen only ever runs in a desktop browser (Chrome/Edge, per
-// DECISIONS.md #30/#33's Web Serial/mixed-content constraints), never
-// inside the mobile app.
-const READER_URL_STORAGE_KEY = "ncct_kiosk_reader_url";
-const CAM_URL_STORAGE_KEY = "ncct_kiosk_cam_url";
-
-function readStoredUrl(key: string, fallback: string): string {
-  try {
-    return localStorage.getItem(key) || fallback;
-  } catch {
-    // Private browsing / blocked storage — fall back to the mDNS default,
-    // same as a first-ever visit. Never worth crashing the kiosk over.
-    return fallback;
-  }
-}
+// Both boards advertise themselves via mDNS at these fixed hostnames (see
+// the firmware's own MDNS_HOSTNAME, ESP32-CONTROLLER/arduino/kiosk_controller
+// and ESP32-CAM/arduino/kiosk_capture_server), which keep working across
+// DHCP lease changes and even a different network entirely — unlike a raw
+// numeric IP, which changes with both. No longer user-editable here: with
+// mDNS resolving on any normal network (true out of the box on macOS/Linux,
+// and in Chrome/Edge on Windows without any extra install), there's nothing
+// for a staff member to ever type. If mDNS is ever blocked on a given
+// network, fix it at the source — reflash that board's MDNS_HOSTNAME or
+// resolve the network issue — rather than hardcoding a numeric IP here that
+// would just go stale on the next DHCP lease.
+const READER_URL = "http://ncct-kiosk-reader.local";
+const CAM_URL = "http://ncct-kiosk-cam.local";
 
 export function KioskTerminal({ accessToken }: KioskTerminalProps) {
   const [sessionId, setSessionId] = useState("");
-  const [readerUrl, setReaderUrl] = useState(() =>
-    readStoredUrl(READER_URL_STORAGE_KEY, READER_MDNS_DEFAULT),
-  );
-  const [camUrl, setCamUrl] = useState(() => readStoredUrl(CAM_URL_STORAGE_KEY, CAM_MDNS_DEFAULT));
   const [log, setLog] = useState<LogEntry[]>([]);
   const [busy, setBusy] = useState(false);
   const [current, setCurrent] = useState<{ id: string; name: string } | null>(null);
@@ -82,16 +58,12 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
   // assigned during render — a render-phase ref write is what React warns
   // about, and these are only ever read later, from an async callback.
   const sessionIdRef = useRef(sessionId);
-  const camUrlRef = useRef(camUrl);
   const traineeRef = useRef<{ id: string; name: string } | null>(null);
   const busyRef = useRef(false);
 
   useEffect(() => {
     sessionIdRef.current = sessionId;
   }, [sessionId]);
-  useEffect(() => {
-    camUrlRef.current = camUrl;
-  }, [camUrl]);
 
   const addLog = useCallback((text: string, kind: LogEntry["kind"] = "info") => {
     const at = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -150,14 +122,13 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
   const handleCapture = useCallback(async () => {
     const trainee = traineeRef.current;
     const session = sessionIdRef.current.trim();
-    const cam = camUrlRef.current.trim();
 
     if (!trainee) {
       await sendRef.current("ERR:no card scanned");
       return;
     }
-    if (!session || !cam) {
-      addLog("Session ID or camera address not set", "bad");
+    if (!session) {
+      addLog("Session ID not set", "bad");
       await sendRef.current("ERR:kiosk not configured");
       return;
     }
@@ -172,7 +143,7 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
       if (!canvas) throw new Error("preview canvas not ready");
 
       const frame = await withCaptureRetries(
-        () => captureFrame(cam, canvas),
+        () => captureFrame(CAM_URL, canvas),
         (message, attempt, total) => addLog(`Capture attempt ${attempt}/${total}: ${message}`, "bad"),
       );
 
@@ -238,12 +209,12 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
     [handleCard, handleCapture, addLog],
   );
 
-  const { connected, error, start, stop, send } = useKioskReader(readerUrl, handleLine);
+  const { connected, error, start, stop, send } = useKioskReader(READER_URL, handleLine);
   useEffect(() => {
     sendRef.current = send;
   }, [send]);
 
-  const configured = sessionId.trim() !== "" && readerUrl.trim() !== "" && camUrl.trim() !== "";
+  const configured = sessionId.trim() !== "";
 
   return (
     <div className="p-margin-mobile md:p-margin-desktop max-w-5xl mx-auto w-full flex flex-col gap-6 text-left">
@@ -252,9 +223,8 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
           Kiosk Terminal
         </h1>
         <p className="font-body-md text-body-md text-on-surface-variant mt-1">
-          Set the session, reader and camera addresses once, start it, then leave it running.
-          Students tap, position themselves and press the button &mdash; no action needed here per
-          student.
+          Set the session ID, start it, then leave it running. Students tap, position themselves
+          and press the button &mdash; no action needed here per student.
         </p>
       </div>
 
@@ -273,40 +243,6 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
             value={sessionId}
             onChange={(e) => setSessionId(e.target.value)}
             placeholder="Session ID (UUID)"
-            disabled={busy}
-            className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 font-mono text-body-sm disabled:opacity-50"
-          />
-          <input
-            id="kiosk-reader"
-            value={readerUrl}
-            onChange={(e) => {
-              const next = e.target.value;
-              setReaderUrl(next);
-              try {
-                localStorage.setItem(READER_URL_STORAGE_KEY, next);
-              } catch {
-                // Storage blocked — the field still works this session, it
-                // just won't be remembered next time. Not worth surfacing
-                // as an error for a pure convenience feature.
-              }
-            }}
-            placeholder="http://<reader-ip>"
-            disabled={busy || connected}
-            className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 font-mono text-body-sm disabled:opacity-50"
-          />
-          <input
-            id="kiosk-cam"
-            value={camUrl}
-            onChange={(e) => {
-              const next = e.target.value;
-              setCamUrl(next);
-              try {
-                localStorage.setItem(CAM_URL_STORAGE_KEY, next);
-              } catch {
-                // See the reader field's identical comment above.
-              }
-            }}
-            placeholder="http://<esp32-cam-ip>"
             disabled={busy}
             className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 font-mono text-body-sm disabled:opacity-50"
           />
@@ -339,9 +275,7 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
             </>
           )}
           {!configured && (
-            <span className="font-body-sm text-on-surface-variant">
-              Enter a session ID, reader address and camera address first.
-            </span>
+            <span className="font-body-sm text-on-surface-variant">Enter a session ID first.</span>
           )}
         </div>
       </section>
