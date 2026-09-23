@@ -18,6 +18,7 @@ import { ProfileEditor } from "./ProfileEditor.js";
 import { PublicProfile } from "./PublicProfile.js";
 import { ResetPasswordForm } from "./ResetPasswordForm.js";
 import { TraineeApp } from "./trainee/TraineeApp.js";
+import { TrainerCoursesDashboard } from "./TrainerCoursesDashboard.js";
 import { usePasswordRecovery } from "./usePasswordRecovery.js";
 import { useSession } from "./useSession.js";
 
@@ -138,7 +139,7 @@ function App() {
     session.role === "admin"
       ? "dashboard"
       : session.role === "trainer"
-        ? "content"
+        ? "courses"
         : session.role === "employer"
           ? "employer"
           : "profile";
@@ -165,6 +166,12 @@ function App() {
           <AdminUserManager accessToken={session.accessToken} currentUserId={session.userId} />
         )}
         {currentTab === "programmes" && <AdminProgrammeManager accessToken={session.accessToken} />}
+        {currentTab === "courses" && (
+          <TrainerCoursesDashboard
+            accessToken={session.accessToken}
+            onNavigate={(tab) => setActiveTab(tab)}
+          />
+        )}
         {currentTab === "content" && <AdminCourseManager accessToken={session.accessToken} />}
         {currentTab === "attendance" && <AttendanceManager accessToken={session.accessToken} />}
         {currentTab === "kiosk" && <KioskNfcReader accessToken={session.accessToken} />}

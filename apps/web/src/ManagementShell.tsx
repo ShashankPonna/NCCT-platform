@@ -7,6 +7,7 @@ export type ManagementTab =
   | "dashboard"
   | "users"
   | "programmes"
+  | "courses"
   | "content"
   | "attendance"
   | "kiosk"
@@ -26,12 +27,13 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { id: "dashboard", labelKey: "dashboard", icon: "dashboard", roles: ["admin"] },
   { id: "users", labelKey: "users", icon: "domain", roles: ["admin"] },
   { id: "programmes", labelKey: "programmes", icon: "school", roles: ["admin"] },
-  { id: "content", labelKey: "content", icon: "description", roles: ["admin", "trainer"] },
-  { id: "attendance", labelKey: "attendance", icon: "calendar_today", roles: ["admin", "trainer"] },
+  { id: "courses", labelKey: "courses", icon: "menu_book", roles: ["trainer"] },
+  { id: "content", labelKey: "content", icon: "folder_shared", roles: ["admin", "trainer"] },
+  { id: "attendance", labelKey: "attendance", icon: "fact_check", roles: ["admin", "trainer"] },
   { id: "kiosk", labelKey: "kiosk", icon: "nfc", roles: ["admin", "trainer"] },
   { id: "terminal", labelKey: "terminal", icon: "point_of_sale", roles: ["admin", "trainer"] },
   { id: "chatbot", labelKey: "chatbot", icon: "smart_toy", roles: ["admin", "trainer"] },
-  { id: "employer", labelKey: "employer", icon: "work", roles: ["employer"] },
+  { id: "employer", labelKey: "employer", icon: "person_search", roles: ["employer"] },
   { id: "profile", labelKey: "profile", icon: "person", roles: ["admin", "trainer", "employer"] },
 ];
 
@@ -40,6 +42,7 @@ interface ManagementShellText {
     dashboard: string;
     users: string;
     programmes: string;
+    courses: string;
     content: string;
     attendance: string;
     kiosk: string;
@@ -80,12 +83,13 @@ const content: Record<Locale, ManagementShellText> = {
       dashboard: "Dashboard",
       users: "Users & Institutions",
       programmes: "Programmes",
+      courses: "My Courses",
       content: "Content",
       attendance: "Attendance",
       kiosk: "NFC Kiosk",
       terminal: "Kiosk Terminal",
       chatbot: "Chatbot Knowledge Base",
-      employer: "Jobs & Candidates",
+      employer: "Trainee Search & Talent Pool",
       profile: "My Profile",
     },
     roles: {
@@ -94,8 +98,8 @@ const content: Record<Locale, ManagementShellText> = {
       employer: "Employer",
       trainee: "Trainee",
     },
-    portalTag: "NCCT PORTAL",
-    tagline: "Cooperative Training & Certification",
+    portalTag: "COOP-NET • Sahakar Utkarsh",
+    tagline: "National Council for Cooperative Training",
     skipToContent: "Skip To Main Content",
     decreaseText: "Decrease text size",
     normalText: "Normal text size",
@@ -103,12 +107,12 @@ const content: Record<Locale, ManagementShellText> = {
     lightMode: "Switch to Light Mode",
     darkMode: "Switch to Dark Mode",
     highContrast: "High Contrast Toggle",
-    searchPlaceholder: "Search Programmes, Content, Users...",
+    searchPlaceholder: "Search institutes, candidates, programmes, kiosks...",
     toggleTheme: "Toggle Theme",
     notifications: "Notifications",
     myProfile: "My profile",
     signOut: "Sign Out",
-    footerCopyright: "2026 National Council for Cooperative Training. All rights reserved.",
+    footerCopyright: "2026 National Council for Cooperative Training (NCCT) — Ministry of Cooperation, Govt. of India",
     footerPrivacy: "Privacy Policy",
     footerTerms: "Terms of Service",
     footerSupport: "Support",
@@ -118,12 +122,13 @@ const content: Record<Locale, ManagementShellText> = {
       dashboard: "डैशबोर्ड",
       users: "उपयोगकर्ता एवं संस्थान",
       programmes: "कार्यक्रम",
+      courses: "मेरे पाठ्यक्रम",
       content: "सामग्री",
       attendance: "उपस्थिति",
       kiosk: "NFC कियोस्क",
       terminal: "कियोस्क टर्मिनल",
       chatbot: "चैटबॉट ज्ञान आधार",
-      employer: "नौकरियां एवं उम्मीदवार",
+      employer: "प्रशिक्षणार्थी खोज एवं शॉर्टलिस्ट",
       profile: "मेरी प्रोफ़ाइल",
     },
     roles: {
@@ -323,15 +328,15 @@ export function ManagementShell({
               onClick={() => onNavigate(roleNavItems[0]?.id ?? "profile")}
               className="flex items-center gap-2 text-left transition-opacity hover:opacity-90 cursor-pointer md:gap-3"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-container text-on-primary shadow-xs md:h-10 md:w-10">
-                <span className="material-symbols-outlined text-[20px] md:text-[22px]">school</span>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-secondary-container text-primary font-bold shadow-xs md:h-10 md:w-10">
+                <span className="material-symbols-outlined text-[22px]">account_balance</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-headline text-headline-sm font-bold leading-tight text-on-surface">
-                  NCCT Platform
+                <span className="font-headline-sm text-headline-sm font-bold leading-tight text-primary tracking-tight">
+                  COOP-NET
                 </span>
-                <span className="hidden text-[11px] font-medium leading-tight text-on-surface-variant md:block">
-                  {t.tagline}
+                <span className="hidden text-[11px] font-semibold leading-tight text-secondary md:block uppercase tracking-wider">
+                  Sahakar Utkarsh
                 </span>
               </div>
             </button>
@@ -436,10 +441,10 @@ export function ManagementShell({
                   key={item.id}
                   type="button"
                   onClick={() => onNavigate(item.id)}
-                  className={`relative flex h-11 items-center gap-2 text-label-md font-semibold transition-colors shrink-0 cursor-pointer ${
+                  className={`relative flex h-11 items-center gap-2 font-label-md text-label-md font-semibold transition-colors shrink-0 cursor-pointer ${
                     isActive
-                      ? "text-interactive after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-interactive"
-                      : "text-on-surface-variant hover:text-on-surface"
+                      ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:h-[3px] after:w-full after:bg-secondary-container"
+                      : "text-on-surface-variant hover:text-primary"
                   }`}
                 >
                   <span

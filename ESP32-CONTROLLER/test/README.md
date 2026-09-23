@@ -1,8 +1,11 @@
 # Controller firmware logic harness
 
 Compiles `../arduino/kiosk_controller/kiosk_controller.ino` against stub
-Arduino / MFRC522 / SSD1306 headers and drives its state machine with fake
-time, fake card taps and fake serial input.
+Arduino / MFRC522 / SSD1306 / WiFi / WebServer headers and drives its state
+machine with fake time, fake card taps and fake HTTP calls (the board's
+wire protocol moved from USB serial to WiFi — GET /events + POST /command —
+when the kiosk went battery-powered; see the file header in the .ino and
+DECISIONS.md for why).
 
 ```sh
 g++ -std=gnu++17 -Istubs -Wno-deprecated-declarations -o simtest simtest.cpp && ./simtest
