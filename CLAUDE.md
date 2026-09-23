@@ -11,11 +11,11 @@ An AI-enabled digital ecosystem for cooperative training institutions (NCCT / VA
 | Layer            | Choice                                                                                                                                            |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Web              | React (TypeScript)                                                                                                                                |
-| Mobile           | React (Vite/TypeScript), packaged as a native Android app via Capacitor — not React Native/Expo; see [docs/DECISIONS.md](docs/DECISIONS.md) #19  |
+| Mobile           | React (Vite/TypeScript), packaged as native Android **and iOS** apps via Capacitor — not React Native/Expo; see [docs/DECISIONS.md](docs/DECISIONS.md) #19, #36 (iOS platform added) |
 | Backend          | Node.js + Express (TypeScript) — single API for both clients                                                                                      |
 | Database         | Supabase (Postgres + Auth + Storage + pgvector)                                                                                                   |
 | Face recognition | `@vladmandic/human` (default); InsightFace `buffalo_l` via `onnxruntime-node` as swap-in alternative — see [docs/DECISIONS.md](docs/DECISIONS.md) |
-| Chatbot          | Gemini API + pgvector RAG — see [docs/DECISIONS.md](docs/DECISIONS.md) #25 (amends #17)                                                          |
+| Chatbot          | Groq API + pgvector RAG — see [docs/DECISIONS.md](docs/DECISIONS.md) #35 (amends #25, amends #17). F12's AI Career Counsellor separately still uses Gemini — see #27. |
 | Hosting/CI       | TBD — see Open Questions in [docs/PRD.md](docs/PRD.md)                                                                                            |
 
 Full detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
