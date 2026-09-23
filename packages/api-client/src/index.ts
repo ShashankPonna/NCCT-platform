@@ -284,6 +284,7 @@ export function getMyCertificates(accessToken: string) {
   return apiFetch<
     (Certificate & {
       pdf_url: string;
+      course_title: string | null;
       programme_title: string | null;
       institution_name: string | null;
     })[]
@@ -472,6 +473,7 @@ export async function getCertificate(code: string): Promise<
   | (Certificate & {
       pdf_url: string;
       trainee_name: string | null;
+      course_title: string | null;
       programme_title: string | null;
       institution_name: string | null;
     })
@@ -600,10 +602,14 @@ export function kioskFaceCheckIn(
   traineeId: string,
   embedding: number[],
 ) {
-  return apiFetch<AttendanceCheckInResult>(`/timetable/${sessionId}/kiosk-face-checkin`, accessToken, {
-    method: "POST",
-    body: { trainee_id: traineeId, embedding },
-  });
+  return apiFetch<AttendanceCheckInResult>(
+    `/timetable/${sessionId}/kiosk-face-checkin`,
+    accessToken,
+    {
+      method: "POST",
+      body: { trainee_id: traineeId, embedding },
+    },
+  );
 }
 
 export function getAttendanceRoster(accessToken: string, sessionId: string) {
@@ -614,10 +620,18 @@ export function getAttendanceRoster(accessToken: string, sessionId: string) {
 }
 
 export function getAttendanceQr(accessToken: string, sessionId: string) {
-  return apiFetch<{ qrDataUrl: string; checkInUrl: string }>(
+  return apiFetch<{ qrDataUrl: string; checkInUrl: string; checkInCode: string }>(
     `/timetable/${sessionId}/qr`,
     accessToken,
   );
+}
+
+// Resolves a session's short numeric check_in_code to the real session row —
+// what both AttendanceManager's (faculty) and TraineeAttendance's (trainee
+// manual fallback) code-entry fields call before acting on the real id, so
+// neither ever has to handle a raw session UUID by hand.
+export function getSessionByCode(accessToken: string, code: string) {
+  return apiFetch<TimetableSession>(`/timetable-sessions/code/${code}`, accessToken);
 }
 
 // Job listings are public data (no requireAuth on the API side, matching

@@ -15,3 +15,17 @@ export function generateCode(length: number): string {
   }
   return code;
 }
+
+// Digits-only, unlike generateCode's letter+digit alphabet above: a
+// timetable session's check-in code is meant to be read aloud or written on
+// a whiteboard (docs/DECISIONS.md), where spoken letters (B/D, M/N) are
+// genuinely ambiguous but spoken digits aren't — the same reasoning join
+// codes in Kahoot/Zoom/Meet are built on.
+export function generateNumericCode(length: number): string {
+  const bytes = randomBytes(length);
+  let code = "";
+  for (const byte of bytes) {
+    code += (byte % 10).toString();
+  }
+  return code;
+}

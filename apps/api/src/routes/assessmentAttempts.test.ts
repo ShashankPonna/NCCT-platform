@@ -40,7 +40,7 @@ vi.mock("../supabaseClient.js", () => ({
 }));
 
 vi.mock("../certificateService.js", () => ({
-  issueCertificateForPassingAttempt: issueCertificateMock,
+  checkAndIssueCourseCertificateForAssessment: issueCertificateMock,
 }));
 
 function buildApp() {
@@ -162,7 +162,7 @@ describe("POST /api/assessments/:id/attempts", () => {
     expect(res.body.attempt).toMatchObject({ score_percent: 100, passed: true });
   });
 
-  it("passes at exactly the threshold and issues a certificate", async () => {
+  it("passes at exactly the threshold and checks course completion, which issues a certificate here", async () => {
     authenticateAs("trainee-1", "trainee");
     assessmentsMock.result.data = { id: "assess-1", pass_threshold_percent: 50 };
     questionsMock.result.data = twoQuestions;
@@ -183,10 +183,34 @@ describe("POST /api/assessments/:id/attempts", () => {
     expect(res.status).toBe(201);
     expect(res.body.certificate).toMatchObject({ certificate_code: "NCCT-ABC12345" });
     expect(issueCertificateMock).toHaveBeenCalledWith({
-      attemptId: "attempt-1",
       assessmentId: "assess-1",
       traineeId: "trainee-1",
     });
+  });
+
+  it("passes but the certificate stays null when the rest of the course isn't complete yet", async () => {
+    authenticateAs("trainee-1", "trainee");
+    assessmentsMock.result.data = { id: "assess-1", pass_threshold_percent: 50 };
+    questionsMock.result.data = twoQuestions;
+    attemptsMock.result.data = {
+      id: "attempt-1",
+      assessment_id: "assess-1",
+      trainee_id: "trainee-1",
+      score_percent: 50,
+      passed: true,
+    };
+    // checkAndIssueCourseCertificateForAssessment resolving null is the
+    // normal, expected outcome of a pass that doesn't complete the course.
+    issueCertificateMock.mockResolvedValue(null);
+
+    const res = await request(buildApp())
+      .post("/api/assessments/assess-1/attempts")
+      .set("Authorization", "Bearer token")
+      .send({ answers: { "q-1": "a", "q-2": "wrong" } });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({ attempt: { passed: true }, certificate: null });
+    expect(res.body.certificateError).toBeUndefined();
   });
 
   it("still returns 201 with the graded attempt if certificate issuance throws", async () => {

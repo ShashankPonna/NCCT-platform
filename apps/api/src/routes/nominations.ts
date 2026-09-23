@@ -52,10 +52,15 @@ nominationsRouter.get(
   },
 );
 
+// Admin+trainer read (not admin-only): a trainer needs to see who's coming
+// to their own sessions — the widening this same request also asked for on
+// the timetable-creation route above, see timetable.ts. *Deciding* a
+// nomination (PATCH below) stays admin-only per PRD's role table; this is
+// read access only.
 nominationsRouter.get(
   "/programmes/:id/nominations",
   requireAuth,
-  requireRole("admin"),
+  requireRole("admin", "trainer"),
   async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from("nominations")

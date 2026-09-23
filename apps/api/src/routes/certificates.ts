@@ -21,7 +21,7 @@ certificatesRouter.get(
   async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from("certificates")
-      .select("*, programmes(title), institutions(name)")
+      .select("*, courses(title), programmes(title), institutions(name)")
       .eq("trainee_id", req.user!.id)
       .order("issued_at", { ascending: false });
 
@@ -32,13 +32,14 @@ certificatesRouter.get(
 
     res.json(
       (data ?? []).map((row) => {
-        const { programmes, institutions, ...certificate } = row;
+        const { courses, programmes, institutions, ...certificate } = row;
         const { data: publicUrl } = supabaseAdmin.storage
           .from("certificates")
           .getPublicUrl(certificate.pdf_storage_path);
         return {
           ...certificate,
           pdf_url: publicUrl.publicUrl,
+          course_title: courses?.title ?? null,
           programme_title: programmes?.title ?? null,
           institution_name: institutions?.name ?? null,
         };
@@ -56,7 +57,7 @@ certificatesRouter.get(
 certificatesRouter.get("/certificates/:code", async (req, res) => {
   const { data, error } = await supabaseAdmin
     .from("certificates")
-    .select("*, profiles(full_name), programmes(title), institutions(name)")
+    .select("*, profiles(full_name), courses(title), programmes(title), institutions(name)")
     .eq("certificate_code", req.params.code)
     .maybeSingle();
 
@@ -73,11 +74,12 @@ certificatesRouter.get("/certificates/:code", async (req, res) => {
     .from("certificates")
     .getPublicUrl(data.pdf_storage_path);
 
-  const { profiles, programmes, institutions, ...certificate } = data;
+  const { profiles, courses, programmes, institutions, ...certificate } = data;
   res.json({
     ...certificate,
     pdf_url: publicUrl.publicUrl,
     trainee_name: profiles?.full_name ?? null,
+    course_title: courses?.title ?? null,
     programme_title: programmes?.title ?? null,
     institution_name: institutions?.name ?? null,
   });

@@ -72,14 +72,16 @@ const content: Record<Locale, TraineeHomeText> = {
     welcome: (firstName) => `Welcome back${firstName ? `, ${firstName}` : ""}!`,
     heroWithProgramme: (title) =>
       `You're making great progress in your ${title} certification. Your next milestone is coming up next week.`,
-    heroNoProgramme: "Explore cooperative management programmes, track your progress, and earn verified certifications.",
+    heroNoProgramme:
+      "Explore cooperative management programmes, track your progress, and earn verified certifications.",
     resumeCourse: "Resume Course",
     browsePogrammes: "Browse Programmes",
     continueLearning: {
       inProgress: "In Progress",
       notStarted: "Not Started",
       noActiveProgramme: "No active programme",
-      modeWithLessons: (mode, completed, total) => `Mode: ${mode} · ${completed}/${total} lessons complete`,
+      modeWithLessons: (mode, completed, total) =>
+        `Mode: ${mode} · ${completed}/${total} lessons complete`,
       modeOnly: (mode) => `Mode: ${mode}`,
       nominatePrompt: "Nominate for a programme to start learning.",
       progress: "Progress",
@@ -96,7 +98,8 @@ const content: Record<Locale, TraineeHomeText> = {
     },
     employerMatch: {
       title: "Employer Match",
-      shortlisted: (count) => `${count} employer${count === 1 ? "" : "s"} shortlisted your profile.`,
+      shortlisted: (count) =>
+        `${count} employer${count === 1 ? "" : "s"} shortlisted your profile.`,
       none: "No employer interest yet — turn on visibility to be discovered.",
       view: "View Open Positions",
     },
@@ -110,7 +113,7 @@ const content: Record<Locale, TraineeHomeText> = {
     certificates: {
       title: (count) => `Certificates (${count})`,
       verified: (count) => `${count} verified credential${count === 1 ? "" : "s"}`,
-      none: "Complete quizzes to earn certificates",
+      none: "Complete a course to earn certificates",
       view: "View Certificates",
     },
   },
@@ -118,7 +121,8 @@ const content: Record<Locale, TraineeHomeText> = {
     welcome: (firstName) => `वापसी पर स्वागत है${firstName ? `, ${firstName}` : ""}!`,
     heroWithProgramme: (title) =>
       `आप अपने ${title} प्रमाणन में अच्छी प्रगति कर रहे हैं। आपका अगला पड़ाव अगले सप्ताह आने वाला है।`,
-    heroNoProgramme: "सहकारी प्रबंधन कार्यक्रमों को देखें, अपनी प्रगति ट्रैक करें, और सत्यापित प्रमाणपत्र अर्जित करें।",
+    heroNoProgramme:
+      "सहकारी प्रबंधन कार्यक्रमों को देखें, अपनी प्रगति ट्रैक करें, और सत्यापित प्रमाणपत्र अर्जित करें।",
     resumeCourse: "पाठ्यक्रम जारी रखें",
     browsePogrammes: "कार्यक्रम देखें",
     continueLearning: {
@@ -136,7 +140,8 @@ const content: Record<Locale, TraineeHomeText> = {
       timetableSession: "समय-सारणी सत्र",
       noUpcoming: "कोई आगामी सत्र नहीं",
       scheduledCaption: "इस कार्यक्रम के लिए आपका अगला निर्धारित सत्र।",
-      noneScheduledWithProgramme: "आपके कार्यक्रम के लिए अभी कुछ भी निर्धारित नहीं है — बाद में फिर देखें।",
+      noneScheduledWithProgramme:
+        "आपके कार्यक्रम के लिए अभी कुछ भी निर्धारित नहीं है — बाद में फिर देखें।",
       noneScheduledNoProgramme: "यहां समय-सारणी देखने के लिए किसी कार्यक्रम हेतु नामांकन करें।",
       markAttendance: "उपस्थिति दर्ज करें (QR / चेहरा)",
     },
@@ -159,7 +164,7 @@ const content: Record<Locale, TraineeHomeText> = {
     certificates: {
       title: (count) => `प्रमाणपत्र (${count})`,
       verified: (count) => `${count} सत्यापित प्रमाणपत्र`,
-      none: "प्रमाणपत्र अर्जित करने के लिए क्विज़ पूरी करें",
+      none: "प्रमाणपत्र अर्जित करने के लिए एक कोर्स पूरा करें",
       view: "प्रमाणपत्र देखें",
     },
   },
@@ -288,7 +293,9 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
             <div>
               <div className="mb-1.5 flex justify-between text-label-sm text-on-surface-variant">
                 <span>{t.continueLearning.progress}</span>
-                <span className="font-bold text-interactive">{progress ? `${progress.percent}%` : "0%"}</span>
+                <span className="font-bold text-interactive">
+                  {progress ? `${progress.percent}%` : "0%"}
+                </span>
               </div>
               <div className="h-2 w-full rounded-full bg-surface-container">
                 <div
@@ -320,7 +327,9 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
             )}
           </div>
           <h3 className="mb-1.5 font-headline text-headline-sm font-bold text-on-surface">
-            {nextSession ? (nextSession.title ?? t.nextSession.timetableSession) : t.nextSession.noUpcoming}
+            {nextSession
+              ? (nextSession.title ?? t.nextSession.timetableSession)
+              : t.nextSession.noUpcoming}
           </h3>
           <p className="mb-4 flex-1 text-body-md text-on-surface-variant">
             {nextSession
@@ -334,10 +343,13 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
               <span className="material-symbols-outlined text-outline">schedule</span>
               <div>
                 <p className="text-label-md font-bold text-on-surface">
-                  {new Date(nextSession.starts_at).toLocaleString(locale === "hi" ? "hi-IN" : undefined, {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })}
+                  {new Date(nextSession.starts_at).toLocaleString(
+                    locale === "hi" ? "hi-IN" : undefined,
+                    {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    },
+                  )}
                 </p>
                 {nextSession.location && (
                   <p className="text-label-sm text-on-surface-variant">{nextSession.location}</p>
@@ -364,7 +376,9 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
             <div className="flex-1">
               <h4 className="text-label-md font-bold text-on-surface">{t.employerMatch.title}</h4>
               <p className="text-label-sm text-on-surface-variant">
-                {shortlistCount > 0 ? t.employerMatch.shortlisted(shortlistCount) : t.employerMatch.none}
+                {shortlistCount > 0
+                  ? t.employerMatch.shortlisted(shortlistCount)
+                  : t.employerMatch.none}
               </p>
             </div>
             <button
@@ -414,9 +428,13 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
                 <span className="material-symbols-outlined">workspace_premium</span>
               </div>
               <div>
-                <h4 className="text-label-md font-bold text-on-surface">{t.certificates.title(certificates.length)}</h4>
+                <h4 className="text-label-md font-bold text-on-surface">
+                  {t.certificates.title(certificates.length)}
+                </h4>
                 <p className="text-label-sm text-on-surface-variant">
-                  {certificates.length > 0 ? t.certificates.verified(certificates.length) : t.certificates.none}
+                  {certificates.length > 0
+                    ? t.certificates.verified(certificates.length)
+                    : t.certificates.none}
                 </p>
               </div>
             </div>

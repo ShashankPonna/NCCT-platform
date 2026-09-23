@@ -1,4 +1,4 @@
-import { getAttendanceQr, getAttendanceRoster } from "@ncct/api-client";
+import { getAttendanceQr, getAttendanceRoster, getSessionByCode } from "@ncct/api-client";
 import type { AttendanceRecord } from "@ncct/shared-types";
 import { useState } from "react";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
@@ -29,6 +29,8 @@ interface AttendanceManagerText {
   needsReview: string;
   scanToCheckIn: string;
   scanInstructions: string;
+  sessionCode: string;
+  sessionCodeHint: string;
   directUrl: string;
   linkCopied: string;
   copyLink: string;
@@ -40,8 +42,8 @@ const content: Record<Locale, AttendanceManagerText> = {
     heading: "Session Attendance",
     subheading: "Manage live check-ins, generate QR passes, and verify trainee presence.",
     sessionControls: "Session Controls",
-    sessionIdLabel: "Session ID / UUID",
-    sessionIdPlaceholder: "Enter timetable session UUID...",
+    sessionIdLabel: "Session Code",
+    sessionIdPlaceholder: "Enter the 6-digit session code...",
     generateQr: "Generate QR",
     loadRoster: "Load Roster",
     liveRoster: "Live Roster",
@@ -55,6 +57,8 @@ const content: Record<Locale, AttendanceManagerText> = {
     needsReview: "(Needs Review)",
     scanToCheckIn: "Scan to Check-in",
     scanInstructions: "Trainees can scan this QR code with the camera or mobile app.",
+    sessionCode: "Session Code",
+    sessionCodeHint: "Share this instead of the QR — trainees can type it in by hand.",
     directUrl: "Direct Check-in URL",
     linkCopied: "Link Copied!",
     copyLink: "Copy Check-in Link",
@@ -64,8 +68,8 @@ const content: Record<Locale, AttendanceManagerText> = {
     heading: "सत्र उपस्थिति",
     subheading: "लाइव चेक-इन प्रबंधित करें, QR पास बनाएं, और प्रशिक्षणार्थी उपस्थिति सत्यापित करें।",
     sessionControls: "सत्र नियंत्रण",
-    sessionIdLabel: "सत्र आईडी / UUID",
-    sessionIdPlaceholder: "समय-सारणी सत्र UUID दर्ज करें...",
+    sessionIdLabel: "सत्र कोड",
+    sessionIdPlaceholder: "6-अंकीय सत्र कोड दर्ज करें...",
     generateQr: "QR बनाएं",
     loadRoster: "रोस्टर लोड करें",
     liveRoster: "लाइव रोस्टर",
@@ -79,6 +83,8 @@ const content: Record<Locale, AttendanceManagerText> = {
     needsReview: "(समीक्षा आवश्यक)",
     scanToCheckIn: "चेक-इन के लिए स्कैन करें",
     scanInstructions: "प्रशिक्षणार्थी कैमरे या मोबाइल ऐप से इस QR कोड को स्कैन कर सकते हैं।",
+    sessionCode: "सत्र कोड",
+    sessionCodeHint: "QR के बजाय इसे साझा करें — प्रशिक्षणार्थी इसे हाथ से टाइप कर सकते हैं।",
     directUrl: "सीधा चेक-इन URL",
     linkCopied: "लिंक कॉपी हो गया!",
     copyLink: "चेक-इन लिंक कॉपी करें",
@@ -89,22 +95,37 @@ const content: Record<Locale, AttendanceManagerText> = {
 export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
   const { locale } = useLocale();
   const t = content[locale];
-  const [sessionId, setSessionId] = useState("");
+  const [sessionCode, setSessionCode] = useState("");
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [checkInUrl, setCheckInUrl] = useState<string | null>(null);
+  const [checkInCode, setCheckInCode] = useState<string | null>(null);
   const [roster, setRoster] = useState<RosterRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Faculty type the short code, not the session's real UUID — this resolves
+  // it once per action so Generate QR / Load Roster / the kiosk below all
+  // keep working against the real id internally.
+  async function resolveSessionId(): Promise<string | null> {
+    if (!sessionCode.trim()) return null;
+    const session = await getSessionByCode(accessToken, sessionCode.trim());
+    setSessionId(session.id);
+    return session.id;
+  }
+
   async function handleGenerateQr() {
-    if (!sessionId.trim()) return;
+    if (!sessionCode.trim()) return;
     setError(null);
     setBusy(true);
     try {
-      const result = await getAttendanceQr(accessToken, sessionId.trim());
+      const id = await resolveSessionId();
+      if (!id) return;
+      const result = await getAttendanceQr(accessToken, id);
       setQrDataUrl(result.qrDataUrl);
       setCheckInUrl(result.checkInUrl);
+      setCheckInCode(result.checkInCode);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -113,11 +134,13 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
   }
 
   async function handleLoadRoster() {
-    if (!sessionId.trim()) return;
+    if (!sessionCode.trim()) return;
     setError(null);
     setBusy(true);
     try {
-      const data = await getAttendanceRoster(accessToken, sessionId.trim());
+      const id = await resolveSessionId();
+      if (!id) return;
+      const data = await getAttendanceRoster(accessToken, id);
       setRoster(data);
     } catch (err) {
       setError((err as Error).message);
@@ -171,9 +194,11 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                   </span>
                   <input
                     id="sessionId"
-                    value={sessionId}
-                    onChange={(e) => setSessionId(e.target.value)}
+                    value={sessionCode}
+                    onChange={(e) => setSessionCode(e.target.value)}
                     placeholder={t.sessionIdPlaceholder}
+                    inputMode="numeric"
+                    maxLength={6}
                     className="w-full h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 pl-10 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow"
                     type="text"
                   />
@@ -183,7 +208,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
               <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                 <button
                   type="button"
-                  disabled={busy || !sessionId.trim()}
+                  disabled={busy || !sessionCode.trim()}
                   onClick={() => void handleGenerateQr()}
                   className="h-touch-target px-6 bg-cta text-on-primary hover:bg-cta-hover disabled:opacity-50 rounded-full font-label-md text-label-md transition-colors flex items-center justify-center gap-2 whitespace-nowrap shadow-sm cursor-pointer"
                 >
@@ -192,7 +217,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                 </button>
                 <button
                   type="button"
-                  disabled={busy || !sessionId.trim()}
+                  disabled={busy || !sessionCode.trim()}
                   onClick={() => void handleLoadRoster()}
                   className="h-touch-target px-6 bg-transparent border border-outline text-primary hover:bg-surface-container-high disabled:opacity-50 rounded-full font-label-md text-label-md transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer"
                 >
@@ -203,7 +228,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
             </div>
           </section>
 
-          <KioskFaceCheckIn accessToken={accessToken} sessionId={sessionId} />
+          <KioskFaceCheckIn accessToken={accessToken} sessionId={sessionId ?? ""} />
 
           {/* Attendance Roster Table Card */}
           {roster && (
@@ -320,6 +345,19 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                   className="w-48 h-48 object-contain"
                 />
               </div>
+              {checkInCode && (
+                <div className="w-full bg-primary-container p-4 rounded-lg text-center mb-4">
+                  <p className="font-label-sm text-label-sm text-on-primary-container mb-1 uppercase tracking-wider">
+                    {t.sessionCode}
+                  </p>
+                  <p className="font-mono text-3xl tracking-[0.3em] text-on-primary-container font-bold">
+                    {checkInCode}
+                  </p>
+                  <p className="font-body-sm text-body-sm text-on-primary-container/80 mt-1">
+                    {t.sessionCodeHint}
+                  </p>
+                </div>
+              )}
               <div className="w-full bg-surface-container p-4 rounded-lg text-left">
                 <p className="font-label-sm text-label-sm text-outline mb-1 uppercase tracking-wider">
                   {t.directUrl}

@@ -239,7 +239,7 @@ attendanceRouter.get(
   async (req, res) => {
     const { data: session, error } = await supabaseAdmin
       .from("timetable_sessions")
-      .select("id")
+      .select("id, check_in_code")
       .eq("id", req.params.sessionId)
       .maybeSingle();
 
@@ -255,6 +255,6 @@ attendanceRouter.get(
     const publicWebUrl = process.env.PUBLIC_WEB_URL ?? "http://localhost:5173";
     const checkInUrl = `${publicWebUrl}/?checkin=${session.id}`;
     const qrDataUrl = await QRCode.toDataURL(checkInUrl, { width: 300 });
-    res.json({ qrDataUrl, checkInUrl });
+    res.json({ qrDataUrl, checkInUrl, checkInCode: session.check_in_code });
   },
 );

@@ -10,6 +10,11 @@ interface TraineeLearnProps {
   accessToken: string;
   subView?: LearnView;
   onSubViewChange?: (view: LearnView) => void;
+  /** Lifted from TraineeApp (docs/DECISIONS.md's offline-sync fix) so the
+   * write-queue flush isn't tied to this screen being mounted — only the
+   * banner display still lives here, in TraineeLearnLessons. */
+  online: boolean;
+  pendingCount: number;
 }
 
 const TAB_LABELS: Record<Locale, Record<LearnView, string>> = {
@@ -31,7 +36,13 @@ const TAB_IDS: LearnView[] = ["lessons", "certificates", "nominate"];
 // learn_nominate_enroll) presented as one segmented sub-nav rather than
 // three separate top-level nav destinations — keeps the main nav at 4 items
 // per the "don't overload the navbar" call made while planning this feature.
-export function TraineeLearn({ accessToken, subView, onSubViewChange }: TraineeLearnProps) {
+export function TraineeLearn({
+  accessToken,
+  subView,
+  onSubViewChange,
+  online,
+  pendingCount,
+}: TraineeLearnProps) {
   const { locale } = useLocale();
   const labels = TAB_LABELS[locale];
   const [localView, setLocalView] = useState<LearnView>("lessons");
@@ -61,7 +72,9 @@ export function TraineeLearn({ accessToken, subView, onSubViewChange }: TraineeL
         ))}
       </div>
 
-      {view === "lessons" && <TraineeLearnLessons accessToken={accessToken} />}
+      {view === "lessons" && (
+        <TraineeLearnLessons accessToken={accessToken} online={online} pendingCount={pendingCount} />
+      )}
       {view === "certificates" && <TraineeLearnCertificates accessToken={accessToken} />}
       {view === "nominate" && <TraineeLearnNominate accessToken={accessToken} />}
     </div>

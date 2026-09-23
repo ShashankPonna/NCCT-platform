@@ -111,6 +111,7 @@ export interface TimetableSession {
   starts_at: string;
   ends_at: string;
   location: string | null;
+  check_in_code: string;
   created_at: string;
 }
 
@@ -214,7 +215,11 @@ export interface AssessmentAttempt {
 export interface Certificate {
   id: string;
   certificate_code: string;
-  assessment_attempt_id: string;
+  // Nullable: a course with no assessments (pure lesson content) can still
+  // be completed and certified with no passing attempt to point at. See
+  // docs/DECISIONS.md #37.
+  assessment_attempt_id: string | null;
+  course_id: string;
   trainee_id: string;
   programme_id: string;
   issuing_institution_id: string;
@@ -275,6 +280,7 @@ export interface VisibilitySettings {
 // profile row (no phone, no cooperative_affiliation).
 export interface PublicProfileCertificate {
   certificate_code: string;
+  course_title: string | null;
   programme_title: string | null;
   institution_name: string | null;
   issued_at: string;

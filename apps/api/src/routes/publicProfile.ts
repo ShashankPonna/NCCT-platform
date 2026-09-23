@@ -20,6 +20,7 @@ function generatePublicProfileCode(): string {
 interface CertRow {
   certificate_code: string;
   issued_at: string;
+  courses: { title: string } | null;
   programmes: { title: string } | null;
   institutions: { name: string } | null;
 }
@@ -35,12 +36,16 @@ async function buildProfileResult(
 ): Promise<PublicProfileResult> {
   const { data: certificates, error } = await supabaseAdmin
     .from("certificates")
-    .select("certificate_code, issued_at, programmes(title), institutions(name)")
+    .select("certificate_code, issued_at, courses(title), programmes(title), institutions(name)")
     .eq("trainee_id", traineeId)
     .order("issued_at", { ascending: false });
   if (error) throw new Error(error.message);
 
   const rows = (certificates ?? []) as unknown as CertRow[];
+  // "Skills" are still derived from programme titles, not course titles —
+  // a programme is what the Skill-Gap taxonomy tags (programme_skills), and
+  // several courses within one programme should still read as one skill,
+  // not fragment into one per completed course.
   const skills = [
     ...new Set(rows.map((row) => row.programmes?.title).filter((t): t is string => Boolean(t))),
   ];
@@ -49,6 +54,7 @@ async function buildProfileResult(
     full_name: fullName,
     certificates: rows.map((row) => ({
       certificate_code: row.certificate_code,
+      course_title: row.courses?.title ?? null,
       programme_title: row.programmes?.title ?? null,
       institution_name: row.institutions?.name ?? null,
       issued_at: row.issued_at,

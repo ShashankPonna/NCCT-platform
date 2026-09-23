@@ -1,6 +1,6 @@
 import { submitAttemptSchema } from "@ncct/validation";
 import { Router } from "express";
-import { issueCertificateForPassingAttempt } from "../certificateService.js";
+import { checkAndIssueCourseCertificateForAssessment } from "../certificateService.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
@@ -79,17 +79,21 @@ assessmentAttemptsRouter.post(
     }
 
     try {
-      const certificate = await issueCertificateForPassingAttempt({
-        attemptId: attempt.id,
+      // A pass no longer mints a certificate by itself — this checks
+      // whether the whole course (every lesson + every module assessment)
+      // is now complete, and only then issues one. `certificate` is null on
+      // a perfectly normal pass if other lessons/assessments in the course
+      // are still outstanding; that's expected, not an error.
+      const certificate = await checkAndIssueCourseCertificateForAssessment({
         assessmentId: req.params.id,
         traineeId: req.user!.id,
       });
       res.status(201).json({ attempt, certificate });
     } catch (err) {
       // The attempt itself is already recorded and graded correctly; only
-      // certificate generation failed (e.g. a Storage/PDF-rendering issue).
-      // Surface that distinctly rather than making the whole submission
-      // look like it failed.
+      // the course-completion check/certificate generation failed (e.g. a
+      // Storage/PDF-rendering issue). Surface that distinctly rather than
+      // making the whole submission look like it failed.
       res.status(201).json({
         attempt,
         certificate: null,

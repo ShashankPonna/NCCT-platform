@@ -1,5 +1,6 @@
 import { updateLessonProgressSchema } from "@ncct/validation";
 import { Router } from "express";
+import { checkAndIssueCourseCertificateForLesson } from "../certificateService.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 
 export const lessonProgressRouter = Router();
@@ -57,6 +58,29 @@ lessonProgressRouter.patch(
       res.status(400).json({ error: error.message });
       return;
     }
+
+    // A lesson being marked complete can be the *last* thing needed to
+    // complete its whole course — check, and issue the course certificate
+    // if so (a no-op if the course isn't fully done, or already certified).
+    // This write is the trainee's real, already-persisted progress, so a
+    // certificate-check failure (e.g. Storage) must not fail the response —
+    // logged, not thrown, same reasoning as assessmentAttempts.ts's
+    // certificateError handling, just with nothing in the response shape to
+    // put it in here since no caller currently reads it.
+    if (parsed.data.completed_at) {
+      try {
+        await checkAndIssueCourseCertificateForLesson({
+          traineeId: req.user!.id,
+          lessonId: req.params.id,
+        });
+      } catch (err) {
+        console.error(
+          `Course-completion certificate check failed for lesson ${req.params.id}:`,
+          (err as Error).message,
+        );
+      }
+    }
+
     res.json(data);
   },
 );

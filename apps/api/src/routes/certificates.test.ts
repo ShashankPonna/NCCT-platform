@@ -91,10 +91,12 @@ describe("GET /api/certificates/:code", () => {
       id: "cert-1",
       certificate_code: "NCCT-ABC12345",
       trainee_id: "trainee-1",
+      course_id: "course-1",
       programme_id: "prog-1",
       issuing_institution_id: "inst-1",
       pdf_storage_path: "NCCT-ABC12345.pdf",
       profiles: { full_name: "Asha Patil" },
+      courses: { title: "Intro to Cooperative Banking" },
       programmes: { title: "Cooperative Management Basics" },
       institutions: { name: "VAMNICOM" },
     };
@@ -108,6 +110,7 @@ describe("GET /api/certificates/:code", () => {
     expect(res.body).toMatchObject({
       certificate_code: "NCCT-ABC12345",
       trainee_name: "Asha Patil",
+      course_title: "Intro to Cooperative Banking",
       programme_title: "Cooperative Management Basics",
       institution_name: "VAMNICOM",
       pdf_url: "https://example.com/certificates/NCCT-ABC12345.pdf",
@@ -147,10 +150,12 @@ describe("GET /api/certificates/mine", () => {
         id: "cert-1",
         certificate_code: "NCCT-ABC12345",
         trainee_id: TRAINEE_ID,
+        course_id: "course-1",
         programme_id: "prog-1",
         issuing_institution_id: "inst-1",
         pdf_storage_path: "NCCT-ABC12345.pdf",
         issued_at: "2026-09-01T00:00:00.000Z",
+        courses: { title: "Intro to Cooperative Banking" },
         programmes: { title: "Cooperative Management Basics" },
         institutions: { name: "VAMNICOM" },
       },
@@ -167,6 +172,7 @@ describe("GET /api/certificates/mine", () => {
     expect(res.body).toHaveLength(1);
     expect(res.body[0]).toMatchObject({
       certificate_code: "NCCT-ABC12345",
+      course_title: "Intro to Cooperative Banking",
       programme_title: "Cooperative Management Basics",
       institution_name: "VAMNICOM",
       pdf_url: "https://example.com/certificates/NCCT-ABC12345.pdf",

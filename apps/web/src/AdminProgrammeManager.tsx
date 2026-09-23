@@ -27,6 +27,13 @@ import { SkillPicker } from "./SkillPicker.js";
 
 interface AdminProgrammeManagerProps {
   accessToken: string;
+  // Trainers can browse programmes and manage their own timetable sessions
+  // here (direct user request — they had no way to schedule a session slot
+  // at all), but programme creation and nomination approval stay admin-only,
+  // per PRD's role table; skill-taxonomy tagging is likewise left admin-only
+  // as a judgment call, since it's a P1 acquisition-source config PRD never
+  // assigns to trainer either.
+  role: "admin" | "trainer";
 }
 
 interface AdminProgrammeManagerText {
@@ -249,7 +256,8 @@ const content: Record<Locale, AdminProgrammeManagerText> = {
   },
 };
 
-export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProps) {
+export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManagerProps) {
+  const isAdmin = role === "admin";
   const { locale } = useLocale();
   const t = content[locale];
   const dateLocale = locale === "hi" ? "hi-IN" : undefined;
@@ -447,14 +455,16 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
           </h2>
           <p className="font-body-md text-body-md text-on-surface-variant mt-1">{t.subheading}</p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          type="button"
-          className="bg-cta hover:bg-cta-hover text-on-primary px-6 py-2 rounded-lg font-label-md text-label-md min-h-[44px] transition-colors flex items-center gap-2 shadow-sm"
-        >
-          <span className="material-symbols-outlined text-[18px]">add</span>
-          {t.newProgramme}
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            type="button"
+            className="bg-cta hover:bg-cta-hover text-on-primary px-6 py-2 rounded-lg font-label-md text-label-md min-h-[44px] transition-colors flex items-center gap-2 shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[18px]">add</span>
+            {t.newProgramme}
+          </button>
+        )}
       </header>
 
       {error && (
@@ -652,34 +662,36 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                               </span>
                             </div>
 
-                            {/* Decision Buttons */}
-                            <div className="flex gap-2 pt-2 border-t border-outline-variant/30">
-                              <button
-                                type="button"
-                                onClick={() => void handleDecide(nom.id, "approved")}
-                                disabled={nom.status === "approved"}
-                                className="flex-1 bg-status-success/10 hover:bg-status-success/20 text-status-success disabled:opacity-40 px-3 py-2 rounded-lg font-label-md text-label-md min-h-[44px] transition-colors border border-status-success/30 font-semibold"
-                              >
-                                {t.approve}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => void handleDecide(nom.id, "waitlisted")}
-                                disabled={nom.status === "waitlisted"}
-                                className="flex-1 bg-surface-container-highest hover:bg-surface-variant text-primary disabled:opacity-40 px-3 py-2 rounded-lg font-label-md text-label-md min-h-[44px] transition-colors border border-outline-variant font-semibold"
-                              >
-                                {t.waitlist}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => void handleDecide(nom.id, "rejected")}
-                                disabled={nom.status === "rejected"}
-                                title={t.rejectTitle}
-                                className="w-[44px] flex items-center justify-center bg-error-container/50 hover:bg-error-container text-error disabled:opacity-40 rounded-lg transition-colors border border-error/20"
-                              >
-                                <span className="material-symbols-outlined text-[20px]">close</span>
-                              </button>
-                            </div>
+                            {/* Decision Buttons — approval stays admin-only per PRD's role table */}
+                            {isAdmin && (
+                              <div className="flex gap-2 pt-2 border-t border-outline-variant/30">
+                                <button
+                                  type="button"
+                                  onClick={() => void handleDecide(nom.id, "approved")}
+                                  disabled={nom.status === "approved"}
+                                  className="flex-1 bg-status-success/10 hover:bg-status-success/20 text-status-success disabled:opacity-40 px-3 py-2 rounded-lg font-label-md text-label-md min-h-[44px] transition-colors border border-status-success/30 font-semibold"
+                                >
+                                  {t.approve}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => void handleDecide(nom.id, "waitlisted")}
+                                  disabled={nom.status === "waitlisted"}
+                                  className="flex-1 bg-surface-container-highest hover:bg-surface-variant text-primary disabled:opacity-40 px-3 py-2 rounded-lg font-label-md text-label-md min-h-[44px] transition-colors border border-outline-variant font-semibold"
+                                >
+                                  {t.waitlist}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => void handleDecide(nom.id, "rejected")}
+                                  disabled={nom.status === "rejected"}
+                                  title={t.rejectTitle}
+                                  className="w-[44px] flex items-center justify-center bg-error-container/50 hover:bg-error-container text-error disabled:opacity-40 rounded-lg transition-colors border border-error/20"
+                                >
+                                  <span className="material-symbols-outlined text-[20px]">close</span>
+                                </button>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -841,46 +853,48 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
                   )}
                 </div>
 
-                {/* Skills Granted Section (P1 Skill-Gap Analysis, DECISIONS.md #26) */}
-                <div>
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-headline-md text-headline-md text-primary m-0">
-                      {t.skillsGranted(programmeSkillIds.size)}
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => void handleSaveProgrammeSkills()}
-                      disabled={savingSkills}
-                      className="px-4 py-2 rounded-lg font-label-md text-label-md bg-cta text-on-primary min-h-[44px] hover:bg-cta-hover shadow-sm disabled:opacity-50"
-                    >
-                      {savingSkills ? t.saving : t.saveSkills}
-                    </button>
+                {/* Skills Granted Section (P1 Skill-Gap Analysis, DECISIONS.md #26) — admin-only config, not a trainer concern */}
+                {isAdmin && (
+                  <div>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="font-headline-md text-headline-md text-primary m-0">
+                        {t.skillsGranted(programmeSkillIds.size)}
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => void handleSaveProgrammeSkills()}
+                        disabled={savingSkills}
+                        className="px-4 py-2 rounded-lg font-label-md text-label-md bg-cta text-on-primary min-h-[44px] hover:bg-cta-hover shadow-sm disabled:opacity-50"
+                      >
+                        {savingSkills ? t.saving : t.saveSkills}
+                      </button>
+                    </div>
+                    <p className="font-body-sm text-on-surface-variant mb-3">{t.skillsGrantedBody}</p>
+                    <SkillPicker skills={skills} selectedIds={programmeSkillIds} onToggle={toggleProgrammeSkill} />
+                    <div className="flex gap-2 mt-2">
+                      <input
+                        value={newSkillName}
+                        onChange={(e) => setNewSkillName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            void handleCreateSkill();
+                          }
+                        }}
+                        placeholder={t.newSkillPlaceholder}
+                        className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                        type="text"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void handleCreateSkill()}
+                        className="px-4 h-touch-target bg-surface-container-highest text-on-surface rounded-lg font-label-sm text-label-sm hover:bg-surface-variant cursor-pointer"
+                      >
+                        {t.addToTaxonomy}
+                      </button>
+                    </div>
                   </div>
-                  <p className="font-body-sm text-on-surface-variant mb-3">{t.skillsGrantedBody}</p>
-                  <SkillPicker skills={skills} selectedIds={programmeSkillIds} onToggle={toggleProgrammeSkill} />
-                  <div className="flex gap-2 mt-2">
-                    <input
-                      value={newSkillName}
-                      onChange={(e) => setNewSkillName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          void handleCreateSkill();
-                        }
-                      }}
-                      placeholder={t.newSkillPlaceholder}
-                      className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-                      type="text"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => void handleCreateSkill()}
-                      className="px-4 h-touch-target bg-surface-container-highest text-on-surface rounded-lg font-label-sm text-label-sm hover:bg-surface-variant cursor-pointer"
-                    >
-                      {t.addToTaxonomy}
-                    </button>
-                  </div>
-                </div>
+                )}
               </div>
             </>
           ) : (
@@ -893,8 +907,10 @@ export function AdminProgrammeManager({ accessToken }: AdminProgrammeManagerProp
         </div>
       </div>
 
-      {/* Create Programme Modal Overlay */}
-      {showCreateModal && (
+      {/* Create Programme Modal Overlay — admin-only, guarded here too since
+          showCreateModal can only become true via the now admin-gated button
+          above, but this keeps the invariant explicit rather than implicit. */}
+      {isAdmin && showCreateModal && (
         <div className="fixed inset-0 bg-primary/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-surface-card rounded-xl border border-outline-variant shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden text-left">
             <div className="p-6 border-b border-outline-variant flex justify-between items-center bg-surface">
