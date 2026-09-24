@@ -17,7 +17,7 @@ import type {
   Module,
   Nomination,
 } from "@ncct/shared-types";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocale, type Locale } from "../i18n/LocaleContext.js";
 import { MatchingExercise } from "../MatchingExercise.js";
 import {
@@ -165,6 +165,12 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
   const [progress, setProgress] = useState<LessonProgress | null>(null);
   const [translations, setTranslations] = useState<ContentTranslation[]>([]);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  // True only while a self-hosted video's signed URL is actually in flight
+  // — distinct from `videoUrl === null`, which was previously also true for
+  // a lesson that genuinely has no video, making the two indistinguishable
+  // to SelfHostedVideoPlayer (it showed "No video available" during every
+  // load, not just a real absence).
+  const [videoLoading, setVideoLoading] = useState(false);
   // Content-translation locale (e.g. a lesson's own Hindi/English text
   // variant) — a different axis from `uiLocale` above (the app chrome's
   // language), which is why this keeps its own name and default.
@@ -190,6 +196,12 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
   const [downloadManifest, setDownloadManifest] = useState<Record<string, DownloadedLesson>>({});
   const [offlinePlaybackId, setOfflinePlaybackId] = useState<string | null>(null);
   const [offlinePlaybackUri, setOfflinePlaybackUri] = useState<string | null>(null);
+
+  // Which lesson's video-URL fetch is the "current" one — read inside the
+  // fetch's own .then/.finally so a slower, superseded request (the trainee
+  // clicked a second lesson before the first one's signed URL came back)
+  // can't overwrite state for the lesson actually on screen now.
+  const videoFetchLessonIdRef = useRef<string | null>(null);
 
   const activeTranslation = translations.find((tr) => tr.locale === contentLocale) ?? null;
 
@@ -303,7 +315,9 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
     setSelectedLesson(lesson);
     setContentLocale("");
     setVideoUrl(null);
+    setVideoLoading(false);
     setError(null);
+    videoFetchLessonIdRef.current = lesson.id;
 
     const needsVideoUrl = lesson.content_type === "video" && !lesson.video_id;
 
@@ -340,19 +354,37 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
       return;
     }
 
+    // The video-URL fetch is deliberately NOT part of the Promise.all below
+    // — it used to be, which meant `setVideoUrl` only ever fired once
+    // progress *and* translations had also finished, so a slow (or merely
+    // unlucky) one of those two calls delayed the one thing the trainee is
+    // actually staring at a blank player waiting for. Firing it separately
+    // means it updates the screen the moment it — and only it — resolves.
+    // `videoFetchLessonIdRef` guards against a second, faster lesson click
+    // landing first: if the trainee has already moved on by the time this
+    // resolves, its result is simply dropped rather than overwriting what's
+    // now on screen.
+    if (needsVideoUrl && !localUri) {
+      setVideoLoading(true);
+      getLessonVideoUrl(accessToken, lesson.id)
+        .then((video) => {
+          if (videoFetchLessonIdRef.current === lesson.id && video?.url) setVideoUrl(video.url);
+        })
+        .catch((err) => {
+          if (videoFetchLessonIdRef.current === lesson.id) setError((err as Error).message);
+        })
+        .finally(() => {
+          if (videoFetchLessonIdRef.current === lesson.id) setVideoLoading(false);
+        });
+    }
+
     try {
-      // Only fetch a playback URL for a video lesson with no YouTube ID —
-      // one with a video_id renders via YouTubeVideoPlayer instead, and the
-      // route itself would just return { url: null } for a non-video lesson.
-      // Skipped entirely when a local copy is already playing (`localUri`).
-      const [lessonProgress, lessonTranslations, video] = await Promise.all([
+      const [lessonProgress, lessonTranslations] = await Promise.all([
         getLessonProgress(accessToken, lesson.id),
         getLessonTranslations(accessToken, lesson.id),
-        needsVideoUrl && !localUri ? getLessonVideoUrl(accessToken, lesson.id) : Promise.resolve(null),
       ]);
       setProgress(lessonProgress);
       setTranslations(lessonTranslations);
-      if (video?.url) setVideoUrl(video.url);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -680,7 +712,7 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
                 (selectedLesson.video_id ? (
                   <YouTubeVideoPlayer videoId={selectedLesson.video_id} />
                 ) : (
-                  <SelfHostedVideoPlayer url={videoUrl} />
+                  <SelfHostedVideoPlayer url={videoUrl} loading={videoLoading} />
                 ))}
               {selectedLesson.content_type === "video" &&
                 !selectedLesson.video_id &&

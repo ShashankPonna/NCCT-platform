@@ -76,6 +76,7 @@ interface AdminCourseManagerText {
   skillsGranted: (count: number) => string;
   hideSkillsGranted: string;
   skillsGrantedBody: string;
+  courseSkillsUnavailable: string;
   newSkillPlaceholder: string;
   addToTaxonomy: string;
   saveSkills: string;
@@ -144,6 +145,8 @@ const content: Record<Locale, AdminCourseManagerText> = {
     hideSkillsGranted: "Hide Skills",
     skillsGrantedBody:
       "A trainee who earns a certificate for this specific course is read as having acquired every skill tagged here, in addition to anything tagged on the whole programme — this is what the Skill-Gap Check compares a job's required skills against.",
+    courseSkillsUnavailable:
+      "Course-level skill tagging isn't set up on this project yet — ask an admin to apply the pending database migration. Skills granted on the whole programme still work as before.",
     newSkillPlaceholder: "New skill, e.g. Bookkeeping",
     addToTaxonomy: "Add to Taxonomy",
     saveSkills: "Save Skills",
@@ -210,6 +213,8 @@ const content: Record<Locale, AdminCourseManagerText> = {
     hideSkillsGranted: "कौशल छिपाएं",
     skillsGrantedBody:
       "जो प्रशिक्षणार्थी इस विशिष्ट पाठ्यक्रम के लिए प्रमाणपत्र अर्जित करता है, उसे यहां टैग किए गए हर कौशल को — पूरे कार्यक्रम पर टैग किए गए कौशलों के अतिरिक्त — अर्जित माना जाता है। कौशल-अंतर जांच किसी नौकरी के आवश्यक कौशलों की तुलना इसी से करती है।",
+    courseSkillsUnavailable:
+      "इस प्रोजेक्ट पर पाठ्यक्रम-स्तरीय कौशल टैगिंग अभी सेट नहीं हुई है — किसी एडमिन से लंबित डेटाबेस माइग्रेशन लागू करने को कहें। पूरे कार्यक्रम पर दिए गए कौशल पहले की तरह काम करते रहेंगे।",
     newSkillPlaceholder: "नया कौशल, उदा. बहीखाता",
     addToTaxonomy: "वर्गीकरण में जोड़ें",
     saveSkills: "कौशल सहेजें",
@@ -290,6 +295,11 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
   const [newSkillName, setNewSkillName] = useState("");
   const [savingCourseSkills, setSavingCourseSkills] = useState(false);
   const [showCourseSkills, setShowCourseSkills] = useState(false);
+  // True when the course_skills table doesn't exist yet on this project —
+  // migration 20260901000017 not applied. This is an additive enrichment
+  // on top of course selection, so its own failure must never block loading
+  // the course's modules (see handleSelectCourse's separate try/catch).
+  const [courseSkillsUnavailable, setCourseSkillsUnavailable] = useState(false);
 
   useEffect(() => {
     getProgrammes(accessToken)
@@ -329,19 +339,29 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
     setSelectedModuleId(null);
     setLessons([]);
     setShowCourseSkills(false);
+    setCourseSkillsUnavailable(false);
     setError(null);
     try {
-      const [mods, courseSkills] = await Promise.all([
-        getModules(accessToken, courseId),
-        getCourseSkills(accessToken, courseId),
-      ]);
+      const mods = await getModules(accessToken, courseId);
       setModules(mods);
-      setCourseSkillIds(new Set(courseSkills.map((s) => s.id)));
       if (mods.length > 0) {
         await handleSelectModule(mods[0].id);
       }
     } catch (err) {
       setError((err as Error).message);
+    }
+
+    // Deliberately its own try/catch, not bundled into the Promise.all
+    // above: this is an additive enrichment (DECISIONS.md #45), and a
+    // pending-migration failure here must never take the actual "select a
+    // course, see its modules" flow down with it — that regression is
+    // exactly what the bundled version did before this fix.
+    try {
+      const courseSkills = await getCourseSkills(accessToken, courseId);
+      setCourseSkillIds(new Set(courseSkills.map((s) => s.id)));
+    } catch {
+      setCourseSkillIds(new Set());
+      setCourseSkillsUnavailable(true);
     }
   }
 
@@ -741,7 +761,12 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                 >
                   {showCourseSkills ? t.hideSkillsGranted : t.skillsGranted(courseSkillIds.size)}
                 </button>
-                {showCourseSkills && (
+                {showCourseSkills && courseSkillsUnavailable && (
+                  <p className="mt-3 text-[11px] text-slate-500 bg-slate-50 border border-dashed border-border-slate rounded-lg p-2.5">
+                    {t.courseSkillsUnavailable}
+                  </p>
+                )}
+                {showCourseSkills && !courseSkillsUnavailable && (
                   <div className="mt-3 space-y-2">
                     <p className="text-[11px] text-slate-500">{t.skillsGrantedBody}</p>
                     <SkillPicker skills={skills} selectedIds={courseSkillIds} onToggle={toggleCourseSkill} />

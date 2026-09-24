@@ -71,6 +71,7 @@ beforeEach(() => {
   delete process.env.B2_KEY_ID;
   delete process.env.B2_APPLICATION_KEY;
   delete process.env.B2_BUCKET_NAME;
+  delete process.env.VIDEO_CDN_BASE_URL;
 });
 
 function configureB2Env() {
@@ -212,5 +213,59 @@ describe("GET /api/lessons/:id/video-url", () => {
       .get("/api/lessons/lesson-1/video-url")
       .set("Authorization", "Bearer token");
     expect(res.status).toBe(503);
+  });
+
+  // DECISIONS.md #49 — CDN-backed stable URL, opt-in via VIDEO_CDN_BASE_URL.
+  describe("with VIDEO_CDN_BASE_URL configured", () => {
+    it("returns a stable CDN url instead of signing, and never calls getSignedUrl", async () => {
+      process.env.VIDEO_CDN_BASE_URL = "https://videos.example.com";
+      authenticateAs("trainee-1", "trainee");
+      lessonsMock.result.data = { content_type: "video", storage_path: "lesson-1/123-intro.mp4" };
+
+      const res = await request(buildApp())
+        .get("/api/lessons/lesson-1/video-url")
+        .set("Authorization", "Bearer token");
+
+      expect(res.status).toBe(200);
+      expect(res.body.url).toBe("https://videos.example.com/lesson-1/123-intro.mp4");
+      expect(getSignedUrlMock).not.toHaveBeenCalled();
+    });
+
+    it("percent-encodes each path segment (a filename with spaces/special characters stays a valid URL)", async () => {
+      process.env.VIDEO_CDN_BASE_URL = "https://videos.example.com";
+      authenticateAs("trainee-1", "trainee");
+      lessonsMock.result.data = { content_type: "video", storage_path: "lesson-1/123-intro clip (final).mp4" };
+
+      const res = await request(buildApp())
+        .get("/api/lessons/lesson-1/video-url")
+        .set("Authorization", "Bearer token");
+
+      expect(res.status).toBe(200);
+      expect(res.body.url).toBe("https://videos.example.com/lesson-1/123-intro%20clip%20(final).mp4");
+    });
+
+    it("strips a trailing slash from VIDEO_CDN_BASE_URL so the built url never gets a double slash", async () => {
+      process.env.VIDEO_CDN_BASE_URL = "https://videos.example.com/";
+      authenticateAs("trainee-1", "trainee");
+      lessonsMock.result.data = { content_type: "video", storage_path: "lesson-1/123-intro.mp4" };
+
+      const res = await request(buildApp())
+        .get("/api/lessons/lesson-1/video-url")
+        .set("Authorization", "Bearer token");
+
+      expect(res.body.url).toBe("https://videos.example.com/lesson-1/123-intro.mp4");
+    });
+
+    it("still returns url: null for a YouTube-hosted lesson — the CDN never applies to those", async () => {
+      process.env.VIDEO_CDN_BASE_URL = "https://videos.example.com";
+      authenticateAs("trainee-1", "trainee");
+      lessonsMock.result.data = { content_type: "video", storage_path: null };
+
+      const res = await request(buildApp())
+        .get("/api/lessons/lesson-1/video-url")
+        .set("Authorization", "Bearer token");
+
+      expect(res.body.url).toBeNull();
+    });
   });
 });

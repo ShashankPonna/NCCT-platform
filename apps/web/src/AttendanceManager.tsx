@@ -8,7 +8,7 @@ import {
 import type { AttendanceRosterEntry } from "@ncct/shared-types";
 import { useState } from "react";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
-import { KioskFaceCheckIn } from "./KioskFaceCheckIn.js";
+import { StaffFaceCheckIn } from "./StaffFaceCheckIn.js";
 
 interface AttendanceManagerProps {
   accessToken: string;
@@ -278,7 +278,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
             </div>
           </section>
 
-          <KioskFaceCheckIn accessToken={accessToken} sessionId={sessionId ?? ""} />
+          <StaffFaceCheckIn accessToken={accessToken} sessionId={sessionId ?? ""} />
 
           {/* Attendance Roster Table Card — every approved nominee, staff can
               directly tick/untick present, like a real ERP's faculty

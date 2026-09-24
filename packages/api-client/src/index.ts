@@ -415,11 +415,36 @@ export async function uploadLessonVideoFile(
   });
 }
 
+// Signed URLs are short-lived (server TTL is 1800s, see
+// PLAYBACK_URL_TTL_SECONDS in lessonVideo.ts) but re-selecting the same
+// lesson within that window — navigating away and back, a remount — used
+// to always mint a brand-new one from scratch: a fresh DB lookup plus a
+// fresh B2 presign, on every single call, no matter how recently the last
+// one was issued. Caching client-side, keyed by lessonId only (the URL
+// itself is what's short-lived, not tied to a specific access token),
+// turns a repeat "select this lesson" into an instant local read instead
+// of a network round trip. Capped well under the server's own TTL
+// (5 minutes, not 30) rather than trusting the full window: this cache has
+// no way to know if a trainer replaces the lesson's video mid-session, and
+// a short cap keeps that staleness window narrow without giving up the
+// main win — re-selecting a lesson you were just looking at.
+const LESSON_VIDEO_URL_CACHE_TTL_MS = 5 * 60 * 1000;
+const lessonVideoUrlCache = new Map<string, { url: string | null; expiresAt: number }>();
+
 export function getLessonVideoUrl(accessToken: string, lessonId: string) {
+  const cached = lessonVideoUrlCache.get(lessonId);
+  if (cached && cached.expiresAt > Date.now()) {
+    return Promise.resolve({ url: cached.url });
+  }
   return apiFetch<{ url: string | null; expires_in?: number }>(
     `/lessons/${lessonId}/video-url`,
     accessToken,
-  );
+  ).then((result) => {
+    const serverTtlMs = (result.expires_in ?? 1800) * 1000;
+    const ttlMs = Math.min(serverTtlMs, LESSON_VIDEO_URL_CACHE_TTL_MS);
+    lessonVideoUrlCache.set(lessonId, { url: result.url, expiresAt: Date.now() + ttlMs });
+    return result;
+  });
 }
 
 export function getLessonTranslations(accessToken: string, lessonId: string) {
