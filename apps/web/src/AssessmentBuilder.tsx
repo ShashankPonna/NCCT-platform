@@ -707,35 +707,50 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
           </form>
 
           <div className="csv-import">
-            <h4>{t.csvTitle}</h4>
+            <div className="csv-import-header">
+              <h4>{t.csvTitle}</h4>
+              <a
+                className="csv-template-link"
+                href={`data:text/csv;charset=utf-8,${encodeURIComponent(CSV_TEMPLATE)}`}
+                download="assessment-questions-template.csv"
+              >
+                {t.csvDownloadTemplate}
+              </a>
+            </div>
             <p className="hint">{t.csvHint}</p>
-            <a
-              href={`data:text/csv;charset=utf-8,${encodeURIComponent(CSV_TEMPLATE)}`}
-              download="assessment-questions-template.csv"
-            >
-              {t.csvDownloadTemplate}
-            </a>
-            <div className="inline-form">
-              <input
-                type="file"
-                accept=".csv,text/csv"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleCsvFileSelected(file);
-                }}
-              />
+
+            <div className="csv-dropzone">
+              <label className="csv-file-label">
+                {t.csvChooseFile}
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleCsvFileSelected(file);
+                  }}
+                />
+              </label>
+              {csvFileName && <span className="csv-file-chip">{csvFileName}</span>}
               {csvFileName && (
-                <button type="button" disabled={csvQuestions.length === 0 || csvBusy} onClick={() => void handleImportCsv()}>
+                <button
+                  type="button"
+                  disabled={csvQuestions.length === 0 || csvBusy}
+                  onClick={() => void handleImportCsv()}
+                >
                   {csvBusy ? "…" : t.csvImport}
                 </button>
               )}
             </div>
+
             {csvFileName && csvErrors.length === 0 && csvQuestions.length === 0 && (
               <p className="form-error">{t.csvNothingToImport}</p>
             )}
-            {csvFileName && csvQuestions.length > 0 && <p>{t.csvRowsReady(csvQuestions.length)}</p>}
+            {csvFileName && csvQuestions.length > 0 && (
+              <p className="csv-ready">✓ {t.csvRowsReady(csvQuestions.length)}</p>
+            )}
             {csvErrors.length > 0 && (
-              <ul className="form-error">
+              <ul className="form-error csv-error-list">
                 {csvErrors.map((err) => (
                   <li key={err}>{err}</li>
                 ))}

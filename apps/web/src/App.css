@@ -221,6 +221,93 @@
   gap: 8px;
 }
 
+.csv-import {
+  margin: 16px 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: var(--code-bg);
+  max-width: 560px;
+}
+
+.csv-import-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.csv-import h4 {
+  margin: 0;
+}
+
+.csv-import .hint {
+  font-size: 13px;
+  color: var(--text);
+  margin: 4px 0 12px;
+}
+
+.csv-template-link {
+  font-size: 13px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.csv-dropzone {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.csv-file-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.csv-file-label input[type="file"] {
+  display: none;
+}
+
+.csv-file-chip {
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.csv-ready {
+  color: #16803c;
+  font-size: 14px;
+  margin: 10px 0 0;
+}
+
+.csv-error-list {
+  margin-top: 10px;
+  padding: 10px 12px 10px 28px;
+  border: 1px solid #f3c2c2;
+  border-radius: 6px;
+  background: rgba(211, 51, 51, 0.06);
+}
+
+.csv-error-list li {
+  margin: 2px 0;
+}
+
 .quiz-form fieldset {
   border: 1px solid var(--border);
   border-radius: 6px;
