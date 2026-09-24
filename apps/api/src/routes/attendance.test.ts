@@ -3,34 +3,60 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { attendanceRouter, cosineSimilarity } from "./attendance.js";
 
-const { getUserMock, profilesMock, attendanceMock, embeddingsMock, sessionsMock, fromMock } =
-  vi.hoisted(() => {
-    function createTableMock() {
-      const result: { data: unknown; error: unknown } = { data: null, error: null };
-      const builder: Record<string, ReturnType<typeof vi.fn>> = {};
-      for (const method of ["select", "insert", "update", "delete", "upsert", "eq"]) {
-        builder[method] = vi.fn(() => builder);
-      }
-      for (const method of ["single", "maybeSingle", "order", "limit"]) {
-        builder[method] = vi.fn(() => Promise.resolve(result));
-      }
-      return { builder, result };
-    }
-
-    const profilesMock = createTableMock();
-    const attendanceMock = createTableMock();
-    const embeddingsMock = createTableMock();
-    const sessionsMock = createTableMock();
-    const tables: Record<string, ReturnType<typeof createTableMock>> = {
-      profiles: profilesMock,
-      attendance_records: attendanceMock,
-      face_embeddings: embeddingsMock,
-      timetable_sessions: sessionsMock,
+const {
+  getUserMock,
+  profilesMock,
+  attendanceMock,
+  embeddingsMock,
+  sessionsMock,
+  nominationsMock,
+  fromMock,
+} = vi.hoisted(() => {
+  // `then` on the builder itself (not a per-method terminal resolver) means
+  // any chain, however it ends (`.order()`, `.single()`, `.maybeSingle()`,
+  // or nothing extra at all), resolves the same way — matching how a real
+  // supabase-js query builder is itself a thenable. `queue` holds per-call
+  // overrides, shifted off on each await, for a route that queries the same
+  // table more than once with different expected answers (e.g. the manual
+  // mark route's existing-row check, then its insert) — `result` is the
+  // steady-state fallback once the queue is empty, same pattern as
+  // employerSearch.test.ts.
+  function createTableMock() {
+    const result: { data: unknown; error: unknown } = { data: null, error: null };
+    const queue: { data: unknown; error: unknown }[] = [];
+    const builder: Record<string, ReturnType<typeof vi.fn>> = {
+      then: vi.fn((resolve: (value: typeof result) => void) => resolve(queue.shift() ?? result)),
     };
-    const fromMock = vi.fn((table: string) => tables[table].builder);
-    const getUserMock = vi.fn();
-    return { getUserMock, profilesMock, attendanceMock, embeddingsMock, sessionsMock, fromMock };
-  });
+    for (const method of ["select", "insert", "update", "delete", "upsert", "eq", "order", "limit", "single", "maybeSingle"]) {
+      builder[method] = vi.fn(() => builder);
+    }
+    return { builder, result, queue };
+  }
+
+  const profilesMock = createTableMock();
+  const attendanceMock = createTableMock();
+  const embeddingsMock = createTableMock();
+  const sessionsMock = createTableMock();
+  const nominationsMock = createTableMock();
+  const tables: Record<string, ReturnType<typeof createTableMock>> = {
+    profiles: profilesMock,
+    attendance_records: attendanceMock,
+    face_embeddings: embeddingsMock,
+    timetable_sessions: sessionsMock,
+    nominations: nominationsMock,
+  };
+  const fromMock = vi.fn((table: string) => tables[table].builder);
+  const getUserMock = vi.fn();
+  return {
+    getUserMock,
+    profilesMock,
+    attendanceMock,
+    embeddingsMock,
+    sessionsMock,
+    nominationsMock,
+    fromMock,
+  };
+});
 
 vi.mock("../supabaseClient.js", () => ({
   supabaseAdmin: { auth: { getUser: getUserMock }, from: fromMock },
@@ -56,10 +82,11 @@ function embeddingOf(value: number): number[] {
 
 beforeEach(() => {
   getUserMock.mockReset();
-  for (const mock of [profilesMock, attendanceMock, embeddingsMock, sessionsMock]) {
+  for (const mock of [profilesMock, attendanceMock, embeddingsMock, sessionsMock, nominationsMock]) {
     mock.builder.insert.mockClear();
     mock.result.data = null;
     mock.result.error = null;
+    mock.queue.length = 0;
   }
 });
 
@@ -359,35 +386,6 @@ describe("POST /api/timetable/:sessionId/kiosk-face-checkin", () => {
   });
 });
 
-describe("GET /api/timetable/:sessionId/attendance", () => {
-  it("returns 401 with no bearer token", async () => {
-    const res = await request(buildApp()).get(
-      "/api/timetable/11111111-1111-1111-1111-111111111111/attendance",
-    );
-    expect(res.status).toBe(401);
-  });
-
-  it("returns 403 for a trainee", async () => {
-    authenticateAs("trainee-1", "trainee");
-    const res = await request(buildApp())
-      .get("/api/timetable/11111111-1111-1111-1111-111111111111/attendance")
-      .set("Authorization", "Bearer token");
-    expect(res.status).toBe(403);
-  });
-
-  it("returns the roster for admin", async () => {
-    authenticateAs("admin-1", "admin");
-    attendanceMock.result.data = [{ id: "att-1", method: "qr" }];
-
-    const res = await request(buildApp())
-      .get("/api/timetable/11111111-1111-1111-1111-111111111111/attendance")
-      .set("Authorization", "Bearer token");
-
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual([{ id: "att-1", method: "qr" }]);
-  });
-});
-
 describe("GET /api/timetable/:sessionId/qr", () => {
   it("returns 403 for a trainee", async () => {
     authenticateAs("trainee-1", "trainee");
@@ -423,5 +421,193 @@ describe("GET /api/timetable/:sessionId/qr", () => {
     expect(res.body.qrDataUrl).toMatch(/^data:image\/png;base64,/);
     expect(res.body.checkInUrl).toContain("11111111-1111-1111-1111-111111111111");
     expect(res.body.checkInCode).toBe("482913");
+  });
+});
+
+const SESSION_URL = "/api/timetable/11111111-1111-1111-1111-111111111111";
+const ROSTER_TRAINEE = "22222222-2222-2222-2222-222222222222";
+
+describe("GET /api/timetable/:sessionId/roster", () => {
+  it("returns 401 with no bearer token", async () => {
+    const res = await request(buildApp()).get(`${SESSION_URL}/roster`);
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 403 for a trainee", async () => {
+    authenticateAs("trainee-1", "trainee");
+    const res = await request(buildApp()).get(`${SESSION_URL}/roster`).set("Authorization", "Bearer token");
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 404 for a nonexistent session", async () => {
+    authenticateAs("admin-1", "admin");
+    sessionsMock.result.data = null;
+
+    const res = await request(buildApp()).get(`${SESSION_URL}/roster`).set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(404);
+  });
+
+  it("lists every approved nominee, marking an unchecked-in trainee's attendance as null", async () => {
+    authenticateAs("trainer-1", "trainer");
+    sessionsMock.result.data = { programme_id: "prog-1" };
+    nominationsMock.result.data = [
+      { trainee_id: "trainee-present", profiles: { full_name: "Asha Patil" } },
+      { trainee_id: "trainee-absent", profiles: { full_name: "Rakesh Kumar" } },
+    ];
+    attendanceMock.result.data = [
+      { id: "att-1", session_id: "s1", trainee_id: "trainee-present", method: "qr", match_score: null, recorded_at: "t" },
+    ];
+
+    const res = await request(buildApp()).get(`${SESSION_URL}/roster`).set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([
+      {
+        trainee_id: "trainee-present",
+        full_name: "Asha Patil",
+        attendance: { id: "att-1", session_id: "s1", trainee_id: "trainee-present", method: "qr", match_score: null, recorded_at: "t" },
+      },
+      { trainee_id: "trainee-absent", full_name: "Rakesh Kumar", attendance: null },
+    ]);
+  });
+});
+
+describe("PUT /api/timetable/:sessionId/attendance/:traineeId", () => {
+  const url = `${SESSION_URL}/attendance/${ROSTER_TRAINEE}`;
+
+  it("returns 401 with no bearer token", async () => {
+    const res = await request(buildApp()).put(url);
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 403 for a trainee", async () => {
+    authenticateAs("trainee-1", "trainee");
+    const res = await request(buildApp()).put(url).set("Authorization", "Bearer token");
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 404 for a nonexistent session", async () => {
+    authenticateAs("admin-1", "admin");
+    sessionsMock.result.data = null;
+
+    const res = await request(buildApp()).put(url).set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 404 when the trainee is not an approved nominee for the session's programme", async () => {
+    authenticateAs("admin-1", "admin");
+    sessionsMock.result.data = { programme_id: "prog-1" };
+    nominationsMock.result.data = null;
+
+    const res = await request(buildApp()).put(url).set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toMatch(/not an approved nominee/);
+  });
+
+  it("creates a manual mark, recording who marked it, when the trainee isn't already present", async () => {
+    authenticateAs("admin-1", "admin");
+    sessionsMock.result.data = { programme_id: "prog-1" };
+    nominationsMock.result.data = { trainee_id: ROSTER_TRAINEE };
+    attendanceMock.queue.push(
+      { data: null, error: null }, // no existing row
+      {
+        data: {
+          id: "att-new",
+          session_id: "11111111-1111-1111-1111-111111111111",
+          trainee_id: ROSTER_TRAINEE,
+          method: "manual",
+          match_score: null,
+          marked_by: "admin-1",
+        },
+        error: null,
+      },
+    );
+
+    const res = await request(buildApp()).put(url).set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({ method: "manual", trainee_id: ROSTER_TRAINEE, marked_by: "admin-1" });
+    expect(attendanceMock.builder.insert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        session_id: "11111111-1111-1111-1111-111111111111",
+        trainee_id: ROSTER_TRAINEE,
+        method: "manual",
+        marked_by: "admin-1",
+      }),
+    );
+  });
+
+  it("is idempotent — marking an already-present trainee returns the existing row unchanged, never overwriting its method", async () => {
+    authenticateAs("trainer-1", "trainer");
+    sessionsMock.result.data = { programme_id: "prog-1" };
+    nominationsMock.result.data = { trainee_id: ROSTER_TRAINEE };
+    attendanceMock.result.data = {
+      id: "att-existing",
+      session_id: "11111111-1111-1111-1111-111111111111",
+      trainee_id: ROSTER_TRAINEE,
+      method: "face",
+      match_score: 0.91,
+      marked_by: null,
+    };
+
+    const res = await request(buildApp()).put(url).set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ method: "face", id: "att-existing" });
+    expect(attendanceMock.builder.insert).not.toHaveBeenCalled();
+  });
+
+  it("resolves a concurrent-mark race by returning the winning row instead of erroring", async () => {
+    authenticateAs("admin-1", "admin");
+    sessionsMock.result.data = { programme_id: "prog-1" };
+    nominationsMock.result.data = { trainee_id: ROSTER_TRAINEE };
+    attendanceMock.queue.push(
+      { data: null, error: null }, // no existing row seen
+      { data: null, error: { code: "23505", message: "duplicate" } }, // insert lost the race
+      { data: { id: "att-winner", method: "manual", trainee_id: ROSTER_TRAINEE }, error: null }, // re-fetch
+    );
+
+    const res = await request(buildApp()).put(url).set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ id: "att-winner" });
+  });
+});
+
+describe("DELETE /api/timetable/:sessionId/attendance/:traineeId", () => {
+  const url = `${SESSION_URL}/attendance/${ROSTER_TRAINEE}`;
+
+  it("returns 401 with no bearer token", async () => {
+    const res = await request(buildApp()).delete(url);
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 403 for a trainee", async () => {
+    authenticateAs("trainee-1", "trainee");
+    const res = await request(buildApp()).delete(url).set("Authorization", "Bearer token");
+    expect(res.status).toBe(403);
+  });
+
+  it("unmarks (deletes) whatever attendance row exists, regardless of its original method", async () => {
+    authenticateAs("trainer-1", "trainer");
+
+    const res = await request(buildApp()).delete(url).set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(204);
+    expect(attendanceMock.builder.delete).toHaveBeenCalled();
+    expect(attendanceMock.builder.eq).toHaveBeenCalledWith("session_id", "11111111-1111-1111-1111-111111111111");
+    expect(attendanceMock.builder.eq).toHaveBeenCalledWith("trainee_id", ROSTER_TRAINEE);
+  });
+
+  it("returns 400 on a query error", async () => {
+    authenticateAs("admin-1", "admin");
+    attendanceMock.result.error = { message: "boom" };
+
+    const res = await request(buildApp()).delete(url).set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(400);
   });
 });

@@ -234,6 +234,21 @@ export interface AttendanceRecord {
   method: AttendanceMethod;
   match_score: number | null;
   recorded_at: string;
+  // Admin/trainer who manually marked this row (migration 20260901000018) —
+  // null for qr/face rows, and for manual rows on a project that hasn't
+  // applied that migration yet.
+  marked_by: string | null;
+}
+
+// A trainer/admin's full class roster for one timetable session (DECISIONS.md
+// #47) — every trainee with an *approved* nomination in the session's
+// programme, joined against whatever attendance_records row (if any) they
+// have for this specific session. `attendance: null` means genuinely
+// unmarked/absent, not "not yet loaded".
+export interface AttendanceRosterEntry {
+  trainee_id: string;
+  full_name: string | null;
+  attendance: AttendanceRecord | null;
 }
 
 // The embedding vector itself is never returned to a client after

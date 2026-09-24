@@ -1,5 +1,11 @@
-import { getAttendanceQr, getAttendanceRoster, getSessionByCode } from "@ncct/api-client";
-import type { AttendanceRecord } from "@ncct/shared-types";
+import {
+  getAttendanceQr,
+  getSessionByCode,
+  getSessionRoster,
+  markAttendance,
+  unmarkAttendance,
+} from "@ncct/api-client";
+import type { AttendanceRosterEntry } from "@ncct/shared-types";
 import { useState } from "react";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { KioskFaceCheckIn } from "./KioskFaceCheckIn.js";
@@ -7,8 +13,6 @@ import { KioskFaceCheckIn } from "./KioskFaceCheckIn.js";
 interface AttendanceManagerProps {
   accessToken: string;
 }
-
-type RosterRow = AttendanceRecord & { profiles: { full_name: string | null } | null };
 
 interface AttendanceManagerText {
   heading: string;
@@ -19,14 +23,17 @@ interface AttendanceManagerText {
   generateQr: string;
   loadRoster: string;
   liveRoster: string;
-  checkedIn: (count: number) => string;
+  checkedIn: (present: number, total: number) => string;
   noRecords: string;
+  colPresent: string;
   colTraineeName: string;
   colMethod: string;
   colMatchScore: string;
   colRecordedAt: string;
   traineeFallback: (idPrefix: string) => string;
   needsReview: string;
+  markPresentAria: (name: string) => string;
+  unmarkAria: (name: string) => string;
   scanToCheckIn: string;
   scanInstructions: string;
   sessionCode: string;
@@ -46,15 +53,18 @@ const content: Record<Locale, AttendanceManagerText> = {
     sessionIdPlaceholder: "Enter the 6-digit session code...",
     generateQr: "Generate QR",
     loadRoster: "Load Roster",
-    liveRoster: "Live Roster",
-    checkedIn: (count) => `${count} Checked In`,
-    noRecords: "No attendance records logged for this session yet.",
+    liveRoster: "Attendance Roster",
+    checkedIn: (present, total) => `${present} / ${total} Present`,
+    noRecords: "No trainee has an approved nomination for this session's programme yet.",
+    colPresent: "Present",
     colTraineeName: "Trainee Name",
     colMethod: "Method",
     colMatchScore: "Match Score",
     colRecordedAt: "Recorded At",
     traineeFallback: (idPrefix) => `Trainee #${idPrefix}`,
     needsReview: "(Needs Review)",
+    markPresentAria: (name) => `Mark ${name} present`,
+    unmarkAria: (name) => `Unmark ${name}`,
     scanToCheckIn: "Scan to Check-in",
     scanInstructions: "Trainees can scan this QR code with the camera or mobile app.",
     sessionCode: "Session Code",
@@ -62,7 +72,7 @@ const content: Record<Locale, AttendanceManagerText> = {
     directUrl: "Direct Check-in URL",
     linkCopied: "Link Copied!",
     copyLink: "Copy Check-in Link",
-    method: { qr: "QR", face: "Face" },
+    method: { qr: "QR", face: "Face", manual: "Manual" },
   },
   hi: {
     heading: "सत्र उपस्थिति",
@@ -72,15 +82,18 @@ const content: Record<Locale, AttendanceManagerText> = {
     sessionIdPlaceholder: "6-अंकीय सत्र कोड दर्ज करें...",
     generateQr: "QR बनाएं",
     loadRoster: "रोस्टर लोड करें",
-    liveRoster: "लाइव रोस्टर",
-    checkedIn: (count) => `${count} चेक-इन हुए`,
-    noRecords: "इस सत्र के लिए अभी तक कोई उपस्थिति रिकॉर्ड दर्ज नहीं हुआ है।",
+    liveRoster: "उपस्थिति रोस्टर",
+    checkedIn: (present, total) => `${present} / ${total} उपस्थित`,
+    noRecords: "इस सत्र के कार्यक्रम के लिए अभी तक किसी प्रशिक्षणार्थी का नामांकन स्वीकृत नहीं हुआ है।",
+    colPresent: "उपस्थित",
     colTraineeName: "प्रशिक्षणार्थी का नाम",
     colMethod: "तरीका",
     colMatchScore: "मिलान स्कोर",
     colRecordedAt: "दर्ज समय",
     traineeFallback: (idPrefix) => `प्रशिक्षणार्थी #${idPrefix}`,
     needsReview: "(समीक्षा आवश्यक)",
+    markPresentAria: (name) => `${name} को उपस्थित चिह्नित करें`,
+    unmarkAria: (name) => `${name} को अचिह्नित करें`,
     scanToCheckIn: "चेक-इन के लिए स्कैन करें",
     scanInstructions: "प्रशिक्षणार्थी कैमरे या मोबाइल ऐप से इस QR कोड को स्कैन कर सकते हैं।",
     sessionCode: "सत्र कोड",
@@ -88,7 +101,7 @@ const content: Record<Locale, AttendanceManagerText> = {
     directUrl: "सीधा चेक-इन URL",
     linkCopied: "लिंक कॉपी हो गया!",
     copyLink: "चेक-इन लिंक कॉपी करें",
-    method: { qr: "QR", face: "फेस" },
+    method: { qr: "QR", face: "फेस", manual: "मैनुअल" },
   },
 };
 
@@ -100,10 +113,13 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [checkInUrl, setCheckInUrl] = useState<string | null>(null);
   const [checkInCode, setCheckInCode] = useState<string | null>(null);
-  const [roster, setRoster] = useState<RosterRow[] | null>(null);
+  const [roster, setRoster] = useState<AttendanceRosterEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Which trainee's checkbox is mid-request — disables just that row rather
+  // than the whole table while a single mark/unmark is in flight.
+  const [markingTraineeId, setMarkingTraineeId] = useState<string | null>(null);
 
   // Faculty type the short code, not the session's real UUID — this resolves
   // it once per action so Generate QR / Load Roster / the kiosk below all
@@ -140,12 +156,46 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
     try {
       const id = await resolveSessionId();
       if (!id) return;
-      const data = await getAttendanceRoster(accessToken, id);
+      const data = await getSessionRoster(accessToken, id);
       setRoster(data);
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setBusy(false);
+    }
+  }
+
+  // Direct staff mark/unmark (DECISIONS.md #47) — a trainer/admin ticking or
+  // un-ticking a trainee present, like a real college ERP's attendance
+  // register. Works on any row regardless of how it was originally recorded
+  // (qr/face/manual): a faculty correcting the roster needs to be able to
+  // un-tick a mistaken self-check-in too, not just their own manual marks.
+  async function handleToggleAttendance(entry: AttendanceRosterEntry) {
+    if (!sessionId) return;
+    setError(null);
+    setMarkingTraineeId(entry.trainee_id);
+    try {
+      if (entry.attendance) {
+        await unmarkAttendance(accessToken, sessionId, entry.trainee_id);
+        setRoster(
+          (prev) =>
+            prev?.map((row) =>
+              row.trainee_id === entry.trainee_id ? { ...row, attendance: null } : row,
+            ) ?? prev,
+        );
+      } else {
+        const record = await markAttendance(accessToken, sessionId, entry.trainee_id);
+        setRoster(
+          (prev) =>
+            prev?.map((row) =>
+              row.trainee_id === entry.trainee_id ? { ...row, attendance: record } : row,
+            ) ?? prev,
+        );
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setMarkingTraineeId(null);
     }
   }
 
@@ -230,7 +280,11 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
 
           <KioskFaceCheckIn accessToken={accessToken} sessionId={sessionId ?? ""} />
 
-          {/* Attendance Roster Table Card */}
+          {/* Attendance Roster Table Card — every approved nominee, staff can
+              directly tick/untick present, like a real ERP's faculty
+              register (DECISIONS.md #47). Unmarked trainees show
+              `attendance: null` rather than being absent from the list
+              entirely, unlike the old checked-in-only view this replaced. */}
           {roster && (
             <section className="bg-surface-card border border-outline-variant rounded-xl overflow-hidden shadow-sm">
               <div className="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
@@ -239,7 +293,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                   {t.liveRoster}
                 </h2>
                 <span className="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm font-bold">
-                  {t.checkedIn(roster.length)}
+                  {t.checkedIn(roster.filter((r) => r.attendance !== null).length, roster.length)}
                 </span>
               </div>
 
@@ -250,6 +304,9 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-surface-container-low border-b border-outline-variant">
+                        <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase font-medium">
+                          {t.colPresent}
+                        </th>
                         <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase font-medium">
                           {t.colTraineeName}
                         </th>
@@ -265,20 +322,37 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                       </tr>
                     </thead>
                     <tbody className="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant">
-                      {roster.map((row) => {
+                      {roster.map((entry) => {
                         const traineeName =
-                          row.profiles?.full_name ?? t.traineeFallback(row.trainee_id.slice(0, 8));
+                          entry.full_name ?? t.traineeFallback(entry.trainee_id.slice(0, 8));
                         const initials = traineeName.slice(0, 2).toUpperCase();
-                        const isFace = row.method === "face";
-                        const isReview = isFace && (row.match_score ?? 1) < 0.6;
+                        const attendance = entry.attendance;
+                        const isFace = attendance?.method === "face";
+                        const isManual = attendance?.method === "manual";
+                        const isReview = isFace && (attendance?.match_score ?? 1) < 0.6;
+                        const isBusyRow = markingTraineeId === entry.trainee_id;
 
                         return (
                           <tr
-                            key={row.id}
+                            key={entry.trainee_id}
                             className={`hover:bg-surface-container-lowest transition-colors ${
                               isReview ? "bg-error-container/20" : ""
                             }`}
                           >
+                            <td className="p-4">
+                              <input
+                                type="checkbox"
+                                checked={attendance !== null}
+                                disabled={isBusyRow}
+                                onChange={() => void handleToggleAttendance(entry)}
+                                aria-label={
+                                  attendance !== null
+                                    ? t.unmarkAria(traineeName)
+                                    : t.markPresentAria(traineeName)
+                                }
+                                className="h-5 w-5 rounded border-outline-variant accent-cta disabled:opacity-50 cursor-pointer"
+                              />
+                            </td>
                             <td className="p-4 flex items-center gap-3">
                               <div className="w-8 h-8 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center font-bold text-xs">
                                 {initials}
@@ -286,39 +360,51 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                               <span className="font-medium text-primary">{traineeName}</span>
                             </td>
                             <td className="p-4">
-                              <span
-                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-label-sm text-label-sm border uppercase font-bold ${
-                                  isFace
-                                    ? isReview
-                                      ? "bg-status-rejected/15 text-status-rejected border-status-rejected/30"
-                                      : "bg-status-success/15 text-status-success border-status-success/30"
-                                    : "bg-tertiary-container/15 text-tertiary-container border-tertiary-container/30"
-                                }`}
-                              >
-                                <span className="material-symbols-outlined text-[14px]">
-                                  {isFace ? "face" : "qr_code_2"}
+                              {attendance ? (
+                                <span
+                                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-label-sm text-label-sm border uppercase font-bold ${
+                                    isManual
+                                      ? "bg-tertiary-container/15 text-tertiary-container border-tertiary-container/30"
+                                      : isFace
+                                        ? isReview
+                                          ? "bg-status-rejected/15 text-status-rejected border-status-rejected/30"
+                                          : "bg-status-success/15 text-status-success border-status-success/30"
+                                        : "bg-primary-container/15 text-primary border-primary/30"
+                                  }`}
+                                >
+                                  <span className="material-symbols-outlined text-[14px]">
+                                    {isManual ? "edit" : isFace ? "face" : "qr_code_2"}
+                                  </span>
+                                  {t.method[attendance.method] ?? attendance.method}
                                 </span>
-                                {t.method[row.method] ?? row.method}
-                              </span>
+                              ) : (
+                                <span className="text-outline">—</span>
+                              )}
                             </td>
                             <td className="p-4 font-mono">
-                              {row.match_score != null ? (
+                              {attendance?.match_score != null ? (
                                 <span className={isReview ? "text-status-rejected font-bold" : ""}>
-                                  {row.match_score.toFixed(3)}
+                                  {attendance.match_score.toFixed(3)}
                                 </span>
                               ) : (
                                 <span className="text-outline">—</span>
                               )}
                             </td>
                             <td className="p-4 text-on-surface-variant">
-                              {new Date(row.recorded_at).toLocaleTimeString(locale === "hi" ? "hi-IN" : undefined, {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                              {isReview && (
-                                <span className="text-status-rejected font-bold ml-2 text-xs">
-                                  {t.needsReview}
-                                </span>
+                              {attendance ? (
+                                <>
+                                  {new Date(attendance.recorded_at).toLocaleTimeString(
+                                    locale === "hi" ? "hi-IN" : undefined,
+                                    { hour: "2-digit", minute: "2-digit" },
+                                  )}
+                                  {isReview && (
+                                    <span className="text-status-rejected font-bold ml-2 text-xs">
+                                      {t.needsReview}
+                                    </span>
+                                  )}
+                                </>
+                              ) : (
+                                <span className="text-outline">—</span>
                               )}
                             </td>
                           </tr>

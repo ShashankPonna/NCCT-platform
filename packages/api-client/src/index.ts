@@ -5,6 +5,7 @@ import type {
   AssessmentQuestion,
   AssessmentQuestionForTrainee,
   AttendanceRecord,
+  AttendanceRosterEntry,
   BulkImportResult,
   Certificate,
   ChatbotAnswer,
@@ -613,18 +614,34 @@ export function kioskFaceCheckIn(
   );
 }
 
-export function getAttendanceRoster(accessToken: string, sessionId: string) {
-  return apiFetch<(AttendanceRecord & { profiles: { full_name: string | null } | null })[]>(
-    `/timetable/${sessionId}/attendance`,
-    accessToken,
-  );
-}
-
 export function getAttendanceQr(accessToken: string, sessionId: string) {
   return apiFetch<{ qrDataUrl: string; checkInUrl: string; checkInCode: string }>(
     `/timetable/${sessionId}/qr`,
     accessToken,
   );
+}
+
+// Full class roster (DECISIONS.md #47) — every approved nominee for the
+// session's programme, `attendance: null` when genuinely unmarked.
+export function getSessionRoster(accessToken: string, sessionId: string) {
+  return apiFetch<AttendanceRosterEntry[]>(`/timetable/${sessionId}/roster`, accessToken);
+}
+
+// Direct staff mark/unmark from the roster (DECISIONS.md #47) — a
+// trainer/admin ticking or un-ticking a trainee present, like a real
+// college ERP's attendance register. markAttendance is idempotent (marking
+// an already-present trainee, any method, is a no-op); unmarkAttendance
+// removes whatever row exists regardless of how it originally got there.
+export function markAttendance(accessToken: string, sessionId: string, traineeId: string) {
+  return apiFetch<AttendanceRecord>(`/timetable/${sessionId}/attendance/${traineeId}`, accessToken, {
+    method: "PUT",
+  });
+}
+
+export function unmarkAttendance(accessToken: string, sessionId: string, traineeId: string) {
+  return apiFetch<void>(`/timetable/${sessionId}/attendance/${traineeId}`, accessToken, {
+    method: "DELETE",
+  });
 }
 
 // Resolves a session's short numeric check_in_code to the real session row —

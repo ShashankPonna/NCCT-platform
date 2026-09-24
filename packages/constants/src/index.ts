@@ -44,7 +44,11 @@ export const SUGGESTED_LOCALES = ["en", "hi", "mr", "gu", "ta", "te", "kn", "bn"
 
 export const INTERACTIVE_EXERCISE_TYPES = ["matching"] as const;
 
-export const ATTENDANCE_METHODS = ["qr", "face"] as const;
+// "manual" (migration 20260901000018) is a trainer/admin directly ticking a
+// trainee present from the class roster — no scan, no embedding match, so
+// unlike "qr"/"face" it carries no independent verification signal of its
+// own; attendance_records.marked_by is the audit trail for who asserted it.
+export const ATTENDANCE_METHODS = ["qr", "face", "manual"] as const;
 
 // Matches the `face_embeddings.model` CHECK constraint. Only "human" is
 // actually implemented (extraction runs client-side via @vladmandic/human,
