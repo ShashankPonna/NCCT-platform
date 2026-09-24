@@ -612,6 +612,17 @@ export function createAssessmentQuestion(
   });
 }
 
+export function bulkCreateAssessmentQuestions(
+  accessToken: string,
+  assessmentId: string,
+  questions: QuestionInput[],
+) {
+  return apiFetch<AssessmentQuestion[]>(`/assessments/${assessmentId}/questions/bulk`, accessToken, {
+    method: "POST",
+    body: { questions },
+  });
+}
+
 export function updateAssessmentQuestion(
   accessToken: string,
   questionId: string,

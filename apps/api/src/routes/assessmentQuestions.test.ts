@@ -12,8 +12,17 @@ const {
   fromMock,
 } = vi.hoisted(() => {
   function createTableMock() {
-    const result: { data: unknown; error: unknown } = { data: null, error: null };
-    const builder: Record<string, ReturnType<typeof vi.fn>> = {};
+    const result: { data: unknown; error: unknown; count?: number | null } = {
+      data: null,
+      error: null,
+      count: null,
+    };
+    const builder: Record<string, ReturnType<typeof vi.fn>> = {
+      // Lets a chain with no terminal .single()/.maybeSingle()/.order() call
+      // (the bulk-import count query and the bulk insert itself) still
+      // resolve when awaited directly.
+      then: vi.fn((resolve: (value: typeof result) => void) => resolve(result)),
+    };
     for (const method of ["select", "insert", "update", "delete", "eq"]) {
       builder[method] = vi.fn(() => builder);
     }
@@ -86,6 +95,7 @@ beforeEach(() => {
   profilesMock.result.error = null;
   questionsMock.result.data = null;
   questionsMock.result.error = null;
+  questionsMock.result.count = null;
   assessmentsMock.result.data = null;
   assessmentsMock.result.error = null;
   programmeTrainersMock.result.data = null;
@@ -152,6 +162,64 @@ describe("POST /api/assessments/:id/questions", () => {
 
     expect(res.status).toBe(201);
     expect(res.body.correct_option_id).toBe("a");
+  });
+});
+
+describe("POST /api/assessments/:id/questions/bulk", () => {
+  it("returns 403 for a trainee", async () => {
+    authenticateAs("trainee-1", "trainee");
+    const res = await request(buildApp())
+      .post("/api/assessments/assess-1/questions/bulk")
+      .set("Authorization", "Bearer token")
+      .send({ questions: [validQuestion] });
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 403 for a trainer not assigned to the assessment's programme", async () => {
+    authenticateAs("trainer-1", "trainer");
+    assessmentsMock.result.data = { modules: { courses: { programme_id: "prog-1" } } };
+    programmeTrainersMock.result.data = null;
+
+    const res = await request(buildApp())
+      .post("/api/assessments/assess-1/questions/bulk")
+      .set("Authorization", "Bearer token")
+      .send({ questions: [validQuestion] });
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 400 for an empty questions array", async () => {
+    authenticateAs("admin-1", "admin");
+    const res = await request(buildApp())
+      .post("/api/assessments/assess-1/questions/bulk")
+      .set("Authorization", "Bearer token")
+      .send({ questions: [] });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 when any row fails validation", async () => {
+    authenticateAs("admin-1", "admin");
+    const res = await request(buildApp())
+      .post("/api/assessments/assess-1/questions/bulk")
+      .set("Authorization", "Bearer token")
+      .send({ questions: [validQuestion, { ...validQuestion, correct_option_id: "z" }] });
+    expect(res.status).toBe(400);
+  });
+
+  it("inserts every row for an admin, appending after the existing question count", async () => {
+    authenticateAs("admin-1", "admin");
+    questionsMock.result.count = 3;
+    questionsMock.result.data = [
+      { id: "q-10", assessment_id: "assess-1", position: 3, ...validQuestion },
+      { id: "q-11", assessment_id: "assess-1", position: 4, ...validQuestion },
+    ];
+
+    const res = await request(buildApp())
+      .post("/api/assessments/assess-1/questions/bulk")
+      .set("Authorization", "Bearer token")
+      .send({ questions: [validQuestion, validQuestion] });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toHaveLength(2);
   });
 });
 

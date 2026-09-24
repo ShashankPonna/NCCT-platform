@@ -1,4 +1,4 @@
-import { createQuestionSchema, updateQuestionSchema } from "@ncct/validation";
+import { bulkCreateQuestionsSchema, createQuestionSchema, updateQuestionSchema } from "@ncct/validation";
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import {
@@ -33,6 +33,47 @@ assessmentQuestionsRouter.post(
       .insert({ ...parsed.data, assessment_id: req.params.id })
       .select()
       .single();
+
+    if (error) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
+    res.status(201).json(data);
+  },
+);
+
+// Bulk CSV import (docs/DECISIONS.md #57): the client parses the CSV into
+// the same shape as a single question and posts the whole batch here in one
+// request, rather than one round-trip per row. New rows are appended after
+// whatever the assessment already has, in CSV order.
+assessmentQuestionsRouter.post(
+  "/assessments/:id/questions/bulk",
+  requireAuth,
+  requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForAssessment(req.params.id)),
+  async (req, res) => {
+    const parsed = bulkCreateQuestionsSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() });
+      return;
+    }
+
+    const { count, error: countError } = await supabaseAdmin
+      .from("assessment_questions")
+      .select("id", { count: "exact", head: true })
+      .eq("assessment_id", req.params.id);
+    if (countError) {
+      res.status(400).json({ error: countError.message });
+      return;
+    }
+
+    const rows = parsed.data.questions.map((q, i) => ({
+      ...q,
+      assessment_id: req.params.id,
+      position: q.position ?? (count ?? 0) + i,
+    }));
+
+    const { data, error } = await supabaseAdmin.from("assessment_questions").insert(rows).select();
 
     if (error) {
       res.status(400).json({ error: error.message });

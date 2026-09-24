@@ -264,6 +264,14 @@ export const updateQuestionSchema = z
     path: ["options"],
   });
 
+// CSV bulk import (docs/DECISIONS.md #57): the CSV is parsed into the same
+// per-question shape createQuestionSchema already validates for the
+// single-question form, so one bulk request is just several of those rows
+// re-checked server-side — CLAUDE.md's "never validate only on the client".
+export const bulkCreateQuestionsSchema = z.object({
+  questions: z.array(createQuestionSchema).min(1).max(200),
+});
+
 // Answers are keyed by question id; an unanswered question is simply absent
 // from the map rather than requiring a placeholder value.
 export const submitAttemptSchema = z.object({

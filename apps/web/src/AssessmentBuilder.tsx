@@ -1,4 +1,5 @@
 import {
+  bulkCreateAssessmentQuestions,
   createAssessment,
   createAssessmentQuestion,
   deleteAssessment,
@@ -60,6 +61,13 @@ interface AssessmentBuilderText {
   previewPassed: string;
   previewFailed: string;
   correctAnswerWas: (text: string) => string;
+  csvTitle: string;
+  csvHint: string;
+  csvDownloadTemplate: string;
+  csvChooseFile: string;
+  csvRowsReady: (n: number) => string;
+  csvImport: string;
+  csvNothingToImport: string;
 }
 
 const content: Record<Locale, AssessmentBuilderText> = {
@@ -101,6 +109,14 @@ const content: Record<Locale, AssessmentBuilderText> = {
     previewPassed: "Would pass",
     previewFailed: "Would not pass",
     correctAnswerWas: (text) => `Correct answer: ${text}`,
+    csvTitle: "Bulk import questions (CSV)",
+    csvHint:
+      "Columns: question_text, option_a..option_f (blank = unused), correct_option (matching letter), marks (optional, default 1).",
+    csvDownloadTemplate: "Download CSV template",
+    csvChooseFile: "Choose CSV file",
+    csvRowsReady: (n) => `${n} question${n === 1 ? "" : "s"} ready to import`,
+    csvImport: "Import questions",
+    csvNothingToImport: "Select a CSV file with at least one valid question row first.",
   },
   hi: {
     assessments: "मूल्यांकन",
@@ -140,6 +156,14 @@ const content: Record<Locale, AssessmentBuilderText> = {
     previewPassed: "उत्तीर्ण होगा",
     previewFailed: "उत्तीर्ण नहीं होगा",
     correctAnswerWas: (text) => `सही उत्तर: ${text}`,
+    csvTitle: "प्रश्न बल्क आयात करें (CSV)",
+    csvHint:
+      "कॉलम: question_text, option_a..option_f (खाली = अप्रयुक्त), correct_option (मिलता अक्षर), marks (वैकल्पिक, डिफ़ॉल्ट 1)।",
+    csvDownloadTemplate: "CSV टेम्पलेट डाउनलोड करें",
+    csvChooseFile: "CSV फ़ाइल चुनें",
+    csvRowsReady: (n) => `${n} प्रश्न आयात के लिए तैयार`,
+    csvImport: "प्रश्न आयात करें",
+    csvNothingToImport: "पहले कम से कम एक वैध प्रश्न पंक्ति वाली CSV फ़ाइल चुनें।",
   },
 };
 
@@ -157,6 +181,88 @@ function emptyQuestionForm(): QuestionFormState {
     correct_option_id: "",
     marks: "1",
   };
+}
+
+// Fixed column layout — question_text, one column per possible option letter
+// (blank = unused), then correct_option and marks — rather than a flexible
+// header-driven order, since the option-count column can't vary per row.
+const CSV_TEMPLATE = `question_text,${OPTION_LETTERS.map((l) => `option_${l}`).join(",")},correct_option,marks
+"Who owns a cooperative society?",A single private investor,The government,Its members,A bank,,,c,5
+`;
+
+// A quoted field can contain commas (question text routinely does), so a
+// plain String.split(",") — good enough for the simpler trainee-CSV import
+// elsewhere — isn't safe here. This handles quotes and doubled-quote
+// escaping but not embedded newlines, which is an acceptable limit for a
+// one-row-per-question sheet.
+function splitCsvRow(line: string): string[] {
+  const cells: string[] = [];
+  let cell = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (line[i + 1] === '"') {
+          cell += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        cell += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ",") {
+      cells.push(cell);
+      cell = "";
+    } else {
+      cell += ch;
+    }
+  }
+  cells.push(cell);
+  return cells.map((c) => c.trim());
+}
+
+function parseQuestionCsvRow(cells: string[], rowNum: number): { question?: QuestionInput; error?: string } {
+  const question_text = cells[0] ?? "";
+  const optionCells = OPTION_LETTERS.map((_, i) => cells[1 + i] ?? "");
+  const correctLetter = (cells[1 + MAX_QUESTION_OPTIONS] ?? "").toLowerCase();
+  const marksCell = cells[2 + MAX_QUESTION_OPTIONS] ?? "";
+
+  const options = OPTION_LETTERS.map((id, i) => ({ id, text: optionCells[i] })).filter((o) => o.text);
+
+  const parsed = createQuestionSchema.safeParse({
+    question_text,
+    options,
+    correct_option_id: correctLetter,
+    marks: marksCell ? Number(marksCell) : undefined,
+  });
+  if (!parsed.success) {
+    return { error: `Row ${rowNum}: ${parsed.error.issues.map((i) => i.message).join("; ")}` };
+  }
+  return { question: parsed.data };
+}
+
+function parseQuestionCsv(text: string): { questions: QuestionInput[]; errors: string[] } {
+  const lines = text
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  if (lines.length === 0) return { questions: [], errors: [] };
+
+  const hasHeader = (splitCsvRow(lines[0])[0] ?? "").toLowerCase() === "question_text";
+  const dataLines = hasHeader ? lines.slice(1) : lines;
+
+  const questions: QuestionInput[] = [];
+  const errors: string[] = [];
+  dataLines.forEach((line, i) => {
+    const result = parseQuestionCsvRow(splitCsvRow(line), i + (hasHeader ? 2 : 1));
+    if (result.error) errors.push(result.error);
+    else if (result.question) questions.push(result.question);
+  });
+  return { questions, errors };
 }
 
 // Full assessment authoring for both practice quizzes and graded module
@@ -181,6 +287,11 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
   const [previewAnswers, setPreviewAnswers] = useState<Record<string, string>>({});
   const [previewResult, setPreviewResult] = useState<GradedResult | null>(null);
   const [previewBusy, setPreviewBusy] = useState(false);
+
+  const [csvFileName, setCsvFileName] = useState<string | null>(null);
+  const [csvQuestions, setCsvQuestions] = useState<QuestionInput[]>([]);
+  const [csvErrors, setCsvErrors] = useState<string[]>([]);
+  const [csvBusy, setCsvBusy] = useState(false);
 
   // Reset-on-moduleId-change is handled by the parent mounting this
   // component with `key={moduleId}` rather than resetting state here.
@@ -215,6 +326,9 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
     setPreviewOpen(false);
     setPreviewResult(null);
     setPreviewAnswers({});
+    setCsvFileName(null);
+    setCsvQuestions([]);
+    setCsvErrors([]);
     void loadQuestions(assessmentId);
   }
 
@@ -343,6 +457,37 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
       await loadAssessments();
     } catch (err) {
       setError((err as Error).message);
+    }
+  }
+
+  function handleCsvFileSelected(file: File) {
+    setCsvFileName(file.name);
+    setError(null);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      const { questions, errors } = parseQuestionCsv(text ?? "");
+      setCsvQuestions(questions);
+      setCsvErrors(errors);
+    };
+    reader.readAsText(file);
+  }
+
+  async function handleImportCsv() {
+    if (!selectedAssessmentId || csvQuestions.length === 0) return;
+    setError(null);
+    setCsvBusy(true);
+    try {
+      await bulkCreateAssessmentQuestions(accessToken, selectedAssessmentId, csvQuestions);
+      setCsvFileName(null);
+      setCsvQuestions([]);
+      setCsvErrors([]);
+      await loadQuestions(selectedAssessmentId);
+      await loadAssessments();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setCsvBusy(false);
     }
   }
 
@@ -560,6 +705,43 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
               </button>
             )}
           </form>
+
+          <div className="csv-import">
+            <h4>{t.csvTitle}</h4>
+            <p className="hint">{t.csvHint}</p>
+            <a
+              href={`data:text/csv;charset=utf-8,${encodeURIComponent(CSV_TEMPLATE)}`}
+              download="assessment-questions-template.csv"
+            >
+              {t.csvDownloadTemplate}
+            </a>
+            <div className="inline-form">
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleCsvFileSelected(file);
+                }}
+              />
+              {csvFileName && (
+                <button type="button" disabled={csvQuestions.length === 0 || csvBusy} onClick={() => void handleImportCsv()}>
+                  {csvBusy ? "…" : t.csvImport}
+                </button>
+              )}
+            </div>
+            {csvFileName && csvErrors.length === 0 && csvQuestions.length === 0 && (
+              <p className="form-error">{t.csvNothingToImport}</p>
+            )}
+            {csvFileName && csvQuestions.length > 0 && <p>{t.csvRowsReady(csvQuestions.length)}</p>}
+            {csvErrors.length > 0 && (
+              <ul className="form-error">
+                {csvErrors.map((err) => (
+                  <li key={err}>{err}</li>
+                ))}
+              </ul>
+            )}
+          </div>
 
           {questions.length > 0 && (
             <div className="assessment-preview">
