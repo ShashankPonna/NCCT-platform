@@ -84,12 +84,19 @@ function embeddingOf(value: number): number[] {
   return new Array(1024).fill(value);
 }
 
+// Session start times for the "not before start" checks below — comfortably
+// in the past/future so there's no flakiness near the boundary.
+const PAST_STARTS_AT = "2020-01-01T00:00:00.000Z";
+const FUTURE_STARTS_AT = "2099-01-01T00:00:00.000Z";
+
 // requireProgrammeAccess now gates every admin/trainer route below via a
 // session→programme lookup on `timetable_sessions` (the same table several
 // handlers already query themselves) plus an assignment check on
 // `programme_trainers` — this sets up both for a trainer's success path.
+// Defaults to an already-started session since most of these tests are
+// about role/assignment, not timing.
 function assignTrainerToSession(sessionFields: Record<string, unknown> = {}) {
-  sessionsMock.result.data = { programme_id: "prog-1", ...sessionFields };
+  sessionsMock.result.data = { programme_id: "prog-1", starts_at: PAST_STARTS_AT, ...sessionFields };
   programmeTrainersMock.result.data = { trainer_id: "trainer-1" };
 }
 
@@ -150,8 +157,42 @@ describe("POST /api/attendance", () => {
     expect(res.status).toBe(400);
   });
 
+  it("returns 400 and never writes a record when checking in before the session starts", async () => {
+    authenticateAs("trainee-1", "trainee");
+    sessionsMock.result.data = { starts_at: FUTURE_STARTS_AT };
+
+    const res = await request(buildApp())
+      .post("/api/attendance")
+      .set("Authorization", "Bearer token")
+      .send({ session_id: "11111111-1111-1111-1111-111111111111", method: "qr" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/isn't open yet/);
+    expect(attendanceMock.builder.insert).not.toHaveBeenCalled();
+  });
+
+  it("allows a qr check-in exactly at or after the session's start time", async () => {
+    authenticateAs("trainee-1", "trainee");
+    sessionsMock.result.data = { starts_at: PAST_STARTS_AT };
+    attendanceMock.result.data = {
+      id: "att-1",
+      session_id: "11111111-1111-1111-1111-111111111111",
+      trainee_id: "trainee-1",
+      method: "qr",
+      match_score: null,
+    };
+
+    const res = await request(buildApp())
+      .post("/api/attendance")
+      .set("Authorization", "Bearer token")
+      .send({ session_id: "11111111-1111-1111-1111-111111111111", method: "qr" });
+
+    expect(res.status).toBe(201);
+  });
+
   it("records a qr check-in", async () => {
     authenticateAs("trainee-1", "trainee");
+    sessionsMock.result.data = { starts_at: PAST_STARTS_AT };
     attendanceMock.result.data = {
       id: "att-1",
       session_id: "11111111-1111-1111-1111-111111111111",
@@ -171,6 +212,7 @@ describe("POST /api/attendance", () => {
 
   it("returns 409 on a duplicate qr check-in", async () => {
     authenticateAs("trainee-1", "trainee");
+    sessionsMock.result.data = { starts_at: PAST_STARTS_AT };
     attendanceMock.result.data = null;
     attendanceMock.result.error = { code: "23505", message: "duplicate" };
 
@@ -184,8 +226,7 @@ describe("POST /api/attendance", () => {
 
   it("returns 404 for a qr check-in against a nonexistent session", async () => {
     authenticateAs("trainee-1", "trainee");
-    attendanceMock.result.data = null;
-    attendanceMock.result.error = { code: "23503", message: "fk violation" };
+    sessionsMock.result.data = null; // the proactive session lookup itself finds nothing
 
     const res = await request(buildApp())
       .post("/api/attendance")
@@ -210,6 +251,7 @@ describe("POST /api/attendance", () => {
 
   it("falls back to QR when the trainee has no enrolled embedding", async () => {
     authenticateAs("trainee-1", "trainee");
+    sessionsMock.result.data = { starts_at: PAST_STARTS_AT };
     embeddingsMock.result.data = [];
 
     const res = await request(buildApp())
@@ -227,6 +269,7 @@ describe("POST /api/attendance", () => {
 
   it("falls back to QR without writing a record when the match score is below threshold", async () => {
     authenticateAs("trainee-1", "trainee");
+    sessionsMock.result.data = { starts_at: PAST_STARTS_AT };
     embeddingsMock.result.data = [{ embedding: embeddingOf(1) }];
 
     const res = await request(buildApp())
@@ -245,6 +288,7 @@ describe("POST /api/attendance", () => {
 
   it("records a face check-in with a server-computed match_score when above threshold", async () => {
     authenticateAs("trainee-1", "trainee");
+    sessionsMock.result.data = { starts_at: PAST_STARTS_AT };
     embeddingsMock.result.data = [{ embedding: embeddingOf(1) }];
     attendanceMock.result.data = {
       id: "att-1",
@@ -272,6 +316,7 @@ describe("POST /api/attendance", () => {
 
   it("ignores a client-supplied match_score entirely (never trusted)", async () => {
     authenticateAs("trainee-1", "trainee");
+    sessionsMock.result.data = { starts_at: PAST_STARTS_AT };
     embeddingsMock.result.data = [{ embedding: embeddingOf(1) }];
     attendanceMock.result.data = {
       id: "att-1",
@@ -394,6 +439,7 @@ describe("POST /api/timetable/:sessionId/kiosk-face-checkin", () => {
 
   it("returns 409 on a duplicate check-in for the same session", async () => {
     authenticateAs("admin-1", "admin");
+    sessionsMock.result.data = { starts_at: PAST_STARTS_AT };
     embeddingsMock.result.data = [{ embedding: embeddingOf(1) }];
     attendanceMock.result.data = null;
     attendanceMock.result.error = { code: "23505", message: "duplicate" };
@@ -404,6 +450,20 @@ describe("POST /api/timetable/:sessionId/kiosk-face-checkin", () => {
       .send({ trainee_id: traineeId, embedding: embeddingOf(1) });
 
     expect(res.status).toBe(409);
+  });
+
+  it("returns 400 and never writes a record when checking in before the session starts", async () => {
+    authenticateAs("admin-1", "admin");
+    sessionsMock.result.data = { starts_at: FUTURE_STARTS_AT };
+
+    const res = await request(buildApp())
+      .post(url)
+      .set("Authorization", "Bearer token")
+      .send({ trainee_id: traineeId, embedding: embeddingOf(1) });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/isn't open yet/);
+    expect(attendanceMock.builder.insert).not.toHaveBeenCalled();
   });
 
   it("returns 404 against a nonexistent session", async () => {
@@ -591,6 +651,32 @@ describe("PUT /api/timetable/:sessionId/attendance/:traineeId", () => {
         marked_by: "admin-1",
       }),
     );
+  });
+
+  // Unlike the self/kiosk check-in routes, a manual mark is deliberately
+  // never time-gated — staff must be able to manage the roster regardless
+  // of whether the slot is in the future, ongoing, or long over.
+  it("succeeds for a session scheduled in the future, unlike the self/kiosk check-in routes", async () => {
+    authenticateAs("admin-1", "admin");
+    sessionsMock.result.data = { programme_id: "prog-1", starts_at: FUTURE_STARTS_AT };
+    nominationsMock.result.data = { trainee_id: ROSTER_TRAINEE };
+    attendanceMock.queue.push(
+      { data: null, error: null },
+      {
+        data: {
+          id: "att-new",
+          session_id: "11111111-1111-1111-1111-111111111111",
+          trainee_id: ROSTER_TRAINEE,
+          method: "manual",
+          marked_by: "admin-1",
+        },
+        error: null,
+      },
+    );
+
+    const res = await request(buildApp()).put(url).set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(201);
   });
 
   it("is idempotent — marking an already-present trainee returns the existing row unchanged, never overwriting its method", async () => {

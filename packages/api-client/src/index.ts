@@ -31,6 +31,7 @@ import type {
   Module,
   Nomination,
   NominationDecision,
+  NominationWithTrainee,
   Profile,
   Programme,
   ProgrammeMode,
@@ -241,7 +242,7 @@ export function createProgramme(
 // Admin review queue for one programme (distinct from getMyNominations,
 // which is a trainee's own list).
 export function getProgrammeNominations(accessToken: string, programmeId: string) {
-  return apiFetch<Nomination[]>(`/programmes/${programmeId}/nominations`, accessToken);
+  return apiFetch<NominationWithTrainee[]>(`/programmes/${programmeId}/nominations`, accessToken);
 }
 
 export function decideNomination(

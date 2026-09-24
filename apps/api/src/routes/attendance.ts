@@ -36,6 +36,20 @@ export function cosineSimilarity(a: number[], b: number[]): number {
   return dot / (Math.sqrt(magA) * Math.sqrt(magB));
 }
 
+// A trainee shouldn't be markable present for a class that hasn't started
+// yet — "on time" or late is fine (there's no upper bound: a staff-driven
+// manual mark or a late self-check-in must keep working for as long as the
+// roster stays open), only *before* `starts_at` is rejected. Exported for
+// the manual-mark route to reuse the identical rule if it ever needs to
+// (it deliberately doesn't today — see that route's own comment).
+export function isBeforeSessionStart(startsAt: string): boolean {
+  return new Date(startsAt).getTime() > Date.now();
+}
+
+function formatSessionStart(startsAt: string): string {
+  return new Date(startsAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+}
+
 // A trainee's own check-in, either method — own-row insert via req.supabase
 // (RLS `attendance_records_insert_own`, docs/DECISIONS.md #9), not
 // supabaseAdmin. For `face`, the client only ever supplies the raw embedding
@@ -44,6 +58,14 @@ export function cosineSimilarity(a: number[], b: number[]): number {
 // client, per CLAUDE.md's security rules. A below-threshold match does not
 // error and does not block the trainee — it reports `fallbackToQr: true` so
 // the client can offer the QR flow instead, per PRD §11's edge case.
+//
+// Checked before either branch: a trainee can't register presence for a
+// session that hasn't started (docs/DECISIONS.md #55) — on time or late is
+// fine, only early is rejected. An offline QR scan queued before start time
+// (see syncManager.ts) is unaffected: the check runs against real server
+// time at actual sync/insert, not the client's queued timestamp, and the
+// write-queue's existing "stop and retry the whole queue" behavior already
+// handles a still-too-early replay correctly as a transient failure.
 attendanceRouter.post("/attendance", requireAuth, requireRole("trainee"), async (req, res) => {
   const parsed = attendanceCheckInSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -51,6 +73,26 @@ attendanceRouter.post("/attendance", requireAuth, requireRole("trainee"), async 
     return;
   }
   const checkIn = parsed.data;
+
+  const { data: session, error: sessionError } = await req
+    .supabase!.from("timetable_sessions")
+    .select("starts_at")
+    .eq("id", checkIn.session_id)
+    .maybeSingle();
+  if (sessionError) {
+    res.status(400).json({ error: sessionError.message });
+    return;
+  }
+  if (!session) {
+    res.status(404).json({ error: "Session not found" });
+    return;
+  }
+  if (isBeforeSessionStart(session.starts_at)) {
+    res.status(400).json({
+      error: `Check-in isn't open yet — this session starts at ${formatSessionStart(session.starts_at)}`,
+    });
+    return;
+  }
 
   if (checkIn.method === "qr") {
     const { data, error } = await req
@@ -151,6 +193,29 @@ attendanceRouter.post(
       return;
     }
     const { trainee_id, embedding } = parsed.data;
+
+    // Same "not before start time" rule as the trainee's own check-in above
+    // — a staff-operated face capture still registers presence *now*, so
+    // it's subject to the same real-time rule, not exempt from it.
+    const { data: session, error: sessionError } = await supabaseAdmin
+      .from("timetable_sessions")
+      .select("starts_at")
+      .eq("id", req.params.sessionId)
+      .maybeSingle();
+    if (sessionError) {
+      res.status(400).json({ error: sessionError.message });
+      return;
+    }
+    if (!session) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
+    if (isBeforeSessionStart(session.starts_at)) {
+      res.status(400).json({
+        error: `Check-in isn't open yet — this session starts at ${formatSessionStart(session.starts_at)}`,
+      });
+      return;
+    }
 
     const { data: embeddings, error: embeddingsError } = await supabaseAdmin
       .from("face_embeddings")
@@ -279,6 +344,14 @@ attendanceRouter.get(
 // quiz score) — a manual mark has no such verdict to fake, it's staff
 // directly asserting a fact, the same way nomination decisions and content
 // authoring already work in this codebase.
+//
+// Deliberately has no "not before start time" check, unlike the two
+// self/kiosk check-in routes above (docs/DECISIONS.md #55) — staff need the
+// roster manageable indefinitely, including long after a slot ends (fixing
+// a missed scan, backfilling a paper register), and nothing here should
+// narrow that window. The early-check-in rule exists to stop a trainee
+// registering their own presence ahead of time, not to constrain when staff
+// can correct the record.
 //
 // Restricted to the session's actual roster (an approved nomination in its
 // programme) rather than any trainee id — the same integrity check a real

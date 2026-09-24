@@ -19,8 +19,8 @@ import { PROGRAMME_MODES } from "@ncct/constants";
 import type {
   AdminUserRow,
   Institution,
-  Nomination,
   NominationDecision,
+  NominationWithTrainee,
   Programme,
   ProgrammeMode,
   ProgrammeTrainerRow,
@@ -62,8 +62,12 @@ interface AdminProgrammeManagerText {
   nominationsLabel: string;
   nominationsSummary: (approved: number, pending: number, total: number) => string;
   nominationsHeading: (count: number) => string;
+  seatsFilled: (approved: number, capacity: number) => string;
+  seatsFull: string;
   noNominationsYet: string;
+  unnamedTrainee: string;
   nominatedOn: (date: string) => string;
+  decidedOn: (date: string) => string;
   approve: string;
   waitlist: string;
   rejectTitle: string;
@@ -142,8 +146,12 @@ const content: Record<Locale, AdminProgrammeManagerText> = {
     nominationsSummary: (approved, pending, total) =>
       `${approved} Approved${pending > 0 ? ` · ${pending} Pending` : ""} / ${total} Total`,
     nominationsHeading: (count) => `Nominations (${count})`,
+    seatsFilled: (approved, capacity) => `${approved} of ${capacity} seats filled`,
+    seatsFull: "Programme is at capacity — approving more will exceed it",
     noNominationsYet: "No nominations submitted for this programme yet.",
+    unnamedTrainee: "Unnamed trainee",
     nominatedOn: (date) => `Nominated: ${date}`,
+    decidedOn: (date) => `Decided: ${date}`,
     approve: "Approve",
     waitlist: "Waitlist",
     rejectTitle: "Reject nomination",
@@ -223,8 +231,12 @@ const content: Record<Locale, AdminProgrammeManagerText> = {
     nominationsSummary: (approved, pending, total) =>
       `${approved} स्वीकृत${pending > 0 ? ` · ${pending} लंबित` : ""} / कुल ${total}`,
     nominationsHeading: (count) => `नामांकन (${count})`,
+    seatsFilled: (approved, capacity) => `${capacity} में से ${approved} सीटें भरी गईं`,
+    seatsFull: "कार्यक्रम पूर्ण क्षमता पर है — अधिक स्वीकृत करने से यह क्षमता से अधिक हो जाएगा",
     noNominationsYet: "इस कार्यक्रम के लिए अभी तक कोई नामांकन जमा नहीं किया गया है।",
+    unnamedTrainee: "अनाम प्रशिक्षणार्थी",
     nominatedOn: (date) => `नामांकित: ${date}`,
+    decidedOn: (date) => `निर्णय: ${date}`,
     approve: "स्वीकृत करें",
     waitlist: "प्रतीक्षा सूची में डालें",
     rejectTitle: "नामांकन अस्वीकार करें",
@@ -293,7 +305,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [programmes, setProgrammes] = useState<Programme[]>([]);
   const [selectedProgrammeId, setSelectedProgrammeId] = useState<string | null>(null);
-  const [nominations, setNominations] = useState<Nomination[]>([]);
+  const [nominations, setNominations] = useState<NominationWithTrainee[]>([]);
   const [sessions, setSessions] = useState<TimetableSession[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -684,6 +696,20 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                     <h3 className="font-display text-base text-[#00236F] font-bold m-0">
                       {t.nominationsHeading(nominations.length)}
                     </h3>
+                    {selectedProg.capacity != null && (
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                          approvedNominations.length >= selectedProg.capacity
+                            ? "bg-rose-50 text-rose-800 border-rose-200"
+                            : "bg-blue-50 text-blue-800 border-blue-200"
+                        }`}
+                        title={
+                          approvedNominations.length >= selectedProg.capacity ? t.seatsFull : undefined
+                        }
+                      >
+                        {t.seatsFilled(approvedNominations.length, selectedProg.capacity)}
+                      </span>
+                    )}
                   </div>
 
                   {nominations.length === 0 ? (
@@ -694,10 +720,11 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                   ) : (
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                       {nominations.map((nom) => {
-                        const traineeName =
-                          (nom as unknown as { trainee_name?: string }).trainee_name ??
-                          nom.trainee_id.slice(0, 8);
+                        const traineeName = nom.trainee_name?.trim() || t.unnamedTrainee;
                         const initials = traineeName.slice(0, 2).toUpperCase();
+                        const supportingInfo = [nom.trainee_phone, nom.trainee_cooperative_affiliation]
+                          .filter(Boolean)
+                          .join(" · ");
 
                         return (
                           <div
@@ -706,15 +733,22 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                           >
                             <div className="flex justify-between items-start gap-2">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-[#00236F] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                                <div className="w-10 h-10 rounded-xl bg-[#00236F] text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
                                   {initials}
                                 </div>
                                 <div>
                                   <h4 className="font-bold text-xs text-[#00236F] m-0">
                                     {traineeName}
                                   </h4>
+                                  {supportingInfo && (
+                                    <p className="font-metric-mono text-[11px] text-slate-600 m-0 mt-0.5">
+                                      {supportingInfo}
+                                    </p>
+                                  )}
                                   <p className="font-metric-mono text-[11px] text-slate-500 m-0 mt-0.5">
                                     {t.nominatedOn(new Date(nom.nominated_at).toLocaleDateString(dateLocale))}
+                                    {nom.decided_at &&
+                                      ` · ${t.decidedOn(new Date(nom.decided_at).toLocaleDateString(dateLocale))}`}
                                   </p>
                                 </div>
                               </div>

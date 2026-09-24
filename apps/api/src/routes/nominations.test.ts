@@ -110,9 +110,20 @@ describe("GET /api/programmes/:id/nominations", () => {
     expect(res.status).toBe(403);
   });
 
-  it("lists nominations for an admin", async () => {
+  it("lists nominations for an admin, denormalizing the trainee's profile", async () => {
     authenticateAs("admin-1", "admin");
-    nominationsMock.result.data = [{ id: "nom-1", status: "pending" }];
+    nominationsMock.result.data = [
+      {
+        id: "nom-1",
+        status: "pending",
+        trainee_id: "trainee-1",
+        profiles: {
+          full_name: "Asha Patil",
+          phone: "9876543210",
+          cooperative_affiliation: "Village PACS",
+        },
+      },
+    ];
 
     const res = await request(buildApp())
       .get("/api/programmes/prog-1/nominations")
@@ -120,11 +131,35 @@ describe("GET /api/programmes/:id/nominations", () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(1);
+    expect(res.body[0]).toMatchObject({
+      id: "nom-1",
+      trainee_name: "Asha Patil",
+      trainee_phone: "9876543210",
+      trainee_cooperative_affiliation: "Village PACS",
+    });
+    // The raw embedded relation is never echoed back to the client.
+    expect(res.body[0]).not.toHaveProperty("profiles");
+  });
+
+  it("falls back to null fields when the trainee has no profile data to show", async () => {
+    authenticateAs("admin-1", "admin");
+    nominationsMock.result.data = [{ id: "nom-1", status: "pending", profiles: null }];
+
+    const res = await request(buildApp())
+      .get("/api/programmes/prog-1/nominations")
+      .set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(200);
+    expect(res.body[0]).toMatchObject({
+      trainee_name: null,
+      trainee_phone: null,
+      trainee_cooperative_affiliation: null,
+    });
   });
 
   it("also lists nominations for a trainer (read-only roster access)", async () => {
     authenticateAs("trainer-1", "trainer");
-    nominationsMock.result.data = [{ id: "nom-1", status: "pending" }];
+    nominationsMock.result.data = [{ id: "nom-1", status: "pending", profiles: null }];
 
     const res = await request(buildApp())
       .get("/api/programmes/prog-1/nominations")

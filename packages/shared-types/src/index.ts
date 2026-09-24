@@ -117,6 +117,15 @@ export interface Nomination {
   decided_at: string | null;
 }
 
+// GET /programmes/:id/nominations' shape (docs/DECISIONS.md #54) — denormalizes
+// the trainee's profile so an admin/trainer reviewing nominations sees who
+// they're actually deciding on, not a bare trainee_id.
+export interface NominationWithTrainee extends Nomination {
+  trainee_name: string | null;
+  trainee_phone: string | null;
+  trainee_cooperative_affiliation: string | null;
+}
+
 export interface TimetableSession {
   id: string;
   programme_id: string;

@@ -23,6 +23,7 @@ interface TraineeAttendanceText {
   queuedNotice: string;
   notMatched: (score: string) => string;
   checkedIn: (method: string, time: string) => string;
+  tooEarly: (time: string) => string;
 }
 
 const content: Record<Locale, TraineeAttendanceText> = {
@@ -39,6 +40,7 @@ const content: Record<Locale, TraineeAttendanceText> = {
     queuedNotice: "Check-in saved — it will be sent once you're back online.",
     notMatched: (score) => `Check-in couldn't be confirmed (score ${score}). Please try QR check-in again.`,
     checkedIn: (method, time) => `Checked in via ${method} at ${time}.`,
+    tooEarly: (time) => `Check-in opens at ${time} — this session hasn't started yet.`,
   },
   hi: {
     heading: "उपस्थिति दर्ज करें",
@@ -53,6 +55,7 @@ const content: Record<Locale, TraineeAttendanceText> = {
     queuedNotice: "चेक-इन सहेजा गया — ऑनलाइन आते ही यह भेजा जाएगा।",
     notMatched: (score) => `चेक-इन की पुष्टि नहीं हो सकी (स्कोर ${score})। कृपया पुनः QR चेक-इन आज़माएं।`,
     checkedIn: (method, time) => `${method} के माध्यम से ${time} पर चेक-इन हुआ।`,
+    tooEarly: (time) => `चेक-इन ${time} पर शुरू होगा — यह सत्र अभी शुरू नहीं हुआ है।`,
   },
 };
 
@@ -108,13 +111,23 @@ export function TraineeAttendance({ accessToken, autoCheckInSessionId }: Trainee
   }
 
   // Manual fallback: resolve the short code the trainer shared to the
-  // session's real id, then check in exactly as the QR-scan path does.
+  // session's real id, then check in exactly as the QR-scan path does. The
+  // API is the real, authoritative enforcement of "not before start time"
+  // (docs/DECISIONS.md #55) — this is purely a UX shortcut, since this path
+  // already has the full session object in hand and can skip a doomed round
+  // trip with a friendlier, locale-aware message instead of the server's
+  // English-only one.
   async function handleCodeCheckIn() {
     if (!sessionCode.trim()) return;
     setError(null);
     setBusy(true);
     try {
       const session = await getSessionByCode(accessToken, sessionCode.trim());
+      if (new Date(session.starts_at).getTime() > Date.now()) {
+        setError(t.tooEarly(new Date(session.starts_at).toLocaleString(locale === "hi" ? "hi-IN" : undefined)));
+        setBusy(false);
+        return;
+      }
       await handleQrCheckIn(session.id);
     } catch (err) {
       setError((err as Error).message);

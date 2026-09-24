@@ -57,6 +57,11 @@ nominationsRouter.get(
 // the timetable-creation route above, see timetable.ts. *Deciding* a
 // nomination (PATCH below) stays admin-only per PRD's role table; this is
 // read access only.
+//
+// Denormalizes the trainee's profile (docs/DECISIONS.md #54) — the previous
+// version returned bare nomination rows with no name, phone, or
+// affiliation, so the review screen had nothing to actually identify a
+// trainee by beyond a raw UUID.
 nominationsRouter.get(
   "/programmes/:id/nominations",
   requireAuth,
@@ -64,7 +69,7 @@ nominationsRouter.get(
   async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from("nominations")
-      .select("*")
+      .select("*, profiles(full_name, phone, cooperative_affiliation)")
       .eq("programme_id", req.params.id)
       .order("nominated_at", { ascending: true });
 
@@ -72,7 +77,23 @@ nominationsRouter.get(
       res.status(400).json({ error: error.message });
       return;
     }
-    res.json(data);
+
+    res.json(
+      (
+        (data ?? []) as unknown as {
+          profiles: {
+            full_name: string | null;
+            phone: string | null;
+            cooperative_affiliation: string | null;
+          } | null;
+        }[]
+      ).map(({ profiles, ...nomination }) => ({
+        ...nomination,
+        trainee_name: profiles?.full_name ?? null,
+        trainee_phone: profiles?.phone ?? null,
+        trainee_cooperative_affiliation: profiles?.cooperative_affiliation ?? null,
+      })),
+    );
   },
 );
 
