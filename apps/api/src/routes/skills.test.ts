@@ -11,6 +11,8 @@ const {
   jobSkillsMock,
   programmeSkillsMock,
   courseSkillsMock,
+  coursesMock,
+  programmeTrainersMock,
   fromMock,
   getSkillGapMock,
   getSkillGapAcrossJobsMock,
@@ -33,6 +35,8 @@ const {
     const jobSkillsMock = createTableMock();
     const programmeSkillsMock = createTableMock();
     const courseSkillsMock = createTableMock();
+    const coursesMock = createTableMock();
+    const programmeTrainersMock = createTableMock();
     const tables: Record<string, ReturnType<typeof createTableMock>> = {
       profiles: profilesMock,
       skills: skillsMock,
@@ -40,6 +44,8 @@ const {
       job_skills: jobSkillsMock,
       programme_skills: programmeSkillsMock,
       course_skills: courseSkillsMock,
+      courses: coursesMock,
+      programme_trainers: programmeTrainersMock,
     };
     const fromMock = vi.fn((table: string) => tables[table].builder);
     return {
@@ -50,6 +56,8 @@ const {
       jobSkillsMock,
       programmeSkillsMock,
       courseSkillsMock,
+      coursesMock,
+      programmeTrainersMock,
       fromMock,
       getSkillGapMock: vi.fn(),
       getSkillGapAcrossJobsMock: vi.fn(),
@@ -89,7 +97,16 @@ beforeEach(() => {
   getSkillGapMock.mockReset();
   getSkillGapAcrossJobsMock.mockReset();
   embedJobBestEffortMock.mockReset();
-  for (const mock of [profilesMock, skillsMock, jobsMock, jobSkillsMock, programmeSkillsMock, courseSkillsMock]) {
+  for (const mock of [
+    profilesMock,
+    skillsMock,
+    jobsMock,
+    jobSkillsMock,
+    programmeSkillsMock,
+    courseSkillsMock,
+    coursesMock,
+    programmeTrainersMock,
+  ]) {
     mock.result.data = null;
     mock.result.error = null;
     for (const key of Object.keys(mock.builder)) {
@@ -259,8 +276,19 @@ describe("PUT /api/programmes/:id/skills", () => {
     ]);
   });
 
-  it("replaces the granted set for a trainer", async () => {
+  it("returns 403 for a trainer not assigned to the programme", async () => {
     authenticateAs("trainer-1", "trainer");
+    programmeTrainersMock.result.data = null;
+    const res = await request(buildApp())
+      .put(`/api/programmes/${PROGRAMME_ID}/skills`)
+      .set("Authorization", "Bearer token")
+      .send({ skill_ids: [] });
+    expect(res.status).toBe(403);
+  });
+
+  it("replaces the granted set for a trainer assigned to the programme", async () => {
+    authenticateAs("trainer-1", "trainer");
+    programmeTrainersMock.result.data = { trainer_id: "trainer-1" };
     const res = await request(buildApp())
       .put(`/api/programmes/${PROGRAMME_ID}/skills`)
       .set("Authorization", "Bearer token")
@@ -316,8 +344,21 @@ describe("PUT /api/courses/:id/skills", () => {
     expect(courseSkillsMock.builder.insert).toHaveBeenCalledWith([{ course_id: COURSE_ID, skill_id: SKILL_ID }]);
   });
 
-  it("replaces the granted set for a trainer", async () => {
+  it("returns 403 for a trainer not assigned to the course's programme", async () => {
     authenticateAs("trainer-1", "trainer");
+    coursesMock.result.data = { programme_id: PROGRAMME_ID };
+    programmeTrainersMock.result.data = null;
+    const res = await request(buildApp())
+      .put(`/api/courses/${COURSE_ID}/skills`)
+      .set("Authorization", "Bearer token")
+      .send({ skill_ids: [] });
+    expect(res.status).toBe(403);
+  });
+
+  it("replaces the granted set for a trainer assigned to the course's programme", async () => {
+    authenticateAs("trainer-1", "trainer");
+    coursesMock.result.data = { programme_id: PROGRAMME_ID };
+    programmeTrainersMock.result.data = { trainer_id: "trainer-1" };
     const res = await request(buildApp())
       .put(`/api/courses/${COURSE_ID}/skills`)
       .set("Authorization", "Bearer token")

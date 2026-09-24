@@ -5,6 +5,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { getB2BucketName, getB2Client, getVideoCdnBaseUrl } from "../b2Client.js";
+import { getProgrammeIdForLesson, requireProgrammeAccess } from "../programmeAccess.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
 export const lessonVideoRouter = Router();
@@ -40,6 +41,7 @@ lessonVideoRouter.post(
   "/lessons/:id/video-upload-url",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForLesson(req.params.id)),
   async (req, res) => {
     const parsed = requestUploadUrlSchema.safeParse(req.body);
     if (!parsed.success) {

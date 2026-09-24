@@ -1,6 +1,11 @@
 import { createQuestionSchema, updateQuestionSchema } from "@ncct/validation";
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import {
+  getProgrammeIdForAssessment,
+  getProgrammeIdForAssessmentQuestion,
+  requireProgrammeAccess,
+} from "../programmeAccess.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
 export const assessmentQuestionsRouter = Router();
@@ -15,6 +20,7 @@ assessmentQuestionsRouter.post(
   "/assessments/:id/questions",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForAssessment(req.params.id)),
   async (req, res) => {
     const parsed = createQuestionSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -41,6 +47,7 @@ assessmentQuestionsRouter.get(
   "/assessments/:id/questions",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForAssessment(req.params.id)),
   async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from("assessment_questions")
@@ -74,6 +81,7 @@ assessmentQuestionsRouter.get("/assessments/:id/take", requireAuth, async (req, 
     assessment_id: q.assessment_id,
     question_text: q.question_text,
     options: q.options,
+    marks: q.marks,
     position: q.position,
   }));
   res.json(safeQuestions);
@@ -83,6 +91,7 @@ assessmentQuestionsRouter.patch(
   "/questions/:id",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForAssessmentQuestion(req.params.id)),
   async (req, res) => {
     const parsed = updateQuestionSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -113,6 +122,7 @@ assessmentQuestionsRouter.delete(
   "/questions/:id",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForAssessmentQuestion(req.params.id)),
   async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from("assessment_questions")

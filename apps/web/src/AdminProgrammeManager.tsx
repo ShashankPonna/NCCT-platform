@@ -1,4 +1,5 @@
 import {
+  assignProgrammeTrainer,
   createProgramme,
   createSkill,
   createTimetableSession,
@@ -7,17 +8,22 @@ import {
   getProgrammeNominations,
   getProgrammes,
   getProgrammeSkills,
+  getProgrammeTrainers,
   getSkills,
   getTimetableSessions,
+  listUsers,
   setProgrammeSkills,
+  unassignProgrammeTrainer,
 } from "@ncct/api-client";
 import { PROGRAMME_MODES } from "@ncct/constants";
 import type {
+  AdminUserRow,
   Institution,
   Nomination,
   NominationDecision,
   Programme,
   ProgrammeMode,
+  ProgrammeTrainerRow,
   Skill,
   TimetableSession,
 } from "@ncct/shared-types";
@@ -105,6 +111,13 @@ interface AdminProgrammeManagerText {
   creating: string;
   createProgramme: string;
   status: Record<string, string>;
+  assignedTrainers: (count: number) => string;
+  assignedTrainersBody: string;
+  noTrainersAssigned: string;
+  selectTrainerToAssign: string;
+  assignTrainer: string;
+  unassignTrainer: string;
+  assigning: string;
 }
 
 const content: Record<Locale, AdminProgrammeManagerText> = {
@@ -180,6 +193,14 @@ const content: Record<Locale, AdminProgrammeManagerText> = {
     creating: "Creating...",
     createProgramme: "Create Programme",
     status: { pending: "Pending", approved: "Approved", waitlisted: "Waitlisted", rejected: "Rejected" },
+    assignedTrainers: (count) => `Assigned Trainers (${count})`,
+    assignedTrainersBody:
+      "Only trainers assigned here can manage this programme's courses, content, and attendance.",
+    noTrainersAssigned: "No trainers assigned yet — this programme has no faculty who can manage it.",
+    selectTrainerToAssign: "Select a trainer to assign...",
+    assignTrainer: "Assign",
+    unassignTrainer: "Unassign",
+    assigning: "Assigning...",
   },
   hi: {
     heading: "कार्यक्रम प्रबंधन",
@@ -253,6 +274,14 @@ const content: Record<Locale, AdminProgrammeManagerText> = {
     creating: "बनाया जा रहा है...",
     createProgramme: "कार्यक्रम बनाएं",
     status: { pending: "लंबित", approved: "स्वीकृत", waitlisted: "प्रतीक्षा सूची में", rejected: "अस्वीकृत" },
+    assignedTrainers: (count) => `नियुक्त प्रशिक्षक (${count})`,
+    assignedTrainersBody:
+      "केवल यहां नियुक्त प्रशिक्षक ही इस कार्यक्रम के पाठ्यक्रम, सामग्री और उपस्थिति का प्रबंधन कर सकते हैं।",
+    noTrainersAssigned: "अभी तक कोई प्रशिक्षक नियुक्त नहीं — इस कार्यक्रम का प्रबंधन करने वाला कोई संकाय सदस्य नहीं है।",
+    selectTrainerToAssign: "नियुक्त करने के लिए एक प्रशिक्षक चुनें...",
+    assignTrainer: "नियुक्त करें",
+    unassignTrainer: "हटाएं",
+    assigning: "नियुक्त किया जा रहा है...",
   },
 };
 
@@ -282,6 +311,13 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
   const [newSkillName, setNewSkillName] = useState("");
   const [savingSkills, setSavingSkills] = useState(false);
 
+  // Programme-trainer assignment (docs/DECISIONS.md #52) — admin-only, same
+  // gating as the skills-taxonomy section below.
+  const [trainerProfiles, setTrainerProfiles] = useState<AdminUserRow[]>([]);
+  const [assignedTrainers, setAssignedTrainers] = useState<ProgrammeTrainerRow[]>([]);
+  const [trainerToAssign, setTrainerToAssign] = useState("");
+  const [assigningTrainer, setAssigningTrainer] = useState(false);
+
   useEffect(() => {
     getInstitutions(accessToken)
       .then(setInstitutions)
@@ -297,6 +333,11 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
     getSkills(accessToken)
       .then(setSkills)
       .catch((err: Error) => setError(err.message));
+    if (isAdmin) {
+      listUsers(accessToken, { role: "trainer" })
+        .then(setTrainerProfiles)
+        .catch((err: Error) => setError(err.message));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken]);
 
@@ -318,6 +359,35 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
       setNominations(noms);
       setSessions(sess);
       setProgrammeSkillIds(new Set(progSkills.map((s) => s.id)));
+      if (isAdmin) {
+        setAssignedTrainers(await getProgrammeTrainers(accessToken, programmeId));
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  async function handleAssignTrainer() {
+    if (!selectedProgrammeId || !trainerToAssign) return;
+    setError(null);
+    setAssigningTrainer(true);
+    try {
+      await assignProgrammeTrainer(accessToken, selectedProgrammeId, trainerToAssign);
+      setAssignedTrainers(await getProgrammeTrainers(accessToken, selectedProgrammeId));
+      setTrainerToAssign("");
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setAssigningTrainer(false);
+    }
+  }
+
+  async function handleUnassignTrainer(trainerId: string) {
+    if (!selectedProgrammeId) return;
+    setError(null);
+    try {
+      await unassignProgrammeTrainer(accessToken, selectedProgrammeId, trainerId);
+      setAssignedTrainers((prev) => prev.filter((t) => t.trainer_id !== trainerId));
     } catch (err) {
       setError((err as Error).message);
     }
@@ -855,6 +925,66 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                     </div>
                   )}
                 </div>
+
+                {/* Assigned Trainers Section (DECISIONS.md #52) — admin-only: which
+                    trainers can manage this programme's courses, content, and attendance. */}
+                {isAdmin && (
+                  <div>
+                    <h3 className="font-display text-base text-[#00236F] font-bold m-0 mb-1">
+                      {t.assignedTrainers(assignedTrainers.length)}
+                    </h3>
+                    <p className="text-xs text-slate-600 mb-3">{t.assignedTrainersBody}</p>
+
+                    {assignedTrainers.length === 0 ? (
+                      <p className="text-xs text-slate-500 mb-3">{t.noTrainersAssigned}</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {assignedTrainers.map((tr) => (
+                          <span
+                            key={tr.trainer_id}
+                            className="inline-flex items-center gap-2 bg-paper-light border border-border-slate rounded-full pl-3 pr-1.5 py-1 text-xs font-medium text-[#00236F]"
+                          >
+                            {tr.full_name ?? tr.trainer_id.slice(0, 8)}
+                            <button
+                              type="button"
+                              onClick={() => void handleUnassignTrainer(tr.trainer_id)}
+                              title={t.unassignTrainer}
+                              aria-label={`${t.unassignTrainer}: ${tr.full_name ?? tr.trainer_id}`}
+                              className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-rose-100 text-rose-600 cursor-pointer"
+                            >
+                              <span className="material-symbols-outlined text-[14px]">close</span>
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <select
+                        value={trainerToAssign}
+                        onChange={(e) => setTrainerToAssign(e.target.value)}
+                        className="flex-1 h-10 bg-paper-light border border-border-slate rounded-xl px-3.5 text-xs text-ink focus:bg-white focus:border-[#00236F] outline-none cursor-pointer"
+                      >
+                        <option value="">{t.selectTrainerToAssign}</option>
+                        {trainerProfiles
+                          .filter((tp) => !assignedTrainers.some((at) => at.trainer_id === tp.id))
+                          .map((tp) => (
+                            <option key={tp.id} value={tp.id}>
+                              {tp.full_name ?? tp.email ?? tp.id}
+                            </option>
+                          ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => void handleAssignTrainer()}
+                        disabled={!trainerToAssign || assigningTrainer}
+                        className="px-4 h-10 bg-paper-light border border-border-slate text-[#00236F] font-bold rounded-xl text-xs hover:bg-slate-100 disabled:opacity-50 cursor-pointer"
+                      >
+                        {assigningTrainer ? t.assigning : t.assignTrainer}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Skills Granted Section (P1 Skill-Gap Analysis, DECISIONS.md #26) — admin-only config */}
                 {isAdmin && (

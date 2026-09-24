@@ -10,6 +10,7 @@ const {
   embeddingsMock,
   sessionsMock,
   nominationsMock,
+  programmeTrainersMock,
   fromMock,
 } = vi.hoisted(() => {
   // `then` on the builder itself (not a per-method terminal resolver) means
@@ -38,12 +39,14 @@ const {
   const embeddingsMock = createTableMock();
   const sessionsMock = createTableMock();
   const nominationsMock = createTableMock();
+  const programmeTrainersMock = createTableMock();
   const tables: Record<string, ReturnType<typeof createTableMock>> = {
     profiles: profilesMock,
     attendance_records: attendanceMock,
     face_embeddings: embeddingsMock,
     timetable_sessions: sessionsMock,
     nominations: nominationsMock,
+    programme_trainers: programmeTrainersMock,
   };
   const fromMock = vi.fn((table: string) => tables[table].builder);
   const getUserMock = vi.fn();
@@ -54,6 +57,7 @@ const {
     embeddingsMock,
     sessionsMock,
     nominationsMock,
+    programmeTrainersMock,
     fromMock,
   };
 });
@@ -80,9 +84,25 @@ function embeddingOf(value: number): number[] {
   return new Array(1024).fill(value);
 }
 
+// requireProgrammeAccess now gates every admin/trainer route below via a
+// session→programme lookup on `timetable_sessions` (the same table several
+// handlers already query themselves) plus an assignment check on
+// `programme_trainers` — this sets up both for a trainer's success path.
+function assignTrainerToSession(sessionFields: Record<string, unknown> = {}) {
+  sessionsMock.result.data = { programme_id: "prog-1", ...sessionFields };
+  programmeTrainersMock.result.data = { trainer_id: "trainer-1" };
+}
+
 beforeEach(() => {
   getUserMock.mockReset();
-  for (const mock of [profilesMock, attendanceMock, embeddingsMock, sessionsMock, nominationsMock]) {
+  for (const mock of [
+    profilesMock,
+    attendanceMock,
+    embeddingsMock,
+    sessionsMock,
+    nominationsMock,
+    programmeTrainersMock,
+  ]) {
     mock.builder.insert.mockClear();
     mock.result.data = null;
     mock.result.error = null;
@@ -307,8 +327,21 @@ describe("POST /api/timetable/:sessionId/kiosk-face-checkin", () => {
     expect(res.status).toBe(400);
   });
 
+  it("returns 403 for a trainer not assigned to the session's programme", async () => {
+    authenticateAs("trainer-1", "trainer");
+    sessionsMock.result.data = { programme_id: "prog-1" };
+    programmeTrainersMock.result.data = null;
+
+    const res = await request(buildApp())
+      .post(url)
+      .set("Authorization", "Bearer token")
+      .send({ trainee_id: traineeId, embedding: embeddingOf(1) });
+    expect(res.status).toBe(403);
+  });
+
   it("falls back to QR when the named trainee has no enrolled embedding", async () => {
     authenticateAs("trainer-1", "trainer");
+    assignTrainerToSession();
     embeddingsMock.result.data = [];
 
     const res = await request(buildApp())
@@ -322,6 +355,7 @@ describe("POST /api/timetable/:sessionId/kiosk-face-checkin", () => {
 
   it("falls back to QR without writing a record when the match score is below threshold", async () => {
     authenticateAs("trainer-1", "trainer");
+    assignTrainerToSession();
     embeddingsMock.result.data = [{ embedding: embeddingOf(1) }];
 
     const res = await request(buildApp())
@@ -336,6 +370,7 @@ describe("POST /api/timetable/:sessionId/kiosk-face-checkin", () => {
 
   it("records a face check-in for the named trainee_id, not the caller", async () => {
     authenticateAs("trainer-1", "trainer");
+    assignTrainerToSession();
     embeddingsMock.result.data = [{ embedding: embeddingOf(1) }];
     attendanceMock.result.data = {
       id: "att-1",
@@ -408,10 +443,10 @@ describe("GET /api/timetable/:sessionId/qr", () => {
 
   it("returns a QR data URL and the session's check-in code for trainer", async () => {
     authenticateAs("trainer-1", "trainer");
-    sessionsMock.result.data = {
+    assignTrainerToSession({
       id: "11111111-1111-1111-1111-111111111111",
       check_in_code: "482913",
-    };
+    });
 
     const res = await request(buildApp())
       .get("/api/timetable/11111111-1111-1111-1111-111111111111/qr")
@@ -448,9 +483,18 @@ describe("GET /api/timetable/:sessionId/roster", () => {
     expect(res.status).toBe(404);
   });
 
-  it("lists every approved nominee, marking an unchecked-in trainee's attendance as null", async () => {
+  it("returns 403 for a trainer not assigned to the session's programme", async () => {
     authenticateAs("trainer-1", "trainer");
     sessionsMock.result.data = { programme_id: "prog-1" };
+    programmeTrainersMock.result.data = null;
+
+    const res = await request(buildApp()).get(`${SESSION_URL}/roster`).set("Authorization", "Bearer token");
+    expect(res.status).toBe(403);
+  });
+
+  it("lists every approved nominee, marking an unchecked-in trainee's attendance as null", async () => {
+    authenticateAs("trainer-1", "trainer");
+    assignTrainerToSession();
     nominationsMock.result.data = [
       { trainee_id: "trainee-present", profiles: { full_name: "Asha Patil" } },
       { trainee_id: "trainee-absent", profiles: { full_name: "Rakesh Kumar" } },
@@ -494,6 +538,15 @@ describe("PUT /api/timetable/:sessionId/attendance/:traineeId", () => {
     const res = await request(buildApp()).put(url).set("Authorization", "Bearer token");
 
     expect(res.status).toBe(404);
+  });
+
+  it("returns 403 for a trainer not assigned to the session's programme", async () => {
+    authenticateAs("trainer-1", "trainer");
+    sessionsMock.result.data = { programme_id: "prog-1" };
+    programmeTrainersMock.result.data = null;
+
+    const res = await request(buildApp()).put(url).set("Authorization", "Bearer token");
+    expect(res.status).toBe(403);
   });
 
   it("returns 404 when the trainee is not an approved nominee for the session's programme", async () => {
@@ -542,7 +595,7 @@ describe("PUT /api/timetable/:sessionId/attendance/:traineeId", () => {
 
   it("is idempotent — marking an already-present trainee returns the existing row unchanged, never overwriting its method", async () => {
     authenticateAs("trainer-1", "trainer");
-    sessionsMock.result.data = { programme_id: "prog-1" };
+    assignTrainerToSession();
     nominationsMock.result.data = { trainee_id: ROSTER_TRAINEE };
     attendanceMock.result.data = {
       id: "att-existing",
@@ -591,8 +644,18 @@ describe("DELETE /api/timetable/:sessionId/attendance/:traineeId", () => {
     expect(res.status).toBe(403);
   });
 
+  it("returns 403 for a trainer not assigned to the session's programme", async () => {
+    authenticateAs("trainer-1", "trainer");
+    sessionsMock.result.data = { programme_id: "prog-1" };
+    programmeTrainersMock.result.data = null;
+
+    const res = await request(buildApp()).delete(url).set("Authorization", "Bearer token");
+    expect(res.status).toBe(403);
+  });
+
   it("unmarks (deletes) whatever attendance row exists, regardless of its original method", async () => {
     authenticateAs("trainer-1", "trainer");
+    assignTrainerToSession();
 
     const res = await request(buildApp()).delete(url).set("Authorization", "Bearer token");
 

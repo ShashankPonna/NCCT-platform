@@ -2,6 +2,14 @@ export const ROLES = ["admin", "trainer", "trainee", "employer"] as const;
 
 export const PROGRAMME_MODES = ["online", "offline", "hybrid"] as const;
 
+// 'quiz' = practice test (never gates a certificate, reveals answers after
+// submission); 'module_test' = graded module assessment that counts toward
+// the course marks tally and must be passed — docs/DECISIONS.md #53.
+export const ASSESSMENT_KINDS = ["quiz", "module_test"] as const;
+
+// Upper bound on MCQ options per question in the builder UI and validation.
+export const MAX_QUESTION_OPTIONS = 6;
+
 export const NOMINATION_STATUSES = ["pending", "approved", "waitlisted", "rejected"] as const;
 
 // A nomination can only be *decided* into one of these — "pending" is the

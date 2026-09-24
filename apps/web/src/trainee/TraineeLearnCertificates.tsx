@@ -25,6 +25,7 @@ interface TraineeLearnCertificatesText {
   institutionFallback: string;
   issuedOn: string;
   credentialId: string;
+  marksObtained: string;
   downloadPdf: string;
   verifyPublicLink: string;
   statsCredentials: string;
@@ -47,6 +48,7 @@ const content: Record<Locale, TraineeLearnCertificatesText> = {
     institutionFallback: "NCCT Academy",
     issuedOn: "Issued On",
     credentialId: "Credential Code",
+    marksObtained: "Marks Obtained",
     downloadPdf: "Download Official PDF",
     verifyPublicLink: "Public Verification Link",
     statsCredentials: "Total Credentials",
@@ -67,6 +69,7 @@ const content: Record<Locale, TraineeLearnCertificatesText> = {
     certificateFallback: "पूर्णता प्रमाणपत्र",
     institutionFallback: "NCCT अकादमी",
     issuedOn: "जारी करने की तिथि",
+    marksObtained: "प्राप्त अंक",
     credentialId: "क्रेडेंशियल कोड",
     downloadPdf: "आधिकारिक PDF डाउनलोड करें",
     verifyPublicLink: "सार्वजनिक सत्यापन लिंक",
@@ -227,6 +230,17 @@ export function TraineeLearnCertificates({ accessToken }: TraineeLearnCertificat
                       {cert.certificate_code}
                     </span>
                   </div>
+                  {cert.total_marks !== null && (
+                    <div className="flex flex-col col-span-2 pt-2">
+                      <span className="font-metric-mono text-[10px] uppercase text-slate-500">
+                        {t.marksObtained}
+                      </span>
+                      <span className="font-label-md font-semibold text-ink mt-0.5">
+                        {cert.marks_obtained} / {cert.total_marks}
+                        {cert.score_percent !== null && ` (${cert.score_percent}%)`}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Verification Hash Stamp */}

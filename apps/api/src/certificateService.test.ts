@@ -86,6 +86,66 @@ function queueIssuanceLookups() {
   });
 }
 
+// Queues what loadCourseStructure reads, in order: the course, its modules,
+// then lessons and assessments (the latter with each question's marks).
+function queueStructure({
+  modules = [{ id: "mod-1", title: "Module 1" }],
+  lessons = [],
+  assessments = [],
+}: {
+  modules?: { id: string; title: string }[];
+  lessons?: { id: string }[];
+  assessments?: {
+    id: string;
+    module_id?: string;
+    kind?: "quiz" | "module_test";
+    pass_threshold_percent?: number;
+    marks?: number[];
+  }[];
+}) {
+  queue("courses", { title: "Intro to Cooperative Banking", programme_id: "prog-1" });
+  queue("modules", modules);
+  if (modules.length === 0) return;
+  queue("lessons", lessons);
+  queue(
+    "assessments",
+    assessments.map((a) => ({
+      id: a.id,
+      module_id: a.module_id ?? "mod-1",
+      title: a.id,
+      kind: a.kind ?? "module_test",
+      pass_threshold_percent: a.pass_threshold_percent ?? 60,
+      max_attempts: null,
+      assessment_questions: (a.marks ?? [1]).map((marks) => ({ marks })),
+    })),
+  );
+}
+
+function attempt(
+  id: string,
+  assessmentId: string,
+  scorePercent: number,
+  marksObtained: number,
+  totalMarks: number,
+  submittedAt: string,
+) {
+  return {
+    id,
+    assessment_id: assessmentId,
+    trainee_id: "trainee-1",
+    score_percent: scorePercent,
+    passed: scorePercent >= 60,
+    marks_obtained: marksObtained,
+    total_marks: totalMarks,
+    submitted_at: submittedAt,
+  };
+}
+
+function insertedCertificate() {
+  const builder = fromMock("certificates") as unknown as { insert: ReturnType<typeof vi.fn> };
+  return builder.insert.mock.calls.at(-1)?.[0] as Record<string, unknown> | undefined;
+}
+
 describe("checkAndIssueCourseCertificate", () => {
   it("is a no-op if this trainee is already certified for the course", async () => {
     queue("certificates", { id: "existing-cert" }); // existence check finds one
@@ -103,7 +163,20 @@ describe("checkAndIssueCourseCertificate", () => {
 
   it("is a no-op if the course has no modules at all", async () => {
     queue("certificates", null);
-    queue("modules", []);
+    queueStructure({ modules: [] });
+
+    const result = await checkAndIssueCourseCertificate({
+      traineeId: "trainee-1",
+      courseId: "course-1",
+    });
+
+    expect(result).toBeNull();
+    expect(uploadMock).not.toHaveBeenCalled();
+  });
+
+  it("never certifies a course whose only content is a practice quiz", async () => {
+    queue("certificates", null);
+    queueStructure({ assessments: [{ id: "quiz-1", kind: "quiz" }] });
 
     const result = await checkAndIssueCourseCertificate({
       traineeId: "trainee-1",
@@ -116,8 +189,7 @@ describe("checkAndIssueCourseCertificate", () => {
 
   it("does not issue a certificate while some lessons are still incomplete", async () => {
     queue("certificates", null);
-    queue("modules", [{ id: "mod-1" }]);
-    queue("lessons", [{ id: "lesson-1" }, { id: "lesson-2" }]);
+    queueStructure({ lessons: [{ id: "lesson-1" }, { id: "lesson-2" }] });
     queue("lesson_progress", [{ lesson_id: "lesson-1" }]); // only 1 of 2 lessons done
 
     const result = await checkAndIssueCourseCertificate({
@@ -129,12 +201,10 @@ describe("checkAndIssueCourseCertificate", () => {
     expect(uploadMock).not.toHaveBeenCalled();
   });
 
-  it("issues a certificate once every lesson is complete on a course with no assessments", async () => {
+  it("issues a certificate with no marks once every lesson is complete on a course with no module tests", async () => {
     queue("certificates", null);
-    queue("modules", [{ id: "mod-1" }]);
-    queue("lessons", [{ id: "lesson-1" }, { id: "lesson-2" }]);
+    queueStructure({ lessons: [{ id: "lesson-1" }, { id: "lesson-2" }] });
     queue("lesson_progress", [{ lesson_id: "lesson-1" }, { lesson_id: "lesson-2" }]);
-    queue("assessments", []); // no assessments on this course — nothing to pass
     queueIssuanceLookups();
 
     const result = await checkAndIssueCourseCertificate({
@@ -147,21 +217,25 @@ describe("checkAndIssueCourseCertificate", () => {
     const [path, buffer, options] = uploadMock.mock.calls[0];
     expect(path).toMatch(/^NCCT-[A-Z0-9]{8}\.pdf$/);
     expect(Buffer.isBuffer(buffer)).toBe(true);
-    // A real PDF was actually rendered, not mocked away — catches a real
-    // pdfkit/qrcode wiring mistake, same reasoning the old test had.
+    // A real PDF was actually rendered, not mocked away.
     expect(buffer.length).toBeGreaterThan(100);
     expect(options).toMatchObject({ contentType: "application/pdf" });
+    expect(insertedCertificate()).toMatchObject({
+      assessment_attempt_id: null,
+      marks_obtained: null,
+      total_marks: null,
+      score_percent: null,
+    });
   }, 15000);
 
-  it("does not issue a certificate if lessons are done but an assessment hasn't been passed", async () => {
+  it("does not issue a certificate if lessons are done but a module test hasn't been passed", async () => {
     queue("certificates", null);
-    queue("modules", [{ id: "mod-1" }]);
-    queue("lessons", [{ id: "lesson-1" }]);
+    queueStructure({
+      lessons: [{ id: "lesson-1" }],
+      assessments: [{ id: "assess-1" }, { id: "assess-2" }],
+    });
     queue("lesson_progress", [{ lesson_id: "lesson-1" }]);
-    queue("assessments", [{ id: "assess-1" }, { id: "assess-2" }]);
-    queue("assessment_attempts", [
-      { id: "attempt-1", assessment_id: "assess-1", submitted_at: "2026-01-01" },
-    ]); // only 1 of 2 passed
+    queue("assessment_attempts", [attempt("attempt-1", "assess-1", 100, 1, 1, "2026-01-01")]);
 
     const result = await checkAndIssueCourseCertificate({
       traineeId: "trainee-1",
@@ -172,15 +246,25 @@ describe("checkAndIssueCourseCertificate", () => {
     expect(uploadMock).not.toHaveBeenCalled();
   });
 
-  it("issues a certificate once every lesson is complete and every assessment is passed", async () => {
+  it("issues a certificate carrying the best-attempt marks of every module test, ignoring practice quizzes", async () => {
     queue("certificates", null);
-    queue("modules", [{ id: "mod-1" }, { id: "mod-2" }]);
-    queue("lessons", [{ id: "lesson-1" }, { id: "lesson-2" }]);
+    queueStructure({
+      modules: [
+        { id: "mod-1", title: "Module 1" },
+        { id: "mod-2", title: "Module 2" },
+      ],
+      lessons: [{ id: "lesson-1" }, { id: "lesson-2" }],
+      assessments: [
+        { id: "assess-1", module_id: "mod-1", marks: [5, 5] },
+        { id: "quiz-1", module_id: "mod-1", kind: "quiz" },
+        { id: "assess-2", module_id: "mod-2", marks: [10, 10, 10] },
+      ],
+    });
     queue("lesson_progress", [{ lesson_id: "lesson-1" }, { lesson_id: "lesson-2" }]);
-    queue("assessments", [{ id: "assess-1" }, { id: "assess-2" }]);
     queue("assessment_attempts", [
-      { id: "attempt-1", assessment_id: "assess-1", submitted_at: "2026-01-01" },
-      { id: "attempt-2", assessment_id: "assess-2", submitted_at: "2026-01-02" },
+      attempt("a1-fail", "assess-1", 50, 5, 10, "2026-01-01"),
+      attempt("a1-pass", "assess-1", 100, 10, 10, "2026-01-02"),
+      attempt("a2-pass", "assess-2", 67, 20, 30, "2026-01-03"),
     ]);
     queueIssuanceLookups();
 
@@ -191,15 +275,19 @@ describe("checkAndIssueCourseCertificate", () => {
 
     expect(result).toMatchObject({ id: "cert-1" });
     expect(uploadMock).toHaveBeenCalledTimes(1);
+    // 10/10 + 20/30 = 30/40; the unattempted practice quiz is irrelevant.
+    expect(insertedCertificate()).toMatchObject({
+      assessment_attempt_id: "a2-pass",
+      marks_obtained: 30,
+      total_marks: 40,
+      score_percent: 75,
+    });
   }, 15000);
 
   it("propagates a Storage upload failure instead of inserting a certificate row", async () => {
-    // A course with lessons complete and no assessments, but Storage fails.
     queue("certificates", null);
-    queue("modules", [{ id: "mod-1" }]);
-    queue("lessons", [{ id: "lesson-1" }]);
+    queueStructure({ lessons: [{ id: "lesson-1" }] });
     queue("lesson_progress", [{ lesson_id: "lesson-1" }]);
-    queue("assessments", []);
     queue("courses", { title: "Intro to Cooperative Banking", programme_id: "prog-1" });
     queue("programmes", { title: "Programme", institution_id: "inst-1" });
     queue("institutions", { name: "Institution" });

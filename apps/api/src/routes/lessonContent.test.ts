@@ -7,6 +7,7 @@ const {
   getUserMock,
   profilesMock,
   lessonsMock,
+  programmeTrainersMock,
   fromMock,
   uploadMock,
   createSignedUrlMock,
@@ -26,9 +27,11 @@ const {
 
   const profilesMock = createTableMock();
   const lessonsMock = createTableMock();
+  const programmeTrainersMock = createTableMock();
   const tables: Record<string, ReturnType<typeof createTableMock>> = {
     profiles: profilesMock,
     lessons: lessonsMock,
+    programme_trainers: programmeTrainersMock,
   };
   const fromMock = vi.fn((table: string) => tables[table].builder);
 
@@ -43,6 +46,7 @@ const {
     getUserMock,
     profilesMock,
     lessonsMock,
+    programmeTrainersMock,
     fromMock,
     uploadMock,
     createSignedUrlMock,
@@ -68,6 +72,15 @@ function authenticateAs(userId: string, role: string) {
   profilesMock.result.error = null;
 }
 
+// requireProgrammeAccess's resolver and the route's own lesson lookup/update
+// share this same `lessons` table mock, so one object has to satisfy both —
+// the embedded `modules.courses.programme_id` the resolver reads, and
+// whatever plain fields a given test also needs on `lessonsMock.result.data`.
+function assignTrainerToLesson(extra: Record<string, unknown> = {}) {
+  lessonsMock.result.data = { modules: { courses: { programme_id: "prog-1" } }, ...extra };
+  programmeTrainersMock.result.data = { trainer_id: "trainer-1" };
+}
+
 beforeEach(() => {
   getUserMock.mockReset();
   uploadMock.mockReset();
@@ -76,6 +89,8 @@ beforeEach(() => {
   profilesMock.result.error = null;
   lessonsMock.result.data = null;
   lessonsMock.result.error = null;
+  programmeTrainersMock.result.data = null;
+  programmeTrainersMock.result.error = null;
 });
 
 describe("POST /api/lessons/:id/content", () => {
@@ -101,8 +116,24 @@ describe("POST /api/lessons/:id/content", () => {
     expect(res.status).toBe(403);
   });
 
+  it("returns 403 for a trainer not assigned to the lesson's programme", async () => {
+    authenticateAs("trainer-1", "trainer");
+    lessonsMock.result.data = { modules: { courses: { programme_id: "prog-1" } } };
+    programmeTrainersMock.result.data = null;
+
+    const res = await request(buildApp())
+      .post("/api/lessons/lesson-1/content")
+      .set("Authorization", "Bearer token")
+      .attach("file", Buffer.from("%PDF-1.4"), {
+        filename: "notes.pdf",
+        contentType: "application/pdf",
+      });
+    expect(res.status).toBe(403);
+  });
+
   it("returns 400 when no file is attached", async () => {
     authenticateAs("trainer-1", "trainer");
+    assignTrainerToLesson();
     const res = await request(buildApp())
       .post("/api/lessons/lesson-1/content")
       .set("Authorization", "Bearer token");
@@ -111,6 +142,7 @@ describe("POST /api/lessons/:id/content", () => {
 
   it("returns 400 for an unsupported file type", async () => {
     authenticateAs("trainer-1", "trainer");
+    assignTrainerToLesson();
     const res = await request(buildApp())
       .post("/api/lessons/lesson-1/content")
       .set("Authorization", "Bearer token")
@@ -124,7 +156,7 @@ describe("POST /api/lessons/:id/content", () => {
   it("uploads a PDF and saves storage_path on the lesson", async () => {
     authenticateAs("trainer-1", "trainer");
     uploadMock.mockResolvedValue({ data: { path: "lesson-1/1.pdf" }, error: null });
-    lessonsMock.result.data = { id: "lesson-1", storage_path: "lesson-1/1.pdf" };
+    assignTrainerToLesson({ id: "lesson-1", storage_path: "lesson-1/1.pdf" });
 
     const res = await request(buildApp())
       .post("/api/lessons/lesson-1/content")

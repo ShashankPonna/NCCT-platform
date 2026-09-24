@@ -3,29 +3,41 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { assessmentsRouter } from "./assessments.js";
 
-const { getUserMock, profilesMock, assessmentsMock, fromMock } = vi.hoisted(() => {
-  function createTableMock() {
-    const result: { data: unknown; error: unknown } = { data: null, error: null };
-    const builder: Record<string, ReturnType<typeof vi.fn>> = {};
-    for (const method of ["select", "insert", "update", "delete", "eq"]) {
-      builder[method] = vi.fn(() => builder);
+const { getUserMock, profilesMock, assessmentsMock, modulesMock, programmeTrainersMock, fromMock } =
+  vi.hoisted(() => {
+    function createTableMock() {
+      const result: { data: unknown; error: unknown } = { data: null, error: null };
+      const builder: Record<string, ReturnType<typeof vi.fn>> = {};
+      for (const method of ["select", "insert", "update", "delete", "eq"]) {
+        builder[method] = vi.fn(() => builder);
+      }
+      for (const method of ["single", "maybeSingle", "order"]) {
+        builder[method] = vi.fn(() => Promise.resolve(result));
+      }
+      return { builder, result };
     }
-    for (const method of ["single", "maybeSingle", "order"]) {
-      builder[method] = vi.fn(() => Promise.resolve(result));
-    }
-    return { builder, result };
-  }
 
-  const profilesMock = createTableMock();
-  const assessmentsMock = createTableMock();
-  const tables: Record<string, ReturnType<typeof createTableMock>> = {
-    profiles: profilesMock,
-    assessments: assessmentsMock,
-  };
-  const fromMock = vi.fn((table: string) => tables[table].builder);
-  const getUserMock = vi.fn();
-  return { getUserMock, profilesMock, assessmentsMock, fromMock };
-});
+    const profilesMock = createTableMock();
+    const assessmentsMock = createTableMock();
+    const modulesMock = createTableMock();
+    const programmeTrainersMock = createTableMock();
+    const tables: Record<string, ReturnType<typeof createTableMock>> = {
+      profiles: profilesMock,
+      assessments: assessmentsMock,
+      modules: modulesMock,
+      programme_trainers: programmeTrainersMock,
+    };
+    const fromMock = vi.fn((table: string) => tables[table].builder);
+    const getUserMock = vi.fn();
+    return {
+      getUserMock,
+      profilesMock,
+      assessmentsMock,
+      modulesMock,
+      programmeTrainersMock,
+      fromMock,
+    };
+  });
 
 vi.mock("../supabaseClient.js", () => ({
   supabaseAdmin: { auth: { getUser: getUserMock }, from: fromMock },
@@ -51,6 +63,10 @@ beforeEach(() => {
   profilesMock.result.error = null;
   assessmentsMock.result.data = null;
   assessmentsMock.result.error = null;
+  modulesMock.result.data = null;
+  modulesMock.result.error = null;
+  programmeTrainersMock.result.data = null;
+  programmeTrainersMock.result.error = null;
 });
 
 describe("POST /api/modules/:id/assessments", () => {
@@ -70,8 +86,22 @@ describe("POST /api/modules/:id/assessments", () => {
     expect(res.status).toBe(403);
   });
 
+  it("returns 403 for a trainer not assigned to the module's programme", async () => {
+    authenticateAs("trainer-1", "trainer");
+    modulesMock.result.data = { courses: { programme_id: "prog-1" } };
+    programmeTrainersMock.result.data = null;
+
+    const res = await request(buildApp())
+      .post("/api/modules/mod-1/assessments")
+      .set("Authorization", "Bearer token")
+      .send({ title: "Quiz 1" });
+    expect(res.status).toBe(403);
+  });
+
   it("creates the assessment for a trainer with the default pass threshold", async () => {
     authenticateAs("trainer-1", "trainer");
+    modulesMock.result.data = { courses: { programme_id: "prog-1" } };
+    programmeTrainersMock.result.data = { trainer_id: "trainer-1" };
     assessmentsMock.result.data = {
       id: "assess-1",
       module_id: "mod-1",
@@ -100,6 +130,31 @@ describe("GET /api/modules/:id/assessments", () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(1);
+  });
+
+  it("computes question_count/total_marks from the embedded question marks", async () => {
+    authenticateAs("trainee-1", "trainee");
+    assessmentsMock.result.data = [
+      {
+        id: "assess-1",
+        module_id: "mod-1",
+        title: "Quiz 1",
+        assessment_questions: [{ marks: 5 }, { marks: 3 }],
+      },
+      { id: "assess-2", module_id: "mod-1", title: "Quiz 2", assessment_questions: [] },
+    ];
+
+    const res = await request(buildApp())
+      .get("/api/modules/mod-1/assessments")
+      .set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject([
+      { id: "assess-1", question_count: 2, total_marks: 8 },
+      { id: "assess-2", question_count: 0, total_marks: 0 },
+    ]);
+    // The raw embedded relation is never echoed back to the client.
+    expect(res.body[0]).not.toHaveProperty("assessment_questions");
   });
 });
 

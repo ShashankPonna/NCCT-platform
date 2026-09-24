@@ -125,6 +125,18 @@ export function CertificateVerification({ code }: CertificateVerificationProps) 
             </div>
           </div>
 
+          {certificate.total_marks !== null && (
+            <div>
+              <span className="font-label-sm text-label-sm text-on-surface-variant uppercase block">
+                Marks Obtained
+              </span>
+              <span className="font-body-md text-primary font-medium">
+                {certificate.marks_obtained} / {certificate.total_marks}
+                {certificate.score_percent !== null && ` (${certificate.score_percent}%)`}
+              </span>
+            </div>
+          )}
+
           <div>
             <span className="font-label-sm text-label-sm text-on-surface-variant uppercase block">
               Unique Verification Code

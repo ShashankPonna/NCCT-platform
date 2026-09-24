@@ -23,6 +23,7 @@ import type { ContentType, Course, Lesson, Module, Programme, Skill } from "@ncc
 import { createLessonSchema, localeSchema, youtubeVideoIdSchema } from "@ncct/validation";
 import { useEffect, useState } from "react";
 import { AssessmentBuilder } from "./AssessmentBuilder.js";
+import { CourseGradebook } from "./CourseGradebook.js";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { SelfHostedVideoPlayer } from "./SelfHostedVideoPlayer.js";
 import { SkillPicker } from "./SkillPicker.js";
@@ -94,6 +95,7 @@ interface AdminCourseManagerText {
   localizedBodyPlaceholder: string;
   saveTranslation: string;
   moduleAssessments: string;
+  courseGradebook: string;
   invalidLessonPayload: string;
   invalidYoutubeId: string;
   invalidLocale: string;
@@ -164,6 +166,7 @@ const content: Record<Locale, AdminCourseManagerText> = {
     localizedBodyPlaceholder: "Localized body text (optional)",
     saveTranslation: "Save Translation",
     moduleAssessments: "Module Assessments",
+    courseGradebook: "Gradebook",
     invalidLessonPayload: "Invalid lesson payload",
     invalidYoutubeId: "Invalid YouTube ID",
     invalidLocale: "Locale must be a valid BCP 47 code (e.g. 'hi-IN')",
@@ -232,6 +235,7 @@ const content: Record<Locale, AdminCourseManagerText> = {
     localizedBodyPlaceholder: "स्थानीयकृत मुख्य पाठ (वैकल्पिक)",
     saveTranslation: "अनुवाद सहेजें",
     moduleAssessments: "मॉड्यूल मूल्यांकन",
+    courseGradebook: "ग्रेडबुक",
     invalidLessonPayload: "अमान्य पाठ डेटा",
     invalidYoutubeId: "अमान्य YouTube आईडी",
     invalidLocale: "भाषा एक मान्य BCP 47 कोड होनी चाहिए (उदा. 'hi-IN')",
@@ -1184,6 +1188,18 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                     {t.moduleAssessments}
                   </h4>
                   <AssessmentBuilder accessToken={accessToken} moduleId={selectedModuleId} />
+                </div>
+              )}
+
+              {/* Course Gradebook — every roster trainee's best marks per
+                  graded module test in the selected course. */}
+              {selectedCourseId && (
+                <div className="mt-6 pt-5 border-t border-border-slate/60">
+                  <h4 className="font-display text-base font-bold text-[#00236F] mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#D97706]">grading</span>
+                    {t.courseGradebook}
+                  </h4>
+                  <CourseGradebook key={selectedCourseId} accessToken={accessToken} courseId={selectedCourseId} />
                 </div>
               )}
             </div>

@@ -3,6 +3,7 @@ import { attendanceCheckInSchema, kioskFaceCheckInSchema } from "@ncct/validatio
 import { Router } from "express";
 import QRCode from "qrcode";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { getProgrammeIdForSession, requireProgrammeAccess } from "../programmeAccess.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
 export const attendanceRouter = Router();
@@ -142,6 +143,7 @@ attendanceRouter.post(
   "/timetable/:sessionId/kiosk-face-checkin",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForSession(req.params.sessionId)),
   async (req, res) => {
     const parsed = kioskFaceCheckInSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -219,6 +221,7 @@ attendanceRouter.get(
   "/timetable/:sessionId/roster",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForSession(req.params.sessionId)),
   async (req, res) => {
     const { data: session, error: sessionError } = await supabaseAdmin
       .from("timetable_sessions")
@@ -287,6 +290,7 @@ attendanceRouter.put(
   "/timetable/:sessionId/attendance/:traineeId",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForSession(req.params.sessionId)),
   async (req, res) => {
     const { sessionId, traineeId } = req.params;
 
@@ -370,6 +374,7 @@ attendanceRouter.delete(
   "/timetable/:sessionId/attendance/:traineeId",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForSession(req.params.sessionId)),
   async (req, res) => {
     const { error } = await supabaseAdmin
       .from("attendance_records")
@@ -395,6 +400,7 @@ attendanceRouter.get(
   "/timetable/:sessionId/qr",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForSession(req.params.sessionId)),
   async (req, res) => {
     const { data: session, error } = await supabaseAdmin
       .from("timetable_sessions")

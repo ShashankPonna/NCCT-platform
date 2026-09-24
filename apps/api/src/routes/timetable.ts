@@ -2,6 +2,7 @@ import { createTimetableSessionSchema } from "@ncct/validation";
 import { Router } from "express";
 import { generateNumericCode } from "../codeGenerator.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { requireProgrammeAccess } from "../programmeAccess.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
 export const timetableRouter = Router();
@@ -16,11 +17,15 @@ const MAX_CODE_ATTEMPTS = 5;
 // F3/F4's content-authoring routes (courses/modules/lessons/assessments),
 // where PRD doesn't actually say trainers can't. Programme creation and
 // nomination approval, immediately below/elsewhere in this file, stay
-// admin-only — PRD explicitly assigns those, unlike timetable.
+// admin-only — PRD explicitly assigns those, unlike timetable. A trainer
+// additionally has to be assigned to the programme itself (docs/DECISIONS.md
+// #52) — the widening above says trainers *can* schedule sessions, not that
+// any trainer can schedule one for any programme.
 timetableRouter.post(
   "/programmes/:id/timetable",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => Promise.resolve(req.params.id)),
   async (req, res) => {
     const parsed = createTimetableSessionSchema.safeParse(req.body);
     if (!parsed.success) {

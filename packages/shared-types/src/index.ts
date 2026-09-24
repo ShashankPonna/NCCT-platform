@@ -1,4 +1,5 @@
 import type {
+  ASSESSMENT_KINDS,
   ATTENDANCE_METHODS,
   CHATBOT_SOURCE_TYPES,
   CONTENT_TYPES,
@@ -18,6 +19,7 @@ export type NominationStatus = (typeof NOMINATION_STATUSES)[number];
 // The subset an admin can decide on — `pending` is the initial state, not a
 // decision, so it is deliberately absent (mirrors NOMINATION_DECISIONS).
 export type NominationDecision = (typeof NOMINATION_DECISIONS)[number];
+export type AssessmentKind = (typeof ASSESSMENT_KINDS)[number];
 export type ContentType = (typeof CONTENT_TYPES)[number];
 export type InteractiveExerciseType = (typeof INTERACTIVE_EXERCISE_TYPES)[number];
 export type AttendanceMethod = (typeof ATTENDANCE_METHODS)[number];
@@ -93,6 +95,17 @@ export interface Programme {
   end_date: string | null;
   created_by: string | null;
   created_at: string;
+}
+
+export interface ProgrammeTrainer {
+  programme_id: string;
+  trainer_id: string;
+  assigned_by: string | null;
+  assigned_at: string;
+}
+
+export interface ProgrammeTrainerRow extends ProgrammeTrainer {
+  full_name: string | null;
 }
 
 export interface Nomination {
@@ -176,8 +189,19 @@ export interface Assessment {
   id: string;
   module_id: string;
   title: string;
+  kind: AssessmentKind;
+  description: string | null;
   pass_threshold_percent: number;
+  // Null = unlimited attempts.
+  max_attempts: number | null;
   created_at: string;
+}
+
+// GET /modules/:id/assessments' shape — adds derived totals (marks aren't
+// secret, unlike correct answers) so a list can show "10 questions · 25 marks".
+export interface AssessmentWithTotals extends Assessment {
+  question_count: number;
+  total_marks: number;
 }
 
 export interface QuestionOption {
@@ -197,6 +221,7 @@ export interface AssessmentQuestion {
   question_text: string;
   options: QuestionOption[];
   correct_option_id: string;
+  marks: number;
   position: number;
 }
 
@@ -209,7 +234,107 @@ export interface AssessmentAttempt {
   answers: Record<string, string>;
   score_percent: number;
   passed: boolean;
+  // Snapshots at submission time; null only for pre-marks legacy rows the
+  // backfill couldn't resolve (an assessment with no questions left).
+  marks_obtained: number | null;
+  total_marks: number | null;
   submitted_at: string;
+}
+
+export interface QuestionResult {
+  question_id: string;
+  selected_option_id: string | null;
+  is_correct: boolean;
+  marks: number;
+  marks_awarded: number;
+  // Only revealed for practice quizzes and staff previews — a graded module
+  // test never hands the answer key back to a trainee who can retake it.
+  correct_option_id?: string;
+}
+
+export interface GradedResult {
+  marks_obtained: number;
+  total_marks: number;
+  score_percent: number;
+  passed: boolean;
+  breakdown: QuestionResult[];
+}
+
+export interface AttemptSubmissionResult {
+  attempt: AssessmentAttempt;
+  breakdown: QuestionResult[];
+  certificate: Certificate | null;
+  certificateError?: string;
+}
+
+export interface CourseMarksAssessmentRow {
+  assessment_id: string;
+  module_id: string;
+  module_title: string;
+  title: string;
+  kind: AssessmentKind;
+  pass_threshold_percent: number;
+  max_attempts: number | null;
+  total_marks: number;
+  attempts_used: number;
+  best_marks_obtained: number | null;
+  best_total_marks: number | null;
+  best_score_percent: number | null;
+  passed: boolean;
+  last_submitted_at: string | null;
+}
+
+export interface CourseMarksTotals {
+  // Module tests only — practice quizzes never count toward the tally.
+  marks_obtained: number;
+  total_marks: number;
+  score_percent: number | null;
+  module_tests_passed: number;
+  module_tests_total: number;
+}
+
+export interface CourseMarksTally {
+  course_id: string;
+  course_title: string;
+  assessments: CourseMarksAssessmentRow[];
+  totals: CourseMarksTotals;
+  lessons_completed: number;
+  lessons_total: number;
+  eligible_for_certificate: boolean;
+  certificate: Pick<
+    Certificate,
+    "certificate_code" | "marks_obtained" | "total_marks" | "score_percent" | "issued_at"
+  > | null;
+}
+
+export interface GradebookCell {
+  best_marks_obtained: number;
+  best_total_marks: number;
+  best_score_percent: number;
+  passed: boolean;
+  attempts: number;
+}
+
+export interface GradebookRow {
+  trainee_id: string;
+  full_name: string | null;
+  cells: Record<string, GradebookCell | null>;
+  totals: CourseMarksTotals;
+  certificate_code: string | null;
+}
+
+export interface CourseGradebook {
+  course_id: string;
+  course_title: string;
+  assessments: {
+    id: string;
+    title: string;
+    module_title: string;
+    kind: AssessmentKind;
+    total_marks: number;
+    pass_threshold_percent: number;
+  }[];
+  rows: GradebookRow[];
 }
 
 export interface Certificate {
@@ -224,6 +349,11 @@ export interface Certificate {
   programme_id: string;
   issuing_institution_id: string;
   pdf_storage_path: string;
+  // Final course marks at issue time (docs/DECISIONS.md #53); null for a
+  // course with no module tests.
+  marks_obtained: number | null;
+  total_marks: number | null;
+  score_percent: number | null;
   issued_at: string;
 }
 

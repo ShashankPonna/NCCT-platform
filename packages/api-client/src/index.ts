@@ -2,6 +2,12 @@ import type {
   AdminUserRow,
   Assessment,
   AssessmentAttempt,
+  AssessmentKind,
+  AssessmentWithTotals,
+  AttemptSubmissionResult,
+  CourseGradebook,
+  CourseMarksTally,
+  GradedResult,
   AssessmentQuestion,
   AssessmentQuestionForTrainee,
   AttendanceRecord,
@@ -28,6 +34,7 @@ import type {
   Profile,
   Programme,
   ProgrammeMode,
+  ProgrammeTrainerRow,
   CareerCounsellorAnswer,
   JobMatchesResult,
   KioskProfileResult,
@@ -248,6 +255,35 @@ export function decideNomination(
     accessToken,
     { method: "PATCH", body: { status } },
   );
+}
+
+// Programme-trainer assignment (docs/DECISIONS.md #52): which trainers an
+// admin has allotted to a programme — the API's own enforcement of this is
+// what actually matters (every content/attendance write route now checks
+// it), these just back the admin assignment UI and a trainer's own "which
+// programmes am I on" filter.
+export function assignProgrammeTrainer(accessToken: string, programmeId: string, trainerId: string) {
+  return apiFetch<ProgrammeTrainerRow>(`/programmes/${programmeId}/trainers`, accessToken, {
+    method: "POST",
+    body: { trainer_id: trainerId },
+  });
+}
+
+export function getProgrammeTrainers(accessToken: string, programmeId: string) {
+  return apiFetch<ProgrammeTrainerRow[]>(`/programmes/${programmeId}/trainers`, accessToken);
+}
+
+export function unassignProgrammeTrainer(accessToken: string, programmeId: string, trainerId: string) {
+  return apiFetch<void>(`/programmes/${programmeId}/trainers/${trainerId}`, accessToken, {
+    method: "DELETE",
+  });
+}
+
+// A trainer's own assigned programme ids — lets trainer-facing UI filter the
+// any-authenticated-user GET /programmes catalog read down to just the
+// programmes this trainer can actually author content or attendance for.
+export function getMyAssignedProgrammes(accessToken: string) {
+  return apiFetch<string[]>("/trainers/me/programmes", accessToken);
 }
 
 export function createTimetableSession(
@@ -516,19 +552,48 @@ export async function getCertificate(code: string): Promise<
   return res.json();
 }
 
-export function getAssessments(accessToken: string, moduleId: string) {
-  return apiFetch<Assessment[]>(`/modules/${moduleId}/assessments`, accessToken);
+// Assessments (docs/DECISIONS.md #53): practice quizzes and graded module
+// tests, marks per question, attempt limits, staff preview, marks tally.
+export interface AssessmentInput {
+  title: string;
+  kind?: AssessmentKind;
+  description?: string | null;
+  pass_threshold_percent?: number;
+  max_attempts?: number | null;
 }
 
-export function createAssessment(
-  accessToken: string,
-  moduleId: string,
-  body: { title: string; pass_threshold_percent?: number },
-) {
+export interface QuestionInput {
+  question_text: string;
+  options: QuestionOption[];
+  correct_option_id: string;
+  marks?: number;
+  position?: number;
+}
+
+export function getAssessments(accessToken: string, moduleId: string) {
+  return apiFetch<AssessmentWithTotals[]>(`/modules/${moduleId}/assessments`, accessToken);
+}
+
+export function createAssessment(accessToken: string, moduleId: string, body: AssessmentInput) {
   return apiFetch<Assessment>(`/modules/${moduleId}/assessments`, accessToken, {
     method: "POST",
     body,
   });
+}
+
+export function updateAssessment(
+  accessToken: string,
+  assessmentId: string,
+  body: Partial<AssessmentInput>,
+) {
+  return apiFetch<Assessment>(`/assessments/${assessmentId}`, accessToken, {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function deleteAssessment(accessToken: string, assessmentId: string) {
+  return apiFetch<void>(`/assessments/${assessmentId}`, accessToken, { method: "DELETE" });
 }
 
 export function getAssessmentQuestions(accessToken: string, assessmentId: string) {
@@ -538,12 +603,27 @@ export function getAssessmentQuestions(accessToken: string, assessmentId: string
 export function createAssessmentQuestion(
   accessToken: string,
   assessmentId: string,
-  body: { question_text: string; options: QuestionOption[]; correct_option_id: string },
+  body: QuestionInput,
 ) {
   return apiFetch<AssessmentQuestion>(`/assessments/${assessmentId}/questions`, accessToken, {
     method: "POST",
     body,
   });
+}
+
+export function updateAssessmentQuestion(
+  accessToken: string,
+  questionId: string,
+  body: Partial<QuestionInput>,
+) {
+  return apiFetch<AssessmentQuestion>(`/questions/${questionId}`, accessToken, {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function deleteAssessmentQuestion(accessToken: string, questionId: string) {
+  return apiFetch<void>(`/questions/${questionId}`, accessToken, { method: "DELETE" });
 }
 
 export function getAssessmentToTake(accessToken: string, assessmentId: string) {
@@ -555,11 +635,31 @@ export function submitAssessmentAttempt(
   assessmentId: string,
   answers: Record<string, string>,
 ) {
-  return apiFetch<{
-    attempt: AssessmentAttempt;
-    certificate: Certificate | null;
-    certificateError?: string;
-  }>(`/assessments/${assessmentId}/attempts`, accessToken, { method: "POST", body: { answers } });
+  return apiFetch<AttemptSubmissionResult>(`/assessments/${assessmentId}/attempts`, accessToken, {
+    method: "POST",
+    body: { answers },
+  });
+}
+
+// Staff-only: grades like a real attempt, reveals the answer key, records
+// nothing.
+export function previewAssessment(
+  accessToken: string,
+  assessmentId: string,
+  answers: Record<string, string>,
+) {
+  return apiFetch<GradedResult>(`/assessments/${assessmentId}/preview`, accessToken, {
+    method: "POST",
+    body: { answers },
+  });
+}
+
+export function getMyCourseMarks(accessToken: string, courseId: string) {
+  return apiFetch<CourseMarksTally>(`/courses/${courseId}/marks/mine`, accessToken);
+}
+
+export function getCourseGradebook(accessToken: string, courseId: string) {
+  return apiFetch<CourseGradebook>(`/courses/${courseId}/gradebook`, accessToken);
 }
 
 export function getAssessmentAttempts(accessToken: string, assessmentId: string) {

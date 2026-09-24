@@ -3,29 +3,33 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { timetableRouter } from "./timetable.js";
 
-const { getUserMock, profilesMock, timetableMock, fromMock } = vi.hoisted(() => {
-  function createTableMock() {
-    const result: { data: unknown; error: unknown } = { data: null, error: null };
-    const builder: Record<string, ReturnType<typeof vi.fn>> = {};
-    for (const method of ["select", "insert", "update", "delete", "eq"]) {
-      builder[method] = vi.fn(() => builder);
+const { getUserMock, profilesMock, timetableMock, programmeTrainersMock, fromMock } = vi.hoisted(
+  () => {
+    function createTableMock() {
+      const result: { data: unknown; error: unknown } = { data: null, error: null };
+      const builder: Record<string, ReturnType<typeof vi.fn>> = {};
+      for (const method of ["select", "insert", "update", "delete", "eq"]) {
+        builder[method] = vi.fn(() => builder);
+      }
+      for (const method of ["single", "maybeSingle", "order"]) {
+        builder[method] = vi.fn(() => Promise.resolve(result));
+      }
+      return { builder, result };
     }
-    for (const method of ["single", "maybeSingle", "order"]) {
-      builder[method] = vi.fn(() => Promise.resolve(result));
-    }
-    return { builder, result };
-  }
 
-  const profilesMock = createTableMock();
-  const timetableMock = createTableMock();
-  const tables: Record<string, ReturnType<typeof createTableMock>> = {
-    profiles: profilesMock,
-    timetable_sessions: timetableMock,
-  };
-  const fromMock = vi.fn((table: string) => tables[table].builder);
-  const getUserMock = vi.fn();
-  return { getUserMock, profilesMock, timetableMock, fromMock };
-});
+    const profilesMock = createTableMock();
+    const timetableMock = createTableMock();
+    const programmeTrainersMock = createTableMock();
+    const tables: Record<string, ReturnType<typeof createTableMock>> = {
+      profiles: profilesMock,
+      timetable_sessions: timetableMock,
+      programme_trainers: programmeTrainersMock,
+    };
+    const fromMock = vi.fn((table: string) => tables[table].builder);
+    const getUserMock = vi.fn();
+    return { getUserMock, profilesMock, timetableMock, programmeTrainersMock, fromMock };
+  },
+);
 
 vi.mock("../supabaseClient.js", () => ({
   supabaseAdmin: { auth: { getUser: getUserMock }, from: fromMock },
@@ -60,6 +64,8 @@ beforeEach(() => {
   // A test overriding .single() directly (the check_in_code collision-retry
   // test below) must not leak its mock into later tests.
   timetableMock.builder.single = vi.fn(() => Promise.resolve(timetableMock.result));
+  programmeTrainersMock.result.data = null;
+  programmeTrainersMock.result.error = null;
 });
 
 describe("POST /api/programmes/:id/timetable", () => {
@@ -81,8 +87,21 @@ describe("POST /api/programmes/:id/timetable", () => {
     expect(res.status).toBe(403);
   });
 
+  it("returns 403 for a trainer not assigned to the programme", async () => {
+    authenticateAs("trainer-1", "trainer");
+    programmeTrainersMock.result.data = null;
+
+    const res = await request(buildApp())
+      .post("/api/programmes/prog-1/timetable")
+      .set("Authorization", "Bearer token")
+      .send(validSession);
+
+    expect(res.status).toBe(403);
+  });
+
   it("creates the session for a trainer, not just an admin", async () => {
     authenticateAs("trainer-1", "trainer");
+    programmeTrainersMock.result.data = { trainer_id: "trainer-1" };
     timetableMock.result.data = {
       id: "sess-2",
       programme_id: "prog-1",

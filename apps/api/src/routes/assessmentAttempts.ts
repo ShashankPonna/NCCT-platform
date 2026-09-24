@@ -1,17 +1,58 @@
+import type { AssessmentKind } from "@ncct/shared-types";
 import { submitAttemptSchema } from "@ncct/validation";
 import { Router } from "express";
+import { gradeAnswers, type GradableQuestion } from "../assessmentScoring.js";
 import { checkAndIssueCourseCertificateForAssessment } from "../certificateService.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { getProgrammeIdForAssessment, requireProgrammeAccess } from "../programmeAccess.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
 export const assessmentAttemptsRouter = Router();
 
-// Grading — and therefore this whole submit path — uses supabaseAdmin, not
-// req.supabase: computing the score requires reading correct_option_id,
-// which no RLS policy exposes to a trainee (by design, see
-// assessmentQuestions.ts). trainee_id always comes from req.user, never the
-// request body, so a trainee can only ever submit as themselves even though
-// the insert itself bypasses RLS. See docs/DECISIONS.md #15.
+interface GradingContext {
+  assessment: { id: string; kind: AssessmentKind; pass_threshold_percent: number; max_attempts: number | null };
+  questions: GradableQuestion[];
+}
+
+// Loads what grading needs — including correct_option_id, which is why this
+// is supabaseAdmin-only (no RLS policy exposes it, DECISIONS.md #15).
+// Returns an HTTP-shaped error instead of throwing so both routes below can
+// report it the same way.
+async function loadGradingContext(
+  assessmentId: string,
+): Promise<{ ok: true; value: GradingContext } | { ok: false; status: number; error: string }> {
+  const { data: assessment, error: assessmentError } = await supabaseAdmin
+    .from("assessments")
+    .select("id, kind, pass_threshold_percent, max_attempts")
+    .eq("id", assessmentId)
+    .maybeSingle();
+  if (assessmentError) return { ok: false, status: 400, error: assessmentError.message };
+  if (!assessment) return { ok: false, status: 404, error: "Assessment not found" };
+
+  const { data: questions, error: questionsError } = await supabaseAdmin
+    .from("assessment_questions")
+    .select("id, correct_option_id, marks")
+    .eq("assessment_id", assessmentId)
+    .order("position", { ascending: true });
+  if (questionsError) return { ok: false, status: 400, error: questionsError.message };
+  if (!questions || questions.length === 0) {
+    return { ok: false, status: 400, error: "This assessment has no questions yet" };
+  }
+  return {
+    ok: true,
+    value: { assessment: assessment as GradingContext["assessment"], questions: questions as GradableQuestion[] },
+  };
+}
+
+// Grading uses supabaseAdmin, not req.supabase: computing the score needs
+// correct_option_id. trainee_id always comes from req.user, never the body,
+// so a trainee can only ever submit as themselves. Marks, percent and pass
+// are always computed here from the stored answer key — any client-sent
+// score fields are ignored (CLAUDE.md security rules).
+//
+// Correct answers come back only for a practice quiz. A graded module test
+// reports right/wrong per question but never the answer key, since the
+// trainee may retake it (DECISIONS.md #53).
 assessmentAttemptsRouter.post(
   "/assessments/:id/attempts",
   requireAuth,
@@ -23,39 +64,38 @@ assessmentAttemptsRouter.post(
       return;
     }
 
-    const { data: assessment, error: assessmentError } = await supabaseAdmin
-      .from("assessments")
-      .select("id, pass_threshold_percent")
-      .eq("id", req.params.id)
-      .maybeSingle();
-    if (assessmentError) {
-      res.status(400).json({ error: assessmentError.message });
+    const context = await loadGradingContext(req.params.id);
+    if (!context.ok) {
+      res.status(context.status).json({ error: context.error });
       return;
     }
-    if (!assessment) {
-      res.status(404).json({ error: "Assessment not found" });
-      return;
+    const { assessment, questions } = context.value;
+
+    if (assessment.max_attempts !== null) {
+      const { count, error: countError } = await supabaseAdmin
+        .from("assessment_attempts")
+        .select("id", { count: "exact", head: true })
+        .eq("assessment_id", req.params.id)
+        .eq("trainee_id", req.user!.id);
+      if (countError) {
+        res.status(400).json({ error: countError.message });
+        return;
+      }
+      if ((count ?? 0) >= assessment.max_attempts) {
+        res.status(409).json({
+          error: `Attempt limit reached (${assessment.max_attempts} allowed)`,
+          attemptLimitReached: true,
+        });
+        return;
+      }
     }
 
-    const { data: questions, error: questionsError } = await supabaseAdmin
-      .from("assessment_questions")
-      .select("id, correct_option_id")
-      .eq("assessment_id", req.params.id)
-      .order("position", { ascending: true });
-    if (questionsError) {
-      res.status(400).json({ error: questionsError.message });
-      return;
-    }
-    if (!questions || questions.length === 0) {
-      res.status(400).json({ error: "This assessment has no questions yet" });
-      return;
-    }
-
-    const correctCount = questions.filter(
-      (q) => parsed.data.answers[q.id] === q.correct_option_id,
-    ).length;
-    const scorePercent = Math.round((correctCount / questions.length) * 100);
-    const passed = scorePercent >= assessment.pass_threshold_percent;
+    const graded = gradeAnswers(
+      questions,
+      parsed.data.answers,
+      assessment.pass_threshold_percent,
+      assessment.kind === "quiz",
+    );
 
     const { data: attempt, error: attemptError } = await supabaseAdmin
       .from("assessment_attempts")
@@ -63,8 +103,10 @@ assessmentAttemptsRouter.post(
         assessment_id: req.params.id,
         trainee_id: req.user!.id,
         answers: parsed.data.answers,
-        score_percent: scorePercent,
-        passed,
+        score_percent: graded.score_percent,
+        marks_obtained: graded.marks_obtained,
+        total_marks: graded.total_marks,
+        passed: graded.passed,
       })
       .select()
       .single();
@@ -73,33 +115,56 @@ assessmentAttemptsRouter.post(
       return;
     }
 
-    if (!passed) {
-      res.status(201).json({ attempt, certificate: null });
+    // Only a passed module test can be the event that completes a course —
+    // practice quizzes never gate certification.
+    if (!graded.passed || assessment.kind !== "module_test") {
+      res.status(201).json({ attempt, breakdown: graded.breakdown, certificate: null });
       return;
     }
 
     try {
-      // A pass no longer mints a certificate by itself — this checks
-      // whether the whole course (every lesson + every module assessment)
-      // is now complete, and only then issues one. `certificate` is null on
-      // a perfectly normal pass if other lessons/assessments in the course
-      // are still outstanding; that's expected, not an error.
+      // `certificate` is null on a perfectly normal pass if other lessons or
+      // module tests in the course are still outstanding.
       const certificate = await checkAndIssueCourseCertificateForAssessment({
         assessmentId: req.params.id,
         traineeId: req.user!.id,
       });
-      res.status(201).json({ attempt, certificate });
+      res.status(201).json({ attempt, breakdown: graded.breakdown, certificate });
     } catch (err) {
-      // The attempt itself is already recorded and graded correctly; only
-      // the course-completion check/certificate generation failed (e.g. a
-      // Storage/PDF-rendering issue). Surface that distinctly rather than
-      // making the whole submission look like it failed.
+      // The attempt itself is recorded and graded; only certificate
+      // generation failed (e.g. Storage/PDF). Report that distinctly.
       res.status(201).json({
         attempt,
+        breakdown: graded.breakdown,
         certificate: null,
         certificateError: (err as Error).message,
       });
     }
+  },
+);
+
+// Staff "try this test" preview: grades exactly like a real attempt through
+// the same gradeAnswers call, with the full answer key revealed, and records
+// nothing — so a trainer/admin can sit their own test before trainees do.
+assessmentAttemptsRouter.post(
+  "/assessments/:id/preview",
+  requireAuth,
+  requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForAssessment(req.params.id)),
+  async (req, res) => {
+    const parsed = submitAttemptSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() });
+      return;
+    }
+
+    const context = await loadGradingContext(req.params.id);
+    if (!context.ok) {
+      res.status(context.status).json({ error: context.error });
+      return;
+    }
+    const { assessment, questions } = context.value;
+    res.json(gradeAnswers(questions, parsed.data.answers, assessment.pass_threshold_percent, true));
   },
 );
 

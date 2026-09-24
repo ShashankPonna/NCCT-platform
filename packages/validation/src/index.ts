@@ -1,9 +1,11 @@
 import {
+  ASSESSMENT_KINDS,
   CHATBOT_SOURCE_TYPES,
   CONTENT_TYPES,
   FACE_EMBEDDING_DIMENSIONS,
   JOB_INTEREST_STATUSES,
   LOCALE_PATTERN,
+  MAX_QUESTION_OPTIONS,
   NOMINATION_DECISIONS,
   PROGRAMME_MODES,
   ROLES,
@@ -131,6 +133,10 @@ export const createTimetableSessionSchema = z
     path: ["ends_at"],
   });
 
+export const assignTrainerSchema = z.object({
+  trainer_id: z.string().uuid(),
+});
+
 export const createCourseSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
@@ -204,18 +210,28 @@ export const updateLessonProgressSchema = z.object({
 
 export const createAssessmentSchema = z.object({
   title: z.string().min(1),
+  kind: z.enum(ASSESSMENT_KINDS).optional(),
+  description: z.string().max(2000).nullable().optional(),
   pass_threshold_percent: z.number().int().min(0).max(100).optional(),
+  // null = unlimited attempts.
+  max_attempts: z.number().int().min(1).max(100).nullable().optional(),
 });
 
 export const updateAssessmentSchema = createAssessmentSchema.partial();
 
 const questionOptionSchema = z.object({ id: z.string().min(1), text: z.string().min(1) });
+const questionOptionsSchema = z
+  .array(questionOptionSchema)
+  .min(2, "A question needs at least 2 options")
+  .max(MAX_QUESTION_OPTIONS, `A question can have at most ${MAX_QUESTION_OPTIONS} options`);
+const questionMarksSchema = z.number().int().min(1).max(100);
 
 export const createQuestionSchema = z
   .object({
     question_text: z.string().min(1),
-    options: z.array(questionOptionSchema).min(2, "A question needs at least 2 options"),
+    options: questionOptionsSchema,
     correct_option_id: z.string().min(1),
+    marks: questionMarksSchema.optional(),
     position: z.number().int().nonnegative().optional(),
   })
   .refine((q) => q.options.some((o) => o.id === q.correct_option_id), {
@@ -230,8 +246,9 @@ export const createQuestionSchema = z
 export const updateQuestionSchema = z
   .object({
     question_text: z.string().min(1).optional(),
-    options: z.array(questionOptionSchema).min(2, "A question needs at least 2 options").optional(),
+    options: questionOptionsSchema.optional(),
     correct_option_id: z.string().min(1).optional(),
+    marks: questionMarksSchema.optional(),
     position: z.number().int().nonnegative().optional(),
   })
   .refine(
@@ -241,7 +258,11 @@ export const updateQuestionSchema = z
       message: "correct_option_id must match one of the options' ids",
       path: ["correct_option_id"],
     },
-  );
+  )
+  .refine((q) => !q.options || new Set(q.options.map((o) => o.id)).size === q.options.length, {
+    message: "option ids must be unique",
+    path: ["options"],
+  });
 
 // Answers are keyed by question id; an unanswered question is simply absent
 // from the map rather than requiring a placeholder value.

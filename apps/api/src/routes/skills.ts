@@ -2,6 +2,7 @@ import { createSkillSchema, setSkillIdsSchema } from "@ncct/validation";
 import { Router } from "express";
 import { embedJobBestEffort } from "../jobMatchingService.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { getProgrammeIdForCourse, requireProgrammeAccess } from "../programmeAccess.js";
 import { getSkillGap, getSkillGapAcrossJobs } from "../skillGapService.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
@@ -123,12 +124,13 @@ skillsRouter.get("/programmes/:id/skills", requireAuth, async (req, res) => {
 });
 
 // Content-authoring write, same admin-or-trainer judgment call as
-// courses/modules/lessons — no per-programme ownership check, matching how
-// those routes work today.
+// courses/modules/lessons — and, per docs/DECISIONS.md #52, the same
+// programme-assignment check those routes now enforce too.
 skillsRouter.put(
   "/programmes/:id/skills",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => Promise.resolve(req.params.id)),
   async (req, res) => {
     const parsed = setSkillIdsSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -176,36 +178,42 @@ skillsRouter.get("/courses/:id/skills", requireAuth, async (req, res) => {
 });
 
 // Same content-authoring write pattern as the programme route above —
-// admin-or-trainer, no per-course ownership check, replaces the whole
-// tagged set per call.
-skillsRouter.put("/courses/:id/skills", requireAuth, requireRole("admin", "trainer"), async (req, res) => {
-  const parsed = setSkillIdsSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.flatten() });
-    return;
-  }
-
-  const { error: deleteError } = await supabaseAdmin
-    .from("course_skills")
-    .delete()
-    .eq("course_id", req.params.id);
-  if (deleteError) {
-    res.status(400).json({ error: deleteError.message });
-    return;
-  }
-
-  if (parsed.data.skill_ids.length > 0) {
-    const { error: insertError } = await supabaseAdmin
-      .from("course_skills")
-      .insert(parsed.data.skill_ids.map((skill_id) => ({ course_id: req.params.id, skill_id })));
-    if (insertError) {
-      res.status(400).json({ error: insertError.message });
+// admin-or-trainer, plus the same programme-assignment check, replaces the
+// whole tagged set per call.
+skillsRouter.put(
+  "/courses/:id/skills",
+  requireAuth,
+  requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForCourse(req.params.id)),
+  async (req, res) => {
+    const parsed = setSkillIdsSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.flatten() });
       return;
     }
-  }
 
-  res.status(204).send();
-});
+    const { error: deleteError } = await supabaseAdmin
+      .from("course_skills")
+      .delete()
+      .eq("course_id", req.params.id);
+    if (deleteError) {
+      res.status(400).json({ error: deleteError.message });
+      return;
+    }
+
+    if (parsed.data.skill_ids.length > 0) {
+      const { error: insertError } = await supabaseAdmin
+        .from("course_skills")
+        .insert(parsed.data.skill_ids.map((skill_id) => ({ course_id: req.params.id, skill_id })));
+      if (insertError) {
+        res.status(400).json({ error: insertError.message });
+        return;
+      }
+    }
+
+    res.status(204).send();
+  },
+);
 
 // The multi-job counterpart (DECISIONS.md #45) — registered before the
 // `:jobId` route below so "mine" is never captured as a job id by it.

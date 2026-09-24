@@ -31,6 +31,7 @@ import { getDownloadManifest } from "../offline/storage.js";
 import { enqueueWrite } from "../offline/syncManager.js";
 import type { DownloadedLesson } from "../offline/types.js";
 import { QuizTaker } from "../QuizTaker.js";
+import { CourseMarksTally } from "./CourseMarksTally.js";
 import { SelfHostedVideoPlayer } from "../SelfHostedVideoPlayer.js";
 import { YouTubeVideoPlayer } from "../YouTubeVideoPlayer.js";
 import { ErrorBanner } from "./pieces.js";
@@ -668,6 +669,14 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
               })}
             </ul>
           </div>
+        )}
+
+        {selectedCourseId && (
+          <CourseMarksTally
+            key={selectedCourseId}
+            accessToken={accessToken}
+            courseId={selectedCourseId}
+          />
         )}
 
         {selectedModuleId && (

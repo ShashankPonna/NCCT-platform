@@ -1,4 +1,4 @@
-import { getInstitutions, getProgrammes } from "@ncct/api-client";
+import { getInstitutions, getMyAssignedProgrammes, getProgrammes } from "@ncct/api-client";
 import type { Institution, Programme } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 import type { ManagementTab } from "./ManagementShell.js";
@@ -120,11 +120,21 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
   useEffect(() => {
     async function loadData() {
       try {
-        const [insts, progs] = await Promise.all([
+        const [insts, allProgs, assignedIds] = await Promise.all([
           getInstitutions(accessToken).catch(() => []),
           getProgrammes(accessToken).catch(() => []),
+          getMyAssignedProgrammes(accessToken).catch(() => null),
         ]);
         if (insts.length > 0) setInstitutions(insts);
+
+        // Only show programmes this trainer is actually allotted to
+        // (docs/DECISIONS.md #52) — the API now enforces this on every
+        // write, so a card for a programme the trainer can't touch would
+        // just be a dead end. `assignedIds === null` means the lookup
+        // itself failed (not "assigned to nothing"), so fall back to
+        // showing everything rather than hiding a trainer's real work.
+        const assignedIdSet = assignedIds ? new Set(assignedIds) : null;
+        const progs = assignedIdSet ? allProgs.filter((p) => assignedIdSet.has(p.id)) : allProgs;
 
         if (progs.length > 0) {
           const apiCohorts: AssignedCohort[] = progs.map((prog: Programme, idx: number) => {

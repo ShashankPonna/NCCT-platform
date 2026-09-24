@@ -1,6 +1,7 @@
 import { localeSchema, upsertContentTranslationSchema } from "@ncct/validation";
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { getProgrammeIdForLesson, requireProgrammeAccess } from "../programmeAccess.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
 export const contentTranslationsRouter = Router();
@@ -27,6 +28,7 @@ contentTranslationsRouter.put(
   "/lessons/:id/translations/:locale",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForLesson(req.params.id)),
   async (req, res) => {
     const parsedLocale = localeSchema.safeParse(req.params.locale);
     if (!parsedLocale.success) {
@@ -61,6 +63,7 @@ contentTranslationsRouter.delete(
   "/lessons/:id/translations/:locale",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForLesson(req.params.id)),
   async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from("content_translations")
