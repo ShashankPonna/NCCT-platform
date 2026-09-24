@@ -233,10 +233,15 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
 
   async function handleCreateAssessment(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    // The native event's currentTarget is cleared as soon as dispatch
+    // finishes — reading it after an `await` (as the form-reset call below
+    // needs to) throws "Cannot read properties of null (reading 'reset')",
+    // so it has to be captured into a local variable first.
+    const form = e.currentTarget;
     setError(null);
     try {
-      await createAssessment(accessToken, moduleId, readAssessmentInput(e.currentTarget));
-      e.currentTarget.reset();
+      await createAssessment(accessToken, moduleId, readAssessmentInput(form));
+      form.reset();
       await loadAssessments();
     } catch (err) {
       setError((err as Error).message);
