@@ -10,7 +10,6 @@ import { CertificateVerification } from "./CertificateVerification.js";
 import { ChatbotCorpusManager } from "./ChatbotCorpusManager.js";
 import { EmployerDashboard } from "./EmployerDashboard.js";
 import { HomePage } from "./HomePage.js";
-import { KioskNfcReader } from "./KioskNfcReader.js";
 import { KioskTerminal } from "./KioskTerminal.js";
 import { LoginPage } from "./LoginPage.js";
 import { ManagementShell, type ManagementTab } from "./ManagementShell.js";
@@ -179,7 +178,6 @@ function App() {
         )}
         {currentTab === "content" && <AdminCourseManager accessToken={session.accessToken} />}
         {currentTab === "attendance" && <AttendanceManager accessToken={session.accessToken} />}
-        {currentTab === "kiosk" && <KioskNfcReader accessToken={session.accessToken} />}
         {currentTab === "terminal" && <KioskTerminal accessToken={session.accessToken} />}
         {currentTab === "chatbot" && <ChatbotCorpusManager accessToken={session.accessToken} />}
         {currentTab === "profile" && (

@@ -113,9 +113,9 @@ const content: Record<Locale, KioskFaceCheckInText> = {
 
 // F5 kiosk face check-in (docs/DECISIONS.md #21): a staff-operated terminal
 // has no trainee JWT to read an identity from, so trainee_id is typed here
-// (or pasted from a preceding NFC lookup in KioskNfcReader.tsx) rather than
-// inferred from the caller — same shift publicProfile.ts's NFC kiosk route
-// already made for the same reason.
+// (or pasted from a preceding NFC lookup) rather than inferred from the
+// caller — same shift publicProfile.ts's NFC kiosk route already made for
+// the same reason.
 //
 // Single-shot capture, not continuous live polling: real hardware testing
 // showed the ESP32-CAM's WiFi link is marginal (observed transfer times

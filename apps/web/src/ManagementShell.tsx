@@ -10,7 +10,6 @@ export type ManagementTab =
   | "courses"
   | "content"
   | "attendance"
-  | "kiosk"
   | "terminal"
   | "chatbot"
   | "profile"
@@ -30,7 +29,6 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { id: "courses", labelKey: "courses", icon: "menu_book", roles: ["trainer"] },
   { id: "content", labelKey: "content", icon: "description", roles: ["admin", "trainer"] },
   { id: "attendance", labelKey: "attendance", icon: "calendar_today", roles: ["admin", "trainer"] },
-  { id: "kiosk", labelKey: "kiosk", icon: "nfc", roles: ["admin", "trainer"] },
   { id: "terminal", labelKey: "terminal", icon: "point_of_sale", roles: ["admin", "trainer"] },
   { id: "chatbot", labelKey: "chatbot", icon: "smart_toy", roles: ["admin", "trainer"] },
   { id: "employer", labelKey: "employer", icon: "person_search", roles: ["employer"] },
@@ -45,7 +43,6 @@ interface ManagementShellText {
     courses: string;
     content: string;
     attendance: string;
-    kiosk: string;
     terminal: string;
     chatbot: string;
     employer: string;
@@ -86,7 +83,6 @@ const content: Record<Locale, ManagementShellText> = {
       courses: "My Courses",
       content: "Content",
       attendance: "Attendance",
-      kiosk: "NFC Kiosk",
       terminal: "Kiosk Terminal",
       chatbot: "Chatbot Knowledge Base",
       employer: "Trainee Search & Talent Pool",
@@ -125,7 +121,6 @@ const content: Record<Locale, ManagementShellText> = {
       courses: "मेरे पाठ्यक्रम",
       content: "सामग्री",
       attendance: "उपस्थिति",
-      kiosk: "NFC कियोस्क",
       terminal: "कियोस्क टर्मिनल",
       chatbot: "चैटबॉट ज्ञान आधार",
       employer: "प्रशिक्षणार्थी खोज एवं शॉर्टलिस्ट",
