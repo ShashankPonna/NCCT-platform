@@ -380,15 +380,15 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
       )}
 
       {/* Top Action & Meta Header */}
-      <section className="flex flex-col md:flex-row md:items-center justify-between gap-space-md bg-surface-container-lowest p-space-lg rounded-xl shadow-xs border border-outline-variant/40">
+      <section className="flex flex-col md:flex-row md:items-center justify-between gap-space-md bg-surface-container-lowest p-6 rounded-2xl shadow-xs border border-border-slate">
         <div className="flex flex-col gap-space-xs max-w-2xl">
           <div className="flex items-center gap-space-xs">
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider font-bold">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 text-primary font-label-sm text-label-sm uppercase tracking-wider font-bold border border-blue-200">
               <span className="material-symbols-outlined text-[14px] text-secondary">verified_user</span> NCCT Verified Roster
             </span>
             <span className="text-outline-variant font-body-sm text-body-sm">•</span>
-            <span className="font-tabular-data text-body-sm text-on-surface-variant">
-              Active Candidates: <span className="font-bold text-on-surface">1,482</span>
+            <span className="font-metric-mono text-body-sm text-on-surface-variant">
+              Active Candidates: <span className="font-bold text-primary">1,482</span>
             </span>
           </div>
           <h1 className="font-headline-lg text-headline-lg text-primary tracking-tight font-bold">
@@ -403,7 +403,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
           <button
             type="button"
             onClick={() => setShowManageJobsModal(true)}
-            className="min-h-[48px] px-space-md py-space-sm bg-surface-container-high text-on-surface hover:bg-surface-variant font-label-md text-label-md rounded flex items-center gap-space-xs transition-colors shadow-xs cursor-pointer font-bold"
+            className="min-h-[48px] px-space-md py-space-sm bg-paper text-on-surface hover:bg-slate-200 border border-border-slate font-label-md text-label-md rounded-xl flex items-center gap-space-xs transition-colors shadow-2xs cursor-pointer font-bold"
           >
             <span className="material-symbols-outlined text-[20px]">work</span>
             <span>My Postings ({jobs.length})</span>
@@ -411,7 +411,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
           <button
             type="button"
             onClick={() => setShowPostJobModal(true)}
-            className="min-h-[48px] px-space-lg py-space-sm bg-secondary-container hover:bg-secondary text-primary hover:text-on-primary font-label-lg text-label-lg rounded flex items-center gap-space-xs transition-all shadow-sm active:translate-y-0.5 font-bold cursor-pointer"
+            className="min-h-[48px] px-space-lg py-space-sm bg-secondary-container hover:bg-secondary text-primary hover:text-on-primary font-label-lg text-label-lg rounded-xl flex items-center gap-space-xs transition-all shadow-xs active:translate-y-0.5 font-bold cursor-pointer"
           >
             <span className="material-symbols-outlined text-[22px]">add_circle</span>
             <span>+ Post a Job</span>
@@ -420,7 +420,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
       </section>
 
       {/* Filter & Discovery Hub */}
-      <section className="bg-surface-container-lowest p-space-md rounded-xl shadow-xs flex flex-col gap-space-md border border-outline-variant/40">
+      <section className="bg-surface-container-lowest p-space-md rounded-2xl shadow-xs flex flex-col gap-space-md border border-border-slate">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-space-md">
           {/* Search Input */}
           <div className="md:col-span-4 flex flex-col gap-1">
@@ -437,7 +437,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="e.g. Ramesh Patel, NCCT-2024-GJ-89"
                 type="text"
-                className="w-full min-h-[48px] pl-10 pr-space-md bg-surface-container-low text-on-surface rounded font-body-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-secondary-container border border-outline-variant/40"
+                className="w-full min-h-[48px] pl-10 pr-space-md bg-paper-light text-on-surface rounded-xl font-body-sm text-body-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-secondary-container border border-border-slate/60"
               />
             </div>
           </div>
@@ -572,14 +572,14 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
         {/* Candidate Roster Table Column (approx 68% -> col-span-8) */}
         <section className="lg:col-span-8 flex flex-col gap-space-md">
-          <div className="bg-surface-container-lowest rounded-xl shadow-xs overflow-hidden border border-outline-variant/40">
+          <div className="bg-surface-container-lowest rounded-2xl shadow-xs overflow-hidden border border-border-slate">
             {/* Table Control & Sorting Header */}
-            <div className="px-space-md py-space-sm bg-surface-container-low flex items-center justify-between border-b border-outline-variant/30">
+            <div className="px-space-md py-space-sm bg-paper-light flex items-center justify-between border-b border-border-slate/60">
               <div className="flex items-center gap-space-sm">
                 <span className="font-headline-sm text-headline-sm text-primary font-bold">
                   Certified Trainees
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-primary-container text-on-primary font-tabular-data text-label-sm font-bold">
+                <span className="px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary font-metric-mono text-label-sm font-bold">
                   {filteredCandidates.length} Found
                 </span>
               </div>
@@ -588,7 +588,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-surface-container-lowest text-on-surface rounded px-space-xs py-1 font-body-sm text-body-sm border border-outline-variant/40 focus:outline-none cursor-pointer"
+                  className="bg-white text-on-surface rounded-lg px-2.5 py-1 font-body-sm text-body-sm border border-border-slate focus:outline-none cursor-pointer"
                 >
                   <option value="merit">NCCT Exam Merit (High to Low)</option>
                   <option value="availability">Availability (Immediate First)</option>
@@ -601,16 +601,16 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-surface-container-highest text-on-surface-variant font-label-md text-label-md border-b border-outline-variant/30">
-                    <th className="py-space-sm px-space-md">Trainee Candidate</th>
-                    <th className="py-space-sm px-space-md">Verified Competencies</th>
-                    <th className="py-space-sm px-space-md">NCCT Certification</th>
-                    <th className="py-space-sm px-space-md">Location</th>
-                    <th className="py-space-sm px-space-md">Availability</th>
-                    <th className="py-space-sm px-space-md text-right">Shortlist</th>
+                  <tr className="bg-paper text-on-surface-variant font-label-md text-label-md border-b border-border-slate">
+                    <th className="py-space-sm px-space-md uppercase font-bold tracking-wider text-xs">Trainee Candidate</th>
+                    <th className="py-space-sm px-space-md uppercase font-bold tracking-wider text-xs">Verified Competencies</th>
+                    <th className="py-space-sm px-space-md uppercase font-bold tracking-wider text-xs">NCCT Certification</th>
+                    <th className="py-space-sm px-space-md uppercase font-bold tracking-wider text-xs">Location</th>
+                    <th className="py-space-sm px-space-md uppercase font-bold tracking-wider text-xs">Availability</th>
+                    <th className="py-space-sm px-space-md uppercase font-bold tracking-wider text-xs text-right">Shortlist</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-surface-container-low font-body-sm text-body-sm">
+                <tbody className="divide-y divide-border-slate/40 font-body-sm text-body-sm">
                   {filteredCandidates.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-8 text-center text-on-surface-variant">
@@ -621,11 +621,11 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                     filteredCandidates.map((cand) => {
                       const isShortlisted = shortlistedIds.has(cand.id);
                       return (
-                        <tr key={cand.id} className="hover:bg-surface-container-low/60 transition-colors">
+                        <tr key={cand.id} className="hover:bg-paper-light/60 transition-colors">
                           <td className="py-space-md px-space-md">
                             <div className="flex items-center gap-space-sm">
                               <div
-                                className={`w-10 h-10 rounded ${cand.avatarBg} flex items-center justify-center font-headline-sm text-headline-sm shrink-0 font-bold`}
+                                className={`w-10 h-10 rounded-xl ${cand.avatarBg} flex items-center justify-center font-display text-headline-sm shrink-0 font-bold shadow-2xs`}
                               >
                                 {cand.initials}
                               </div>
@@ -641,7 +641,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                                     verified
                                   </span>
                                 </div>
-                                <span className="font-tabular-data text-label-sm text-on-surface-variant">
+                                <span className="font-metric-mono text-label-sm text-on-surface-variant">
                                   ID: {cand.certId}
                                 </span>
                               </div>
@@ -652,7 +652,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                               {cand.skills.map((skill, si) => (
                                 <span
                                   key={si}
-                                  className="px-2 py-0.5 rounded bg-surface-container text-on-surface font-body-sm text-body-sm text-xs"
+                                  className="px-2 py-0.5 rounded-lg bg-paper text-ink font-metric-mono text-xs border border-border-slate/50"
                                 >
                                   {skill}
                                 </span>
@@ -679,16 +679,16 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                           </td>
                           <td className="py-space-md px-space-md">
                             <span
-                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded font-label-sm text-label-sm font-bold ${
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-label-sm text-label-sm font-bold border ${
                                 cand.availability === "Immediate"
-                                  ? "bg-tertiary-fixed text-on-tertiary-fixed-variant"
-                                  : "bg-secondary-fixed text-on-secondary-fixed"
+                                  ? "bg-blue-50 text-primary border-blue-200"
+                                  : "bg-secondary-fixed text-on-secondary-fixed border-secondary/20"
                               }`}
                             >
                               <span
                                 className={`w-1.5 h-1.5 rounded-full ${
                                   cand.availability === "Immediate"
-                                    ? "bg-on-tertiary-container"
+                                    ? "bg-primary"
                                     : "bg-secondary"
                                 }`}
                               />
@@ -699,10 +699,10 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                             <button
                               type="button"
                               onClick={() => toggleShortlist(cand.id)}
-                              className={`min-h-[44px] px-space-sm py-1.5 rounded inline-flex items-center gap-1 transition-all cursor-pointer font-bold ${
+                              className={`min-h-[40px] px-3.5 py-1.5 rounded-xl inline-flex items-center gap-1 transition-all cursor-pointer font-bold text-xs shadow-2xs ${
                                 isShortlisted
                                   ? "bg-primary text-on-primary"
-                                  : "bg-surface-container-high hover:bg-secondary-container hover:text-primary text-on-surface"
+                                  : "bg-paper hover:bg-secondary-container hover:text-primary text-on-surface border border-border-slate"
                               }`}
                             >
                               <span className="material-symbols-outlined text-[18px]">
@@ -720,31 +720,31 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
             </div>
 
             {/* Table Footer Pagination */}
-            <div className="px-space-md py-space-sm bg-surface-container-low flex items-center justify-between border-t border-outline-variant/30">
+            <div className="px-space-md py-space-sm bg-paper-light flex items-center justify-between border-t border-border-slate/60">
               <span className="font-body-sm text-body-sm text-on-surface-variant">
-                Showing <strong className="text-on-surface font-tabular-data">1–{filteredCandidates.length}</strong> of{" "}
-                <strong className="text-on-surface font-tabular-data">1,482</strong> qualified profiles
+                Showing <strong className="text-on-surface font-metric-mono">1–{filteredCandidates.length}</strong> of{" "}
+                <strong className="text-on-surface font-metric-mono">1,482</strong> qualified profiles
               </span>
               <div className="flex items-center gap-space-xs">
                 <button
                   type="button"
                   disabled
-                  className="min-h-[40px] px-space-sm bg-surface-container-lowest text-on-surface-variant rounded opacity-40 cursor-not-allowed"
+                  className="min-h-[36px] px-2.5 bg-white border border-border-slate text-on-surface-variant rounded-lg opacity-40 cursor-not-allowed"
                 >
                   <span className="material-symbols-outlined text-[18px]">chevron_left</span>
                 </button>
-                <span className="px-space-sm py-1 bg-primary text-on-primary rounded font-label-sm text-label-sm font-bold">
+                <span className="px-3 py-1 bg-primary text-on-primary rounded-lg font-label-sm text-label-sm font-bold shadow-xs">
                   1
                 </span>
                 <button
                   type="button"
-                  className="px-space-sm py-1 bg-surface-container-lowest text-on-surface hover:bg-surface-container rounded font-label-sm text-label-sm cursor-pointer"
+                  className="px-3 py-1 bg-white border border-border-slate text-on-surface hover:bg-paper rounded-lg font-label-sm text-label-sm cursor-pointer"
                 >
                   2
                 </button>
                 <button
                   type="button"
-                  className="min-h-[40px] px-space-sm bg-surface-container-lowest text-on-surface hover:bg-surface-container rounded cursor-pointer"
+                  className="min-h-[36px] px-2.5 bg-white border border-border-slate text-on-surface hover:bg-paper rounded-lg cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[18px]">chevron_right</span>
                 </button>
@@ -753,7 +753,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
           </div>
 
           {/* Cooperative Skill Metrics Visual Block */}
-          <div className="bg-surface-container-lowest p-space-md rounded-xl shadow-xs flex flex-col md:flex-row items-center justify-between gap-space-md border border-outline-variant/40">
+          <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-xs flex flex-col md:flex-row items-center justify-between gap-space-md border border-border-slate">
             <div className="flex flex-col gap-1 max-w-sm">
               <span className="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-bold">
                 Placement Metric
@@ -765,7 +765,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                 82% of available candidates hold hands-on validation in computerized society day-book management.
               </p>
             </div>
-            <div className="w-full md:w-auto flex items-center gap-space-md bg-surface-container-low p-space-sm rounded-lg border border-outline-variant/30">
+            <div className="w-full md:w-auto flex items-center gap-space-md bg-paper-light p-3.5 rounded-xl border border-border-slate/60">
               <svg className="w-36 h-12 text-primary" fill="none" viewBox="0 0 144 48" xmlns="http://www.w3.org/2000/svg">
                 <path
                   d="M4 36L30 24L56 30L82 12L108 18L134 6"
@@ -777,10 +777,10 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                 <circle cx="134" cy="6" r="4" className="fill-secondary-container" />
               </svg>
               <div className="flex flex-col">
-                <span className="font-tabular-data text-headline-md text-headline-md text-primary font-bold">
+                <span className="font-metric-mono text-headline-md text-headline-md text-primary font-bold">
                   +24.6%
                 </span>
-                <span className="font-label-sm text-label-sm text-on-surface-variant">
+                <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">
                   Demand this cycle
                 </span>
               </div>
@@ -790,7 +790,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
 
         {/* Side Panel — Candidate Shortlist Drawer (approx 32% -> col-span-4) */}
         <aside className="lg:col-span-4 flex flex-col gap-space-md sticky top-20">
-          <div className="bg-surface-container-lowest rounded-xl shadow-xs overflow-hidden flex flex-col border border-outline-variant/40">
+          <div className="bg-surface-container-lowest rounded-2xl shadow-xs overflow-hidden flex flex-col border border-border-slate">
             {/* Drawer Header */}
             <div className="p-space-md bg-primary-container text-on-primary flex items-center justify-between">
               <div className="flex items-center gap-space-xs">
@@ -799,13 +799,13 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                 </span>
                 <h2 className="font-headline-sm text-headline-sm font-bold">Shortlisted Candidates</h2>
               </div>
-              <span className="px-2.5 py-0.5 bg-secondary-container text-primary rounded-full font-tabular-data text-label-sm font-bold">
+              <span className="px-2.5 py-0.5 bg-secondary-container text-primary rounded-full font-metric-mono text-label-sm font-bold shadow-xs">
                 {shortlistedCandidates.length} Selected
               </span>
             </div>
 
             {/* Shortlisted Items Container */}
-            <div className="p-space-md flex flex-col gap-space-sm max-h-[520px] overflow-y-auto">
+            <div className="p-space-md flex flex-col gap-space-sm max-h-[520px] overflow-y-auto custom-scrollbar">
               {shortlistedCandidates.length === 0 ? (
                 <p className="text-center py-8 text-on-surface-variant text-sm">
                   No candidates shortlisted yet. Click "Shortlist" on any candidate from the roster.
@@ -814,12 +814,12 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                 shortlistedCandidates.map((cand) => (
                   <div
                     key={cand.id}
-                    className="p-space-sm bg-surface-container-low rounded-lg flex flex-col gap-space-xs relative group transition-all hover:bg-surface-container border border-outline-variant/20"
+                    className="p-space-sm bg-paper-light rounded-xl flex flex-col gap-space-xs relative group transition-all hover:bg-paper border border-border-slate/60"
                   >
                     <div className="flex items-start justify-between gap-space-xs">
                       <div className="flex items-center gap-space-xs">
                         <div
-                          className={`w-7 h-7 rounded ${cand.avatarBg} flex items-center justify-center font-label-sm text-label-sm shrink-0 font-bold`}
+                          className={`w-8 h-8 rounded-lg ${cand.avatarBg} flex items-center justify-center font-display text-label-md shrink-0 font-bold shadow-2xs`}
                         >
                           {cand.initials}
                         </div>
@@ -843,7 +843,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                     </div>
 
                     <div className="pt-1">
-                      <span className="inline-block px-2 py-0.5 rounded bg-surface-container-highest text-on-surface font-label-sm text-label-sm truncate max-w-full font-medium">
+                      <span className="inline-block px-2 py-0.5 rounded-lg bg-white border border-border-slate/50 text-on-surface font-label-sm text-label-sm truncate max-w-full font-medium">
                         {cand.course}
                       </span>
                     </div>
@@ -853,7 +853,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                         <span className="material-symbols-outlined text-[14px] text-on-tertiary-container">
                           check_circle
                         </span>{" "}
-                        Verified Score: {cand.verifiedScore}%
+                        Score: <strong className="font-metric-mono">{cand.verifiedScore}%</strong>
                       </span>
                       <button
                         type="button"
@@ -861,7 +861,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                           setContactToast(`Direct line for ${cand.name} opened. Contact: +91 98765 43210`);
                           setTimeout(() => setContactToast(null), 4000);
                         }}
-                        className="min-h-[36px] px-space-md py-1 bg-primary hover:bg-primary/90 text-on-primary font-label-sm text-label-sm rounded flex items-center gap-1 transition-all active:translate-y-0.5 shadow-xs font-bold cursor-pointer"
+                        className="min-h-[36px] px-space-md py-1 bg-primary hover:bg-primary/90 text-on-primary font-label-sm text-label-sm rounded-xl flex items-center gap-1 transition-all active:translate-y-0.5 shadow-2xs font-bold cursor-pointer"
                       >
                         <span className="material-symbols-outlined text-[16px]">call</span>
                         <span>Contact</span>
@@ -873,12 +873,12 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
             </div>
 
             {/* Shortlist Side Actions Block */}
-            <div className="p-space-md bg-surface-container-low flex flex-col gap-space-xs border-t border-outline-variant/30">
+            <div className="p-space-md bg-paper-light flex flex-col gap-space-xs border-t border-border-slate/60">
               <button
                 type="button"
                 disabled={shortlistedCandidates.length === 0}
                 onClick={handleSendBulkInvite}
-                className="w-full min-h-[48px] px-space-md bg-secondary-container hover:bg-secondary text-primary hover:text-on-primary font-label-md text-label-md rounded flex items-center justify-center gap-space-xs transition-all shadow-xs active:translate-y-0.5 font-bold cursor-pointer disabled:opacity-40"
+                className="w-full min-h-[48px] px-space-md bg-secondary-container hover:bg-secondary text-primary hover:text-on-primary font-label-md text-label-md rounded-xl flex items-center justify-center gap-space-xs transition-all shadow-xs active:translate-y-0.5 font-bold cursor-pointer disabled:opacity-40"
               >
                 <span className="material-symbols-outlined text-[20px]">forward_to_inbox</span>
                 <span>Send Bulk Interview Invitation</span>
@@ -887,7 +887,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                 type="button"
                 disabled={shortlistedCandidates.length === 0}
                 onClick={handleDownloadShortlistCsv}
-                className="w-full min-h-[48px] px-space-md bg-surface-container-lowest hover:bg-surface-container text-on-surface font-label-md text-label-md rounded flex items-center justify-center gap-space-xs transition-colors shadow-xs border border-outline-variant/40 font-bold cursor-pointer disabled:opacity-40"
+                className="w-full min-h-[48px] px-space-md bg-white hover:bg-paper text-on-surface font-label-md text-label-md rounded-xl flex items-center justify-center gap-space-xs transition-colors shadow-2xs border border-border-slate font-bold cursor-pointer disabled:opacity-40"
               >
                 <span className="material-symbols-outlined text-[20px]">download</span>
                 <span>Download Shortlist Summary (CSV)</span>
@@ -896,7 +896,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
           </div>
 
           {/* Cooperative Guidance Note */}
-          <div className="p-space-md bg-surface-container-low rounded-xl flex items-start gap-space-sm border border-outline-variant/30">
+          <div className="p-space-md bg-paper-light rounded-2xl flex items-start gap-space-sm border border-border-slate/60">
             <span className="material-symbols-outlined text-secondary text-[24px] shrink-0 mt-0.5">
               shield
             </span>
@@ -915,8 +915,8 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
 
       {/* Post Opportunity Modal */}
       {showPostJobModal && (
-        <div className="fixed inset-0 bg-primary/60 backdrop-blur-sm z-50 flex items-center justify-center p-space-md animate-fade-in">
-          <div className="bg-surface-container-lowest rounded-xl max-w-xl w-full p-space-lg shadow-2xl space-y-space-md border border-outline-variant/40 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-primary/60 backdrop-blur-xs z-50 flex items-center justify-center p-space-md animate-fade-in">
+          <div className="bg-surface-container-lowest rounded-2xl max-w-xl w-full p-space-lg shadow-2xl space-y-space-md border border-border-slate max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-space-sm border-b border-outline-variant/30">
               <div className="flex items-center gap-space-xs">
                 <div className="w-8 h-8 rounded bg-secondary-container flex items-center justify-center text-primary font-bold">
@@ -1030,8 +1030,8 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
 
       {/* Manage Postings Modal */}
       {showManageJobsModal && (
-        <div className="fixed inset-0 bg-primary/60 backdrop-blur-sm z-50 flex items-center justify-center p-space-md animate-fade-in">
-          <div className="bg-surface-container-lowest rounded-xl max-w-2xl w-full p-space-lg shadow-2xl space-y-space-md border border-outline-variant/40 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-primary/60 backdrop-blur-xs z-50 flex items-center justify-center p-space-md animate-fade-in">
+          <div className="bg-surface-container-lowest rounded-2xl max-w-2xl w-full p-space-lg shadow-2xl space-y-space-md border border-border-slate max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-space-sm border-b border-outline-variant/30">
               <div className="flex items-center gap-space-xs">
                 <span className="material-symbols-outlined text-[24px] text-primary">work</span>

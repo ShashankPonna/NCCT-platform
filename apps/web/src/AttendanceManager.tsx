@@ -228,14 +228,14 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
         {/* Left Column: Controls & Roster (Span 8 or 12 if no QR) */}
         <div className={`${qrDataUrl ? "lg:col-span-8" : "lg:col-span-12"} flex flex-col gap-gutter`}>
           {/* Session Configuration Card */}
-          <section className="bg-surface-card border border-outline-variant rounded-xl p-6 shadow-sm">
+          <section className="bg-surface-card border border-border-slate rounded-2xl p-6 shadow-xs">
             <h2 className="font-headline-sm text-headline-sm text-on-surface mb-6 flex items-center gap-2 m-0">
               <span className="material-symbols-outlined text-primary">settings_suggest</span>
               {t.sessionControls}
             </h2>
             <div className="flex flex-col md:flex-row gap-4 items-end">
               <div className="flex-1 w-full flex flex-col gap-2">
-                <label htmlFor="sessionId" className="font-label-md text-label-md text-on-surface">
+                <label htmlFor="sessionId" className="font-label-md text-label-md text-on-surface font-semibold">
                   {t.sessionIdLabel}
                 </label>
                 <div className="relative">
@@ -249,7 +249,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                     placeholder={t.sessionIdPlaceholder}
                     inputMode="numeric"
                     maxLength={6}
-                    className="w-full h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 pl-10 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow"
+                    className="w-full h-touch-target bg-paper-light border border-border-slate rounded-xl px-3 pl-10 font-metric-mono tracking-widest text-body-md text-on-surface focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                     type="text"
                   />
                 </div>
@@ -260,7 +260,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                   type="button"
                   disabled={busy || !sessionCode.trim()}
                   onClick={() => void handleGenerateQr()}
-                  className="h-touch-target px-6 bg-cta text-on-primary hover:bg-cta-hover disabled:opacity-50 rounded-full font-label-md text-label-md transition-colors flex items-center justify-center gap-2 whitespace-nowrap shadow-sm cursor-pointer"
+                  className="h-touch-target px-6 bg-secondary-container text-primary hover:bg-secondary hover:text-on-primary disabled:opacity-50 rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-xs cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[18px]">qr_code</span>
                   {t.generateQr}
@@ -269,7 +269,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                   type="button"
                   disabled={busy || !sessionCode.trim()}
                   onClick={() => void handleLoadRoster()}
-                  className="h-touch-target px-6 bg-transparent border border-outline text-primary hover:bg-surface-container-high disabled:opacity-50 rounded-full font-label-md text-label-md transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer"
+                  className="h-touch-target px-6 bg-white border border-border-slate text-primary hover:bg-paper-light disabled:opacity-50 rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer shadow-2xs"
                 >
                   <span className="material-symbols-outlined text-[18px]">group</span>
                   {t.loadRoster}
@@ -286,13 +286,13 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
               `attendance: null` rather than being absent from the list
               entirely, unlike the old checked-in-only view this replaced. */}
           {roster && (
-            <section className="bg-surface-card border border-outline-variant rounded-xl overflow-hidden shadow-sm">
-              <div className="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
+            <section className="bg-surface-card border border-border-slate rounded-2xl overflow-hidden shadow-xs">
+              <div className="p-6 border-b border-border-slate/60 flex justify-between items-center bg-paper-light">
                 <h2 className="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2 m-0">
                   <span className="material-symbols-outlined text-primary">fact_check</span>
                   {t.liveRoster}
                 </h2>
-                <span className="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label-sm text-label-sm font-bold">
+                <span className="bg-secondary-container text-primary px-3.5 py-1 rounded-full font-metric-mono text-label-sm font-bold border border-secondary/20">
                   {t.checkedIn(roster.filter((r) => r.attendance !== null).length, roster.length)}
                 </span>
               </div>
@@ -303,25 +303,25 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-surface-container-low border-b border-outline-variant">
-                        <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase font-medium">
+                      <tr className="bg-paper border-b border-border-slate text-on-surface-variant font-label-md">
+                        <th className="p-4 uppercase font-bold tracking-wider text-xs">
                           {t.colPresent}
                         </th>
-                        <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase font-medium">
+                        <th className="p-4 uppercase font-bold tracking-wider text-xs">
                           {t.colTraineeName}
                         </th>
-                        <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase font-medium">
+                        <th className="p-4 uppercase font-bold tracking-wider text-xs">
                           {t.colMethod}
                         </th>
-                        <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase font-medium">
+                        <th className="p-4 uppercase font-bold tracking-wider text-xs">
                           {t.colMatchScore}
                         </th>
-                        <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase font-medium">
+                        <th className="p-4 uppercase font-bold tracking-wider text-xs">
                           {t.colRecordedAt}
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant">
+                    <tbody className="font-body-sm text-body-sm text-on-surface divide-y divide-border-slate/40">
                       {roster.map((entry) => {
                         const traineeName =
                           entry.full_name ?? t.traineeFallback(entry.trainee_id.slice(0, 8));
@@ -421,10 +421,10 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
         {/* Right Column: QR Code Display (Span 4) */}
         {qrDataUrl && (
           <div className="lg:col-span-4">
-            <section className="bg-surface-card border border-outline-variant rounded-xl p-6 flex flex-col items-center text-center shadow-sm">
+            <section className="bg-surface-card border border-border-slate rounded-2xl p-6 flex flex-col items-center text-center shadow-xs">
               <h2 className="font-headline-sm text-headline-sm text-on-surface mb-2 m-0">{t.scanToCheckIn}</h2>
               <p className="font-body-sm text-body-sm text-on-surface-variant mb-6">{t.scanInstructions}</p>
-              <div className="bg-surface-container-lowest border-2 border-outline-variant p-4 rounded-xl mb-6 shadow-sm">
+              <div className="bg-white border-2 border-border-slate p-4 rounded-2xl mb-6 shadow-sm">
                 <img
                   src={qrDataUrl}
                   alt="Session check-in QR code"
@@ -432,11 +432,11 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                 />
               </div>
               {checkInCode && (
-                <div className="w-full bg-primary-container p-4 rounded-lg text-center mb-4">
-                  <p className="font-label-sm text-label-sm text-on-primary-container mb-1 uppercase tracking-wider">
+                <div className="w-full bg-primary-container p-4 rounded-xl text-center mb-4 shadow-xs">
+                  <p className="font-label-sm text-label-sm text-on-primary-container mb-1 uppercase tracking-wider font-semibold">
                     {t.sessionCode}
                   </p>
-                  <p className="font-mono text-3xl tracking-[0.3em] text-on-primary-container font-bold">
+                  <p className="font-metric-mono text-3xl tracking-[0.3em] text-on-primary-container font-bold">
                     {checkInCode}
                   </p>
                   <p className="font-body-sm text-body-sm text-on-primary-container/80 mt-1">
@@ -444,18 +444,18 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                   </p>
                 </div>
               )}
-              <div className="w-full bg-surface-container p-4 rounded-lg text-left">
-                <p className="font-label-sm text-label-sm text-outline mb-1 uppercase tracking-wider">
+              <div className="w-full bg-paper p-4 rounded-xl text-left border border-border-slate/60">
+                <p className="font-label-sm text-label-sm text-outline mb-1 uppercase tracking-wider font-semibold">
                   {t.directUrl}
                 </p>
-                <p className="font-mono text-[12px] text-primary break-all bg-surface-container-lowest p-2 rounded border border-outline-variant select-all">
+                <p className="font-metric-mono text-[12px] text-primary break-all bg-white p-2.5 rounded-lg border border-border-slate select-all">
                   {checkInUrl}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={handleCopyLink}
-                className="mt-4 w-full h-touch-target border border-outline text-primary hover:bg-surface-container-highest rounded-full font-label-md text-label-md transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                className="mt-4 w-full h-touch-target bg-white border border-border-slate text-primary hover:bg-paper-light rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
               >
                 <span className="material-symbols-outlined text-[18px]">
                   {copied ? "check" : "content_copy"}

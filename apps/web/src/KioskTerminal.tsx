@@ -264,8 +264,8 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
         </div>
       )}
 
-      <section className="bg-surface-card border border-outline-variant rounded-xl p-6 flex flex-col gap-4">
-        <h2 className="font-headline-sm text-headline-sm text-on-surface m-0">Setup</h2>
+      <section className="bg-surface-card border border-border-slate rounded-2xl p-6 flex flex-col gap-4 shadow-xs">
+        <h2 className="font-headline-sm text-headline-sm text-on-surface m-0 font-bold">Setup</h2>
         <div className="flex flex-col md:flex-row gap-3">
           <input
             id="kiosk-session"
@@ -275,7 +275,7 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
             inputMode="numeric"
             maxLength={6}
             disabled={busy || connected || resolvingSession}
-            className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 font-mono text-body-sm disabled:opacity-50"
+            className="flex-1 h-touch-target bg-paper-light border border-border-slate rounded-xl px-4 font-metric-mono text-center tracking-widest text-lg disabled:opacity-50 focus:bg-white outline-none focus:ring-2 focus:ring-secondary-container"
           />
         </div>
 
@@ -285,21 +285,21 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
               type="button"
               onClick={() => void handleStart()}
               disabled={!configured || resolvingSession}
-              className="h-touch-target px-6 bg-cta text-on-primary hover:bg-cta-hover disabled:opacity-50 rounded-full font-label-md text-label-md flex items-center gap-2"
+              className="h-touch-target px-6 bg-secondary-container text-primary hover:bg-secondary hover:text-on-primary disabled:opacity-50 rounded-xl font-label-md text-label-md font-bold flex items-center gap-2 cursor-pointer shadow-xs transition-all"
             >
               <span className="material-symbols-outlined text-[18px]">wifi</span>
-              {resolvingSession ? "Resolving..." : "Start"}
+              {resolvingSession ? "Resolving..." : "Start Kiosk"}
             </button>
           ) : (
             <>
-              <span className="flex items-center gap-2 text-status-success font-label-md">
+              <span className="flex items-center gap-2 text-status-success font-label-md font-bold">
                 <span className="material-symbols-outlined text-[18px]">nfc</span>
                 Live &mdash; waiting for a card
               </span>
               <button
                 type="button"
                 onClick={handleStop}
-                className="h-touch-target px-5 border border-outline text-primary hover:bg-surface-container-highest rounded-full font-label-md text-label-md"
+                className="h-touch-target px-5 bg-white border border-border-slate text-primary hover:bg-paper-light rounded-xl font-label-md text-label-md font-bold cursor-pointer transition-colors shadow-2xs"
               >
                 Stop
               </button>
@@ -312,11 +312,11 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
       </section>
 
       {unboundUid && (
-        <section className="bg-surface-card border border-dashed border-outline-variant rounded-xl p-6 flex flex-col gap-3">
-          <h2 className="font-headline-sm text-headline-sm text-on-surface m-0">Bind this card</h2>
+        <section className="bg-surface-card border border-dashed border-border-slate rounded-2xl p-6 flex flex-col gap-3 shadow-xs">
+          <h2 className="font-headline-sm text-headline-sm text-on-surface m-0 font-bold">Bind this card</h2>
           <p className="font-body-sm text-body-sm text-on-surface-variant m-0">
             Card{" "}
-            <code className="font-mono bg-surface-container px-2 py-0.5 rounded">{unboundUid}</code>{" "}
+            <code className="font-metric-mono bg-paper px-2 py-0.5 rounded border border-border-slate/60">{unboundUid}</code>{" "}
             isn&rsquo;t linked to anyone yet. Nothing is written to the card &mdash; the link is stored
             against the trainee.
           </p>
@@ -326,13 +326,13 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
               value={bindTraineeId}
               onChange={(e) => setBindTraineeId(e.target.value)}
               placeholder="Trainee ID (UUID)"
-              className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 font-mono text-body-sm"
+              className="flex-1 h-touch-target bg-paper-light border border-border-slate rounded-xl px-3 font-metric-mono text-body-sm outline-none focus:bg-white"
             />
             <button
               type="button"
               onClick={() => void handleBind()}
               disabled={!bindTraineeId.trim()}
-              className="h-touch-target px-6 bg-cta text-on-primary hover:bg-cta-hover disabled:opacity-50 rounded-full font-label-md text-label-md"
+              className="h-touch-target px-6 bg-secondary-container text-primary hover:bg-secondary hover:text-on-primary disabled:opacity-50 rounded-xl font-label-md text-label-md font-bold cursor-pointer transition-all shadow-xs"
             >
               Bind Card
             </button>
@@ -341,11 +341,11 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <section className="bg-surface-card border border-outline-variant rounded-xl p-6 flex flex-col gap-3">
-          <h2 className="font-headline-sm text-headline-sm text-on-surface m-0">Last capture</h2>
+        <section className="bg-surface-card border border-border-slate rounded-2xl p-6 flex flex-col gap-3 shadow-xs">
+          <h2 className="font-headline-sm text-headline-sm text-on-surface m-0 font-bold">Last capture</h2>
           <canvas
             ref={canvasRef}
-            className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest"
+            className="w-full rounded-xl border border-border-slate bg-paper-light"
           />
           <p className="font-body-sm text-on-surface-variant m-0">
             {current
@@ -356,23 +356,23 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
           </p>
         </section>
 
-        <section className="bg-surface-card border border-outline-variant rounded-xl p-6 flex flex-col gap-2">
-          <h2 className="font-headline-sm text-headline-sm text-on-surface m-0 mb-1">Activity</h2>
+        <section className="bg-surface-card border border-border-slate rounded-2xl p-6 flex flex-col gap-2 shadow-xs">
+          <h2 className="font-headline-sm text-headline-sm text-on-surface m-0 mb-1 font-bold">Activity</h2>
           {log.length === 0 ? (
             <p className="font-body-sm text-on-surface-variant m-0">Nothing yet.</p>
           ) : (
             <ul className="flex flex-col gap-1.5 m-0 p-0 list-none">
               {log.map((entry, i) => (
                 <li key={`${entry.at}-${i}`} className="flex gap-3 font-body-sm text-body-sm">
-                  <span className="font-mono text-on-surface-variant shrink-0">{entry.at}</span>
+                  <span className="font-metric-mono text-on-surface-variant shrink-0">{entry.at}</span>
                   <span
                     className={
                       entry.kind === "good"
-                        ? "text-status-success"
+                        ? "text-status-success font-semibold"
                         : entry.kind === "bad"
-                          ? "text-status-rejected"
+                          ? "text-status-rejected font-semibold"
                           : entry.kind === "in"
-                            ? "text-primary"
+                            ? "text-primary font-semibold"
                             : "text-on-surface"
                     }
                   >

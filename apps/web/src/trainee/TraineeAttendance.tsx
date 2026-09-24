@@ -138,8 +138,8 @@ export function TraineeAttendance({ accessToken, autoCheckInSessionId }: Trainee
         </div>
       )}
 
-      <div className="flex w-full flex-col gap-4 rounded-xl border border-border-low-contrast bg-surface-card p-6">
-        <label className="flex flex-col gap-2 text-label-md text-on-surface-variant">
+      <div className="flex w-full flex-col gap-4 rounded-2xl border border-border-slate bg-surface-container-lowest p-6 shadow-xs">
+        <label className="flex flex-col gap-2 font-label-md text-xs font-semibold text-slate-600">
           {t.sessionIdLabel}
           <input
             type="text"
@@ -148,26 +148,26 @@ export function TraineeAttendance({ accessToken, autoCheckInSessionId }: Trainee
             value={sessionCode}
             onChange={(e) => setSessionCode(e.target.value)}
             placeholder={t.sessionIdPlaceholder}
-            className="min-h-touch-target rounded border border-border-low-contrast bg-surface-container-lowest px-4 py-3 text-body-md focus:outline-none focus:ring-2 focus:ring-interactive"
+            className="min-h-touch-target rounded-xl border border-border-slate bg-paper px-4 py-3 font-metric-mono text-lg font-bold text-center tracking-widest text-primary focus:outline-none focus:ring-2 focus:ring-accent"
           />
         </label>
         <button
           type="button"
           disabled={busy || !sessionCode.trim()}
           onClick={() => void handleCodeCheckIn()}
-          className="flex min-h-touch-target items-center justify-center gap-2 rounded-lg bg-cta py-3 font-bold text-white transition-colors hover:bg-cta-hover disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex min-h-touch-target items-center justify-center gap-2 rounded-xl bg-secondary hover:bg-secondary-dark py-3.5 font-label-md text-sm font-bold text-white transition-all shadow-xs active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <span className="material-symbols-outlined">qr_code_scanner</span>
+          <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
           {t.checkInButton}
         </button>
       </div>
 
       <ErrorBanner message={error} />
 
-      <div className="flex w-full flex-col gap-4 rounded-xl border border-border-low-contrast bg-surface-card p-6">
+      <div className="flex w-full flex-col gap-4 rounded-2xl border border-border-slate bg-surface-container-lowest p-6 shadow-xs">
         <div>
-          <h2 className="text-headline-sm text-primary">{t.faceIdHeading}</h2>
-          <p className="mt-1 text-body-sm text-on-surface-variant">{t.faceIdBody}</p>
+          <h2 className="font-headline text-lg font-bold text-ink">{t.faceIdHeading}</h2>
+          <p className="mt-1 font-body text-xs md:text-sm text-slate-600">{t.faceIdBody}</p>
         </div>
         <FaceEnrollment accessToken={accessToken} />
       </div>

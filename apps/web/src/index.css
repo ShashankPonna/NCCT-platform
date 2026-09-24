@@ -74,6 +74,13 @@
   --ncct-status-pending: #d97706;
   --ncct-status-rejected: #dc2626;
 
+  --ncct-ink: #0f172a;
+  --ncct-paper: #f1f5f9;
+  --ncct-paper-light: #f8fafc;
+  --ncct-border-slate: #cbd5e1;
+  --ncct-accent: #3b82f6;
+  --ncct-accent-light: #eff6ff;
+
   --sans: system-ui, "Segoe UI", Roboto, sans-serif;
   --heading: system-ui, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
@@ -163,6 +170,13 @@
   --ncct-status-pending: #fbbf24;
   --ncct-status-rejected: #f87171;
 
+  --ncct-ink: #f8fafc;
+  --ncct-paper: #0f172a;
+  --ncct-paper-light: #0b1120;
+  --ncct-border-slate: #334155;
+  --ncct-accent: #60a5fa;
+  --ncct-accent-light: #1e293b;
+
   color-scheme: dark;
 }
 
@@ -228,19 +242,29 @@
   --color-error-container: #ffdad6;
   --color-on-error-container: #93000a;
 
-  --font-heading: "Public Sans", "Plus Jakarta Sans", sans-serif;
-  --font-headline: "Public Sans", "Hanken Grotesk", sans-serif;
-  --font-body: "Public Sans", "Fira Sans", sans-serif;
-  --font-headline-lg: "Public Sans", sans-serif;
-  --font-headline-md: "Public Sans", sans-serif;
-  --font-headline-sm: "Public Sans", sans-serif;
-  --font-body-lg: "Public Sans", sans-serif;
-  --font-body-md: "Public Sans", sans-serif;
-  --font-body-sm: "Public Sans", sans-serif;
-  --font-label-lg: "Public Sans", sans-serif;
-  --font-label-md: "Public Sans", sans-serif;
-  --font-label-sm: "Public Sans", sans-serif;
-  --font-tabular-data: "Public Sans", monospace;
+  --color-ink: var(--ncct-ink);
+  --color-paper: var(--ncct-paper);
+  --color-paper-light: var(--ncct-paper-light);
+  --color-border-slate: var(--ncct-border-slate);
+  --color-accent: var(--ncct-accent);
+  --color-accent-light: var(--ncct-accent-light);
+
+  --font-display: "Manrope", "Public Sans", sans-serif;
+  --font-heading: "Manrope", "Plus Jakarta Sans", "Public Sans", sans-serif;
+  --font-headline: "Manrope", "Plus Jakarta Sans", sans-serif;
+  --font-body: "Plus Jakarta Sans", "Public Sans", sans-serif;
+  --font-metric-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-headline-lg: "Manrope", sans-serif;
+  --font-headline-md: "Manrope", sans-serif;
+  --font-headline-sm: "Manrope", sans-serif;
+  --font-title-md: "Plus Jakarta Sans", sans-serif;
+  --font-body-lg: "Plus Jakarta Sans", sans-serif;
+  --font-body-md: "Plus Jakarta Sans", sans-serif;
+  --font-body-sm: "Plus Jakarta Sans", sans-serif;
+  --font-label-lg: "Plus Jakarta Sans", sans-serif;
+  --font-label-md: "Plus Jakarta Sans", sans-serif;
+  --font-label-sm: "Plus Jakarta Sans", sans-serif;
+  --font-tabular-data: "JetBrains Mono", "Public Sans", monospace;
 
   --text-headline-lg: 2rem;
   --text-headline-lg--line-height: 2.5rem;

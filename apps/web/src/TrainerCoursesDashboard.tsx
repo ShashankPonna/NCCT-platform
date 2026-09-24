@@ -242,7 +242,7 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
             <button
               type="button"
               onClick={() => setShowProposalModal(true)}
-              className="inline-flex items-center justify-center gap-space-sm min-h-[48px] px-space-lg bg-secondary-container text-primary font-label-md text-label-md rounded font-bold shadow-sm hover:brightness-105 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              className="inline-flex items-center justify-center gap-space-sm min-h-[48px] px-space-lg bg-secondary-container text-primary font-label-md text-label-md rounded-xl font-bold shadow-sm hover:brightness-105 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
             >
               <span className="material-symbols-outlined text-[20px]">add_circle</span>
               <span>+ Propose New Batch / Programme</span>
@@ -251,7 +251,7 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
         </div>
 
         {/* Filter & Query Command Strip */}
-        <div className="bg-surface-container-lowest p-space-md rounded-xl shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-space-md border border-outline-variant/40">
+        <div className="bg-surface-container-lowest p-space-md rounded-2xl shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-space-md border border-border-slate">
           {/* Search Box */}
           <div className="relative flex-1 max-w-lg">
             <span className="material-symbols-outlined absolute left-space-md top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px] pointer-events-none">
@@ -262,7 +262,7 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter by Course Code, Subject or Regional Institute..."
-              className="w-full h-12 pl-11 pr-space-md bg-surface-container-low text-on-surface font-body-sm text-body-sm rounded outline-none placeholder:text-on-surface-variant/60 focus:ring-2 focus:ring-secondary-container transition-all"
+              className="w-full h-12 pl-11 pr-space-md bg-paper-light text-on-surface font-body-sm text-body-sm rounded-xl outline-none border border-border-slate/60 placeholder:text-on-surface-variant/60 focus:bg-white focus:ring-2 focus:ring-secondary-container transition-all"
             />
           </div>
 
@@ -274,9 +274,9 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
             <button
               type="button"
               onClick={() => setSelectedTerm("all")}
-              className={`px-space-md py-space-xs rounded font-label-sm text-label-sm uppercase tracking-wider transition-colors min-h-[40px] cursor-pointer ${
+              className={`px-space-md py-space-xs rounded-lg font-label-sm text-label-sm uppercase tracking-wider transition-colors min-h-[40px] cursor-pointer font-bold ${
                 selectedTerm === "all"
-                  ? "bg-primary text-on-primary font-bold"
+                  ? "bg-primary text-on-primary shadow-xs"
                   : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
               }`}
             >
@@ -285,9 +285,9 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
             <button
               type="button"
               onClick={() => setSelectedTerm("q3")}
-              className={`px-space-md py-space-xs rounded font-label-sm text-label-sm uppercase tracking-wider transition-colors min-h-[40px] cursor-pointer ${
+              className={`px-space-md py-space-xs rounded-lg font-label-sm text-label-sm uppercase tracking-wider transition-colors min-h-[40px] cursor-pointer font-bold ${
                 selectedTerm === "q3"
-                  ? "bg-primary text-on-primary font-bold"
+                  ? "bg-primary text-on-primary shadow-xs"
                   : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
               }`}
             >
@@ -296,9 +296,9 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
             <button
               type="button"
               onClick={() => setSelectedTerm("q4")}
-              className={`px-space-md py-space-xs rounded font-label-sm text-label-sm uppercase tracking-wider transition-colors min-h-[40px] cursor-pointer ${
+              className={`px-space-md py-space-xs rounded-lg font-label-sm text-label-sm uppercase tracking-wider transition-colors min-h-[40px] cursor-pointer font-bold ${
                 selectedTerm === "q4"
-                  ? "bg-primary text-on-primary font-bold"
+                  ? "bg-primary text-on-primary shadow-xs"
                   : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
               }`}
             >
@@ -362,16 +362,16 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
             return (
               <div
                 key={cohort.id}
-                className="flex flex-col bg-surface-container-lowest rounded-xl shadow-xs p-space-lg hover:shadow-md transition-shadow border border-outline-variant/40"
+                className="flex flex-col bg-surface-container-lowest rounded-2xl shadow-xs p-space-lg hover:shadow-md transition-all border border-border-slate"
               >
                 {/* Card Top Ribbon: Identity, Batch, Badges */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md pb-space-md border-b border-outline-variant/20">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md pb-space-md border-b border-border-slate/40">
                   <div className="space-y-space-xs">
                     <div className="flex flex-wrap items-center gap-space-sm">
-                      <span className="px-space-sm py-0.5 bg-primary-container text-on-primary font-tabular-data text-label-sm rounded uppercase tracking-wider font-bold">
+                      <span className="px-space-sm py-0.5 bg-primary-container text-on-primary font-metric-mono text-label-sm rounded-lg uppercase tracking-wider font-bold">
                         {cohort.code}
                       </span>
-                      <span className="px-space-sm py-0.5 bg-surface-container text-on-surface-variant font-tabular-data text-label-sm rounded font-medium">
+                      <span className="px-space-sm py-0.5 bg-paper text-ink font-metric-mono text-label-sm rounded-lg font-medium border border-border-slate/50">
                         Batch: {cohort.batch}
                       </span>
                       <span className="inline-flex items-center gap-space-xs font-label-sm text-label-sm text-secondary font-semibold">
@@ -386,15 +386,15 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
 
                   <div className="shrink-0 flex items-center gap-space-sm">
                     {cohort.status === "Final Assessment Phase" ? (
-                      <span className="inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-label-sm font-bold">
+                      <span className="inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-label-sm font-bold border border-secondary/20">
                         <span className="material-symbols-outlined text-[16px] text-secondary">
                           assignment_late
                         </span>
                         Final Assessment Phase
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-tertiary-fixed-dim/30 text-on-tertiary-fixed-variant font-label-sm text-label-sm font-bold">
-                        <span className="w-2 h-2 rounded-full bg-on-tertiary-fixed-variant animate-pulse" />
+                      <span className="inline-flex items-center gap-space-xs px-space-md py-space-xs rounded-full bg-blue-50 text-primary font-label-sm text-label-sm font-bold border border-blue-200">
+                        <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                         {cohort.status}
                       </span>
                     )}
@@ -402,10 +402,10 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
                 </div>
 
                 {/* Core Teaching Metrics Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-space-md my-space-md bg-surface-container-low rounded-lg p-space-md">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-space-md my-space-md bg-paper-light border border-border-slate/60 rounded-xl p-space-md">
                   {/* Modules Status */}
                   <div className="flex items-start gap-space-sm">
-                    <div className="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center shrink-0 text-primary">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-border-slate/60 flex items-center justify-center shrink-0 text-primary shadow-2xs">
                       <span className="material-symbols-outlined text-[20px]">layers</span>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -413,11 +413,11 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
                         <span className="font-label-sm text-label-sm text-on-surface-variant font-semibold">
                           Modules Published
                         </span>
-                        <span className="font-tabular-data text-primary text-label-md font-bold">
+                        <span className="font-metric-mono text-primary text-label-md font-bold">
                           {cohort.modulesCount} of {cohort.totalModules} Active
                         </span>
                       </div>
-                      <div className="w-full h-2 bg-surface-container-high rounded-full overflow-hidden mt-space-xs">
+                      <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden mt-space-xs">
                         <div
                           className="h-full bg-secondary-container rounded-full"
                           style={{ width: `${modulePercent}%` }}
@@ -431,7 +431,7 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
 
                   {/* Trainees Enrolled */}
                   <div className="flex items-start gap-space-sm">
-                    <div className="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center shrink-0 text-primary">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-border-slate/60 flex items-center justify-center shrink-0 text-primary shadow-2xs">
                       <span className="material-symbols-outlined text-[20px]">groups</span>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -439,11 +439,11 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
                         <span className="font-label-sm text-label-sm text-on-surface-variant font-semibold">
                           Students Enrolled
                         </span>
-                        <span className="font-tabular-data text-primary text-label-md font-bold">
+                        <span className="font-metric-mono text-primary text-label-md font-bold">
                           {cohort.enrolledStudents} Trainees
                         </span>
                       </div>
-                      <div className="w-full h-2 bg-surface-container-high rounded-full overflow-hidden mt-space-xs">
+                      <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden mt-space-xs">
                         <div
                           className="h-full bg-primary-container rounded-full"
                           style={{ width: `${studentPercent}%` }}
@@ -459,7 +459,7 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
 
                   {/* Weekly Schedule */}
                   <div className="flex items-start gap-space-sm">
-                    <div className="w-10 h-10 rounded bg-surface-container-high flex items-center justify-center shrink-0 text-primary">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-border-slate/60 flex items-center justify-center shrink-0 text-primary shadow-2xs">
                       <span className="material-symbols-outlined text-[20px]">schedule</span>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -489,7 +489,7 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
                     <button
                       type="button"
                       onClick={() => onNavigate("content")}
-                      className="inline-flex items-center justify-center gap-space-xs min-h-[44px] px-space-md bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md rounded transition-colors cursor-pointer"
+                      className="inline-flex items-center justify-center gap-space-xs min-h-[44px] px-space-md bg-paper hover:bg-slate-200 text-on-surface font-label-md text-label-md rounded-xl border border-border-slate/60 transition-colors cursor-pointer font-bold"
                     >
                       <span className="material-symbols-outlined text-[18px]">folder_open</span>
                       <span>Manage Content</span>
@@ -497,7 +497,7 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
                     <button
                       type="button"
                       onClick={() => onNavigate("attendance")}
-                      className="inline-flex items-center justify-center gap-space-xs min-h-[44px] px-space-md bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md rounded transition-colors cursor-pointer"
+                      className="inline-flex items-center justify-center gap-space-xs min-h-[44px] px-space-md bg-paper hover:bg-slate-200 text-on-surface font-label-md text-label-md rounded-xl border border-border-slate/60 transition-colors cursor-pointer font-bold"
                     >
                       <span className="material-symbols-outlined text-[18px]">badge</span>
                       <span>Roster & Attendance</span>
@@ -505,9 +505,9 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
                     <button
                       type="button"
                       onClick={() => onNavigate("content")}
-                      className={`inline-flex items-center justify-center gap-space-xs min-h-[44px] px-space-md font-label-md text-label-md rounded shadow-xs transition-all cursor-pointer ${
+                      className={`inline-flex items-center justify-center gap-space-xs min-h-[44px] px-space-md font-label-md text-label-md rounded-xl shadow-xs transition-all cursor-pointer font-bold ${
                         cohort.status === "Final Assessment Phase"
-                          ? "bg-secondary-container text-primary hover:brightness-105 font-bold"
+                          ? "bg-secondary-container text-primary hover:brightness-105"
                           : "bg-primary-container text-on-primary hover:bg-primary"
                       }`}
                     >
@@ -528,8 +528,8 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
 
       {/* Propose New Batch Modal */}
       {showProposalModal && (
-        <div className="fixed inset-0 bg-primary/60 backdrop-blur-sm z-50 flex items-center justify-center p-space-md animate-fade-in">
-          <div className="bg-surface-container-lowest rounded-xl max-w-xl w-full p-space-lg shadow-2xl space-y-space-md border border-outline-variant/40">
+        <div className="fixed inset-0 bg-primary/60 backdrop-blur-xs z-50 flex items-center justify-center p-space-md animate-fade-in">
+          <div className="bg-surface-container-lowest rounded-2xl max-w-xl w-full p-space-lg shadow-2xl space-y-space-md border border-border-slate">
             <div className="flex items-center justify-between pb-space-sm border-b border-outline-variant/30">
               <div className="flex items-center gap-space-xs">
                 <div className="w-8 h-8 rounded bg-secondary-container flex items-center justify-center text-primary font-bold">

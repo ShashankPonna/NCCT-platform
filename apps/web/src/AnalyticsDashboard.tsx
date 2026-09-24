@@ -280,19 +280,19 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
       {/* Top Row: Stat Tiles */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Stat 1 */}
-        <div className="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col gap-2 relative overflow-hidden group shadow-sm">
+        <div className="bg-surface-card border border-border-slate rounded-2xl p-5 flex flex-col gap-2 relative overflow-hidden group shadow-xs hover:shadow-md transition-all">
           <div className="flex justify-between items-start">
-            <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
+            <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">
               {t.statProgrammesRun}
             </p>
-            <span className="material-symbols-outlined text-primary-container bg-surface-container-high rounded-full p-1 text-[20px]">
+            <span className="material-symbols-outlined text-primary-container bg-surface-container-high rounded-xl p-1.5 text-[20px] shadow-2xs">
               school
             </span>
           </div>
-          <p className="font-headline-lg text-headline-lg text-primary m-0">
+          <p className="font-display font-bold text-3xl text-primary tracking-tight tabular-nums m-0">
             {data.programmesRun.total}
           </p>
-          <div className="flex items-center gap-1 text-status-success font-label-sm text-label-sm mt-auto">
+          <div className="flex items-center gap-1 text-status-success font-label-sm text-label-sm font-bold mt-auto">
             <span className="material-symbols-outlined text-[14px]">trending_up</span>
             <span>{t.trendUp("12")}</span>
           </div>
@@ -300,19 +300,19 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
         </div>
 
         {/* Stat 2 */}
-        <div className="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col gap-2 relative overflow-hidden group shadow-sm">
+        <div className="bg-surface-card border border-border-slate rounded-2xl p-5 flex flex-col gap-2 relative overflow-hidden group shadow-xs hover:shadow-md transition-all">
           <div className="flex justify-between items-start">
-            <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
+            <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">
               {t.statCertificatesIssued}
             </p>
-            <span className="material-symbols-outlined text-primary-container bg-surface-container-high rounded-full p-1 text-[20px]">
+            <span className="material-symbols-outlined text-primary-container bg-surface-container-high rounded-xl p-1.5 text-[20px] shadow-2xs">
               workspace_premium
             </span>
           </div>
-          <p className="font-headline-lg text-headline-lg text-primary m-0">
+          <p className="font-display font-bold text-3xl text-primary tracking-tight tabular-nums m-0">
             {data.certificatesIssued.total.toLocaleString()}
           </p>
-          <div className="flex items-center gap-1 text-status-success font-label-sm text-label-sm mt-auto">
+          <div className="flex items-center gap-1 text-status-success font-label-sm text-label-sm font-bold mt-auto">
             <span className="material-symbols-outlined text-[14px]">trending_up</span>
             <span>{t.trendUp("5.4")}</span>
           </div>
@@ -320,19 +320,19 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
         </div>
 
         {/* Stat 3 */}
-        <div className="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col gap-2 relative overflow-hidden group shadow-sm">
+        <div className="bg-surface-card border border-border-slate rounded-2xl p-5 flex flex-col gap-2 relative overflow-hidden group shadow-xs hover:shadow-md transition-all">
           <div className="flex justify-between items-start">
-            <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
+            <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">
               {t.statOverallCompletion}
             </p>
-            <span className="material-symbols-outlined text-primary-container bg-surface-container-high rounded-full p-1 text-[20px]">
+            <span className="material-symbols-outlined text-primary-container bg-surface-container-high rounded-xl p-1.5 text-[20px] shadow-2xs">
               donut_large
             </span>
           </div>
-          <p className="font-headline-lg text-headline-lg text-primary m-0">
+          <p className="font-display font-bold text-3xl text-primary tracking-tight tabular-nums m-0">
             {formatPercent(data.completionRates.overall.rate)}
           </p>
-          <div className="flex items-center gap-1 text-status-pending font-label-sm text-label-sm mt-auto">
+          <div className="flex items-center gap-1 text-status-pending font-label-sm text-label-sm font-bold mt-auto">
             <span className="material-symbols-outlined text-[14px]">trending_flat</span>
             <span>{t.trendStable}</span>
           </div>
@@ -340,19 +340,19 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
         </div>
 
         {/* Stat 4 */}
-        <div className="bg-surface-card border border-outline-variant rounded-lg p-4 flex flex-col gap-2 relative overflow-hidden group shadow-sm">
+        <div className="bg-surface-card border border-border-slate rounded-2xl p-5 flex flex-col gap-2 relative overflow-hidden group shadow-xs hover:shadow-md transition-all">
           <div className="flex justify-between items-start">
-            <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
+            <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider font-semibold">
               {t.statJobsPosted}
             </p>
-            <span className="material-symbols-outlined text-primary-container bg-surface-container-high rounded-full p-1 text-[20px]">
+            <span className="material-symbols-outlined text-primary-container bg-surface-container-high rounded-xl p-1.5 text-[20px] shadow-2xs">
               work
             </span>
           </div>
-          <p className="font-headline-lg text-headline-lg text-primary m-0">
+          <p className="font-display font-bold text-3xl text-primary tracking-tight tabular-nums m-0">
             {data.placements.totalJobs}
           </p>
-          <div className="flex items-center gap-1 text-status-success font-label-sm text-label-sm mt-auto">
+          <div className="flex items-center gap-1 text-status-success font-label-sm text-label-sm font-bold mt-auto">
             <span className="material-symbols-outlined text-[14px]">trending_up</span>
             <span>{t.trendUp("24")}</span>
           </div>
@@ -363,8 +363,8 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
       {/* Bento Grid Layout for Charts & Data */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Block 1: Programmes by mode */}
-        <div className="bg-surface-card border border-outline-variant rounded-lg p-6 flex flex-col shadow-sm">
-          <h3 className="font-headline-sm text-headline-sm text-primary mb-4">{t.programmesByMode}</h3>
+        <div className="bg-surface-card border border-border-slate rounded-2xl p-6 flex flex-col shadow-xs">
+          <h3 className="font-headline-sm text-headline-sm text-primary mb-4 font-bold">{t.programmesByMode}</h3>
           <div className="flex-grow flex flex-col justify-center py-4">
             <div className="space-y-4">
               {data.programmesRun.byMode.map((row) => {
@@ -372,13 +372,13 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
                 const fillColor = MODE_FILL_COLORS[row.mode.toLowerCase()] ?? "#fd7a41";
                 return (
                   <div key={row.mode}>
-                    <div className="flex justify-between font-label-md text-label-md mb-1">
+                    <div className="flex justify-between font-label-md text-label-md mb-1 font-semibold">
                       <span>{modeLabel(row.mode)}</span>
-                      <span>
+                      <span className="font-metric-mono font-bold">
                         {row.count} ({percent}%)
                       </span>
                     </div>
-                    <div className="h-4 bg-surface-variant rounded-full overflow-hidden">
+                    <div className="h-4 bg-paper rounded-full overflow-hidden border border-border-slate/50">
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{ width: `${percent}%`, backgroundColor: fillColor }}
@@ -389,9 +389,9 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
               })}
             </div>
           </div>
-          <div className="flex gap-4 mt-auto pt-4 border-t border-outline-variant font-label-sm text-label-sm justify-center flex-wrap">
+          <div className="flex gap-4 mt-auto pt-4 border-t border-border-slate/60 font-label-sm text-label-sm justify-center flex-wrap">
             {data.programmesRun.byMode.map((row) => (
-              <div key={row.mode} className="flex items-center gap-1.5">
+              <div key={row.mode} className="flex items-center gap-1.5 font-semibold">
                 <span
                   className="w-3 h-3 rounded-full inline-block"
                   style={{
@@ -405,10 +405,10 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
         </div>
 
         {/* Block 2: Trainees by region */}
-        <div className="bg-surface-card border border-outline-variant rounded-lg p-6 flex flex-col shadow-sm">
-          <h3 className="font-headline-sm text-headline-sm text-primary mb-4">{t.traineesByRegion}</h3>
+        <div className="bg-surface-card border border-border-slate rounded-2xl p-6 flex flex-col shadow-xs">
+          <h3 className="font-headline-sm text-headline-sm text-primary mb-4 font-bold">{t.traineesByRegion}</h3>
           {data.traineesByRegion.length === 0 ? (
-            <div className="flex-grow flex flex-col items-center justify-center text-center p-6 bg-surface-container-low rounded border border-dashed border-outline-variant min-h-[220px]">
+            <div className="flex-grow flex flex-col items-center justify-center text-center p-6 bg-paper-light rounded-xl border border-dashed border-border-slate min-h-[220px]">
               <span className="material-symbols-outlined text-[48px] text-outline opacity-50 mb-3">
                 map
               </span>
@@ -423,13 +423,13 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
                 const pct = Math.round((row.traineeCount / maxRegionCount) * 100);
                 return (
                   <div key={row.region} className="space-y-1">
-                    <div className="flex justify-between font-label-md text-label-md">
+                    <div className="flex justify-between font-label-md text-label-md font-semibold">
                       <span>{row.region}</span>
-                      <span className="font-bold">{row.traineeCount}</span>
+                      <span className="font-metric-mono font-bold">{row.traineeCount}</span>
                     </div>
-                    <div className="h-3 bg-surface-variant rounded-full overflow-hidden">
+                    <div className="h-3 bg-paper rounded-full overflow-hidden border border-border-slate/50">
                       <div
-                        className="h-full bg-cta rounded-full transition-all duration-500"
+                        className="h-full bg-secondary-container rounded-full transition-all duration-500"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -441,20 +441,20 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
         </div>
 
         {/* Block 3: Certificates by month */}
-        <div className="bg-surface-card border border-outline-variant rounded-lg p-6 flex flex-col lg:col-span-2 shadow-sm">
+        <div className="bg-surface-card border border-border-slate rounded-2xl p-6 flex flex-col lg:col-span-2 shadow-xs">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-headline-sm text-headline-sm text-primary">{t.certificatesByMonth}</h3>
+            <h3 className="font-headline-sm text-headline-sm text-primary font-bold">{t.certificatesByMonth}</h3>
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
-              className="bg-surface-container-lowest border border-outline-variant rounded px-3 py-1 font-label-md text-label-md h-[44px]"
+              className="bg-white border border-border-slate rounded-lg px-3 py-1 font-label-md text-label-md h-[40px] cursor-pointer"
             >
               <option value="2026">2026</option>
               <option value="2025">2025</option>
             </select>
           </div>
           {data.certificatesIssued.byMonth.length === 0 ? (
-            <div className="flex-grow flex flex-col items-center justify-center text-center p-8 bg-surface-container-low rounded border border-dashed border-outline-variant min-h-[200px]">
+            <div className="flex-grow flex flex-col items-center justify-center text-center p-8 bg-paper-light rounded-xl border border-dashed border-border-slate min-h-[200px]">
               <span className="material-symbols-outlined text-[48px] text-outline opacity-50 mb-3">
                 bar_chart
               </span>
@@ -469,16 +469,16 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
                 const heightPct = Math.max(15, Math.round((row.count / maxCertCount) * 100));
                 return (
                   <div key={row.month} className="flex flex-col items-center gap-2">
-                    <div className="w-full h-36 bg-surface-container-low rounded-lg p-2 flex items-end justify-center">
+                    <div className="w-full h-36 bg-paper-light rounded-xl p-2 flex items-end justify-center border border-border-slate/50">
                       <div
-                        className="w-full bg-secondary-container rounded-t transition-all duration-500"
+                        className="w-full bg-secondary-container rounded-t-lg transition-all duration-500 shadow-xs"
                         style={{ height: `${heightPct}%` }}
                       />
                     </div>
-                    <span className="font-label-sm text-label-sm text-on-surface-variant">
+                    <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">
                       {formatMonth(row.month, locale)}
                     </span>
-                    <span className="font-body-sm font-semibold">{row.count}</span>
+                    <span className="font-metric-mono text-sm font-bold text-primary">{row.count}</span>
                   </div>
                 );
               })}
@@ -487,37 +487,37 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
         </div>
 
         {/* Block 4: Completion Rate by Programme Table */}
-        <div className="bg-surface-card border border-outline-variant rounded-lg p-6 flex flex-col lg:col-span-2 shadow-sm">
-          <h3 className="font-headline-sm text-headline-sm text-primary mb-4">{t.completionRateByProgramme}</h3>
+        <div className="bg-surface-card border border-border-slate rounded-2xl p-6 flex flex-col lg:col-span-2 shadow-xs">
+          <h3 className="font-headline-sm text-headline-sm text-primary mb-4 font-bold">{t.completionRateByProgramme}</h3>
           {data.completionRates.byProgramme.length === 0 ? (
             <p className="font-body-sm text-on-surface-variant">{t.noApprovedNominations}</p>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-outline-variant">
+            <div className="overflow-x-auto rounded-xl border border-border-slate">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-surface-container-low border-b border-outline-variant">
-                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase">
+                  <tr className="bg-paper border-b border-border-slate text-on-surface-variant font-label-md">
+                    <th className="p-4 uppercase font-bold tracking-wider text-xs">
                       {t.colProgramme}
                     </th>
-                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
+                    <th className="p-4 uppercase font-bold tracking-wider text-xs text-center">
                       {t.colApprovedNominations}
                     </th>
-                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
+                    <th className="p-4 uppercase font-bold tracking-wider text-xs text-center">
                       {t.colCertificatesIssued}
                     </th>
-                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-right">
+                    <th className="p-4 uppercase font-bold tracking-wider text-xs text-right">
                       {t.colCompletionRate}
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-outline-variant font-body-sm">
+                <tbody className="divide-y divide-border-slate/40 font-body-sm">
                   {data.completionRates.byProgramme.map((row) => (
-                    <tr key={row.programmeId} className="hover:bg-surface-container-lowest transition-colors">
-                      <td className="p-4 font-medium text-primary">{row.programmeTitle}</td>
-                      <td className="p-4 text-center">{row.approvedNominations}</td>
-                      <td className="p-4 text-center">{row.certificatesIssued}</td>
+                    <tr key={row.programmeId} className="hover:bg-paper-light/60 transition-colors">
+                      <td className="p-4 font-semibold text-primary">{row.programmeTitle}</td>
+                      <td className="p-4 text-center font-metric-mono font-medium">{row.approvedNominations}</td>
+                      <td className="p-4 text-center font-metric-mono font-medium">{row.certificatesIssued}</td>
                       <td className="p-4 text-right">
-                        <span className="inline-block px-2.5 py-1 rounded-full bg-status-success/15 text-status-success font-label-sm font-bold">
+                        <span className="inline-block px-2.5 py-1 rounded-full bg-status-success/15 text-status-success font-metric-mono text-label-sm font-bold border border-status-success/30">
                           {formatPercent(row.rate)}
                         </span>
                       </td>
@@ -530,8 +530,8 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
         </div>
 
         {/* Block 5: Dropout Risk (P6, DECISIONS.md #29) */}
-        <div className="bg-surface-card border border-outline-variant rounded-lg p-6 flex flex-col lg:col-span-2 shadow-sm">
-          <h3 className="font-headline-sm text-headline-sm text-primary mb-1">{t.dropoutRisk}</h3>
+        <div className="bg-surface-card border border-border-slate rounded-2xl p-6 flex flex-col lg:col-span-2 shadow-xs">
+          <h3 className="font-headline-sm text-headline-sm text-primary mb-1 font-bold">{t.dropoutRisk}</h3>
           <p className="font-body-sm text-body-sm text-on-surface-variant mb-4">{t.dropoutRiskSubheading}</p>
 
           <div className="flex flex-wrap gap-3 mb-4">
@@ -540,74 +540,74 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
               return (
                 <div
                   key={row.level}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${style.border} ${style.bg}`}
+                  className={`flex items-center gap-2 rounded-xl border px-3 py-2 shadow-2xs ${style.border} ${style.bg}`}
                 >
                   <span className={`material-symbols-outlined text-[18px] ${style.text}`}>{style.icon}</span>
                   <span className={`font-label-md text-label-md font-bold ${style.text}`}>
                     {riskLabel(row.level)}
                   </span>
-                  <span className="font-body-sm text-on-surface-variant">{row.count}</span>
+                  <span className="font-metric-mono text-body-sm font-bold text-on-surface-variant">{row.count}</span>
                 </div>
               );
             })}
           </div>
 
           {data.dropoutRisk.flagged.length === 0 ? (
-            <div className="flex-grow flex flex-col items-center justify-center text-center p-6 bg-surface-container-low rounded border border-dashed border-outline-variant min-h-[140px]">
+            <div className="flex-grow flex flex-col items-center justify-center text-center p-6 bg-paper-light rounded-xl border border-dashed border-border-slate min-h-[140px]">
               <span className="material-symbols-outlined text-[48px] text-outline opacity-50 mb-3">
                 task_alt
               </span>
-              <h4 className="font-headline-sm text-headline-sm text-on-surface-variant mb-2">{t.noFlagged}</h4>
+              <h4 className="font-headline-sm text-headline-sm text-on-surface-variant mb-2 font-bold">{t.noFlagged}</h4>
               <p className="font-body-sm text-body-sm text-outline max-w-sm">{t.noFlaggedBody}</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-outline-variant">
+            <div className="overflow-x-auto rounded-xl border border-border-slate">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-surface-container-low border-b border-outline-variant">
-                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase">
+                  <tr className="bg-paper border-b border-border-slate text-on-surface-variant font-label-md">
+                    <th className="p-4 uppercase font-bold tracking-wider text-xs">
                       {t.colTrainee}
                     </th>
-                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase">
+                    <th className="p-4 uppercase font-bold tracking-wider text-xs">
                       {t.colProgramme}
                     </th>
-                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
+                    <th className="p-4 uppercase font-bold tracking-wider text-xs text-center">
                       {t.colRisk}
                     </th>
-                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
+                    <th className="p-4 uppercase font-bold tracking-wider text-xs text-center">
                       {t.colCompletion}
                     </th>
-                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
+                    <th className="p-4 uppercase font-bold tracking-wider text-xs text-center">
                       {t.colAttendance}
                     </th>
-                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
+                    <th className="p-4 uppercase font-bold tracking-wider text-xs text-center">
                       {t.colInactiveDays}
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-outline-variant font-body-sm">
+                <tbody className="divide-y divide-border-slate/40 font-body-sm">
                   {data.dropoutRisk.flagged.map((flag) => {
                     const style = RISK_LEVEL_STYLES[flag.riskLevel];
                     return (
                       <tr
                         key={`${flag.traineeId}-${flag.programmeId}`}
-                        className="hover:bg-surface-container-lowest transition-colors"
+                        className="hover:bg-paper-light/60 transition-colors"
                       >
-                        <td className="p-4 font-medium text-primary">
+                        <td className="p-4 font-semibold text-primary">
                           {flag.traineeName ?? t.traineeFallback(flag.traineeId.slice(0, 8))}
                         </td>
                         <td className="p-4">{flag.programmeTitle}</td>
                         <td className="p-4 text-center">
                           <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-label-sm font-bold ${style.bg} ${style.text}`}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-label-sm font-bold border ${style.bg} ${style.text} ${style.border}`}
                           >
                             <span className="material-symbols-outlined text-[14px]">{style.icon}</span>
                             {riskLabel(flag.riskLevel)}
                           </span>
                         </td>
-                        <td className="p-4 text-center">{formatMaybePercent(flag.completionRate)}</td>
-                        <td className="p-4 text-center">{formatMaybePercent(flag.attendanceRate)}</td>
-                        <td className="p-4 text-center">{flag.daysSinceLastActivity}</td>
+                        <td className="p-4 text-center font-metric-mono font-medium">{formatMaybePercent(flag.completionRate)}</td>
+                        <td className="p-4 text-center font-metric-mono font-medium">{formatMaybePercent(flag.attendanceRate)}</td>
+                        <td className="p-4 text-center font-metric-mono font-medium">{flag.daysSinceLastActivity}</td>
                       </tr>
                     );
                   })}
@@ -617,49 +617,44 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
           )}
         </div>
 
-        {/* Block 6: Skill Demand vs. Supply (P1 Skill-Gap Analysis's
-            institution-wide counterpart, DECISIONS.md #43) — a single
-            trainee's Skill-Gap Check only ever compares against one job at
-            a time; this surfaces the same underlying data (job_skills,
-            programme_skills+certificates) aggregated across everyone, so an
-            admin can see which skills are worth a new programme. */}
-        <div className="bg-surface-card border border-outline-variant rounded-lg p-6 flex flex-col lg:col-span-2 shadow-sm">
-          <h3 className="font-headline-sm text-headline-sm text-primary mb-1">{t.skillDemand}</h3>
+        {/* Block 6: Skill Demand vs. Supply */}
+        <div className="bg-surface-card border border-border-slate rounded-2xl p-6 flex flex-col lg:col-span-2 shadow-xs">
+          <h3 className="font-headline-sm text-headline-sm text-primary mb-1 font-bold">{t.skillDemand}</h3>
           <p className="font-body-sm text-body-sm text-on-surface-variant mb-4">{t.skillDemandSubheading}</p>
 
           {data.skillDemand.topShortages.length === 0 ? (
-            <div className="flex-grow flex flex-col items-center justify-center text-center p-6 bg-surface-container-low rounded border border-dashed border-outline-variant min-h-[140px]">
+            <div className="flex-grow flex flex-col items-center justify-center text-center p-6 bg-paper-light rounded-xl border border-dashed border-border-slate min-h-[140px]">
               <span className="material-symbols-outlined text-[48px] text-outline opacity-50 mb-3">
                 query_stats
               </span>
-              <h4 className="font-headline-sm text-headline-sm text-on-surface-variant mb-2">
+              <h4 className="font-headline-sm text-headline-sm text-on-surface-variant mb-2 font-bold">
                 {t.noSkillShortages}
               </h4>
               <p className="font-body-sm text-body-sm text-outline max-w-sm">{t.noSkillShortagesBody}</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-outline-variant">
+            <div className="overflow-x-auto rounded-xl border border-border-slate">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-surface-container-low border-b border-outline-variant">
-                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase">
+                  <tr className="bg-paper border-b border-border-slate text-on-surface-variant font-label-md">
+                    <th className="p-4 uppercase font-bold tracking-wider text-xs">
                       {t.colSkill}
                     </th>
-                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase">
+                    <th className="p-4 uppercase font-bold tracking-wider text-xs">
                       {t.colCategory}
                     </th>
-                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
+                    <th className="p-4 uppercase font-bold tracking-wider text-xs text-center">
                       {t.colDemand}
                     </th>
-                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
+                    <th className="p-4 uppercase font-bold tracking-wider text-xs text-center">
                       {t.colSupply}
                     </th>
-                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
+                    <th className="p-4 uppercase font-bold tracking-wider text-xs text-center">
                       {t.colShortage}
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-outline-variant font-body-sm">
+                <tbody className="divide-y divide-border-slate/40 font-body-sm">
                   {data.skillDemand.topShortages.map((row) => {
                     const style =
                       row.shortage > 0
@@ -668,14 +663,14 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
                           ? RISK_LEVEL_STYLES.medium
                           : RISK_LEVEL_STYLES.low;
                     return (
-                      <tr key={row.skillId} className="hover:bg-surface-container-lowest transition-colors">
-                        <td className="p-4 font-medium text-primary">{row.skillName}</td>
+                      <tr key={row.skillId} className="hover:bg-paper-light/60 transition-colors">
+                        <td className="p-4 font-semibold text-primary">{row.skillName}</td>
                         <td className="p-4 text-on-surface-variant">{row.category ?? t.noCategory}</td>
-                        <td className="p-4 text-center">{row.demand}</td>
-                        <td className="p-4 text-center">{row.supply}</td>
+                        <td className="p-4 text-center font-metric-mono font-medium">{row.demand}</td>
+                        <td className="p-4 text-center font-metric-mono font-medium">{row.supply}</td>
                         <td className="p-4 text-center">
                           <span
-                            className={`inline-flex items-center px-2.5 py-1 rounded-full font-label-sm font-bold ${style.bg} ${style.text}`}
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full font-metric-mono text-label-sm font-bold border ${style.bg} ${style.text} ${style.border}`}
                           >
                             {row.shortage > 0 ? `+${row.shortage}` : row.shortage}
                           </span>

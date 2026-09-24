@@ -58,8 +58,8 @@ const content: Record<Locale, TraineeShellText> = {
       attendance: "Attendance",
       career: "Career",
     },
-    portalTag: "NCCT PORTAL",
-    tagline: "Cooperative Training & Certification",
+    portalTag: "COOP-NET • Sahakar Utkarsh",
+    tagline: "National Cooperative Digital Training & Employment Infrastructure • Govt of India",
     skipToContent: "Skip To Main Content",
     decreaseText: "Decrease text size",
     normalText: "Normal text size",
@@ -294,13 +294,18 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
               onClick={() => onNavigate("home")}
               className="flex items-center gap-2 text-left transition-opacity hover:opacity-90 md:gap-3"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-container text-on-primary shadow-xs md:h-10 md:w-10">
-                <span className="material-symbols-outlined text-[20px] md:text-[22px]">school</span>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-white shadow-xs md:h-10 md:w-10">
+                <span className="material-symbols-outlined text-[20px] md:text-[22px]">account_balance</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-headline text-headline-sm font-bold leading-tight text-on-surface">
-                  NCCT Platform
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-headline text-headline-sm font-bold leading-tight text-on-surface">
+                    COOP-NET
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded-full bg-amber-50 text-secondary font-semibold border border-amber-200 text-[10px] md:text-[11px]">
+                    Sahakar Utkarsh
+                  </span>
+                </div>
                 <span className="hidden text-[11px] font-medium leading-tight text-on-surface-variant md:block">
                   {t.tagline}
                 </span>
@@ -322,9 +327,13 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
             />
           </form>
 
-          {/* Actions & Profile — sizes trimmed below md:, see
-              ManagementShell.tsx's identical comment. */}
+          {/* Actions & Profile */}
           <div className="flex shrink-0 items-center gap-1 md:gap-3">
+            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-lowest text-on-surface shadow-xs border border-border-slate">
+              <span className="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+              <span className="font-metric-mono text-xs text-on-surface-variant">Online (Auto-synced)</span>
+            </div>
+
             <button
               type="button"
               onClick={toggleTheme}
@@ -399,7 +408,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
               onClick={() => onNavigate("home")}
               className={`relative flex h-11 items-center gap-1.5 text-label-md font-semibold transition-colors ${
                 active === "home"
-                  ? "text-interactive after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-interactive"
+                  ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-secondary"
                   : "text-on-surface-variant hover:text-on-surface"
               }`}
             >
@@ -414,7 +423,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                 onClick={() => onNavigate("learn")}
                 className={`flex h-full items-center gap-1.5 text-label-md font-semibold transition-colors ${
                   active === "learn"
-                    ? "relative text-interactive after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-interactive"
+                    ? "relative text-primary font-bold after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-secondary"
                     : "text-on-surface-variant hover:text-on-surface"
                 }`}
               >
@@ -481,7 +490,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
               onClick={() => onNavigate("attendance")}
               className={`relative flex h-11 items-center gap-1.5 text-label-md font-semibold transition-colors ${
                 active === "attendance"
-                  ? "text-interactive after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-interactive"
+                  ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-secondary"
                   : "text-on-surface-variant hover:text-on-surface"
               }`}
             >
@@ -496,7 +505,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                 onClick={() => onNavigate("career")}
                 className={`flex h-full items-center gap-1.5 text-label-md font-semibold transition-colors ${
                   active === "career"
-                    ? "relative text-interactive after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-interactive"
+                    ? "relative text-primary font-bold after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-secondary"
                     : "text-on-surface-variant hover:text-on-surface"
                 }`}
               >

@@ -127,26 +127,32 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
   }
 
   return (
-    <div className="p-margin-mobile md:p-margin-desktop max-w-max-width-desktop mx-auto w-full flex flex-col gap-8 text-left">
+    <div className="w-full flex flex-col gap-6 text-left">
       {/* Page Header */}
-      <header className="border-b border-outline-variant pb-4">
-        <h1 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface m-0">
+      <header className="bg-white rounded-2xl border border-border-slate px-6 py-5 flex flex-col justify-between gap-1 shadow-xs">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#FE932C]" />
+          <span className="text-xs uppercase tracking-wider text-[#D97706] font-bold">
+            Administration • AI RAG Corpus & Grounding Engine
+          </span>
+        </div>
+        <h1 className="font-display text-2xl lg:text-3xl font-extrabold text-[#00236F] m-0">
           {t.heading}
         </h1>
-        <p className="font-body-md text-body-md text-on-surface-variant mt-1">{t.subheading}</p>
+        <p className="font-body text-xs text-slate-600 mt-1 max-w-2xl">{t.subheading}</p>
       </header>
 
       {/* Institutional Instructions Callout */}
-      <section className="bg-surface-container-low border border-outline-variant rounded-xl p-5 shadow-xs">
-        <div className="flex items-start gap-4">
-          <span className="material-symbols-outlined text-primary text-[28px] shrink-0 mt-0.5">
-            info
-          </span>
+      <section className="bg-indigo-50/60 border border-indigo-200/80 rounded-2xl p-5 shadow-xs">
+        <div className="flex items-start gap-3.5">
+          <div className="w-9 h-9 rounded-xl bg-[#00236F] text-white flex items-center justify-center shrink-0 shadow-xs">
+            <span className="material-symbols-outlined text-[20px]">info</span>
+          </div>
           <div>
-            <h3 className="font-headline-sm text-[16px] text-primary font-semibold m-0 mb-1">
+            <h3 className="font-display text-sm text-[#00236F] font-bold m-0 mb-1">
               {t.guardrailsTitle}
             </h3>
-            <p className="font-body-sm text-body-sm text-on-surface-variant m-0 leading-relaxed">
+            <p className="font-body text-xs text-slate-600 m-0 leading-relaxed">
               {t.guardrailsBody}
             </p>
           </div>
@@ -154,26 +160,26 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
       </section>
 
       {error && (
-        <div className="bg-error-container text-on-error-container p-4 rounded-xl flex items-center gap-3 border border-error/20">
-          <span className="material-symbols-outlined text-error">error</span>
-          <p className="font-body-md text-body-md">{error}</p>
+        <div className="bg-rose-50 text-rose-900 p-4 rounded-xl flex items-center gap-3 border border-rose-200 text-xs font-medium">
+          <span className="material-symbols-outlined text-rose-600 shrink-0">error</span>
+          <p>{error}</p>
         </div>
       )}
 
       {/* Bento Grid: Form (Col 1) and List (Col 2) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Add Chunk Form */}
         <section className="lg:col-span-1">
-          <div className="bg-surface-card rounded-xl border border-outline-variant p-6 shadow-sm sticky top-6">
-            <h2 className="font-headline-sm text-headline-sm text-on-surface mb-6 flex items-center gap-2 m-0">
-              <span className="material-symbols-outlined text-primary">add_circle</span>
+          <div className="bg-white rounded-2xl border border-border-slate p-6 shadow-xs sticky top-6">
+            <h2 className="font-display text-base font-bold text-[#00236F] mb-5 flex items-center gap-2 m-0">
+              <span className="material-symbols-outlined text-[#FE932C]">add_circle</span>
               {t.addNewChunk}
             </h2>
 
             <form onSubmit={(e) => void handleAdd(e)} className="space-y-4">
               {/* Source Type */}
               <div>
-                <label htmlFor="sourceType" className="block font-label-md text-label-md text-on-surface mb-2">
+                <label htmlFor="sourceType" className="block text-xs font-bold text-slate-700 mb-1.5">
                   {t.sourceType}
                 </label>
                 <div className="relative">
@@ -181,7 +187,7 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
                     id="sourceType"
                     value={sourceType}
                     onChange={(e) => setSourceType(e.target.value as ChatbotSourceType)}
-                    className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-primary font-body-md text-body-md h-touch-target"
+                    className="w-full bg-paper-light border border-border-slate rounded-xl px-3.5 py-2.5 appearance-none focus:outline-none focus:bg-white focus:border-[#00236F] text-xs font-semibold text-ink cursor-pointer"
                   >
                     {CHATBOT_SOURCE_TYPES.map((type) => (
                       <option key={type} value={type}>
@@ -189,7 +195,7 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
                       </option>
                     ))}
                   </select>
-                  <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">
+                  <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                     expand_more
                   </span>
                 </div>
@@ -197,11 +203,11 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
 
               {/* Text Area with Character Count */}
               <div>
-                <div className="flex justify-between items-baseline mb-2">
-                  <label htmlFor="chunkContent" className="block font-label-md text-label-md text-on-surface">
+                <div className="flex justify-between items-baseline mb-1.5">
+                  <label htmlFor="chunkContent" className="block text-xs font-bold text-slate-700">
                     {t.contentLabel}
                   </label>
-                  <span className="font-label-sm text-label-sm text-on-surface-variant">
+                  <span className="font-metric-mono text-[11px] text-slate-500">
                     {t.charCount(chunkContent.length)}
                   </span>
                 </div>
@@ -212,7 +218,7 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
                   maxLength={4000}
                   rows={8}
                   placeholder={t.placeholder}
-                  className="w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-4 focus:outline-none focus:ring-2 focus:ring-primary font-body-md text-body-md resize-y"
+                  className="w-full bg-paper-light border border-border-slate rounded-xl p-3.5 focus:outline-none focus:bg-white focus:border-[#00236F] text-xs text-ink leading-relaxed resize-y"
                 />
               </div>
 
@@ -220,9 +226,9 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
               <button
                 type="submit"
                 disabled={busy || !chunkContent.trim()}
-                className="w-full bg-cta hover:bg-cta-hover text-on-primary rounded-lg font-label-md text-label-md h-touch-target flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-sm cursor-pointer"
+                className="w-full bg-[#FE932C] hover:bg-[#E07D1E] text-white rounded-xl text-xs font-bold h-11 flex items-center justify-center gap-2 transition-colors disabled:opacity-50 shadow-xs cursor-pointer"
               >
-                <span className="material-symbols-outlined text-[20px]">upload</span>
+                <span className="material-symbols-outlined text-[18px]">upload</span>
                 <span>{busy ? t.embedding : t.addToKnowledgeBase}</span>
               </button>
             </form>
@@ -232,34 +238,34 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
         {/* List of Existing Entries */}
         <section className="lg:col-span-2 space-y-4">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2 m-0">
-              <span className="material-symbols-outlined text-primary">list_alt</span>
+            <h2 className="font-display text-base font-bold text-[#00236F] flex items-center gap-2 m-0">
+              <span className="material-symbols-outlined text-[#00236F]">list_alt</span>
               {t.existingEntries(chunks.length)}
             </h2>
           </div>
 
           {chunks.length === 0 ? (
-            <div className="p-8 text-center bg-surface-card rounded-xl border border-dashed border-outline-variant text-on-surface-variant">
-              <span className="material-symbols-outlined text-[48px] text-outline opacity-40 mb-2">
+            <div className="p-8 text-center bg-paper-light rounded-2xl border border-dashed border-border-slate text-slate-500">
+              <span className="material-symbols-outlined text-[48px] opacity-40 mb-2">
                 menu_book
               </span>
-              <p className="font-body-md">{t.emptyState}</p>
+              <p className="text-xs">{t.emptyState}</p>
             </div>
           ) : (
             chunks.map((chunk) => {
               const badgeClass =
                 chunk.source_type === "programme"
-                  ? "bg-tertiary-fixed text-on-tertiary-fixed"
-                  : "bg-secondary-fixed text-on-secondary-fixed";
+                  ? "bg-blue-50 text-blue-800 border border-blue-200"
+                  : "bg-amber-50 text-amber-800 border border-amber-200";
 
               return (
                 <article
                   key={chunk.id}
-                  className="bg-surface-card rounded-xl border border-outline-variant p-6 hover:shadow-md transition-shadow group relative shadow-xs"
+                  className="bg-white rounded-2xl border border-border-slate p-5 hover:border-[#FE932C]/40 transition-all shadow-xs"
                 >
                   <div className="flex justify-between items-start mb-3">
                     <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full font-label-sm text-label-sm uppercase tracking-wider font-bold ${badgeClass}`}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold ${badgeClass}`}
                     >
                       {sourceTypeLabel(chunk.source_type)}
                     </span>
@@ -267,19 +273,19 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
                       type="button"
                       onClick={() => void handleDelete(chunk.id)}
                       aria-label={t.deleteEntry}
-                      className="text-on-surface-variant hover:text-error transition-colors p-2 -mr-2 -mt-2 rounded-full hover:bg-error-container/20 cursor-pointer"
+                      className="text-slate-400 hover:text-rose-600 transition-colors p-1.5 -mr-1 -mt-1 rounded-lg hover:bg-rose-50 cursor-pointer"
                     >
-                      <span className="material-symbols-outlined text-[20px]">delete</span>
+                      <span className="material-symbols-outlined text-[18px]">delete</span>
                     </button>
                   </div>
 
-                  <p className="font-body-md text-body-md text-on-surface leading-relaxed whitespace-pre-wrap m-0">
+                  <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap m-0">
                     {chunk.content}
                   </p>
 
-                  <div className="mt-4 pt-3 border-t border-surface-variant flex justify-between items-center text-on-surface-variant font-label-sm text-label-sm">
+                  <div className="mt-4 pt-3 border-t border-border-slate/50 flex justify-between items-center text-slate-500 text-[11px]">
                     <span>{t.added(new Date(chunk.created_at).toLocaleDateString(locale === "hi" ? "hi-IN" : undefined))}</span>
-                    <span className="font-mono">#KB-{chunk.id.slice(0, 8)}</span>
+                    <span className="font-metric-mono font-semibold text-[#00236F]">#KB-{chunk.id.slice(0, 8).toUpperCase()}</span>
                   </div>
                 </article>
               );

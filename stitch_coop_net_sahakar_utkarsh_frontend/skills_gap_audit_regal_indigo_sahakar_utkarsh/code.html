@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Manrope:wght@400;500;600;700;800&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      "colors": {
+        "primary": "#1E3A8A",
+        "primary-container": "#1E3A8A",
+        "on-primary": "#ffffff",
+        "on-primary-container": "#DBEAFE",
+        "primary-fixed": "#DBEAFE",
+        "primary-fixed-dim": "#BFDBFE",
+        "on-primary-fixed": "#1E3A8A",
+        "secondary": "#D97706",
+        "secondary-container": "#D97706",
+        "on-secondary": "#ffffff",
+        "on-secondary-container": "#FFFFFF",
+        "secondary-fixed": "#FEF3C7",
+        "secondary-fixed-dim": "#FDE68A",
+        "on-secondary-fixed": "#92400E",
+        "accent": "#3B82F6",
+        "on-accent": "#ffffff",
+        "accent-container": "#EFF6FF",
+        "on-surface": "#0F172A",
+        "on-surface-variant": "#475569",
+        "surface": "#F8FAFC",
+        "surface-bright": "#FFFFFF",
+        "surface-container-lowest": "#FFFFFF",
+        "surface-container-low": "#F1F5F9",
+        "surface-container": "#E2E8F0",
+        "surface-container-high": "#CBD5E1",
+        "surface-container-highest": "#94A3B8",
+        "outline": "#64748B",
+        "outline-variant": "#CBD5E1",
+        "border-slate": "#CBD5E1",
+        "background": "#F8FAFC",
+        "on-background": "#0F172A",
+        "error": "#DC2626",
+        "error-container": "#FEE2E2",
+        "on-error-container": "#991B1B"
+      },
+      "borderRadius": {
+        "DEFAULT": "0.25rem",
+        "lg": "0.5rem",
+        "xl": "0.75rem",
+        "2xl": "1rem",
+        "full": "9999px"
+      },
+      "spacing": {
+        "space-xs": "0.25rem",
+        "space-sm": "0.5rem",
+        "space-md": "1rem",
+        "space-lg": "1.5rem",
+        "space-xl": "2.5rem",
+        "gutter": "1.5rem",
+        "margin": "2rem"
+      },
+      "fontFamily": {
+        "headline-sm": ["Manrope"],
+        "body-lg": ["Plus Jakarta Sans", "Manrope"],
+        "headline-lg": ["Manrope"],
+        "title-md": ["Plus Jakarta Sans", "Manrope"],
+        "headline-md": ["Manrope"],
+        "body-md": ["Plus Jakarta Sans", "Manrope"],
+        "metric-mono": ["JetBrains Mono"],
+        "label-lg": ["Plus Jakarta Sans", "Manrope"],
+        "label-md": ["Plus Jakarta Sans", "Manrope"],
+        "display": ["Manrope"],
+        "body-sm": ["Plus Jakarta Sans", "Manrope"]
+      }
+    }
+  }
+};</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-low z-50 flex flex-col justify-between border-r border-outline-variant/60 shadow-[0_1px_8px_rgba(15,23,42,0.04)]"><div class="flex flex-col pt-space-md"><div class="px-space-md mb-space-md flex items-center gap-space-xs"><img alt="COOP-NET Sahakar Utkarsh Logo" class="h-7 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1VD53yTvbd4ZzjPyuTuDxbS9aGEhPa9csMvgrcZUpKm-_EGSVLEcrco8o-S1w2Osogb8OXQnG3JMlNCrA5CAVRmrn3wuXqyw9VJYLnnIpOdXgiB7E4m426mNVvoDXvshOtbgttq3nkTb8_FIP-GJekVhJeWZuxrScHyIq9qtDz9B4pX5M39pVyHLLAlvH0WV8VNJVVq4z0DSsVtZ3mBh4pdtP_QrwsSWywMMrZhaeSKz0snQqCqVpq8biRy"/><span class="font-headline-sm text-headline-sm font-bold text-primary">COOP-NET</span></div><nav class="flex flex-col gap-1 px-space-sm" data-active-classes="bg-primary text-on-primary font-bold rounded-lg"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="learning-modules" href="#"><span class="material-symbols-outlined text-[20px] text-accent">school</span><span class="font-label-lg text-label-lg">Learning Hub</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-2 transition-colors bg-primary text-on-primary font-bold rounded-lg shadow-sm" data-path="skills-gap-audit" href="#"><span class="material-symbols-outlined text-[20px]">radar</span><span class="font-label-lg text-label-lg">Skills &amp; Gap</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="credential-vault" href="#"><span class="material-symbols-outlined text-[20px] text-accent">verified</span><span class="font-label-lg text-label-lg">Certifications</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="career-opportunities" href="#"><span class="material-symbols-outlined text-[20px] text-accent">work</span><span class="font-label-lg text-label-lg">Opportunities</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="ai-mentor" href="#"><span class="material-symbols-outlined text-[20px] text-accent">smart_toy</span><span class="font-label-lg text-label-lg">AI Sahayak</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="attendance-and-sessions" href="#"><span class="material-symbols-outlined text-[20px] text-accent">event_available</span><span class="font-label-lg text-label-lg">Sessions &amp; Log</span></a></nav></div><div class="p-space-sm"><div class="p-space-sm rounded-lg bg-surface-container border border-outline-variant/60 flex items-center justify-between"><div class="flex flex-col"><span class="font-label-md text-label-md text-on-surface font-semibold">Kiosk Sync</span><span class="font-metric-mono text-[11px] text-on-surface-variant">v2.4 • Offline Ready</span></div><span class="material-symbols-outlined text-accent">cloud_done</span></div></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface-bright/95 backdrop-blur-md border-b border-outline-variant/60 shadow-[0_1px_8px_rgba(15,23,42,0.03)] z-40 flex items-center justify-between px-gutter"><div class="flex items-center gap-space-sm text-on-surface-variant font-label-md text-label-md"><span class="text-on-surface font-semibold">Sahakar Utkarsh</span><span>/</span><span class="text-on-surface-variant">DPI Console</span><span>/</span><span class="text-primary font-bold">Workspace</span></div><div class="flex items-center gap-space-sm"><button class="flex items-center gap-space-xs px-space-sm py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant hover:text-on-surface border border-outline-variant/60"><span class="material-symbols-outlined text-[18px]">search</span><span class="font-label-md text-label-md">Search</span><kbd class="font-metric-mono text-metric-mono bg-surface-container px-1 rounded text-on-surface-variant">⌘K</kbd></button><div class="flex items-center bg-surface-container-low border border-outline-variant/60 rounded-lg p-0.5"><button class="font-label-md text-label-md px-space-xs py-1 rounded bg-surface-bright text-on-surface font-semibold shadow-sm">EN</button><button class="font-label-md text-label-md px-space-xs py-1 text-on-surface-variant hover:text-on-surface">हि</button></div><div class="flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-bright text-on-surface border border-outline-variant/60 shadow-[0_1px_3px_rgba(15,23,42,0.04)]"><span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span><span class="font-metric-mono text-metric-mono text-on-surface font-medium">Online</span></div><div class="flex items-center gap-space-xs pl-space-xs py-1 pr-space-sm rounded-full bg-surface-container-low border border-outline-variant/60"><img alt="Profile" class="w-8 h-8 rounded-full object-cover border border-outline-variant/60" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCI-L_6QCAYcyqE-Fj7yhRJnGklqv0lJeAQXY1q1D65PtmBNy4-f0_OOmWfPPl14sQ1bkoUqGVjeXJbQRmmRpwsDxWJ86MpP6tfEwvXIUcdflGeb837kKhQA6nWLgakM2ytjF5Gpx1ymi-idL3KViLHtyUunjGVqtGYWJuuyTXMA_4s9gZtCnpBI1YmOQ82N6J9zzgAnuD_hw9Bt38ifgtpfpaMrxm_lfVvAlmsB9GH82Wp7Sj9vpYLVw"/><div class="flex flex-col text-left"><span class="font-label-md text-label-md text-on-surface font-semibold leading-tight">Priya S.</span><span class="font-metric-mono text-[10px] text-on-surface-variant leading-none">Trainee</span></div></div></div></header><main class="relative pt-16 bg-surface min-h-[calc(100vh-64px)] w-full px-gutter"><div class="flex flex-col w-full pb-space-xl">
+<!-- Top Spatial Anchor & Editorial Context Bar -->
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-space-md pt-space-md mb-space-lg">
+<div class="flex flex-col gap-1 max-w-3xl">
+<div class="flex items-center gap-space-xs mb-1">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary-fixed text-secondary font-label-md text-label-md font-semibold border border-secondary/20">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+          Cooperative Public Infrastructure • Gap Audit Engine
+        </span>
+<span class="font-metric-mono text-metric-mono text-outline">NCVET-DPI://v4.8.2</span>
+</div>
+<h1 class="font-display text-display text-on-surface font-extrabold tracking-tight leading-none">
+        What are you missing for this opportunity?
+      </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-1 max-w-2xl">
+        Deterministic skill analysis paired with personalized national cooperative job recommendations.
+      </p>
+</div>
+<!-- Quick Telemetry & National Index Badging -->
+<div class="flex items-center gap-space-md self-start lg:self-auto bg-surface-container-low p-2 rounded-xl border border-outline-variant">
+<div class="flex flex-col px-3 py-1.5 bg-surface-bright rounded-lg shadow-sm border border-outline-variant/60">
+<span class="font-metric-mono text-[11px] text-outline uppercase tracking-wider">Aadhaar Vault</span>
+<span class="font-label-lg text-label-lg font-bold text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-accent">fingerprint</span>
+          Verified Trainee
+        </span>
+</div>
+<div class="flex flex-col px-3 py-1.5 bg-surface-bright rounded-lg shadow-sm border border-outline-variant/60">
+<span class="font-metric-mono text-[11px] text-outline uppercase tracking-wider">State Quota Sync</span>
+<span class="font-label-lg text-label-lg font-bold text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-secondary">account_balance</span>
+          Maharashtra • Pune Div
+        </span>
+</div>
+</div>
+</div>
+<!-- Role Selector & Asymmetric Workspace Header -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-sm border border-outline-variant mb-space-lg">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+<div class="flex flex-col gap-1.5 flex-1 min-w-0">
+<span class="font-metric-mono text-metric-mono uppercase tracking-wider text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px] text-accent">target</span>
+          Target Operational Opening
+        </span>
+<div class="relative group">
+<button class="w-full flex items-center justify-between gap-3 bg-surface-container-low hover:bg-surface-container transition-colors px-4 py-3 rounded-xl text-left border border-outline-variant/70" id="roleDropdownBtn">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-lg bg-primary text-on-primary flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
+                SCB
+              </div>
+<div class="flex flex-col truncate">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">
+                  Assistant Branch Accountant — Saraswat Co-operative Bank, Pune
+                </span>
+<span class="font-metric-mono text-metric-mono text-on-surface-variant">
+                  Posting ID: SCB-2025-412 • Class-II Urban Bank Category • Level-4 Pay Matrix
+                </span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-on-surface transition-colors">unfold_more</span>
+</button>
+</div>
+</div>
+<!-- Opportunity Switchers -->
+<div class="flex flex-col gap-1.5 shrink-0">
+<span class="font-label-md text-label-md text-on-surface-variant font-medium">Compare alternative cooperatives:</span>
+<div class="flex flex-wrap items-center gap-2">
+<button class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-label-md font-label-md font-medium transition-colors flex items-center gap-1.5 border border-outline-variant/60">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+            PACS Executive Secretary
+          </button>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-label-md font-label-md font-medium transition-colors flex items-center gap-1.5 border border-outline-variant/60">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+            Rural Micro-Credit Officer
+          </button>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-label-md font-label-md font-medium transition-colors flex items-center gap-1.5 border border-outline-variant/60">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+            Dairy Cooperative Auditor
+          </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Bento Grid: Main Comparison & Readiness Synthesis -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg mb-space-lg items-start">
+<!-- Left + Middle Combined: 8 Cols - The Visual Comparison Matrix -->
+<div class="xl:col-span-8 flex flex-col gap-space-md">
+<!-- Readiness Metric Banner Card -->
+<div class="bg-primary text-on-primary rounded-2xl p-space-md lg:p-space-lg relative overflow-hidden shadow-md">
+<!-- Subtle Ambient Backdrop -->
+<div class="absolute -right-16 -top-16 w-80 h-80 rounded-full bg-accent/25 blur-3xl pointer-events-none"></div>
+<div class="absolute right-32 bottom-0 w-48 h-48 rounded-full bg-secondary/20 blur-2xl pointer-events-none"></div>
+<div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-space-lg">
+<div class="flex items-center gap-space-md">
+<!-- Inline SVG Gauge Meter (57% Arc) -->
+<div class="relative w-28 h-28 shrink-0 flex items-center justify-center">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 100 100">
+<circle class="text-white/20" cx="50" cy="50" fill="none" r="40" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-secondary" cx="50" cy="50" fill="none" r="40" stroke="currentColor" stroke-dasharray="251.2" stroke-dashoffset="108.01" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+<span class="font-display text-headline-lg font-extrabold text-on-primary leading-none">57%</span>
+<span class="font-metric-mono text-[10px] text-primary-fixed uppercase tracking-wider">Match</span>
+</div>
+</div>
+<div class="flex flex-col">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/15 text-primary-fixed text-label-md font-label-md w-fit mb-1.5 border border-white/20">
+<span class="w-2 h-2 rounded-full bg-secondary animate-ping"></span>
+                Substantial Qualification Baseline
+              </div>
+<h2 class="font-headline-md text-headline-md text-on-primary">
+                4 of 7 Required Competencies Verified
+              </h2>
+<p class="font-body-md text-body-md text-primary-fixed-dim max-w-md mt-1">
+                Good foundation — only 2 short modules away from achieving <strong class="text-on-primary">85%+ full interview qualification</strong> for Saraswat Bank.
+              </p>
+</div>
+</div>
+<!-- Direct Fast-Track CTA -->
+<div class="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0">
+<button class="px-5 py-3 rounded-xl bg-secondary text-white font-label-lg text-label-lg font-bold hover:brightness-105 transition-all flex items-center justify-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[20px]">bolt</span>
+              Start Rapid Remediation
+            </button>
+<span class="font-metric-mono text-[11px] text-primary-fixed-dim text-center">
+              Estimated: 10 hrs combined effort
+            </span>
+</div>
+</div>
+</div>
+<!-- Comparative Two-Column Matrix -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- Left Column: You Have -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-md shadow-sm border border-outline-variant flex flex-col gap-space-sm relative">
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant/50">
+<div class="flex items-center gap-2">
+<span class="w-7 h-7 rounded-full bg-accent/15 text-accent flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+</span>
+<h3 class="font-title-md text-title-md text-primary font-bold">
+                You Have (Verified DPI Record)
+              </h3>
+</div>
+<span class="font-metric-mono text-metric-mono px-2 py-0.5 rounded bg-surface-container text-outline">
+              4 Validated
+            </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Cryptographically signed micro-credentials sourced directly from national cooperative institutes.
+          </p>
+<div class="flex flex-col gap-2.5 mt-2">
+<!-- Item 1 -->
+<div class="p-3 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors flex flex-col gap-1 border border-outline-variant/60">
+<div class="flex items-start justify-between gap-2">
+<span class="font-label-lg text-label-lg font-semibold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-accent text-[18px]">check_circle</span>
+                  Digital Payments &amp; UPI Switch
+                </span>
+<span class="px-2 py-0.5 rounded-full bg-accent-container text-primary font-metric-mono text-[11px] shrink-0 font-semibold border border-accent/20">
+                  NCUI • 2025
+                </span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant font-metric-mono text-[11px] pl-6">
+<span>Hash: 0x9f4a...c7e2</span>
+<span class="text-accent font-semibold">Active Credential</span>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="p-3 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors flex flex-col gap-1 border border-outline-variant/60">
+<div class="flex items-start justify-between gap-2">
+<span class="font-label-lg text-label-lg font-semibold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-accent text-[18px]">check_circle</span>
+                  Cooperative Operations &amp; Governance
+                </span>
+<span class="px-2 py-0.5 rounded-full bg-accent-container text-primary font-metric-mono text-[11px] shrink-0 font-semibold border border-accent/20">
+                  Score 88%
+                </span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant font-metric-mono text-[11px] pl-6">
+<span>VAMNICOM Executive Board</span>
+<span class="text-accent font-semibold">Gold Tier</span>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="p-3 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors flex flex-col gap-1 border border-outline-variant/60">
+<div class="flex items-start justify-between gap-2">
+<span class="font-label-lg text-label-lg font-semibold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-accent text-[18px]">check_circle</span>
+                  Financial Literacy &amp; Micro-Savings
+                </span>
+<span class="px-2 py-0.5 rounded-full bg-accent-container text-primary font-metric-mono text-[11px] shrink-0 font-semibold border border-accent/20">
+                  Score 94%
+                </span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant font-metric-mono text-[11px] pl-6">
+<span>NCDC National Scheme</span>
+<span class="text-accent font-semibold">Distinction</span>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="p-3 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors flex flex-col gap-1 border border-outline-variant/60">
+<div class="flex items-start justify-between gap-2">
+<span class="font-label-lg text-label-lg font-semibold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-accent text-[18px]">check_circle</span>
+                  KYC &amp; AML Guidelines for UCBs
+                </span>
+<span class="px-2 py-0.5 rounded-full bg-accent-container text-primary font-metric-mono text-[11px] shrink-0 font-semibold border border-accent/20">
+                  RBI Norms
+                </span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant font-metric-mono text-[11px] pl-6">
+<span>Proctored Online Assessment</span>
+<span class="text-accent font-semibold">Verified</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: You Need -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-md shadow-sm border border-outline-variant flex flex-col gap-space-sm relative">
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant/50">
+<div class="flex items-center gap-2">
+<span class="w-7 h-7 rounded-full bg-secondary-fixed text-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">pending_actions</span>
+</span>
+<h3 class="font-title-md text-title-md text-secondary font-bold">
+                You Need (Missing for this Role)
+              </h3>
+</div>
+<span class="font-metric-mono text-metric-mono px-2 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed font-semibold">
+              3 Competencies
+            </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Identified directly against Saraswat Bank vacancy requisition ID SCB-2025-412.
+          </p>
+<div class="flex flex-col gap-2.5 mt-2">
+<!-- Missing 1: Advanced Coop Accounting -->
+<div class="p-3 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors flex flex-col gap-1.5 border border-outline-variant/60">
+<div class="flex items-start justify-between gap-2">
+<span class="font-label-lg text-label-lg font-semibold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[18px]">radio_button_unchecked</span>
+                  Adv. Cooperative Accounting &amp; Day-Book
+                </span>
+<span class="px-2 py-0.5 rounded-full bg-secondary text-white font-metric-mono text-[11px] shrink-0 font-bold shadow-xs">
+                  Required
+                </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant pl-6">
+                Requires reconciliation of member ledgers, statutory liquidity reserves, and balance sheets.
+              </p>
+<div class="flex items-center justify-between pl-6 pt-1">
+<span class="font-metric-mono text-[11px] text-outline">Weightage: 25%</span>
+<span class="font-label-md text-label-md text-accent font-semibold flex items-center gap-1">
+                  Mapped to Module 3.2
+                </span>
+</div>
+</div>
+<!-- Missing 2: PACS ERP Reconciliation -->
+<div class="p-3 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors flex flex-col gap-1.5 border border-outline-variant/60">
+<div class="flex items-start justify-between gap-2">
+<span class="font-label-lg text-label-lg font-semibold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[18px]">radio_button_unchecked</span>
+                  PACS ERP Multi-Branch Reconciliation
+                </span>
+<span class="px-2 py-0.5 rounded-full bg-secondary text-white font-metric-mono text-[11px] shrink-0 font-bold shadow-xs">
+                  Required
+                </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant pl-6">
+                Live batch reconciliation between primary rural societies and District Central Co-op Bank switch.
+              </p>
+<div class="flex items-center justify-between pl-6 pt-1">
+<span class="font-metric-mono text-[11px] text-secondary font-medium">In Progress (60%)</span>
+<span class="font-label-md text-label-md text-accent font-semibold">2 hours left</span>
+</div>
+</div>
+<!-- Missing 3: Loan Appraisal & CIBIL -->
+<div class="p-3 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors flex flex-col gap-1.5 border border-outline-variant/60">
+<div class="flex items-start justify-between gap-2">
+<span class="font-label-lg text-label-lg font-semibold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-outline text-[18px]">radio_button_unchecked</span>
+                  Agri-Loan Appraisal &amp; CIBIL Analysis
+                </span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-metric-mono text-[11px] shrink-0 font-medium">
+                  Preferred
+                </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant pl-6">
+                Evaluation of KCC seasonal limits, collateral valuation, and non-performing asset thresholds.
+              </p>
+<div class="flex items-center justify-between pl-6 pt-1">
+<span class="font-metric-mono text-[11px] text-outline">Weightage: 10%</span>
+<span class="font-label-md text-label-md text-secondary font-semibold">Free NABARD Voucher</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Deterministic 3-Step Remediation Pathway -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-sm border border-outline-variant">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-space-md">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-primary text-on-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">route</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">
+                Deterministic Path to Close the Gap
+              </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Guaranteed pipeline directly linked to Saraswat Co-operative Bank recruitment API.
+              </p>
+</div>
+</div>
+<span class="font-metric-mono text-metric-mono px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-semibold self-start sm:self-auto border border-secondary/20">
+            Target Completion: 10 Calendar Days
+          </span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<!-- Step 1 Card -->
+<div class="p-space-md rounded-xl bg-surface-container-low border border-outline-variant/70 flex flex-col justify-between gap-space-md relative overflow-hidden group hover:bg-surface-container transition-all">
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="w-6 h-6 rounded-full bg-primary text-on-primary font-metric-mono text-[12px] font-bold flex items-center justify-center">
+                  1
+                </span>
+<span class="px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-metric-mono text-[10px] font-bold uppercase border border-secondary/20">
+                  In Progress
+                </span>
+</div>
+<h4 class="font-title-md text-title-md text-on-surface font-semibold leading-snug">
+                Module 3.3: PACS ERP Reconciliation
+              </h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                Hands-on simulation using standard national core banking portal for PACS societies.
+              </p>
+<!-- Progress Bar -->
+<div class="w-full bg-surface-container-high rounded-full h-2 mt-2">
+<div class="bg-secondary h-2 rounded-full w-[60%]"></div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2">
+<span class="font-metric-mono text-[12px] text-outline">Est: 2 hrs remaining</span>
+<a class="font-label-md text-label-md font-bold text-accent hover:underline flex items-center gap-0.5" href="#">
+                Resume
+                <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Step 2 Card -->
+<div class="p-space-md rounded-xl bg-surface-container-low border border-outline-variant/70 flex flex-col justify-between gap-space-md relative group hover:bg-surface-container transition-all">
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="w-6 h-6 rounded-full bg-surface-container-high text-on-surface font-metric-mono text-[12px] font-bold flex items-center justify-center">
+                  2
+                </span>
+<span class="px-2 py-0.5 rounded-full bg-accent-container text-primary font-metric-mono text-[10px] font-bold uppercase border border-accent/20">
+                  NABARD Sponsored
+                </span>
+</div>
+<h4 class="font-title-md text-title-md text-on-surface font-semibold leading-snug">
+                Short Certificate: Rural Credit &amp; Loan Appraisal
+              </h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                8-hour intensive course covering crop loss assessment, land registry links, and risk weighting.
+              </p>
+</div>
+<div class="flex items-center justify-between pt-2">
+<span class="font-metric-mono text-[12px] text-outline">8 hrs • Free Grant</span>
+<button class="px-3 py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary/90 transition-colors shadow-sm">
+                Claim Grant
+              </button>
+</div>
+</div>
+<!-- Step 3 Card -->
+<div class="p-space-md rounded-xl bg-primary text-on-primary flex flex-col justify-between gap-space-md shadow-sm border border-primary">
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="w-6 h-6 rounded-full bg-white/20 text-on-primary font-metric-mono text-[12px] font-bold flex items-center justify-center">
+                  3
+                </span>
+<span class="px-2 py-0.5 rounded-full bg-secondary text-white font-metric-mono text-[10px] font-bold uppercase">
+                  Locked Gate
+                </span>
+</div>
+<h4 class="font-title-md text-title-md text-on-primary font-semibold leading-snug">
+                Assessment Retake &amp; Guaranteed Interview Slot
+              </h4>
+<p class="font-body-sm text-body-sm text-primary-fixed-dim">
+                Achieve 85%+ overall readiness to bypass screening and book a direct panel interview with HR Pune.
+              </p>
+</div>
+<div class="flex items-center justify-between pt-2">
+<span class="font-metric-mono text-[12px] text-primary-fixed flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+                Unlock at 85%
+              </span>
+<button class="px-3 py-1.5 rounded-lg bg-white/15 text-on-primary opacity-75 cursor-not-allowed font-label-md text-label-md font-semibold border border-white/20">
+                Locked
+              </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right 4 Cols: AI Career Counsellor Interactive Drawer / Conversational Workspace -->
+<div class="xl:col-span-4 flex flex-col gap-space-md">
+<!-- AI Sahayak Grounded Interface -->
+<div class="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant overflow-hidden flex flex-col h-[740px]">
+<!-- AI Drawer Header -->
+<div class="p-space-md bg-surface-container-low border-b border-outline-variant flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[18px]">smart_toy</span>
+</div>
+<div class="flex flex-col">
+<h3 class="font-title-md text-title-md text-on-surface leading-tight font-bold">
+                  AI Career Counsellor
+                </h3>
+<span class="font-metric-mono text-[11px] text-primary font-semibold">Sahakar Utkarsh Grounded Bot</span>
+</div>
+</div>
+<div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-bright text-outline text-[11px] font-metric-mono border border-outline-variant/60">
+<span class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></span>
+              Live Model
+            </div>
+</div>
+<!-- Grounding Source Indicators -->
+<div class="flex flex-col gap-1 mt-1">
+<span class="font-metric-mono text-[10px] uppercase tracking-wider text-outline">Active Verification Context:</span>
+<div class="flex flex-wrap gap-1">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-bright text-on-surface-variant font-metric-mono text-[10px] border border-outline-variant/60">
+<span class="material-symbols-outlined text-[12px] text-accent">badge</span>
+                Your 4 Certificates
+              </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-bright text-on-surface-variant font-metric-mono text-[10px] border border-outline-variant/60">
+<span class="material-symbols-outlined text-[12px] text-secondary">work</span>
+                Open Jobs: Maharashtra
+              </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-bright text-on-surface-variant font-metric-mono text-[10px] border border-outline-variant/60">
+<span class="material-symbols-outlined text-[12px] text-outline">gavel</span>
+                NCVET Standards
+              </span>
+</div>
+</div>
+</div>
+<!-- Scrollable Dialogue Transcript -->
+<div class="flex-1 overflow-y-auto p-space-md flex flex-col gap-space-md bg-surface-container-low/50" id="chatMessages">
+<!-- System Prompt Badge -->
+<div class="flex justify-center">
+<span class="font-metric-mono text-[11px] text-outline bg-surface-bright border border-outline-variant/60 px-3 py-1 rounded-full text-center shadow-xs">
+              Session initialized with SCB-2025-412 vacancy requirements
+            </span>
+</div>
+<!-- Trainee Query 1 -->
+<div class="flex flex-col items-end gap-1 ml-6">
+<div class="bg-primary text-on-primary rounded-2xl rounded-tr-sm p-3.5 shadow-sm max-w-sm">
+<p class="font-body-sm text-body-sm">
+                Can I apply for the Saraswat Bank role now while finishing Module 3?
+              </p>
+</div>
+<span class="font-metric-mono text-[10px] text-outline">10:42 AM • Sent by Priya S.</span>
+</div>
+<!-- AI Response 1 -->
+<div class="flex flex-col items-start gap-1 mr-4">
+<div class="flex items-center gap-1.5 mb-0.5">
+<span class="w-4 h-4 rounded-full bg-accent text-on-primary flex items-center justify-center text-[10px] font-bold">AI</span>
+<span class="font-label-md text-label-md font-semibold text-primary">Sahakar Sahayak</span>
+</div>
+<div class="bg-surface-container-lowest text-on-surface border border-outline-variant rounded-2xl rounded-tl-sm p-3.5 shadow-sm max-w-sm flex flex-col gap-2">
+<p class="font-body-sm text-body-sm">
+<strong class="text-primary">Yes, absolutely.</strong> Saraswat Bank accepts <span class="text-secondary font-semibold">provisional applications</span> for candidates who possess &gt;50% verified skills if your expected course completion date is within 30 days.
+              </p>
+<div class="p-2.5 rounded-lg bg-surface-container-low border border-outline-variant/60 flex flex-col gap-1 font-metric-mono text-[11px]">
+<div class="flex justify-between text-on-surface">
+<span>Current Verified Score:</span>
+<span class="font-bold text-accent">57.1% (&gt;50% Min)</span>
+</div>
+<div class="flex justify-between text-on-surface">
+<span>Estimated Completion:</span>
+<span class="font-bold text-secondary">Feb 28, 2025</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm">
+                Would you like me to prepare a provisional application dossier signed with your Aadhaar DID?
+              </p>
+<div class="flex items-center gap-2 pt-1">
+<button class="px-2.5 py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary/90 transition-colors shadow-sm" onclick="appendChatUser('Yes, prepare provisional dossier for Saraswat Bank')">
+                  Prepare Dossier
+                </button>
+<button class="px-2.5 py-1.5 rounded-lg bg-surface-container border border-outline-variant hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors" onclick="appendChatUser('What documents do I need?')">
+                  View Rules
+                </button>
+</div>
+</div>
+<span class="font-metric-mono text-[10px] text-outline pl-1">10:42 AM • Grounded in SCB Reg. 14.b</span>
+</div>
+</div>
+<!-- Quick Starter Prompt Chips -->
+<div class="px-space-md py-2 bg-surface-container-low border-t border-outline-variant flex flex-col gap-1.5">
+<span class="font-metric-mono text-[10px] text-outline uppercase tracking-wider">Suggested Queries:</span>
+<div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+<button class="whitespace-nowrap px-2.5 py-1 rounded-full bg-surface-bright hover:bg-surface-container text-on-surface font-label-md text-label-md text-left transition-colors shrink-0 border border-outline-variant/60 shadow-xs" onclick="appendChatUser('Which PACS jobs match my current 4 skills?')">
+              Which PACS jobs match my current 4 skills?
+            </button>
+<button class="whitespace-nowrap px-2.5 py-1 rounded-full bg-surface-bright hover:bg-surface-container text-on-surface font-label-md text-label-md text-left transition-colors shrink-0 border border-outline-variant/60 shadow-xs" onclick="appendChatUser('Show average salary for Cooperative Accountant in Maharashtra')">
+              Cooperative Accountant salary in Maharashtra
+            </button>
+<button class="whitespace-nowrap px-2.5 py-1 rounded-full bg-surface-bright hover:bg-surface-container text-on-surface font-label-md text-label-md text-left transition-colors shrink-0 border border-outline-variant/60 shadow-xs" onclick="appendChatUser('How long will it take to finish the missing 2 skills?')">
+              Time to finish missing 2 skills?
+            </button>
+</div>
+</div>
+<!-- Chat Input Form -->
+<div class="p-space-md bg-surface-container-low border-t border-outline-variant">
+<form class="flex items-center gap-2" id="chatForm" onsubmit="event.preventDefault(); handleSend();">
+<div class="relative flex-1">
+<input class="w-full bg-surface-bright text-on-surface border border-outline-variant font-body-sm text-body-sm px-3.5 py-2.5 rounded-xl placeholder:text-outline focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent shadow-sm" id="chatInput" placeholder="Ask about jobs, qualification rules, or exam dates..." type="text"/>
+</div>
+<button class="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center hover:bg-primary/90 transition-colors shrink-0 shadow-sm" type="submit">
+<span class="material-symbols-outlined text-[20px]">send</span>
+</button>
+</form>
+<div class="flex items-center justify-between mt-2 px-1">
+<span class="font-metric-mono text-[10px] text-outline">Multilingual: English • मराठी • हिन्दी</span>
+<span class="font-metric-mono text-[10px] text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-accent">security</span>
+              Sovereign DPI Encrypted
+            </span>
+</div>
+</div>
+</div>
+<!-- Institutional Backing & Cooperative Mobility Card -->
+<div class="bg-surface-container-low rounded-2xl p-space-md border border-outline-variant flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">account_balance</span>
+<h4 class="font-title-md text-title-md text-on-surface font-semibold">
+            Institutional Career Assurance
+          </h4>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Under the Ministry of Cooperation national directive, candidate profiles verified with &gt;80% match scores are prioritized across 102,000+ computerized Primary Agricultural Credit Societies.
+        </p>
+<div class="flex items-center justify-between pt-1">
+<span class="font-metric-mono text-[11px] text-outline">Gazette Ref: COOP/2024/E-41</span>
+<a class="font-label-md text-label-md font-semibold text-accent hover:underline" href="#">
+            View Policy Framework
+          </a>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Data Section: Immediate Micro-Opportunities Matching Current 4 Skills -->
+<div class="bg-surface-container-lowest rounded-2xl p-space-md lg:p-space-lg shadow-sm border border-outline-variant mb-space-lg">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm mb-space-md">
+<div>
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-accent"></span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold">
+            Immediate Matches with Your Current 4 Skills
+          </h3>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+          You are 100% qualified right now for these active opportunities without waiting to finish pending modules.
+        </p>
+</div>
+<a class="font-label-md text-label-md font-bold text-accent hover:underline flex items-center gap-1 self-start sm:self-auto" href="#">
+        Explore all 24 matched postings
+        <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+<!-- 3 Horizontal Mini Opportunity Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<!-- Match 1 -->
+<div class="p-space-md rounded-xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/70 transition-all flex flex-col justify-between gap-3 shadow-xs">
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<span class="px-2 py-0.5 rounded-full bg-accent-container text-primary font-metric-mono text-[11px] font-bold border border-accent/20">
+              100% Skill Match
+            </span>
+<span class="font-metric-mono text-[11px] text-outline">Haveli Taluka</span>
+</div>
+<h4 class="font-title-md text-title-md text-on-surface font-semibold">
+            PACS Junior Cashier &amp; Member Liaison
+          </h4>
+<span class="font-body-sm text-body-sm text-on-surface-variant">
+            Shivaji Rural Multipurpose Society • Pune District
+          </span>
+<div class="flex items-center gap-2 text-outline font-metric-mono text-[12px] mt-1">
+<span class="text-on-surface font-semibold">₹22,000 / mo</span>
+<span>•</span>
+<span>Full Time</span>
+<span>•</span>
+<span>12 Vacancies</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2">
+<span class="font-metric-mono text-[11px] text-accent font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+            Instant DPI Apply
+          </span>
+<button class="px-3 py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary/90 transition-colors shadow-sm">
+            Apply Now
+          </button>
+</div>
+</div>
+<!-- Match 2 -->
+<div class="p-space-md rounded-xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/70 transition-all flex flex-col justify-between gap-3 shadow-xs">
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<span class="px-2 py-0.5 rounded-full bg-accent-container text-primary font-metric-mono text-[11px] font-bold border border-accent/20">
+              100% Skill Match
+            </span>
+<span class="font-metric-mono text-[11px] text-outline">Baramati</span>
+</div>
+<h4 class="font-title-md text-title-md text-on-surface font-semibold">
+            Micro-Credit Field Recovery Associate
+          </h4>
+<span class="font-body-sm text-body-sm text-on-surface-variant">
+            Maharashtra Cooperative Development Corp
+          </span>
+<div class="flex items-center gap-2 text-outline font-metric-mono text-[12px] mt-1">
+<span class="text-on-surface font-semibold">₹26,500 / mo + TA</span>
+<span>•</span>
+<span>State Contract</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2">
+<span class="font-metric-mono text-[11px] text-accent font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+            Instant DPI Apply
+          </span>
+<button class="px-3 py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary/90 transition-colors shadow-sm">
+            Apply Now
+          </button>
+</div>
+</div>
+<!-- Match 3 -->
+<div class="p-space-md rounded-xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/70 transition-all flex flex-col justify-between gap-3 shadow-xs">
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<span class="px-2 py-0.5 rounded-full bg-accent-container text-primary font-metric-mono text-[11px] font-bold border border-accent/20">
+              95% Skill Match
+            </span>
+<span class="font-metric-mono text-[11px] text-outline">Pimpri Chinchwad</span>
+</div>
+<h4 class="font-title-md text-title-md text-on-surface font-semibold">
+            KYC Compliance Specialist (Urban Bank)
+          </h4>
+<span class="font-body-sm text-body-sm text-on-surface-variant">
+            Rupee Co-operative Bank Transition Desk
+          </span>
+<div class="flex items-center gap-2 text-outline font-metric-mono text-[12px] mt-1">
+<span class="text-on-surface font-semibold">₹28,000 / mo</span>
+<span>•</span>
+<span>Permanent</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-2">
+<span class="font-metric-mono text-[11px] text-accent font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">bolt</span>
+            Instant DPI Apply
+          </span>
+<button class="px-3 py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-primary/90 transition-colors shadow-sm">
+            Apply Now
+          </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Micro-Script for Interactive Chat Drawer and State Handling -->
+<script>
+    function handleSend() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      appendChatUser(text);
+      input.value = '';
+    }
+
+    function appendChatUser(messageText) {
+      const chatContainer = document.getElementById('chatMessages');
+      
+      // User bubble
+      const userBubble = document.createElement('div');
+      userBubble.className = "flex flex-col items-end gap-1 ml-6 animate-fade-in";
+      userBubble.innerHTML = `
+        <div class="bg-primary text-on-primary rounded-2xl rounded-tr-sm p-3.5 shadow-sm max-w-sm">
+          <p class="font-body-sm text-body-sm">${messageText}</p>
+        </div>
+        <span class="font-metric-mono text-[10px] text-outline">Just now • Priya S.</span>
+      `;
+      chatContainer.appendChild(userBubble);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      // Simulate grounded intelligent response
+      setTimeout(() => {
+        const aiBubble = document.createElement('div');
+        aiBubble.className = "flex flex-col items-start gap-1 mr-4 animate-fade-in";
+        
+        let reply = "";
+        let groundNote = "National Cooperative Database";
+
+        if (messageText.includes("PACS jobs")) {
+          reply = `With your verified certifications in <strong>Digital Payments</strong> and <strong>Cooperative Governance</strong>, you currently meet 100% criteria for <strong>14 PACS Cashier & Field Assistant positions</strong> in Pune and Satara districts. The highest starting compensation is ₹26,500 at Baramati Multi-Purpose Society.`;
+          groundNote = "Grounded in Pune DCCB PACS Vacancy Feed";
+        } else if (messageText.includes("salary")) {
+          reply = `In Maharashtra, Assistant Branch Accountants in urban cooperative banks (UCBs) average <strong>₹32,000 to ₹45,000/month</strong> under the 7th Cooperative Wage Board revision, along with health coverage and statutory pension contributions.`;
+          groundNote = "Grounded in Maharashtra State Coop Wage Board 2024";
+        } else if (messageText.includes("missing 2 skills") || messageText.includes("How long")) {
+          reply = `Finishing Module 3.3 requires approx <strong>2 hours</strong> online. The NABARD-sponsored Rural Credit short course requires <strong>8 hours</strong> self-paced study. If you dedicate 1.5 hours daily, you will reach full 85%+ Saraswat Bank qualification in <strong>7 days</strong>.`;
+          groundNote = "Grounded in NCDC Modular Syllabus Timings";
+        } else if (messageText.includes("dossier")) {
+          reply = `I have generated your <strong>Provisional Application Dossier #PAD-SCB-412</strong>. It bundles your 4 verified certificate hashes with a digitally signed declaration committing to finish PACS ERP reconciliation by Feb 28. Would you like me to transmit it directly to Saraswat Bank HR?`;
+          groundNote = "Sahakar Utkarsh DPI Registry Gateway";
+        } else {
+          reply = `Based on your verified credentials and vacancy SCB-2025-412, completing <strong>Module 3.3 (ERP Multi-Branch Reconciliation)</strong> is the fastest way to raise your match index from 57% to 76%. Saraswat Bank HR is actively interviewing candidate batches every Tuesday.`;
+          groundNote = "Saraswat Bank Recruitment Policy 2025";
+        }
+
+        aiBubble.innerHTML = `
+          <div class="flex items-center gap-1.5 mb-0.5">
+            <span class="w-4 h-4 rounded-full bg-accent text-on-primary flex items-center justify-center text-[10px] font-bold">AI</span>
+            <span class="font-label-md text-label-md font-semibold text-primary">Sahakar Sahayak</span>
+          </div>
+          <div class="bg-surface-container-lowest text-on-surface border border-outline-variant rounded-2xl rounded-tl-sm p-3.5 shadow-sm max-w-sm flex flex-col gap-2">
+            <p class="font-body-sm text-body-sm">${reply}</p>
+          </div>
+          <span class="font-metric-mono text-[10px] text-outline pl-1">Just now • ${groundNote}</span>
+        `;
+        chatContainer.appendChild(aiBubble);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }, 650);
+    }
+  </script>
+</div></main></div></body></html>

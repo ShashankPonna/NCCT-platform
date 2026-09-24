@@ -323,7 +323,7 @@ export function ManagementShell({
               onClick={() => onNavigate(roleNavItems[0]?.id ?? "profile")}
               className="flex items-center gap-2 text-left transition-opacity hover:opacity-90 cursor-pointer md:gap-3"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-secondary-container text-primary font-bold shadow-xs md:h-10 md:w-10">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary-container text-primary font-bold shadow-xs md:h-10 md:w-10">
                 <span className="material-symbols-outlined text-[22px]">account_balance</span>
               </div>
               <div className="flex flex-col">
@@ -347,7 +347,7 @@ export function ManagementShell({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.searchPlaceholder}
-              className="h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest pl-9 pr-4 text-sm text-on-surface transition-all outline-none focus:border-interactive focus:ring-1 focus:ring-interactive placeholder:text-on-surface-variant/60"
+              className="h-10 w-full rounded-xl border border-border-slate bg-paper-light pl-9 pr-4 text-sm text-on-surface transition-all outline-none focus:bg-white focus:border-interactive focus:ring-1 focus:ring-interactive placeholder:text-on-surface-variant/60"
             />
           </div>
 
