@@ -61,6 +61,16 @@ interface AnalyticsDashboardText {
   colAttendance: string;
   colInactiveDays: string;
   traineeFallback: (idPrefix: string) => string;
+  skillDemand: string;
+  skillDemandSubheading: string;
+  noSkillShortages: string;
+  noSkillShortagesBody: string;
+  colSkill: string;
+  colCategory: string;
+  colDemand: string;
+  colSupply: string;
+  colShortage: string;
+  noCategory: string;
 }
 
 const content: Record<Locale, AnalyticsDashboardText> = {
@@ -104,6 +114,18 @@ const content: Record<Locale, AnalyticsDashboardText> = {
     colAttendance: "Attendance",
     colInactiveDays: "Inactive (days)",
     traineeFallback: (idPrefix) => `Trainee #${idPrefix}`,
+    skillDemand: "Skill Demand vs. Supply",
+    skillDemandSubheading:
+      "Taxonomy skills open job postings need most, versus how many trainees actually hold them — the biggest gaps are the strongest case for a new programme.",
+    noSkillShortages: "No skill demand data yet",
+    noSkillShortagesBody:
+      "Once employers tag job postings with taxonomy skills, the biggest gaps against what trainees have earned will show up here.",
+    colSkill: "Skill",
+    colCategory: "Category",
+    colDemand: "Jobs Requiring It",
+    colSupply: "Trainees With It",
+    colShortage: "Shortage",
+    noCategory: "Uncategorized",
   },
   hi: {
     heading: "प्रशासक डैशबोर्ड",
@@ -145,6 +167,18 @@ const content: Record<Locale, AnalyticsDashboardText> = {
     colAttendance: "उपस्थिति",
     colInactiveDays: "निष्क्रिय (दिन)",
     traineeFallback: (idPrefix) => `प्रशिक्षणार्थी #${idPrefix}`,
+    skillDemand: "कौशल मांग बनाम आपूर्ति",
+    skillDemandSubheading:
+      "खुली नौकरी पोस्टिंग को सबसे ज़्यादा किन टैक्सोनॉमी कौशलों की ज़रूरत है, बनाम कितने प्रशिक्षणार्थियों के पास वास्तव में वे हैं — सबसे बड़ा अंतर नए कार्यक्रम का सबसे मजबूत आधार है।",
+    noSkillShortages: "अभी तक कोई कौशल मांग डेटा नहीं",
+    noSkillShortagesBody:
+      "जैसे ही नियोक्ता नौकरी पोस्टिंग को टैक्सोनॉमी कौशलों से टैग करेंगे, प्रशिक्षणार्थियों के पास मौजूद कौशलों की तुलना में सबसे बड़े अंतर यहां दिखाई देंगे।",
+    colSkill: "कौशल",
+    colCategory: "श्रेणी",
+    colDemand: "आवश्यक नौकरियां",
+    colSupply: "प्रशिक्षणार्थी जिनके पास है",
+    colShortage: "कमी",
+    noCategory: "अवर्गीकृत",
   },
 };
 
@@ -574,6 +608,78 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
                         <td className="p-4 text-center">{formatMaybePercent(flag.completionRate)}</td>
                         <td className="p-4 text-center">{formatMaybePercent(flag.attendanceRate)}</td>
                         <td className="p-4 text-center">{flag.daysSinceLastActivity}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Block 6: Skill Demand vs. Supply (P1 Skill-Gap Analysis's
+            institution-wide counterpart, DECISIONS.md #43) — a single
+            trainee's Skill-Gap Check only ever compares against one job at
+            a time; this surfaces the same underlying data (job_skills,
+            programme_skills+certificates) aggregated across everyone, so an
+            admin can see which skills are worth a new programme. */}
+        <div className="bg-surface-card border border-outline-variant rounded-lg p-6 flex flex-col lg:col-span-2 shadow-sm">
+          <h3 className="font-headline-sm text-headline-sm text-primary mb-1">{t.skillDemand}</h3>
+          <p className="font-body-sm text-body-sm text-on-surface-variant mb-4">{t.skillDemandSubheading}</p>
+
+          {data.skillDemand.topShortages.length === 0 ? (
+            <div className="flex-grow flex flex-col items-center justify-center text-center p-6 bg-surface-container-low rounded border border-dashed border-outline-variant min-h-[140px]">
+              <span className="material-symbols-outlined text-[48px] text-outline opacity-50 mb-3">
+                query_stats
+              </span>
+              <h4 className="font-headline-sm text-headline-sm text-on-surface-variant mb-2">
+                {t.noSkillShortages}
+              </h4>
+              <p className="font-body-sm text-body-sm text-outline max-w-sm">{t.noSkillShortagesBody}</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-outline-variant">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-surface-container-low border-b border-outline-variant">
+                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase">
+                      {t.colSkill}
+                    </th>
+                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase">
+                      {t.colCategory}
+                    </th>
+                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
+                      {t.colDemand}
+                    </th>
+                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
+                      {t.colSupply}
+                    </th>
+                    <th className="p-4 font-label-md text-label-md text-on-surface-variant uppercase text-center">
+                      {t.colShortage}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant font-body-sm">
+                  {data.skillDemand.topShortages.map((row) => {
+                    const style =
+                      row.shortage > 0
+                        ? RISK_LEVEL_STYLES.high
+                        : row.shortage === 0
+                          ? RISK_LEVEL_STYLES.medium
+                          : RISK_LEVEL_STYLES.low;
+                    return (
+                      <tr key={row.skillId} className="hover:bg-surface-container-lowest transition-colors">
+                        <td className="p-4 font-medium text-primary">{row.skillName}</td>
+                        <td className="p-4 text-on-surface-variant">{row.category ?? t.noCategory}</td>
+                        <td className="p-4 text-center">{row.demand}</td>
+                        <td className="p-4 text-center">{row.supply}</td>
+                        <td className="p-4 text-center">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full font-label-sm font-bold ${style.bg} ${style.text}`}
+                          >
+                            {row.shortage > 0 ? `+${row.shortage}` : row.shortage}
+                          </span>
+                        </td>
                       </tr>
                     );
                   })}

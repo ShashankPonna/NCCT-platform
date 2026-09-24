@@ -1,5 +1,5 @@
-import { getJobs, getSkillGap } from "@ncct/api-client";
-import type { Job, SkillGapResult } from "@ncct/shared-types";
+import { getJobMatches, getJobs, getSkillGap, getSkillGapAcrossJobs } from "@ncct/api-client";
+import type { Job, SkillGapAcrossJobsResult, SkillGapResult } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "../i18n/LocaleContext.js";
 import { ErrorBanner, SkillChip } from "./pieces.js";
@@ -20,6 +20,15 @@ interface TraineeCareerSkillGapText {
   allSkillsPresent: string;
   learnFirst: string;
   noSuggestionAvailable: string;
+  sortedByFit: string;
+  fitSuffix: string;
+  relatedToSkill: (name: string) => string;
+  overallHeading: string;
+  overallSubheadingMatched: string;
+  overallSubheadingFallback: string;
+  overallEmpty: string;
+  overallLoading: string;
+  jobsNeedingIt: (count: number) => string;
 }
 
 const content: Record<Locale, TraineeCareerSkillGapText> = {
@@ -36,6 +45,17 @@ const content: Record<Locale, TraineeCareerSkillGapText> = {
     learnFirst: "What to learn first",
     noSuggestionAvailable:
       "A suggested learning order isn't available right now — your skill list above is still complete and correct.",
+    sortedByFit: "Sorted by your best fit first, based on your certified skills.",
+    fitSuffix: "fit",
+    relatedToSkill: (name) => `Related to your "${name}" skill — may already partly cover this.`,
+    overallHeading: "Your Overall Skill Gap",
+    overallSubheadingMatched:
+      "Across the jobs you're currently the best fit for, learning these would close the most gaps at once.",
+    overallSubheadingFallback:
+      "You don't have any certified skills yet, so this is based on the newest open postings instead of a personalized match.",
+    overallEmpty: "No shared gaps found — you already cover what these jobs need, or none are tagged with skills yet.",
+    overallLoading: "Checking your overall skill gap…",
+    jobsNeedingIt: (count) => (count === 1 ? "Needed by 1 job" : `Needed by ${count} jobs`),
   },
   hi: {
     heading: "कौशल-अंतर जांच",
@@ -50,6 +70,17 @@ const content: Record<Locale, TraineeCareerSkillGapText> = {
     learnFirst: "पहले क्या सीखें",
     noSuggestionAvailable:
       "अभी सुझाया गया सीखने का क्रम उपलब्ध नहीं है — ऊपर आपकी कौशल सूची फिर भी पूर्ण और सही है।",
+    sortedByFit: "आपके प्रमाणित कौशलों के आधार पर, आपके लिए सबसे उपयुक्त नौकरियां पहले क्रमबद्ध हैं।",
+    fitSuffix: "उपयुक्तता",
+    relatedToSkill: (name) => `आपके "${name}" कौशल से संबंधित — यह इसे आंशिक रूप से पहले से ही पूरा कर सकता है।`,
+    overallHeading: "आपका समग्र कौशल-अंतर",
+    overallSubheadingMatched:
+      "जिन नौकरियों के लिए आप वर्तमान में सबसे उपयुक्त हैं, उनमें ये कौशल सीखने से एक साथ सबसे ज़्यादा अंतर दूर होंगे।",
+    overallSubheadingFallback:
+      "आपके पास अभी तक कोई प्रमाणित कौशल नहीं है, इसलिए यह व्यक्तिगत मिलान के बजाय नवीनतम खुली नौकरी पोस्टिंग पर आधारित है।",
+    overallEmpty: "कोई साझा अंतर नहीं मिला — या तो आप इन नौकरियों की ज़रूरतें पहले से पूरी करते हैं, या अभी तक किसी में कौशल टैग नहीं किए गए हैं।",
+    overallLoading: "आपका समग्र कौशल-अंतर जांचा जा रहा है…",
+    jobsNeedingIt: (count) => `${count} नौकरियों के लिए आवश्यक`,
   },
 };
 
@@ -69,12 +100,44 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
   const [result, setResult] = useState<SkillGapResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // F13 AI Job Matching (DECISIONS.md #28) re-embeds the trainee's own
+  // certified-skill profile — reused here purely to order the job picker,
+  // best-fit first, instead of leaving it in whatever order the API
+  // happened to return jobs in. A failure here is never surfaced as an
+  // error: the job picker still works, just unsorted, same "optional
+  // enrichment degrades silently" pattern as the ranked panel below.
+  const [jobFit, setJobFit] = useState<Map<string, number>>(new Map());
+  const [hasFitSignal, setHasFitSignal] = useState(false);
+
+  // F11's multi-job counterpart (DECISIONS.md #45) — independent of the
+  // one-job picker below, fetched once on mount.
+  const [overall, setOverall] = useState<SkillGapAcrossJobsResult | null>(null);
+  const [overallLoading, setOverallLoading] = useState(true);
+
+  useEffect(() => {
+    getSkillGapAcrossJobs(accessToken)
+      .then(setOverall)
+      .catch(() => {
+        // Best-effort summary — the per-job check below is the feature
+        // PRD §6.11 actually requires; this degrades to simply not showing.
+      })
+      .finally(() => setOverallLoading(false));
+  }, [accessToken]);
 
   useEffect(() => {
     getJobs()
       .then(setJobs)
       .catch((err: Error) => setError(err.message));
-  }, []);
+    getJobMatches(accessToken)
+      .then((matches) => {
+        setHasFitSignal(matches.hasProfileSignal);
+        setJobFit(new Map(matches.matches.map((m) => [m.id, m.similarity])));
+      })
+      .catch(() => {
+        // Best-effort ordering only — the core skill-gap check works fine
+        // without it.
+      });
+  }, [accessToken]);
 
   useEffect(() => {
     if (!selectedJobId) return;
@@ -93,6 +156,16 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
 
   const selectedJob = jobs.find((j) => j.id === selectedJobId) ?? null;
 
+  // Only reorder once there's an actual fit signal to sort by — a fresh
+  // trainee with no certificates yet gets the plain, unsorted list rather
+  // than a misleading "sorted" order with nothing behind it. Jobs outside
+  // F13's own top-N match set (packages/constants' JOB_MATCH_COUNT) simply
+  // keep their original relative order, appended after every matched job.
+  const orderedJobs =
+    hasFitSignal && jobFit.size > 0
+      ? [...jobs].sort((a, b) => (jobFit.get(b.id) ?? -1) - (jobFit.get(a.id) ?? -1))
+      : jobs;
+
   return (
     <div className="flex flex-col gap-6 py-6 md:py-8">
       <div>
@@ -102,6 +175,38 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
         <p className="mt-1 text-body-md text-on-surface-variant">{t.subheading}</p>
       </div>
 
+      {/* F11's multi-job counterpart (DECISIONS.md #45) — "what should I
+          learn next across every job I'm a fit for," distinct from the
+          one-job picker below, which answers "am I ready for this job." */}
+      <section className="rounded-xl border border-border-low-contrast bg-surface-card p-6">
+        <h2 className="mb-1 flex items-center gap-2 font-headline text-headline-md text-primary">
+          <span className="material-symbols-outlined text-secondary">insights</span>
+          {t.overallHeading}
+        </h2>
+        <p className="mb-4 text-body-sm text-on-surface-variant">
+          {overall?.hasProfileSignal === false ? t.overallSubheadingFallback : t.overallSubheadingMatched}
+        </p>
+        {overallLoading ? (
+          <p className="text-body-md text-on-surface-variant">{t.overallLoading}</p>
+        ) : !overall || overall.gap_summary.length === 0 ? (
+          <p className="text-body-md text-status-shortlisted">{t.overallEmpty}</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {overall.gap_summary.slice(0, 5).map((row) => (
+              <div
+                key={row.skill_id}
+                className="flex items-center justify-between gap-3 rounded-lg border border-border-low-contrast bg-surface-container-lowest px-4 py-3"
+              >
+                <span className="text-label-md font-semibold text-on-surface">{row.skill_name}</span>
+                <span className="whitespace-nowrap rounded-full bg-secondary-container px-3 py-1 text-label-sm font-bold text-on-secondary-container">
+                  {t.jobsNeedingIt(row.jobs_needing_it)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
       <label className="flex flex-col gap-2 text-label-md text-on-surface-variant">
         {t.jobLabel}
         <select
@@ -110,13 +215,21 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
           className="min-h-touch-target rounded border border-border-low-contrast bg-surface-container-lowest px-4 py-3 text-body-md focus:outline-none focus:ring-2 focus:ring-interactive"
         >
           <option value="">{t.choosePrompt}</option>
-          {jobs.map((job) => (
-            <option key={job.id} value={job.id}>
-              {job.title}
-              {job.location ? ` — ${job.location}` : ""}
-            </option>
-          ))}
+          {orderedJobs.map((job) => {
+            const similarity = jobFit.get(job.id);
+            const fitLabel = similarity != null ? ` (${Math.round(similarity * 100)}% ${t.fitSuffix})` : "";
+            return (
+              <option key={job.id} value={job.id}>
+                {job.title}
+                {job.location ? ` — ${job.location}` : ""}
+                {fitLabel}
+              </option>
+            );
+          })}
         </select>
+        {hasFitSignal && jobFit.size > 0 && (
+          <span className="text-body-sm text-on-surface-variant">{t.sortedByFit}</span>
+        )}
       </label>
 
       <ErrorBanner message={error} />
@@ -158,9 +271,23 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
                 {result.gap_skills.length === 0 ? (
                   <p className="text-body-md text-status-shortlisted">{t.allSkillsPresent}</p>
                 ) : (
-                  result.gap_skills.map((skill) => (
-                    <SkillChip key={skill.id} label={skill.name} acquired={false} />
-                  ))
+                  result.gap_skills.map((skill) => {
+                    // Semantic partial-credit layer (DECISIONS.md #45) — an
+                    // annotation on the chip, never a promotion to
+                    // acquired: the trainee still genuinely lacks this
+                    // exact skill, just has something close to it.
+                    const related = result.related_skills.find((r) => r.gap_skill_id === skill.id);
+                    return (
+                      <div key={skill.id} className="flex flex-col items-start gap-1">
+                        <SkillChip label={skill.name} acquired={false} />
+                        {related && (
+                          <p className="max-w-[16rem] text-label-sm text-on-surface-variant">
+                            {t.relatedToSkill(related.related_acquired_skill_name)}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })
                 )}
               </div>
             </section>

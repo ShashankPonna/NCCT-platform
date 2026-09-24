@@ -26,6 +26,10 @@ interface CandidateItem {
   avatarBg: string;
   initials: string;
   skills: string[];
+  // Real taxonomy skill ids (DECISIONS.md #45) — absent/empty for the
+  // hardcoded demo rows below, which aren't real, verifiable trainees and
+  // so correctly never match a real skill_id filter.
+  skillIds?: string[];
   course: string;
   institute: string;
   location: string;
@@ -162,12 +166,22 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
     getSkills(accessToken)
       .then(setSkills)
       .catch((err: Error) => setError(err.message));
-    // Initial fetch from backend if available
-    getEmployerTrainees(accessToken, {})
-      .then(setResults)
-      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Fetches real trainees from the backend on mount and re-fetches whenever
+  // a real taxonomy skill is selected (DECISIONS.md #45) — an exact
+  // server-side match, not just filtering whatever page of `results`
+  // happened to load initially. Reverts to the unfiltered fetch when "all"
+  // is chosen again. Failures here stay silent (`.catch(() => {})`,
+  // matching the original "if available" fetch this replaces) — the mock
+  // candidates below still render either way, this only affects the real
+  // rows merged in alongside them.
+  useEffect(() => {
+    getEmployerTrainees(accessToken, filterSkill !== "all" ? { skill_id: filterSkill } : {})
+      .then(setResults)
+      .catch(() => {});
+  }, [accessToken, filterSkill]);
 
   async function loadOwnJobs() {
     setError(null);
@@ -260,7 +274,11 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
       certId: r.certificates[0]?.certificate_code || `NCCT-2024-CERT-${100 + idx}`,
       avatarBg: "bg-primary-container text-on-primary",
       initials: (r.full_name || "CA").slice(0, 2).toUpperCase(),
-      skills: ["Certified Co-op Trainee"],
+      // Real taxonomy skills (DECISIONS.md #45) — falls back to a plain
+      // label only when this trainee genuinely has none tagged yet, rather
+      // than a fake placeholder claiming a skill that was never verified.
+      skills: r.skills.length > 0 ? r.skills.map((s) => s.name) : ["Certified Co-op Trainee"],
+      skillIds: r.skills.map((s) => s.id),
       course: r.certificates[0]?.programme_title || "NCCT Cooperative Certificate",
       institute: r.certificates[0]?.institution_name || "RICM Regional Center",
       location: r.certificates[0]?.institution_location || "National",
@@ -282,7 +300,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
         cand.location.toLowerCase().includes(q);
 
       const matchReg = filterRegion === "all" || cand.region === filterRegion;
-      const matchSkill = filterSkill === "all" || cand.specialization === filterSkill;
+      const matchSkill = filterSkill === "all" || (cand.skillIds ?? []).includes(filterSkill);
       const matchAvail =
         filterAvailability === "all" ||
         (filterAvailability === "immediate" && cand.availability === "Immediate") ||
@@ -467,11 +485,11 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                 className="w-full min-h-[48px] pl-10 pr-8 bg-surface-container-low text-on-surface rounded font-body-sm text-body-sm appearance-none focus:outline-none focus:ring-2 focus:ring-secondary-container border border-outline-variant/40 cursor-pointer"
               >
                 <option value="all">All Trade Specializations</option>
-                <option value="pacs">PACS Day-Book Accounting</option>
-                <option value="coldchain">Cold Chain Logistics</option>
-                <option value="tally">Tally Prime & GST</option>
-                <option value="milk">Milk Testing & Fat Analysis</option>
-                <option value="governance">Cooperative Governance & By-laws</option>
+                {skills.map((skill) => (
+                  <option key={skill.id} value={skill.id}>
+                    {skill.name}
+                  </option>
+                ))}
               </select>
               <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[20px]">
                 expand_more
@@ -521,7 +539,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
           )}
           {filterSkill !== "all" && (
             <span className="inline-flex items-center gap-1.5 px-space-sm py-1 rounded bg-surface-container text-primary font-body-sm text-body-sm font-medium">
-              Specialization: {filterSkill.toUpperCase()}
+              Skill: {skills.find((s) => s.id === filterSkill)?.name ?? filterSkill}
               <button type="button" onClick={() => setFilterSkill("all")} className="hover:text-error flex items-center">
                 <span className="material-symbols-outlined text-[16px]">close</span>
               </button>

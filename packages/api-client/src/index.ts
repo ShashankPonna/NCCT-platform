@@ -34,6 +34,7 @@ import type {
   QuestionOption,
   Role,
   Skill,
+  SkillGapAcrossJobsResult,
   SkillGapResult,
   TimetableSession,
   TraineeSearchResult,
@@ -658,11 +659,14 @@ export function createJob(
 
 export function getEmployerTrainees(
   accessToken: string,
-  filters?: { q?: string; location?: string },
+  filters?: { q?: string; location?: string; skill_id?: string },
 ) {
   const params = new URLSearchParams();
   if (filters?.q) params.set("q", filters.q);
   if (filters?.location) params.set("location", filters.location);
+  // Exact taxonomy match (DECISIONS.md #45) — `q` above stays a fuzzy
+  // free-text match, this is the precise sibling.
+  if (filters?.skill_id) params.set("skill_id", filters.skill_id);
   const qs = params.toString();
   return apiFetch<TraineeSearchResult[]>(`/employer/trainees${qs ? `?${qs}` : ""}`, accessToken);
 }
@@ -837,6 +841,24 @@ export function setProgrammeSkills(accessToken: string, programmeId: string, ski
 
 export function getSkillGap(accessToken: string, jobId: string) {
   return apiFetch<SkillGapResult>(`/skill-gap/${jobId}`, accessToken);
+}
+
+// F11's multi-job counterpart (DECISIONS.md #45).
+export function getSkillGapAcrossJobs(accessToken: string) {
+  return apiFetch<SkillGapAcrossJobsResult>("/skill-gap/mine", accessToken);
+}
+
+// A course's granted skills — the finer-grained sibling of
+// get/setProgrammeSkills above (DECISIONS.md #45).
+export function getCourseSkills(accessToken: string, courseId: string) {
+  return apiFetch<Skill[]>(`/courses/${courseId}/skills`, accessToken);
+}
+
+export function setCourseSkills(accessToken: string, courseId: string, skillIds: string[]) {
+  return apiFetch<void>(`/courses/${courseId}/skills`, accessToken, {
+    method: "PUT",
+    body: { skill_ids: skillIds },
+  });
 }
 
 // P2 AI Career Counsellor (DECISIONS.md #27).

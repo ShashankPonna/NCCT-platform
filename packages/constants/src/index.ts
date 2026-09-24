@@ -98,6 +98,23 @@ export const CHATBOT_MIN_SIMILARITY = 0.25;
 // chatbot where an irrelevant answer would be actively misleading.
 export const JOB_MATCH_COUNT = 10;
 
+// F11 Skill-Gap Analysis's semantic partial-credit layer (DECISIONS.md #45):
+// a gap skill is flagged as "related to a skill you already have" when its
+// embedding similarity to the trainee's closest acquired skill clears this
+// floor. Calibrated against real sample pairs on this exact model
+// (EMBEDDING_MODEL above), not guessed: genuinely-related-but-distinct
+// skills (e.g. "Bookkeeping"/"Accounting" at 0.60, "Welding"/"Fabrication"
+// at 0.42, "Communication Skills"/"Public Speaking" at 0.45) clustered
+// above 0.40, while unrelated pairs (e.g. "Bookkeeping"/"Welding" at 0.11)
+// sat below 0.22 — a clear gap in between. Same category of hand-tuned,
+// not-measured-optimum starting point as FACE_MATCH_THRESHOLD. Note this
+// model does NOT consider a skill and the software that's used to perform
+// it as related by default — "Bookkeeping"/"Tally Prime" measured only
+// 0.14, below this floor — so that specific pairing will not surface as a
+// partial match; a domain-specific synonym list would catch that case,
+// this floor catches conceptually-adjacent skill names instead.
+export const SKILL_SEMANTIC_SIMILARITY_THRESHOLD = 0.4;
+
 // P6 Deep Training & Learning Analytics — dropout-risk flagging
 // (DECISIONS.md #29). Hand-tuned starting points, not measured optima —
 // same category of judgment call as FACE_MATCH_THRESHOLD/

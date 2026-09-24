@@ -2,25 +2,30 @@ import {
   createCourse,
   createLesson,
   createModule,
+  createSkill,
   getCourses,
+  getCourseSkills,
   getLessonContentUrl,
   getLessons,
   getLessonVideoUploadUrl,
   getLessonVideoUrl,
   getModules,
   getProgrammes,
+  getSkills,
+  setCourseSkills,
   updateLesson,
   uploadLessonContent,
   uploadLessonVideoFile,
   upsertLessonTranslation,
 } from "@ncct/api-client";
 import { LESSON_VIDEO_MIME_TYPES, SUGGESTED_LOCALES } from "@ncct/constants";
-import type { ContentType, Course, Lesson, Module, Programme } from "@ncct/shared-types";
+import type { ContentType, Course, Lesson, Module, Programme, Skill } from "@ncct/shared-types";
 import { createLessonSchema, localeSchema, youtubeVideoIdSchema } from "@ncct/validation";
 import { useEffect, useState } from "react";
 import { AssessmentBuilder } from "./AssessmentBuilder.js";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { SelfHostedVideoPlayer } from "./SelfHostedVideoPlayer.js";
+import { SkillPicker } from "./SkillPicker.js";
 import { YouTubeVideoPlayer } from "./YouTubeVideoPlayer.js";
 
 interface AdminCourseManagerProps {
@@ -68,6 +73,13 @@ interface AdminCourseManagerText {
   noContentYet: string;
   cannotPreviewInline: string;
   openInNewTab: string;
+  skillsGranted: (count: number) => string;
+  hideSkillsGranted: string;
+  skillsGrantedBody: string;
+  newSkillPlaceholder: string;
+  addToTaxonomy: string;
+  saveSkills: string;
+  saving: string;
   attachFile: string;
   uploading: string;
   fileAttached: string;
@@ -128,6 +140,14 @@ const content: Record<Locale, AdminCourseManagerText> = {
     noContentYet: "Nothing uploaded yet.",
     cannotPreviewInline: "This file type can't be previewed inline.",
     openInNewTab: "Open in new tab",
+    skillsGranted: (count) => `Skills Granted (${count})`,
+    hideSkillsGranted: "Hide Skills",
+    skillsGrantedBody:
+      "A trainee who earns a certificate for this specific course is read as having acquired every skill tagged here, in addition to anything tagged on the whole programme — this is what the Skill-Gap Check compares a job's required skills against.",
+    newSkillPlaceholder: "New skill, e.g. Bookkeeping",
+    addToTaxonomy: "Add to Taxonomy",
+    saveSkills: "Save Skills",
+    saving: "Saving...",
     attachFile: "Attach File:",
     uploading: "Uploading…",
     fileAttached: "File attached",
@@ -186,6 +206,14 @@ const content: Record<Locale, AdminCourseManagerText> = {
     noContentYet: "अभी तक कुछ भी अपलोड नहीं किया गया है।",
     cannotPreviewInline: "इस फ़ाइल प्रकार का इनलाइन पूर्वावलोकन नहीं किया जा सकता।",
     openInNewTab: "नए टैब में खोलें",
+    skillsGranted: (count) => `प्रदत्त कौशल (${count})`,
+    hideSkillsGranted: "कौशल छिपाएं",
+    skillsGrantedBody:
+      "जो प्रशिक्षणार्थी इस विशिष्ट पाठ्यक्रम के लिए प्रमाणपत्र अर्जित करता है, उसे यहां टैग किए गए हर कौशल को — पूरे कार्यक्रम पर टैग किए गए कौशलों के अतिरिक्त — अर्जित माना जाता है। कौशल-अंतर जांच किसी नौकरी के आवश्यक कौशलों की तुलना इसी से करती है।",
+    newSkillPlaceholder: "नया कौशल, उदा. बहीखाता",
+    addToTaxonomy: "वर्गीकरण में जोड़ें",
+    saveSkills: "कौशल सहेजें",
+    saving: "सहेजा जा रहा है...",
     attachFile: "फ़ाइल संलग्न करें:",
     uploading: "अपलोड हो रहा है…",
     fileAttached: "फ़ाइल संलग्न है",
@@ -252,6 +280,17 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
   // state — unlike video's B2 presigned-PUT path).
   const [fileUploading, setFileUploading] = useState<Record<string, boolean>>({});
 
+  // Course-level "Skills Granted" (DECISIONS.md #45) — the finer-grained
+  // sibling of AdminProgrammeManager.tsx's whole-programme skills section.
+  // Content-authoring, so admin+trainer here, matching this file's own
+  // existing access model rather than AdminProgrammeManager's admin-only
+  // gate on programme-wide grants.
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [courseSkillIds, setCourseSkillIds] = useState<Set<string>>(new Set());
+  const [newSkillName, setNewSkillName] = useState("");
+  const [savingCourseSkills, setSavingCourseSkills] = useState(false);
+  const [showCourseSkills, setShowCourseSkills] = useState(false);
+
   useEffect(() => {
     getProgrammes(accessToken)
       .then((progs) => {
@@ -260,6 +299,9 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
           void handleSelectProgramme(progs[0].id);
         }
       })
+      .catch((err: Error) => setError(err.message));
+    getSkills(accessToken)
+      .then(setSkills)
       .catch((err: Error) => setError(err.message));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken]);
@@ -286,13 +328,54 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
     setSelectedCourseId(courseId);
     setSelectedModuleId(null);
     setLessons([]);
+    setShowCourseSkills(false);
     setError(null);
     try {
-      const mods = await getModules(accessToken, courseId);
+      const [mods, courseSkills] = await Promise.all([
+        getModules(accessToken, courseId),
+        getCourseSkills(accessToken, courseId),
+      ]);
       setModules(mods);
+      setCourseSkillIds(new Set(courseSkills.map((s) => s.id)));
       if (mods.length > 0) {
         await handleSelectModule(mods[0].id);
       }
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  function toggleCourseSkill(skillId: string) {
+    setCourseSkillIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(skillId)) next.delete(skillId);
+      else next.add(skillId);
+      return next;
+    });
+  }
+
+  async function handleSaveCourseSkills() {
+    if (!selectedCourseId) return;
+    setError(null);
+    setSavingCourseSkills(true);
+    try {
+      await setCourseSkills(accessToken, selectedCourseId, [...courseSkillIds]);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSavingCourseSkills(false);
+    }
+  }
+
+  async function handleCreateSkill() {
+    const name = newSkillName.trim();
+    if (!name) return;
+    setError(null);
+    try {
+      const skill = await createSkill(accessToken, { name });
+      setSkills((prev) => [...prev, skill].sort((a, b) => a.name.localeCompare(b.name)));
+      setCourseSkillIds((prev) => new Set(prev).add(skill.id));
+      setNewSkillName("");
     } catch (err) {
       setError((err as Error).message);
     }
@@ -638,9 +721,60 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
               )}
             </div>
 
-            <div className="font-label-sm text-label-sm text-on-surface-variant mb-4 pb-2 border-b border-outline-variant truncate">
+            <div className="font-label-sm text-label-sm text-on-surface-variant mb-2 pb-2 border-b border-outline-variant truncate">
               {selectedCourse ? t.inContext(selectedCourse.title) : t.selectACourse}
             </div>
+
+            {/* Skills Granted (P1 Skill-Gap Analysis, DECISIONS.md #45) —
+                course-level, finer-grained sibling of
+                AdminProgrammeManager.tsx's whole-programme section. */}
+            {selectedCourseId && (
+              <div className="mb-4 pb-3 border-b border-outline-variant">
+                <button
+                  type="button"
+                  onClick={() => setShowCourseSkills((prev) => !prev)}
+                  className="text-xs text-cta hover:underline font-semibold"
+                >
+                  {showCourseSkills ? t.hideSkillsGranted : t.skillsGranted(courseSkillIds.size)}
+                </button>
+                {showCourseSkills && (
+                  <div className="mt-3 space-y-2">
+                    <p className="font-body-sm text-xs text-on-surface-variant">{t.skillsGrantedBody}</p>
+                    <SkillPicker skills={skills} selectedIds={courseSkillIds} onToggle={toggleCourseSkill} />
+                    <div className="flex gap-2">
+                      <input
+                        value={newSkillName}
+                        onChange={(e) => setNewSkillName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            void handleCreateSkill();
+                          }
+                        }}
+                        placeholder={t.newSkillPlaceholder}
+                        className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 text-xs focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                        type="text"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void handleCreateSkill()}
+                        className="px-3 h-touch-target bg-surface-container-highest text-on-surface rounded-lg font-label-sm text-xs hover:bg-surface-variant cursor-pointer whitespace-nowrap"
+                      >
+                        {t.addToTaxonomy}
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void handleSaveCourseSkills()}
+                      disabled={savingCourseSkills}
+                      className="px-4 py-2 rounded-lg font-label-sm text-xs bg-cta text-on-primary min-h-[36px] hover:bg-cta-hover shadow-sm disabled:opacity-50"
+                    >
+                      {savingCourseSkills ? t.saving : t.saveSkills}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Inline Add Module */}
             {showAddModule && (

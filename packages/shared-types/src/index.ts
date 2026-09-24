@@ -395,6 +395,33 @@ export interface DashboardAnalytics {
     byLevel: { level: DropoutRiskLevel; count: number }[];
     flagged: DropoutRiskFlag[];
   };
+  // P1 Skill-Gap Analysis's institution-wide counterpart (DECISIONS.md #43):
+  // a single trainee's "Skill-Gap Check" only ever compares against one job
+  // at a time (PRD §6.11's scope). This surfaces the same underlying data
+  // — job_skills (demand) and programme_skills+certificates (supply) — one
+  // level up, across every job and every trainee at once, so an admin can
+  // see which taxonomy skills are most worth building a new programme
+  // around, not just what one trainee is missing for one job.
+  skillDemand: {
+    topShortages: SkillDemandRow[];
+  };
+}
+
+export interface SkillDemandRow {
+  skillId: string;
+  skillName: string;
+  category: string | null;
+  // Number of distinct job postings tagged with this skill.
+  demand: number;
+  // Number of distinct trainees who hold this skill via an issued
+  // certificate under a programme tagged with it (same acquisition rule
+  // skillGapService.getAcquiredSkillIds uses for a single trainee).
+  supply: number;
+  // demand - supply. Positive means more job postings want it than
+  // trainees currently have it — the training-need signal. Can be negative
+  // (oversupply relative to current job postings), which is meaningful too,
+  // not filtered out.
+  shortage: number;
 }
 
 export interface DropoutRiskFlag {
@@ -412,11 +439,13 @@ export interface DropoutRiskFlag {
   riskLevel: DropoutRiskLevel;
 }
 
-// A trainee's "skill"/"certification" search result — there's no dedicated
-// skills taxonomy in the schema (see docs/DATABASE.md's Open Items), so this
-// is derived by matching a keyword against the titles of programmes/
-// institutions behind a trainee's earned certificates, not a first-class
-// profile field.
+// A trainee's "skill"/"certification" search result. `skills` (DECISIONS.md
+// #45, unifying this with F11's taxonomy) is the trainee's real acquired
+// skills — same acquisition rule skillGapService.getAcquiredSkillIds uses —
+// alongside the pre-existing free-text match against programme/institution
+// titles, which is kept rather than replaced: not every certified programme
+// is taxonomy-tagged yet, so dropping the text match would silently lose
+// real matches for those.
 export interface TraineeSearchResult {
   trainee_id: string;
   full_name: string;
@@ -427,6 +456,7 @@ export interface TraineeSearchResult {
     institution_location: string | null;
     issued_at: string;
   }[];
+  skills: Skill[];
 }
 
 // P1 Skill-Gap Analysis (PRD §6.11, promoted from Phase-2 — see
@@ -450,10 +480,51 @@ export interface SkillGapReasoningItem {
   reason: string;
 }
 
+// Semantic partial-credit layer over the gap (DECISIONS.md #45): a gap
+// skill whose embedding is close enough to one the trainee already holds
+// (anywhere in their profile, not just this job) — e.g. a trainee with
+// "Accounting" checking a job that needs "Bookkeeping". Never promotes the
+// skill into `acquired_skills` (the trainee doesn't literally hold it), so
+// it's a distinct field the UI annotates the gap chip with, not a change to
+// the gap itself. Empty array, not null, when nothing clears the
+// similarity floor — there's no failure state here worth a `null`
+// (unlike `reasoning`, which depends on an external model call).
+export interface RelatedSkillMatch {
+  gap_skill_id: string;
+  gap_skill_name: string;
+  related_acquired_skill_id: string;
+  related_acquired_skill_name: string;
+  similarity: number;
+}
+
 export interface SkillGapResult {
   acquired_skills: Skill[];
   gap_skills: Skill[];
   reasoning: SkillGapReasoningItem[] | null;
+  related_skills: RelatedSkillMatch[];
+}
+
+// F11's multi-job counterpart (DECISIONS.md #45) — the PRD-scoped "one job
+// at a time" check answers "am I ready for this job"; this answers "what
+// should I learn next, across every job I'm actually a realistic fit for."
+// The job set is F13's own top-match list for this trainee (or, with no
+// profile signal yet, the newest open postings — see `hasProfileSignal`),
+// never every job ever posted.
+export interface SkillGapAcrossJobsResult {
+  jobs: { id: string; title: string }[];
+  gap_summary: {
+    skill_id: string;
+    skill_name: string;
+    category: string | null;
+    // How many of `jobs` above tag this skill — the "learn this once,
+    // close N gaps" signal, sorted descending.
+    jobs_needing_it: number;
+    job_ids: string[];
+  }[];
+  // false when there's no certificate/skill profile yet to rank jobs by
+  // fit, so `jobs` falls back to the newest open postings instead — same
+  // distinct non-error state F13's JobMatchesResult already uses.
+  hasProfileSignal: boolean;
 }
 
 // P2 AI Career Counsellor (PRD §6.12, promoted from Phase-2 — see
