@@ -72,9 +72,13 @@ programmeTrainersRouter.get(
   requireAuth,
   requireRole("admin"),
   async (req, res) => {
+    // `programme_trainers` has two FKs into `profiles` (`trainer_id` and
+    // `assigned_by`), so a bare `profiles(full_name)` embed is ambiguous to
+    // PostgREST ("Could not embed because more than one relationship was
+    // found") — `!trainer_id` hints which one to embed through.
     const { data, error } = await supabaseAdmin
       .from("programme_trainers")
-      .select("programme_id, trainer_id, assigned_by, assigned_at, profiles(full_name)")
+      .select("programme_id, trainer_id, assigned_by, assigned_at, profiles!trainer_id(full_name)")
       .eq("programme_id", req.params.id)
       .order("assigned_at", { ascending: true });
 
