@@ -283,8 +283,10 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
       setCourses(await getCourses(accessToken, id));
       setSelectedCourseId(null);
       setModules([]);
+      setSelectedModuleId(null);
       setLessons([]);
       setSelectedLesson(null);
+      quiz.closeAssessment();
     } catch (err) {
       setError((err as Error).message);
     }
@@ -476,7 +478,11 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
           {myProgrammes.length > 0 ? (
             <select
               value={programmeId}
-              onChange={(e) => e.target.value && loadCourses(e.target.value)}
+              onChange={(e) => {
+                const id = e.target.value;
+                setProgrammeId(id);
+                if (id) void loadCourses(id);
+              }}
               className="min-h-touch-target w-full rounded border border-border-low-contrast bg-surface-container-lowest px-4 py-3 text-body-md focus:outline-none focus:ring-2 focus:ring-interactive"
             >
               {myProgrammes.map((nom) => (
