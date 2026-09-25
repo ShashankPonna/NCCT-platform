@@ -18,6 +18,9 @@ export const NOMINATION_DECISIONS = ["approved", "waitlisted", "rejected"] as co
 
 export const CONTENT_TYPES = ["video", "pdf", "slides", "text", "interactive"] as const;
 
+// docs/DECISIONS.md #64 — reference data only, no capacity logic keys off it.
+export const HOSTEL_ROOM_TYPES = ["dorm", "shared", "single"] as const;
+
 // YouTube video IDs are always exactly 11 URL-safe characters.
 export const YOUTUBE_VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 

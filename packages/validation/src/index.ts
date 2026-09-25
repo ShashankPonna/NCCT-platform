@@ -3,6 +3,7 @@ import {
   CHATBOT_SOURCE_TYPES,
   CONTENT_TYPES,
   FACE_EMBEDDING_DIMENSIONS,
+  HOSTEL_ROOM_TYPES,
   JOB_INTEREST_STATUSES,
   LOCALE_PATTERN,
   MAX_QUESTION_OPTIONS,
@@ -117,8 +118,48 @@ export const createProgrammeSchema = z.object({
 
 export const updateProgrammeSchema = createProgrammeSchema.partial();
 
-export const decideNominationSchema = z.object({
-  status: z.enum(NOMINATION_DECISIONS),
+const hostelNotesSchema = z.string().trim().max(500);
+
+// A room can optionally be assigned in the same action as approving
+// (docs/DECISIONS.md #64) — only when approving, since a waitlisted or
+// rejected trainee isn't attending and has nowhere to stay.
+export const decideNominationSchema = z
+  .object({
+    status: z.enum(NOMINATION_DECISIONS),
+    hostel_room_id: z.string().uuid().optional(),
+    hostel_notes: hostelNotesSchema.optional(),
+  })
+  .refine((body) => !body.hostel_room_id || body.status === "approved", {
+    message: "A hostel room can only be assigned when approving",
+    path: ["hostel_room_id"],
+  });
+
+export const createHostelSchema = z.object({
+  name: z.string().trim().min(1),
+  notes: hostelNotesSchema.nullable().optional(),
+});
+
+export const updateHostelSchema = createHostelSchema
+  .partial()
+  .refine((body) => Object.keys(body).length > 0, {
+    message: "At least one field must be provided",
+  });
+
+export const createHostelRoomSchema = z.object({
+  room_number: z.string().trim().min(1).max(20),
+  capacity: z.number().int().positive().max(100).optional(),
+  type: z.enum(HOSTEL_ROOM_TYPES),
+});
+
+export const updateHostelRoomSchema = createHostelRoomSchema
+  .partial()
+  .refine((body) => Object.keys(body).length > 0, {
+    message: "At least one field must be provided",
+  });
+
+export const assignHostelRoomSchema = z.object({
+  room_id: z.string().uuid(),
+  notes: hostelNotesSchema.nullable().optional(),
 });
 
 export const createTimetableSessionSchema = z

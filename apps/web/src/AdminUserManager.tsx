@@ -11,6 +11,7 @@ import {
 } from "@ncct/api-client";
 import { ROLES } from "@ncct/constants";
 import type { AdminUserRow, BulkImportResult, Institution, Role } from "@ncct/shared-types";
+import { AdminHostelManager } from "./AdminHostelManager.js";
 import { useEffect, useRef, useState } from "react";
 
 interface AdminUserManagerProps {
@@ -913,6 +914,8 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
               </span>
             </div>
           </div>
+
+          <AdminHostelManager accessToken={accessToken} institutions={institutions} />
         </div>
 
         {/* COLUMN 2 */}

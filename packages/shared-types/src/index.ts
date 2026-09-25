@@ -5,6 +5,7 @@ import type {
   CONTENT_TYPES,
   DROPOUT_RISK_LEVELS,
   FACE_REC_MODELS,
+  HOSTEL_ROOM_TYPES,
   INTERACTIVE_EXERCISE_TYPES,
   JOB_INTEREST_STATUSES,
   NOMINATION_DECISIONS,
@@ -27,6 +28,7 @@ export type FaceRecModel = (typeof FACE_REC_MODELS)[number];
 export type JobInterestStatus = (typeof JOB_INTEREST_STATUSES)[number];
 export type DropoutRiskLevel = (typeof DROPOUT_RISK_LEVELS)[number];
 export type ChatbotSourceType = (typeof CHATBOT_SOURCE_TYPES)[number];
+export type HostelRoomType = (typeof HOSTEL_ROOM_TYPES)[number];
 
 export interface Institution {
   id: string;
@@ -124,6 +126,55 @@ export interface NominationWithTrainee extends Nomination {
   trainee_name: string | null;
   trainee_phone: string | null;
   trainee_cooperative_affiliation: string | null;
+  // The trainee's hostel room for this programme, if an admin assigned one
+  // (docs/DECISIONS.md #64). All three null together when unassigned.
+  hostel_room_id: string | null;
+  hostel_name: string | null;
+  hostel_room_number: string | null;
+}
+
+// Hostel/logistics reference data (docs/DECISIONS.md #64) — record-keeping
+// only, no capacity or availability logic.
+export interface Hostel {
+  id: string;
+  institution_id: string;
+  name: string;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface HostelRoom {
+  id: string;
+  hostel_id: string;
+  room_number: string;
+  capacity: number;
+  type: HostelRoomType;
+  created_at: string;
+}
+
+export interface HostelWithRooms extends Hostel {
+  hostel_rooms: HostelRoom[];
+}
+
+export interface TraineeHostelAssignment {
+  id: string;
+  trainee_id: string;
+  room_id: string;
+  programme_id: string;
+  assigned_on: string;
+  assigned_by: string | null;
+  notes: string | null;
+}
+
+// A trainee's own read-only view of where they're staying, per programme.
+export interface MyHostelAssignment {
+  programme_id: string;
+  programme_title: string | null;
+  hostel_name: string | null;
+  room_number: string | null;
+  room_type: HostelRoomType | null;
+  assigned_on: string;
+  notes: string | null;
 }
 
 export interface TimetableSession {

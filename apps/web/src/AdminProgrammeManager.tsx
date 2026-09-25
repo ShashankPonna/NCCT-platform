@@ -1,9 +1,11 @@
 import {
+  assignHostelRoom,
   assignProgrammeTrainer,
   createProgramme,
   createSkill,
   createTimetableSession,
   decideNomination,
+  getHostels,
   getInstitutions,
   getProgrammeNominations,
   getProgrammes,
@@ -13,11 +15,13 @@ import {
   getTimetableSessions,
   listUsers,
   setProgrammeSkills,
+  unassignHostelRoom,
   unassignProgrammeTrainer,
 } from "@ncct/api-client";
 import { PROGRAMME_MODES } from "@ncct/constants";
 import type {
   AdminUserRow,
+  HostelWithRooms,
   Institution,
   NominationDecision,
   NominationWithTrainee,
@@ -71,6 +75,12 @@ interface AdminProgrammeManagerText {
   approve: string;
   waitlist: string;
   rejectTitle: string;
+  hostelRoomLabel: string;
+  noRoom: string;
+  saveRoom: string;
+  roomAssignedOnApprove: string;
+  roomOption: (hostel: string, room: string) => string;
+  assignedRoom: (hostel: string, room: string) => string;
   timetableHeading: (count: number) => string;
   cancel: string;
   addSession: string;
@@ -155,6 +165,12 @@ const content: Record<Locale, AdminProgrammeManagerText> = {
     approve: "Approve",
     waitlist: "Waitlist",
     rejectTitle: "Reject nomination",
+    hostelRoomLabel: "Hostel room",
+    noRoom: "No room",
+    saveRoom: "Save room",
+    roomAssignedOnApprove: "Assigned when you approve",
+    roomOption: (hostel, room) => `${hostel} — Room ${room}`,
+    assignedRoom: (hostel, room) => `${hostel} · Room ${room}`,
     timetableHeading: (count) => `Timetable (${count} sessions)`,
     cancel: "Cancel",
     addSession: "Add Session",
@@ -240,6 +256,12 @@ const content: Record<Locale, AdminProgrammeManagerText> = {
     approve: "स्वीकृत करें",
     waitlist: "प्रतीक्षा सूची में डालें",
     rejectTitle: "नामांकन अस्वीकार करें",
+    hostelRoomLabel: "छात्रावास कक्ष",
+    noRoom: "कोई कक्ष नहीं",
+    saveRoom: "कक्ष सहेजें",
+    roomAssignedOnApprove: "स्वीकृत करने पर आवंटित होगा",
+    roomOption: (hostel, room) => `${hostel} — कक्ष ${room}`,
+    assignedRoom: (hostel, room) => `${hostel} · कक्ष ${room}`,
     timetableHeading: (count) => `समय-सारणी (${count} सत्र)`,
     cancel: "रद्द करें",
     addSession: "सत्र जोड़ें",
@@ -330,6 +352,24 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
   const [trainerToAssign, setTrainerToAssign] = useState("");
   const [assigningTrainer, setAssigningTrainer] = useState(false);
 
+  // Hostel room assignment (docs/DECISIONS.md #64) — admin-only, rooms of
+  // the selected programme's own institution. `roomChoice` is the dropdown
+  // value per nomination id, before it's saved.
+  const [hostels, setHostels] = useState<HostelWithRooms[]>([]);
+  const [roomChoice, setRoomChoice] = useState<Record<string, string>>({});
+  const selectedInstitutionId = programmes.find((p) => p.id === selectedProgrammeId)?.institution_id;
+
+  useEffect(() => {
+    if (!isAdmin || !selectedInstitutionId) return;
+    getHostels(accessToken, selectedInstitutionId)
+      .then(setHostels)
+      .catch((err: Error) => setError(err.message));
+  }, [accessToken, isAdmin, selectedInstitutionId]);
+
+  const roomOptions = hostels.flatMap((hostel) =>
+    hostel.hostel_rooms.map((room) => ({ id: room.id, label: t.roomOption(hostel.name, room.room_number) })),
+  );
+
   useEffect(() => {
     getInstitutions(accessToken)
       .then(setInstitutions)
@@ -361,6 +401,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
 
   async function selectProgramme(programmeId: string) {
     setSelectedProgrammeId(programmeId);
+    setRoomChoice({});
     setError(null);
     try {
       const [noms, sess, progSkills] = await Promise.all([
@@ -471,9 +512,38 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
   async function handleDecide(nominationId: string, status: NominationDecision) {
     if (!selectedProgrammeId) return;
     setError(null);
+    const roomId = roomChoice[nominationId];
     try {
-      await decideNomination(accessToken, selectedProgrammeId, nominationId, status);
+      await decideNomination(
+        accessToken,
+        selectedProgrammeId,
+        nominationId,
+        status,
+        status === "approved" && roomId ? { room_id: roomId } : undefined,
+      );
       setNominations(await getProgrammeNominations(accessToken, selectedProgrammeId));
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  // For a trainee who's already approved: assign, change, or clear the room.
+  async function handleSaveRoom(nom: NominationWithTrainee) {
+    if (!selectedProgrammeId) return;
+    const roomId = roomChoice[nom.id] ?? nom.hostel_room_id ?? "";
+    setError(null);
+    try {
+      if (roomId) {
+        await assignHostelRoom(accessToken, selectedProgrammeId, nom.trainee_id, { room_id: roomId });
+      } else if (nom.hostel_room_id) {
+        await unassignHostelRoom(accessToken, selectedProgrammeId, nom.trainee_id);
+      }
+      setNominations(await getProgrammeNominations(accessToken, selectedProgrammeId));
+      setRoomChoice((prev) => {
+        const next = { ...prev };
+        delete next[nom.id];
+        return next;
+      });
     } catch (err) {
       setError((err as Error).message);
     }
@@ -750,6 +820,12 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                                     {nom.decided_at &&
                                       ` · ${t.decidedOn(new Date(nom.decided_at).toLocaleDateString(dateLocale))}`}
                                   </p>
+                                  {nom.hostel_name && nom.hostel_room_number && (
+                                    <p className="flex items-center gap-1 text-[11px] text-[#00236F] font-semibold m-0 mt-1">
+                                      <span className="material-symbols-outlined text-[14px]">bed</span>
+                                      {t.assignedRoom(nom.hostel_name, nom.hostel_room_number)}
+                                    </p>
+                                  )}
                                 </div>
                               </div>
                               <span
@@ -795,6 +871,40 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                                 >
                                   <span className="material-symbols-outlined text-[16px]">close</span>
                                 </button>
+                              </div>
+                            )}
+
+                            {/* Hostel room (docs/DECISIONS.md #64) — optional,
+                                admin-only; no capacity checks by design. */}
+                            {isAdmin && roomOptions.length > 0 && nom.status !== "rejected" && (
+                              <div className="flex items-center gap-2">
+                                <select
+                                  value={roomChoice[nom.id] ?? nom.hostel_room_id ?? ""}
+                                  onChange={(e) =>
+                                    setRoomChoice((prev) => ({ ...prev, [nom.id]: e.target.value }))
+                                  }
+                                  aria-label={t.hostelRoomLabel}
+                                  className="flex-1 min-w-0 h-8 px-2 bg-white text-ink text-xs rounded-lg border border-border-slate outline-none focus:border-[#00236F]"
+                                >
+                                  <option value="">{t.noRoom}</option>
+                                  {roomOptions.map((option) => (
+                                    <option key={option.id} value={option.id}>
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </select>
+                                {nom.status === "approved" ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => void handleSaveRoom(nom)}
+                                    disabled={(roomChoice[nom.id] ?? nom.hostel_room_id ?? "") === (nom.hostel_room_id ?? "")}
+                                    className="h-8 px-3 shrink-0 bg-[#00236F] hover:bg-[#001b54] text-white disabled:opacity-40 rounded-lg text-xs font-bold cursor-pointer"
+                                  >
+                                    {t.saveRoom}
+                                  </button>
+                                ) : (
+                                  <span className="text-[10px] text-slate-500 shrink-0">{t.roomAssignedOnApprove}</span>
+                                )}
                               </div>
                             )}
                           </div>

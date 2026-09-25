@@ -57,7 +57,7 @@ Cooperative training programmes (for PACS members, SHGs, dairy cooperatives, far
 13. **AI Job Matching** — promoted from Phase-2 into MVP scope, see [docs/DECISIONS.md](DECISIONS.md) #28. Ranked, embedding-based: jobs are embedded (title/description/tagged skills) and a trainee's own certificates/skills are embedded fresh per request, ranked by cosine similarity via pgvector. Shown on the trainee's job board as "Best Matches for You," with a distinct low-signal state when the trainee has no certificates/skills yet.
 14. **Deep Training & Learning Analytics (dropout-risk)** — promoted from Phase-2 into MVP scope, see [docs/DECISIONS.md](DECISIONS.md) #29. A heuristic risk flag (not a trained model — no historical dropout data exists yet to train one) per approved-nomination trainee, from lesson-completion rate, timetable-attendance rate, days since any activity, and failed assessment attempts. Surfaced on the Admin Analytics Dashboard (§6.8) as a new dimension, not a separate screen.
 
-**Explicitly out of MVP**: hostel/logistics management (roadmap only).
+**Explicitly out of MVP**: hostel/logistics management (roadmap only) — **except** a deliberately minimal, software-only slice promoted into scope by [docs/DECISIONS.md](DECISIONS.md) #64: admin-maintained hostel/room reference data per institution, and manual room assignment when (or after) approving a nomination, shown read-only on the trainee's private profile. Room availability/capacity enforcement, booking/waitlists, check-in/check-out, transport/logistics, and any hardware integration all remain out of scope.
 
 ## 7. Non-Functional Requirements
 

@@ -22,7 +22,13 @@ import type {
   ContentType,
   Course,
   InteractiveConfig,
+  Hostel,
+  HostelRoom,
+  HostelRoomType,
+  HostelWithRooms,
   Institution,
+  MyHostelAssignment,
+  TraineeHostelAssignment,
   Job,
   JobInterest,
   JobInterestStatus,
@@ -245,17 +251,90 @@ export function getProgrammeNominations(accessToken: string, programmeId: string
   return apiFetch<NominationWithTrainee[]>(`/programmes/${programmeId}/nominations`, accessToken);
 }
 
+// `hostel` optionally assigns a room in the same action — only accepted by
+// the API when `status` is "approved" (docs/DECISIONS.md #64).
 export function decideNomination(
   accessToken: string,
   programmeId: string,
   nominationId: string,
   status: NominationDecision,
+  hostel?: { room_id: string; notes?: string },
 ) {
   return apiFetch<Nomination>(
     `/programmes/${programmeId}/nominations/${nominationId}`,
     accessToken,
-    { method: "PATCH", body: { status } },
+    {
+      method: "PATCH",
+      body: {
+        status,
+        ...(hostel ? { hostel_room_id: hostel.room_id, hostel_notes: hostel.notes } : {}),
+      },
+    },
   );
+}
+
+// Hostel/logistics reference data (docs/DECISIONS.md #64) — admin-only
+// record-keeping; no capacity or availability logic anywhere.
+export interface HostelInput {
+  name: string;
+  notes?: string | null;
+}
+
+export interface HostelRoomInput {
+  room_number: string;
+  type: HostelRoomType;
+  capacity?: number;
+}
+
+export function getHostels(accessToken: string, institutionId: string) {
+  return apiFetch<HostelWithRooms[]>(`/institutions/${institutionId}/hostels`, accessToken);
+}
+
+export function createHostel(accessToken: string, institutionId: string, body: HostelInput) {
+  return apiFetch<Hostel>(`/institutions/${institutionId}/hostels`, accessToken, { method: "POST", body });
+}
+
+export function updateHostel(accessToken: string, hostelId: string, body: Partial<HostelInput>) {
+  return apiFetch<Hostel>(`/hostels/${hostelId}`, accessToken, { method: "PATCH", body });
+}
+
+export function deleteHostel(accessToken: string, hostelId: string) {
+  return apiFetch<void>(`/hostels/${hostelId}`, accessToken, { method: "DELETE" });
+}
+
+export function createHostelRoom(accessToken: string, hostelId: string, body: HostelRoomInput) {
+  return apiFetch<HostelRoom>(`/hostels/${hostelId}/rooms`, accessToken, { method: "POST", body });
+}
+
+export function updateHostelRoom(accessToken: string, roomId: string, body: Partial<HostelRoomInput>) {
+  return apiFetch<HostelRoom>(`/hostel-rooms/${roomId}`, accessToken, { method: "PATCH", body });
+}
+
+export function deleteHostelRoom(accessToken: string, roomId: string) {
+  return apiFetch<void>(`/hostel-rooms/${roomId}`, accessToken, { method: "DELETE" });
+}
+
+export function assignHostelRoom(
+  accessToken: string,
+  programmeId: string,
+  traineeId: string,
+  body: { room_id: string; notes?: string | null },
+) {
+  return apiFetch<TraineeHostelAssignment>(
+    `/programmes/${programmeId}/hostel-assignments/${traineeId}`,
+    accessToken,
+    { method: "PUT", body },
+  );
+}
+
+export function unassignHostelRoom(accessToken: string, programmeId: string, traineeId: string) {
+  return apiFetch<void>(`/programmes/${programmeId}/hostel-assignments/${traineeId}`, accessToken, {
+    method: "DELETE",
+  });
+}
+
+export function getMyHostelAssignments(accessToken: string) {
+  return apiFetch<MyHostelAssignment[]>("/hostel-assignments/mine", accessToken);
 }
 
 // Programme-trainer assignment (docs/DECISIONS.md #52): which trainers an
