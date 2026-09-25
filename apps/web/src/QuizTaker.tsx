@@ -41,6 +41,7 @@ interface QuizTakerText {
   submitOffline: string;
   queuedNotice: string;
   score: (marks: number, total: number, percent: number) => string;
+  questionMarks: (marks: number) => string;
   passed: string;
   notPassed: string;
   practiceNote: string;
@@ -64,6 +65,7 @@ const content: Record<Locale, QuizTakerText> = {
     submitOffline: "Save answers offline",
     queuedNotice: "Your answers are saved and will be graded once you're back online.",
     score: (marks, total, percent) => `Score: ${marks} / ${total} marks (${percent}%) — `,
+    questionMarks: (marks) => `${marks} mark${marks === 1 ? "" : "s"}`,
     passed: "Passed",
     notPassed: "Not passed",
     practiceNote: "Practice quiz — this never affects your certificate.",
@@ -85,6 +87,7 @@ const content: Record<Locale, QuizTakerText> = {
     submitOffline: "उत्तर ऑफ़लाइन सहेजें",
     queuedNotice: "आपके उत्तर सहेजे गए हैं और ऑनलाइन आते ही उनका मूल्यांकन किया जाएगा।",
     score: (marks, total, percent) => `स्कोर: ${marks} / ${total} अंक (${percent}%) — `,
+    questionMarks: (marks) => `${marks} अंक`,
     passed: "उत्तीर्ण",
     notPassed: "अनुत्तीर्ण",
     practiceNote: "अभ्यास क्विज़ — यह आपके प्रमाणपत्र को कभी प्रभावित नहीं करता।",
@@ -185,16 +188,22 @@ export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
       <h3>{t.assessments}</h3>
       {error && <p className="form-error">{error}</p>}
 
-      <ul>
+      <div className="quiz-assessment-list">
         {assessments.map((a) => (
-          <li key={a.id}>
-            <button type="button" onClick={() => void selectAssessment(a)}>
-              [{t.kind[a.kind]}] {a.title} —{" "}
+          <button
+            key={a.id}
+            type="button"
+            className={`quiz-assessment-card${selectedAssessment?.id === a.id ? " is-selected" : ""}`}
+            onClick={() => void selectAssessment(a)}
+          >
+            <span className={`quiz-kind-badge quiz-kind-${a.kind}`}>{t.kind[a.kind]}</span>
+            <span className="quiz-assessment-title">{a.title}</span>
+            <span className="quiz-assessment-meta">
               {t.assessmentSummary(a.question_count, a.total_marks, a.pass_threshold_percent)}
-            </button>
-          </li>
+            </span>
+          </button>
         ))}
-      </ul>
+      </div>
 
       {selectedAssessment && selectedAssessment.max_attempts !== null && (
         <p className="quiz-attempts-note">
@@ -211,29 +220,48 @@ export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
         !result &&
         !queued &&
         !attemptLimitReached && (
-          <form onSubmit={handleSubmit} className="quiz-form">
+          <form onSubmit={handleSubmit} className="quiz-form quiz-form-big">
+            <div className="quiz-paper-header">
+              <h2>{selectedAssessment.title}</h2>
+              <p className="quiz-paper-meta">
+                {t.assessmentSummary(
+                  selectedAssessment.question_count,
+                  selectedAssessment.total_marks,
+                  selectedAssessment.pass_threshold_percent,
+                )}
+              </p>
+            </div>
             {!online && <p className="quiz-offline-notice">{t.offlineNotice}</p>}
             {selectedAssessment.kind === "quiz" && <p className="quiz-practice-note">{t.practiceNote}</p>}
             {questions.map((q, i) => (
-              <fieldset key={q.id}>
+              <fieldset key={q.id} className="quiz-question">
                 <legend>
-                  {i + 1}. {q.question_text} ({q.marks})
+                  <span className="quiz-question-number">{i + 1}</span>
+                  <span className="quiz-question-text">{q.question_text}</span>
+                  <span className="quiz-question-marks">{t.questionMarks(q.marks)}</span>
                 </legend>
-                {q.options.map((opt) => (
-                  <label key={opt.id} className="quiz-option">
-                    <input
-                      type="radio"
-                      name={`q-${q.id}`}
-                      value={opt.id}
-                      checked={answers[q.id] === opt.id}
-                      onChange={() => setAnswers((prev) => ({ ...prev, [q.id]: opt.id }))}
-                    />
-                    {opt.text}
-                  </label>
-                ))}
+                <div className="quiz-option-list">
+                  {q.options.map((opt) => (
+                    <label
+                      key={opt.id}
+                      className={`quiz-option${answers[q.id] === opt.id ? " is-selected" : ""}`}
+                    >
+                      <input
+                        type="radio"
+                        name={`q-${q.id}`}
+                        value={opt.id}
+                        checked={answers[q.id] === opt.id}
+                        onChange={() => setAnswers((prev) => ({ ...prev, [q.id]: opt.id }))}
+                      />
+                      <span className="quiz-option-text">{opt.text}</span>
+                    </label>
+                  ))}
+                </div>
               </fieldset>
             ))}
-            <button type="submit">{online ? t.submitOnline : t.submitOffline}</button>
+            <button type="submit" className="quiz-submit-button">
+              {online ? t.submitOnline : t.submitOffline}
+            </button>
           </form>
         )}
 

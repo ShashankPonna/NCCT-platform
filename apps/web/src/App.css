@@ -329,6 +329,197 @@
   border-radius: 6px;
 }
 
+/* "Bigger, like a real quiz test" — a full exam-paper presentation for the
+   assessment list and the question form, rather than the compact
+   list/fieldset styling those elements share with every other admin form on
+   this page. Direct user request. */
+.quiz-assessment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+  max-width: 720px;
+}
+
+.quiz-assessment-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.quiz-assessment-card:hover {
+  border-color: var(--accent-border);
+  box-shadow: var(--shadow);
+}
+
+.quiz-assessment-card.is-selected {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.quiz-kind-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.quiz-kind-module_test {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+.quiz-assessment-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-h);
+}
+
+.quiz-assessment-meta {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.quiz-form-big {
+  max-width: 760px;
+  margin: 20px 0;
+  padding: 28px 32px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+}
+
+.quiz-paper-header {
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--border);
+}
+
+.quiz-paper-header h2 {
+  margin: 0 0 6px;
+  font-size: 24px;
+}
+
+.quiz-paper-meta {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.quiz-question {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 22px;
+  margin-bottom: 20px;
+  background: var(--code-bg);
+}
+
+.quiz-question legend {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  padding: 0 4px;
+  font-size: 17px;
+}
+
+.quiz-question-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--ncct-on-primary, #fff);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.quiz-question-text {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.quiz-question-marks {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.quiz-option-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.quiz-form-big .quiz-option {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.quiz-form-big .quiz-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.quiz-form-big .quiz-option-text {
+  font-size: 15px;
+}
+
+.quiz-form-big .quiz-option:hover {
+  border-color: var(--accent-border);
+}
+
+.quiz-form-big .quiz-option.is-selected {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.quiz-submit-button {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.quiz-submit-button:hover {
+  filter: brightness(1.05);
+}
+
 .student-columns {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
