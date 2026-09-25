@@ -64,5 +64,12 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<!-- Makes files the app saves to Documents (e.g. the gradebook Excel
+	     export) visible in the iOS Files app; without these they'd sit in
+	     the app's private sandbox where the user can never reach them. -->
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
 </dict>
 </plist>

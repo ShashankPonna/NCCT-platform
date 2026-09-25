@@ -6,64 +6,22 @@ import {
 } from "@ncct/constants";
 import type { ChatbotAnswer, RetrievedChunk } from "@ncct/shared-types";
 import { pipeline } from "@huggingface/transformers";
+import { groqChat } from "./groqClient.js";
 import { supabaseAdmin } from "./supabaseClient.js";
 
 // F7's answer-generation model — Groq (docs/DECISIONS.md #35, amends #25).
 // Retrieval/grounding (below) is unchanged; only the final generation call
-// moved providers. Uses Groq's OpenAI-compatible REST endpoint directly via
-// fetch rather than adding an SDK dependency, per CLAUDE.md's "don't add a
-// dependency an existing tool already covers" rule — this is one HTTP call.
-//
-// Model choice, confirmed live against the real key rather than assumed:
-// `llama-3.3-70b-versatile` (the obvious first guess) 404s — not on this
-// account's model list. `GET /openai/v1/models` was queried directly to
-// find what actually is: `openai/gpt-oss-120b` is the largest general chat
-// model available, confirmed working with a real grounded question. It's a
-// reasoning model — it emits hidden "reasoning" tokens before the visible
-// answer, and a live test at `max_tokens: 10` with no `reasoning_effort` set
-// came back with EMPTY content (all 10 tokens spent on reasoning, cut off
-// before the answer). `reasoning_effort: "low"` fixes this for a short
-// factual RAG answer (confirmed live: real content back, `finish_reason:
-// "stop"`, not "length") — this is a config value the API needs, not a
-// style preference.
-const GROQ_CHAT_COMPLETIONS_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL = "openai/gpt-oss-120b";
-
-interface GroqChatCompletionResponse {
-  choices?: { message?: { content?: string } }[];
-}
-
+// moved providers. The HTTP call, model choice and reasoning-effort setting
+// live in groqClient.ts, shared with the career counsellor and skill-gap
+// ranking (DECISIONS.md #68).
 async function callGroq(systemPrompt: string, userPrompt: string): Promise<string> {
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) {
-    throw new Error("GROQ_API_KEY is not set");
-  }
-
-  const res = await fetch(GROQ_CHAT_COMPLETIONS_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: GROQ_MODEL,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      max_tokens: 1024,
-      temperature: 0.2,
-      reasoning_effort: "low",
-    }),
+  const message = await groqChat({
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
   });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Groq API error ${res.status}: ${body.slice(0, 300)}`);
-  }
-
-  const data = (await res.json()) as GroqChatCompletionResponse;
-  return data.choices?.[0]?.message?.content ?? "";
+  return message.content ?? "";
 }
 
 // Embeddings are generated locally rather than through a hosted embedding

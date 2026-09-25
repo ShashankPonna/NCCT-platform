@@ -797,36 +797,6 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
                 ))}
             </div>
 
-            {/* Academic / Administrative Context Note */}
-            <div className="bg-surface-container-low border border-border-slate p-3.5 rounded-xl flex items-start gap-3 my-3">
-              <span className="material-symbols-outlined text-primary text-[22px] mt-0.5">verified_user</span>
-              <div className="flex flex-col gap-0.5">
-                <span className="font-label-md text-xs font-bold text-ink">Compliance Note: NABARD CAS Rule 14(B)</span>
-                <p className="font-body text-xs text-slate-600">
-                  Under the Common Accounting System mandate, PACS cannot initiate subsequent trade day vouchers without completing the automated Day-End Balancing routine and cryptographic vault sync with the District Central Cooperative Bank (DCCB).
-                </p>
-              </div>
-            </div>
-
-            {/* 3 Crucial Takeaways Bento Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 my-3">
-              <div className="p-3 bg-surface-container-low border border-border-slate rounded-lg flex flex-col gap-1">
-                <span className="font-metric-mono text-secondary font-bold text-[10px]">01 • RECONCILIATION</span>
-                <span className="font-label-md text-xs font-semibold text-ink">Zero-Tolerance Cash Drawer</span>
-                <p className="font-body text-[11px] text-slate-600">Physical vault tally must equal the GL Code 1101 balance before running batch script.</p>
-              </div>
-              <div className="p-3 bg-surface-container-low border border-border-slate rounded-lg flex flex-col gap-1">
-                <span className="font-metric-mono text-secondary font-bold text-[10px]">02 • SYSTEM INTEGRATION</span>
-                <span className="font-label-md text-xs font-semibold text-ink">DCCB Mirroring Protocol</span>
-                <p className="font-body text-[11px] text-slate-600">Encrypted SFTP transfer transmits trial balances directly to State Cooperative nodal server.</p>
-              </div>
-              <div className="p-3 bg-surface-container-low border border-border-slate rounded-lg flex flex-col gap-1">
-                <span className="font-metric-mono text-secondary font-bold text-[10px]">03 • AUDIT TRAIL</span>
-                <span className="font-label-md text-xs font-semibold text-ink">Tamper-Proof Timestamps</span>
-                <p className="font-body text-[11px] text-slate-600">All journal entries write SHA-256 hash to local storage ledger before broadcast.</p>
-              </div>
-            </div>
-
             <div className="mt-auto flex items-center justify-end border-t border-border-low-contrast pt-4">
               {progress?.completed_at ? (
                 <span className="flex items-center gap-2 text-label-md font-bold text-status-shortlisted">

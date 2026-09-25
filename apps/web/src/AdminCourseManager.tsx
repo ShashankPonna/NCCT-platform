@@ -619,7 +619,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
   return (
     <div className="w-full flex flex-col gap-6 text-left">
       {/* Header with Programme Picker */}
-      <div className="bg-white rounded-2xl border border-border-slate px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-xs">
+      <div className="bg-surface-card rounded-2xl border border-border-slate px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-xs">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#FE932C]" />
@@ -627,7 +627,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
               Administration • Curriculum & Courseware Engineering
             </span>
           </div>
-          <h1 className="font-display text-2xl lg:text-3xl font-extrabold text-[#00236F] m-0">
+          <h1 className="font-display text-2xl lg:text-3xl font-extrabold text-primary m-0">
             {t.heading}
           </h1>
           <p className="font-body text-xs text-slate-600 mt-1 max-w-2xl">{t.subheading}</p>
@@ -642,7 +642,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
             <select
               value={programmeId}
               onChange={(e) => void handleSelectProgramme(e.target.value)}
-              className="w-full h-11 appearance-none bg-paper-light border border-border-slate rounded-xl px-3.5 text-xs text-ink font-semibold focus:outline-none focus:bg-white focus:border-[#00236F] focus:ring-1 focus:ring-[#00236F]/20 pr-10 cursor-pointer transition-all"
+              className="w-full h-11 appearance-none bg-paper-light border border-border-slate rounded-xl px-3.5 text-xs text-ink font-semibold focus:outline-none focus:bg-surface-card focus:border-[#00236F] focus:ring-1 focus:ring-[#00236F]/20 pr-10 cursor-pointer transition-all"
             >
               {programmes.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -668,14 +668,14 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Panel 1: Courses (Col 1-3) */}
         <div className="lg:col-span-3 flex flex-col gap-4">
-          <div className="bg-white border border-border-slate rounded-2xl p-5 shadow-xs flex flex-col min-h-[540px]">
+          <div className="bg-surface-card border border-border-slate rounded-2xl p-5 shadow-xs flex flex-col min-h-[540px]">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-display text-base font-bold m-0 text-[#00236F]">{t.courses}</h3>
+              <h3 className="font-display text-base font-bold m-0 text-primary">{t.courses}</h3>
               <button
                 type="button"
                 onClick={() => setShowAddCourse(!showAddCourse)}
                 aria-label={t.addCourseAria}
-                className="h-8 w-8 rounded-lg bg-paper-light border border-border-slate hover:bg-slate-100 flex items-center justify-center text-[#00236F] cursor-pointer transition-colors"
+                className="h-8 w-8 rounded-lg bg-paper-light border border-border-slate hover:bg-surface-container flex items-center justify-center text-primary cursor-pointer transition-colors"
               >
                 <span className="material-symbols-outlined text-[18px]">
                   {showAddCourse ? "close" : "add"}
@@ -690,7 +690,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                   name="title"
                   required
                   placeholder={t.courseTitlePlaceholder}
-                  className="w-full bg-white border border-border-slate rounded-lg p-2 text-xs text-ink outline-none focus:border-[#00236F]"
+                  className="w-full bg-surface-card border border-border-slate rounded-lg p-2 text-xs text-ink outline-none focus:border-[#00236F]"
                 />
                 <button
                   type="submit"
@@ -718,7 +718,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                           : "bg-paper-light border-border-slate/60 hover:bg-paper hover:border-border-slate"
                       }`}
                     >
-                      <div className="font-bold text-xs text-[#00236F] mb-0.5 line-clamp-2">
+                      <div className="font-bold text-xs text-primary mb-0.5 line-clamp-2">
                         {c.title}
                       </div>
                       <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[#D97706] opacity-0 group-hover:opacity-100 transition-opacity text-[18px]">
@@ -734,15 +734,15 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
 
         {/* Panel 2: Modules (Col 4-6) */}
         <div className="lg:col-span-3 flex flex-col gap-4">
-          <div className="bg-white border border-border-slate rounded-2xl p-5 shadow-xs flex flex-col min-h-[540px]">
+          <div className="bg-surface-card border border-border-slate rounded-2xl p-5 shadow-xs flex flex-col min-h-[540px]">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-display text-base font-bold m-0 text-[#00236F]">{t.modules}</h3>
+              <h3 className="font-display text-base font-bold m-0 text-primary">{t.modules}</h3>
               {selectedCourseId && (
                 <button
                   type="button"
                   onClick={() => setShowAddModule(!showAddModule)}
                   aria-label={t.addModuleAria}
-                  className="h-8 w-8 rounded-lg bg-paper-light border border-border-slate hover:bg-slate-100 flex items-center justify-center text-[#00236F] cursor-pointer transition-colors"
+                  className="h-8 w-8 rounded-lg bg-paper-light border border-border-slate hover:bg-surface-container flex items-center justify-center text-primary cursor-pointer transition-colors"
                 >
                   <span className="material-symbols-outlined text-[18px]">
                     {showAddModule ? "close" : "add"}
@@ -766,7 +766,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                   {showCourseSkills ? t.hideSkillsGranted : t.skillsGranted(courseSkillIds.size)}
                 </button>
                 {showCourseSkills && courseSkillsUnavailable && (
-                  <p className="mt-3 text-[11px] text-slate-500 bg-slate-50 border border-dashed border-border-slate rounded-lg p-2.5">
+                  <p className="mt-3 text-[11px] text-slate-500 bg-surface-container border border-dashed border-border-slate rounded-lg p-2.5">
                     {t.courseSkillsUnavailable}
                   </p>
                 )}
@@ -791,7 +791,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                       <button
                         type="button"
                         onClick={() => void handleCreateSkill()}
-                        className="px-3 h-9 bg-paper-light border border-border-slate text-[#00236F] rounded-lg text-xs font-bold hover:bg-slate-100 cursor-pointer whitespace-nowrap"
+                        className="px-3 h-9 bg-paper-light border border-border-slate text-primary rounded-lg text-xs font-bold hover:bg-surface-container cursor-pointer whitespace-nowrap"
                       >
                         {t.addToTaxonomy}
                       </button>
@@ -816,7 +816,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                   name="title"
                   required
                   placeholder={t.moduleTitlePlaceholder}
-                  className="w-full bg-white border border-border-slate rounded-lg p-2 text-xs text-ink outline-none focus:border-[#00236F]"
+                  className="w-full bg-surface-card border border-border-slate rounded-lg p-2 text-xs text-ink outline-none focus:border-[#00236F]"
                 />
                 <button
                   type="submit"
@@ -846,7 +846,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                           : "bg-paper-light border-border-slate/60 hover:bg-paper hover:border-border-slate"
                       }`}
                     >
-                      <div className="font-bold text-xs text-[#00236F] mb-0.5 line-clamp-2">
+                      <div className="font-bold text-xs text-primary mb-0.5 line-clamp-2">
                         {m.title}
                       </div>
                       <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[#D97706] opacity-0 group-hover:opacity-100 transition-opacity text-[18px]">
@@ -862,10 +862,10 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
 
         {/* Panel 3: Lessons & Details (Col 7-12) */}
         <div className="lg:col-span-6 flex flex-col gap-6">
-          <div className="bg-white border border-border-slate rounded-2xl shadow-xs overflow-hidden flex flex-col min-h-[540px]">
+          <div className="bg-surface-card border border-border-slate rounded-2xl shadow-xs overflow-hidden flex flex-col min-h-[540px]">
             <div className="p-5 border-b border-border-slate/60 bg-paper flex justify-between items-center">
               <div>
-                <h3 className="font-display text-base font-bold m-0 text-[#00236F]">
+                <h3 className="font-display text-base font-bold m-0 text-primary">
                   {t.lessonsAndAssessments}
                 </h3>
                 <div className="text-xs text-slate-500 truncate max-w-sm font-medium mt-0.5">
@@ -893,18 +893,18 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                 onSubmit={(e) => void handleCreateLesson(e)}
                 className="p-4 bg-paper-light border-b border-border-slate/60 space-y-3"
               >
-                <h4 className="font-bold text-xs m-0 text-[#00236F]">{t.createNewLesson}</h4>
+                <h4 className="font-bold text-xs m-0 text-primary">{t.createNewLesson}</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input
                     name="title"
                     required
                     placeholder={t.lessonTitlePlaceholder}
-                    className="w-full bg-white border border-border-slate rounded-xl p-2.5 text-xs text-ink outline-none focus:border-[#00236F]"
+                    className="w-full bg-surface-card border border-border-slate rounded-xl p-2.5 text-xs text-ink outline-none focus:border-[#00236F]"
                   />
                   <select
                     name="content_type"
                     defaultValue="video"
-                    className="w-full bg-white border border-border-slate rounded-xl p-2.5 text-xs text-ink outline-none focus:border-[#00236F] cursor-pointer"
+                    className="w-full bg-surface-card border border-border-slate rounded-xl p-2.5 text-xs text-ink outline-none focus:border-[#00236F] cursor-pointer"
                   >
                     <option value="video">{t.contentTypeVideo}</option>
                     <option value="pdf">{t.contentTypePdf}</option>
@@ -915,7 +915,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                 <input
                   name="video_id"
                   placeholder={t.youtubeIdOptionalPlaceholder}
-                  className="w-full bg-white border border-border-slate rounded-xl p-2.5 text-xs text-ink outline-none focus:border-[#00236F]"
+                  className="w-full bg-surface-card border border-border-slate rounded-xl p-2.5 text-xs text-ink outline-none focus:border-[#00236F]"
                 />
                 <div className="flex justify-end">
                   <button
@@ -952,13 +952,13 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                           className={`material-symbols-outlined p-2 rounded-xl text-[20px] ${
                             lesson.content_type === "video"
                               ? "text-[#D97706] bg-amber-100"
-                              : "text-[#00236F] bg-blue-100"
+                              : "text-primary bg-blue-100"
                           }`}
                         >
                           {lesson.content_type === "video" ? "play_circle" : "description"}
                         </span>
                         <div>
-                          <h4 className="font-bold text-xs text-[#00236F] m-0">{lesson.title}</h4>
+                          <h4 className="font-bold text-xs text-primary m-0">{lesson.title}</h4>
                           <p className="text-[11px] text-slate-500 m-0 flex items-center gap-2 mt-0.5">
                             <span className="uppercase font-bold">
                               {t.contentType[lesson.content_type] ?? lesson.content_type}
@@ -977,7 +977,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                           <button
                             type="button"
                             onClick={() => void handleTogglePreview(lesson)}
-                            className="text-xs text-[#00236F] hover:text-[#FE932C] hover:underline font-bold cursor-pointer"
+                            className="text-xs text-primary hover:text-[#FE932C] hover:underline font-bold cursor-pointer"
                           >
                             {previewLessonId === lesson.id ? t.hidePreview : t.preview}
                           </button>
@@ -985,7 +985,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                         <button
                           type="button"
                           onClick={() => setActiveLessonId(activeLessonId === lesson.id ? null : lesson.id)}
-                          className="text-xs text-[#00236F] hover:text-[#FE932C] hover:underline font-bold cursor-pointer"
+                          className="text-xs text-primary hover:text-[#FE932C] hover:underline font-bold cursor-pointer"
                         >
                           {activeLessonId === lesson.id ? t.hideDetails : t.manage}
                         </button>
@@ -1017,7 +1017,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                                 href={previewUrl}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-[#00236F] hover:underline font-bold"
+                                className="text-primary hover:underline font-bold"
                               >
                                 {t.openInNewTab}
                               </a>
@@ -1045,7 +1045,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                                 const file = e.target.files?.[0];
                                 if (file) void handleUpload(lesson.id, file);
                               }}
-                              className="text-xs file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:bg-white file:text-[#00236F] file:font-semibold disabled:opacity-50"
+                              className="text-xs file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:bg-surface-card file:text-primary file:font-semibold disabled:opacity-50"
                             />
                             {fileUploading[lesson.id] === true && (
                               <span className="text-slate-500 font-semibold">{t.uploading}</span>
@@ -1071,7 +1071,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                                   const file = e.target.files?.[0];
                                   if (file) void handleVideoUpload(lesson.id, file);
                                 }}
-                                className="text-xs file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:bg-white file:text-[#00236F] file:font-semibold disabled:opacity-50"
+                                className="text-xs file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:bg-surface-card file:text-primary file:font-semibold disabled:opacity-50"
                               />
                               {lesson.storage_path && videoUploadProgress[lesson.id] === undefined && (
                                 <span className="text-emerald-700 font-bold">
@@ -1099,7 +1099,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                               setYoutubeInputs((prev) => ({ ...prev, [lesson.id]: e.target.value }))
                             }
                             placeholder="e.g. dQw4w9WgXcQ"
-                            className="bg-white border border-border-slate rounded-lg px-2.5 py-1 flex-1 text-xs text-ink outline-none"
+                            className="bg-surface-card border border-border-slate rounded-lg px-2.5 py-1 flex-1 text-xs text-ink outline-none"
                           />
                           <button
                             type="button"
@@ -1127,7 +1127,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                                   },
                                 }))
                               }
-                              className="bg-white border border-border-slate rounded-lg p-1.5 text-xs text-ink outline-none"
+                              className="bg-surface-card border border-border-slate rounded-lg p-1.5 text-xs text-ink outline-none"
                             >
                               <option value="">{t.selectLanguage}</option>
                               {SUGGESTED_LOCALES.map((l) => (
@@ -1148,7 +1148,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                                 }))
                               }
                               placeholder={t.localizedTitlePlaceholder}
-                              className="bg-white border border-border-slate rounded-lg p-1.5 text-xs text-ink outline-none"
+                              className="bg-surface-card border border-border-slate rounded-lg p-1.5 text-xs text-ink outline-none"
                             />
                           </div>
                           <textarea
@@ -1164,7 +1164,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                             }
                             placeholder={t.localizedBodyPlaceholder}
                             rows={2}
-                            className="w-full bg-white border border-border-slate rounded-lg p-2 text-xs text-ink outline-none"
+                            className="w-full bg-surface-card border border-border-slate rounded-lg p-2 text-xs text-ink outline-none"
                           />
                           <button
                             type="button"
@@ -1183,7 +1183,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
               {/* Assessment Builder Panel */}
               {selectedCourseId && selectedModuleId && (
                 <div className="mt-6 pt-5 border-t border-border-slate/60">
-                  <h4 className="font-display text-base font-bold text-[#00236F] mb-3 flex items-center gap-2">
+                  <h4 className="font-display text-base font-bold text-primary mb-3 flex items-center gap-2">
                     <span className="material-symbols-outlined text-[#D97706]">quiz</span>
                     {t.moduleAssessments}
                   </h4>
@@ -1195,7 +1195,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                   graded module test in the selected course. */}
               {selectedCourseId && (
                 <div className="mt-6 pt-5 border-t border-border-slate/60">
-                  <h4 className="font-display text-base font-bold text-[#00236F] mb-3 flex items-center gap-2">
+                  <h4 className="font-display text-base font-bold text-primary mb-3 flex items-center gap-2">
                     <span className="material-symbols-outlined text-[#D97706]">grading</span>
                     {t.courseGradebook}
                   </h4>

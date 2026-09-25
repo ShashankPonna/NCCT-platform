@@ -41,7 +41,6 @@ interface HomePageText {
     metricVerifiableValue: string;
     metricVerifiableLabel: string;
     liveNetwork: string;
-    active: string;
     credentialsTitle: string;
     credentialsSubtitle: string;
     valid: string;
@@ -146,17 +145,16 @@ const content: Record<"en" | "hi", HomePageText> = {
       subheadlineSuffix: " — bridging classroom training to verified career opportunities.",
       ctaSignIn: "Sign In to Dashboard",
       ctaVerify: "Verify a Certificate",
-      metricInstitutionsValue: "140+",
-      metricInstitutionsLabel: "Partner Institutions",
-      metricTraineesValue: "50,000+",
-      metricTraineesLabel: "Certified Trainees",
+      metricInstitutionsValue: "2",
+      metricInstitutionsLabel: "Languages (English & Hindi)",
+      metricTraineesValue: "Offline",
+      metricTraineesLabel: "Learning in the mobile app",
       metricVerifiableValue: "100%",
       metricVerifiableLabel: "Verifiable via QR",
-      liveNetwork: "Live National Network",
-      active: "Active",
-      credentialsTitle: "Tamper-Proof Credentials",
+      liveNetwork: "Get started",
+      credentialsTitle: "Verifiable Credentials",
       credentialsSubtitle: "Instant public validity checks",
-      valid: "Valid",
+      valid: "Verify a code",
       channelsLabel: "Portal Access Channels",
       channelTrainee: "Trainee & Student Portal",
       channelTrainer: "Trainer & Faculty Workspace",
@@ -176,7 +174,7 @@ const content: Record<"en" | "hi", HomePageText> = {
       point1Body:
         "One system for programme registration, nomination, and trainee records across every affiliated institution.",
       point2Title: "Verified Certification",
-      point2Body: "Every certificate issued is tamper-proof and independently verifiable, with no login required.",
+      point2Body: "Every certificate issued can be independently verified by its code, with no login required.",
       point3Title: "National Reach",
       point3Body: "Serving PACS staff, SHG members, dairy cooperative workers, and rural youth across India.",
     },
@@ -222,7 +220,7 @@ const content: Record<"en" | "hi", HomePageText> = {
         },
         {
           title: "Verifiable Certificates",
-          body: "Automated grading with tamper-proof, cryptographic digital certificates that can be instantly scanned and authenticated.",
+          body: "Automated grading, with PDF certificates carrying a QR code anyone can scan to check them on the public verification page.",
         },
         {
           title: "Biometric Attendance",
@@ -304,17 +302,16 @@ const content: Record<"en" | "hi", HomePageText> = {
         " के विशेष कार्यक्रमों के माध्यम से सशक्त बनाना — कक्षा प्रशिक्षण को सत्यापित करियर अवसरों से जोड़ते हुए।",
       ctaSignIn: "डैशबोर्ड में साइन इन करें",
       ctaVerify: "प्रमाणपत्र सत्यापित करें",
-      metricInstitutionsValue: "140+",
-      metricInstitutionsLabel: "सहभागी संस्थान",
-      metricTraineesValue: "50,000+",
-      metricTraineesLabel: "प्रमाणित प्रशिक्षणार्थी",
+      metricInstitutionsValue: "2",
+      metricInstitutionsLabel: "भाषाएं (अंग्रेज़ी व हिंदी)",
+      metricTraineesValue: "ऑफ़लाइन",
+      metricTraineesLabel: "मोबाइल ऐप में पढ़ाई",
       metricVerifiableValue: "100%",
       metricVerifiableLabel: "QR द्वारा सत्यापन योग्य",
-      liveNetwork: "लाइव राष्ट्रीय नेटवर्क",
-      active: "सक्रिय",
-      credentialsTitle: "छेड़छाड़-रहित प्रमाणपत्र",
+      liveNetwork: "शुरू करें",
+      credentialsTitle: "सत्यापन योग्य प्रमाणपत्र",
       credentialsSubtitle: "तुरंत सार्वजनिक वैधता जांच",
-      valid: "मान्य",
+      valid: "कोड सत्यापित करें",
       channelsLabel: "पोर्टल एक्सेस चैनल",
       channelTrainee: "प्रशिक्षणार्थी एवं छात्र पोर्टल",
       channelTrainer: "प्रशिक्षक एवं संकाय कार्यक्षेत्र",
@@ -333,7 +330,7 @@ const content: Record<"en" | "hi", HomePageText> = {
       point1Title: "केंद्रीकृत ERP",
       point1Body: "सभी संबद्ध संस्थानों में कार्यक्रम पंजीकरण, नामांकन और प्रशिक्षणार्थी रिकॉर्ड के लिए एक ही प्रणाली।",
       point2Title: "सत्यापित प्रमाणन",
-      point2Body: "जारी किया गया प्रत्येक प्रमाणपत्र छेड़छाड़-रहित है और बिना लॉगिन के स्वतंत्र रूप से सत्यापित किया जा सकता है।",
+      point2Body: "जारी किए गए प्रत्येक प्रमाणपत्र को उसके कोड से, बिना लॉगिन के, स्वतंत्र रूप से सत्यापित किया जा सकता है।",
       point3Title: "राष्ट्रव्यापी पहुंच",
       point3Body: "भारत भर में पैक्स कर्मचारियों, स्वयं सहायता समूह सदस्यों, डेयरी सहकारी श्रमिकों और ग्रामीण युवाओं की सेवा।",
     },
@@ -379,7 +376,7 @@ const content: Record<"en" | "hi", HomePageText> = {
         },
         {
           title: "सत्यापन योग्य प्रमाणपत्र",
-          body: "स्वचालित ग्रेडिंग के साथ छेड़छाड़-रहित, क्रिप्टोग्राफ़िक डिजिटल प्रमाणपत्र जिन्हें तुरंत स्कैन और प्रामाणित किया जा सकता है।",
+          body: "स्वचालित ग्रेडिंग, और QR कोड वाले PDF प्रमाणपत्र जिन्हें कोई भी सार्वजनिक सत्यापन पृष्ठ पर स्कैन करके जांच सकता है।",
         },
         {
           title: "बायोमेट्रिक उपस्थिति",
@@ -494,7 +491,7 @@ export function HomePage({ onSignIn, onVerify }: HomePageProps) {
       <header className="sticky top-0 z-40 bg-surface-card border-b border-border-low-contrast shadow-xs">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-8 md:px-16 h-20 flex items-center justify-between">
           {/* Left: Logo & Wordmark */}
-          <a href="#" className="flex items-center gap-3.5 group">
+          <a href="/" className="flex items-center gap-3.5 group">
             <div className="w-11 h-11 rounded-std bg-primary flex items-center justify-center text-on-primary shadow-xs group-hover:bg-primary-container transition-colors">
               <span className="material-symbols-outlined text-[26px]">school</span>
             </div>
@@ -622,13 +619,7 @@ export function HomePage({ onSignIn, onVerify }: HomePageProps) {
             <div className="lg:col-span-5 relative">
               <div className="bg-surface-card border border-border-low-contrast rounded-std p-6 sm:p-7 shadow-xs relative z-10">
                 <div className="flex items-center justify-between pb-4 mb-5 border-b border-border-low-contrast">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span className="font-heading font-bold text-sm text-primary">{t.hero.liveNetwork}</span>
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-status-shortlisted border border-emerald-200">
-                    {t.hero.active}
-                  </span>
+                  <span className="font-heading font-bold text-sm text-primary">{t.hero.liveNetwork}</span>
                 </div>
 
                 {/* Mini verification demo teaser inside hero */}
@@ -642,13 +633,20 @@ export function HomePage({ onSignIn, onVerify }: HomePageProps) {
                       <p className="text-[11px] text-on-surface-variant">{t.hero.credentialsSubtitle}</p>
                     </div>
                   </div>
-                  <div className="mt-2 bg-white rounded p-2.5 border border-border-low-contrast flex items-center justify-between text-xs">
-                    <span className="font-mono text-gray-600">NCCT-2024-8A9X</span>
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-status-shortlisted">
-                      <span className="material-symbols-outlined text-sm">check_circle</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      document.getElementById("verify")?.scrollIntoView({ behavior: "smooth" });
+                      document.getElementById("cert-id")?.focus({ preventScroll: true });
+                    }}
+                    className="mt-2 w-full bg-white rounded p-2.5 border border-border-low-contrast flex items-center justify-between text-xs hover:bg-gray-50 cursor-pointer"
+                  >
+                    <span className="font-mono text-gray-600">NCCT-XXXXXXXX</span>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-primary">
+                      <span className="material-symbols-outlined text-sm">search</span>
                       {t.hero.valid}
                     </span>
-                  </div>
+                  </button>
                 </div>
 
                 {/* Role Quick-Link List */}

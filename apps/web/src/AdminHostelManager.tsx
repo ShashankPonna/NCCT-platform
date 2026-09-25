@@ -23,9 +23,9 @@ const ROOM_TYPE_LABEL: Record<HostelRoomType, string> = {
 };
 
 const inputClass =
-  "h-9 px-3 bg-white text-ink text-xs rounded-xl border border-border-slate outline-none focus:border-[#00236F]";
+  "h-9 px-3 bg-surface-card text-ink text-xs rounded-xl border border-border-slate outline-none focus:border-[#00236F]";
 const smallButtonClass =
-  "h-8 px-2.5 bg-paper-light hover:bg-slate-200/60 border border-border-slate text-[#00236F] text-xs rounded-lg cursor-pointer font-semibold";
+  "h-8 px-2.5 bg-paper-light hover:bg-slate-200/60 border border-border-slate text-primary text-xs rounded-lg cursor-pointer font-semibold";
 const deleteButtonClass =
   "h-8 px-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs rounded-lg cursor-pointer";
 
@@ -131,14 +131,14 @@ export function AdminHostelManager({ accessToken, institutions }: AdminHostelMan
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-xs overflow-hidden flex flex-col border border-border-slate">
+    <div className="bg-surface-card rounded-2xl shadow-xs overflow-hidden flex flex-col border border-border-slate">
       <div className="p-5 bg-paper flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-slate/60">
         <div className="flex items-start gap-3.5">
           <div className="w-10 h-10 rounded-xl bg-[#00236F] text-white flex items-center justify-center shrink-0 shadow-xs">
             <span className="material-symbols-outlined text-[22px]">bed</span>
           </div>
           <div>
-            <h2 className="font-display text-lg text-[#00236F] font-bold">Hostels & Rooms</h2>
+            <h2 className="font-display text-lg text-primary font-bold">Hostels & Rooms</h2>
             <p className="font-body text-xs text-slate-600 mt-0.5">
               Reference list only — assign rooms to approved trainees from a programme&apos;s
               nominations.
@@ -228,7 +228,7 @@ export function AdminHostelManager({ accessToken, institutions }: AdminHostelMan
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-[#00236F] text-sm truncate">
+                          <span className="font-bold text-primary text-sm truncate">
                             {hostel.name}
                           </span>
                           <span className="px-2 py-0.5 rounded-full bg-paper-light border border-border-slate text-slate-600 text-[10px] font-bold uppercase tracking-wider">

@@ -275,7 +275,7 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
             inputMode="numeric"
             maxLength={6}
             disabled={busy || connected || resolvingSession}
-            className="flex-1 h-touch-target bg-paper-light border border-border-slate rounded-xl px-4 font-metric-mono text-center tracking-widest text-lg disabled:opacity-50 focus:bg-white outline-none focus:ring-2 focus:ring-secondary-container"
+            className="flex-1 h-touch-target bg-paper-light border border-border-slate rounded-xl px-4 font-metric-mono text-center tracking-widest text-lg disabled:opacity-50 focus:bg-surface-card outline-none focus:ring-2 focus:ring-secondary-container"
           />
         </div>
 
@@ -299,7 +299,7 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
               <button
                 type="button"
                 onClick={handleStop}
-                className="h-touch-target px-5 bg-white border border-border-slate text-primary hover:bg-paper-light rounded-xl font-label-md text-label-md font-bold cursor-pointer transition-colors shadow-2xs"
+                className="h-touch-target px-5 bg-surface-card border border-border-slate text-primary hover:bg-paper-light rounded-xl font-label-md text-label-md font-bold cursor-pointer transition-colors shadow-2xs"
               >
                 Stop
               </button>
@@ -326,7 +326,7 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
               value={bindTraineeId}
               onChange={(e) => setBindTraineeId(e.target.value)}
               placeholder="Trainee ID (UUID)"
-              className="flex-1 h-touch-target bg-paper-light border border-border-slate rounded-xl px-3 font-metric-mono text-body-sm outline-none focus:bg-white"
+              className="flex-1 h-touch-target bg-paper-light border border-border-slate rounded-xl px-3 font-metric-mono text-body-sm outline-none focus:bg-surface-card"
             />
             <button
               type="button"

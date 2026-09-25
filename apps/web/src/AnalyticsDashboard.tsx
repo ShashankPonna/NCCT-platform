@@ -8,9 +8,11 @@ interface AnalyticsDashboardProps {
 }
 
 const MODE_FILL_COLORS: Record<string, string> = {
-  online: "#0d1c2f",
+  // Mid-tone hues so all three stay visible on both the light and dark theme
+  // (the old near-black navy vanished against the dark surface).
+  online: "#3b82f6",
   hybrid: "#fd7a41",
-  offline: "#00214F",
+  offline: "#14b8a6",
 };
 
 // P6 dropout-risk levels are status (state), not categorical (identity) —
@@ -34,8 +36,10 @@ interface AnalyticsDashboardText {
   statCertificatesIssued: string;
   statOverallCompletion: string;
   statJobsPosted: string;
-  trendUp: (percent: string) => string;
-  trendStable: string;
+  tileModes: (summary: string) => string;
+  tileCertsThisMonth: (count: number) => string;
+  tileCertifiedOf: (certified: number, approved: number) => string;
+  tileShortlisted: (count: number) => string;
   programmesByMode: string;
   mode: Record<string, string>;
   traineesByRegion: string;
@@ -77,15 +81,17 @@ const content: Record<Locale, AnalyticsDashboardText> = {
   en: {
     heading: "Admin Dashboard",
     subheading: "Overview of institutional performance and programme metrics.",
-    currentQuarter: "Current Quarter",
+    currentQuarter: "All time",
     export: "Export",
     loading: "Loading analytics...",
     statProgrammesRun: "Programmes Run",
     statCertificatesIssued: "Certificates Issued",
     statOverallCompletion: "Overall Completion",
     statJobsPosted: "Jobs Posted",
-    trendUp: (percent) => `+${percent}% vs last period`,
-    trendStable: "Stable vs last period",
+    tileModes: (summary) => summary,
+    tileCertsThisMonth: (count) => `${count} issued this month`,
+    tileCertifiedOf: (certified, approved) => `${certified} of ${approved} approved trainees certified`,
+    tileShortlisted: (count) => `${count} candidate${count === 1 ? "" : "s"} shortlisted by employers`,
     programmesByMode: "Programmes by Mode",
     mode: { online: "online", hybrid: "hybrid", offline: "offline" },
     traineesByRegion: "Trainees by Region",
@@ -130,15 +136,17 @@ const content: Record<Locale, AnalyticsDashboardText> = {
   hi: {
     heading: "प्रशासक डैशबोर्ड",
     subheading: "संस्थागत प्रदर्शन और कार्यक्रम मेट्रिक्स का अवलोकन।",
-    currentQuarter: "वर्तमान तिमाही",
+    currentQuarter: "अब तक का",
     export: "निर्यात करें",
     loading: "एनालिटिक्स लोड हो रहा है...",
     statProgrammesRun: "चलाए गए कार्यक्रम",
     statCertificatesIssued: "जारी प्रमाणपत्र",
     statOverallCompletion: "समग्र पूर्णता",
     statJobsPosted: "पोस्ट की गई नौकरियां",
-    trendUp: (percent) => `+${percent}% पिछली अवधि की तुलना में`,
-    trendStable: "पिछली अवधि की तुलना में स्थिर",
+    tileModes: (summary) => summary,
+    tileCertsThisMonth: (count) => `इस महीने ${count} जारी`,
+    tileCertifiedOf: (certified, approved) => `${approved} स्वीकृत प्रशिक्षणार्थियों में से ${certified} प्रमाणित`,
+    tileShortlisted: (count) => `नियोक्ताओं द्वारा ${count} उम्मीदवार शॉर्टलिस्ट`,
     programmesByMode: "मोड के अनुसार कार्यक्रम",
     mode: { online: "ऑनलाइन", hybrid: "हाइब्रिड", offline: "ऑफ़लाइन" },
     traineesByRegion: "क्षेत्र के अनुसार प्रशिक्षणार्थी",
@@ -204,7 +212,8 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
   const t = content[locale];
   const [data, setData] = useState<DashboardAnalytics | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selectedYear, setSelectedYear] = useState<string>("2026");
+  // Empty = the most recent year that actually has certificates.
+  const [selectedYear, setSelectedYear] = useState<string>("");
 
   useEffect(() => {
     getDashboardAnalytics(accessToken)
@@ -247,8 +256,23 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
 
   const modeTotal = data.programmesRun.byMode.reduce((acc, curr) => acc + curr.count, 0) || 1;
   const maxRegionCount = Math.max(1, ...data.traineesByRegion.map((r) => r.traineeCount));
-  const maxCertCount = Math.max(1, ...data.certificatesIssued.byMonth.map((m) => m.count));
+  // The year picker filters the month chart (DECISIONS.md #67) — it used to
+  // be a hardcoded 2026/2025 dropdown that changed nothing. Only years with
+  // data are offered.
+  const certYears = [...new Set(data.certificatesIssued.byMonth.map((m) => m.month.slice(0, 4)))].sort().reverse();
+  const activeYear = selectedYear || certYears[0] || "";
+  const certMonths = data.certificatesIssued.byMonth.filter((m) => m.month.startsWith(activeYear));
+  const maxCertCount = Math.max(1, ...certMonths.map((m) => m.count));
   const modeLabel = (mode: string) => t.mode[mode.toLowerCase()] ?? mode;
+  // Tile footers are real facts from the same payload — they used to be
+  // hardcoded "+12% vs last period"-style trends with no data behind them.
+  const modeSummary = data.programmesRun.byMode
+    .filter((m) => m.count > 0)
+    .map((m) => `${m.count} ${modeLabel(m.mode)}`)
+    .join(" · ");
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  const certsThisMonth = data.certificatesIssued.byMonth.find((m) => m.month === thisMonth)?.count ?? 0;
+  const shortlistedCount = data.placements.byStatus.reduce((acc, s) => acc + s.count, 0);
   const riskLabel = (level: DropoutRiskLevel) => t.riskLevel[level];
 
   return (
@@ -292,9 +316,9 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
           <p className="font-display font-bold text-3xl text-primary tracking-tight tabular-nums m-0">
             {data.programmesRun.total}
           </p>
-          <div className="flex items-center gap-1 text-status-success font-label-sm text-label-sm font-bold mt-auto">
-            <span className="material-symbols-outlined text-[14px]">trending_up</span>
-            <span>{t.trendUp("12")}</span>
+          <div className="flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm font-semibold mt-auto">
+            <span className="material-symbols-outlined text-[14px]">category</span>
+            <span>{t.tileModes(modeSummary)}</span>
           </div>
           <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-container to-secondary-container transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
         </div>
@@ -312,9 +336,9 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
           <p className="font-display font-bold text-3xl text-primary tracking-tight tabular-nums m-0">
             {data.certificatesIssued.total.toLocaleString()}
           </p>
-          <div className="flex items-center gap-1 text-status-success font-label-sm text-label-sm font-bold mt-auto">
-            <span className="material-symbols-outlined text-[14px]">trending_up</span>
-            <span>{t.trendUp("5.4")}</span>
+          <div className="flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm font-semibold mt-auto">
+            <span className="material-symbols-outlined text-[14px]">event</span>
+            <span>{t.tileCertsThisMonth(certsThisMonth)}</span>
           </div>
           <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-container to-secondary-container transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
         </div>
@@ -332,9 +356,9 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
           <p className="font-display font-bold text-3xl text-primary tracking-tight tabular-nums m-0">
             {formatPercent(data.completionRates.overall.rate)}
           </p>
-          <div className="flex items-center gap-1 text-status-pending font-label-sm text-label-sm font-bold mt-auto">
-            <span className="material-symbols-outlined text-[14px]">trending_flat</span>
-            <span>{t.trendStable}</span>
+          <div className="flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm font-semibold mt-auto">
+            <span className="material-symbols-outlined text-[14px]">how_to_reg</span>
+            <span>{t.tileCertifiedOf(data.completionRates.overall.certificatesIssued, data.completionRates.overall.approvedNominations)}</span>
           </div>
           <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-container to-secondary-container transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
         </div>
@@ -352,9 +376,9 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
           <p className="font-display font-bold text-3xl text-primary tracking-tight tabular-nums m-0">
             {data.placements.totalJobs}
           </p>
-          <div className="flex items-center gap-1 text-status-success font-label-sm text-label-sm font-bold mt-auto">
-            <span className="material-symbols-outlined text-[14px]">trending_up</span>
-            <span>{t.trendUp("24")}</span>
+          <div className="flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm font-semibold mt-auto">
+            <span className="material-symbols-outlined text-[14px]">star</span>
+            <span>{t.tileShortlisted(shortlistedCount)}</span>
           </div>
           <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary-container to-secondary-container transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
         </div>
@@ -444,16 +468,24 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
         <div className="bg-surface-card border border-border-slate rounded-2xl p-6 flex flex-col lg:col-span-2 shadow-xs">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-headline-sm text-headline-sm text-primary font-bold">{t.certificatesByMonth}</h3>
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="bg-white border border-border-slate rounded-lg px-3 py-1 font-label-md text-label-md h-[40px] cursor-pointer"
-            >
-              <option value="2026">2026</option>
-              <option value="2025">2025</option>
-            </select>
+            {certYears.length > 1 && (
+              <select
+                value={activeYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="bg-surface-card border border-border-slate rounded-lg px-3 py-1 font-label-md text-label-md h-[40px] cursor-pointer"
+              >
+                {certYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            )}
+            {certYears.length === 1 && (
+              <span className="font-label-md text-label-md text-on-surface-variant">{activeYear}</span>
+            )}
           </div>
-          {data.certificatesIssued.byMonth.length === 0 ? (
+          {certMonths.length === 0 ? (
             <div className="flex-grow flex flex-col items-center justify-center text-center p-8 bg-paper-light rounded-xl border border-dashed border-border-slate min-h-[200px]">
               <span className="material-symbols-outlined text-[48px] text-outline opacity-50 mb-3">
                 bar_chart
@@ -465,7 +497,7 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 py-4">
-              {data.certificatesIssued.byMonth.map((row) => {
+              {certMonths.map((row) => {
                 const heightPct = Math.max(15, Math.round((row.count / maxCertCount) * 100));
                 return (
                   <div key={row.month} className="flex flex-col items-center gap-2">

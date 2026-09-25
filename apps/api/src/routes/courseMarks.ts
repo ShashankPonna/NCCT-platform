@@ -1,5 +1,10 @@
 import { Router } from "express";
 import { getCourseGradebook, getCourseMarksTally } from "../assessmentScoring.js";
+import {
+  buildGradebookWorkbook,
+  gradebookFileName,
+  loadGradebookExportContext,
+} from "../gradebookExport.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { getProgrammeIdForCourse, requireProgrammeAccess } from "../programmeAccess.js";
 
@@ -43,6 +48,51 @@ courseMarksRouter.get(
         return;
       }
       res.json(gradebook);
+    } catch (err) {
+      res.status(400).json({ error: (err as Error).message });
+    }
+  },
+);
+
+// The same gradebook as a structured Excel workbook (docs/DECISIONS.md #66)
+// — identical data and identical access rule to the route above, so a
+// trainer can only ever export their own assigned programmes' courses.
+// `?lang=hi` renders the sheet's labels in Hindi; the marks never change.
+courseMarksRouter.get(
+  "/courses/:id/gradebook/export",
+  requireAuth,
+  requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForCourse(req.params.id)),
+  async (req, res) => {
+    try {
+      const gradebook = await getCourseGradebook(req.params.id);
+      if (!gradebook) {
+        res.status(404).json({ error: "Course not found" });
+        return;
+      }
+      const context = await loadGradebookExportContext(
+        req.params.id,
+        gradebook.rows.map((row) => row.trainee_id),
+      );
+      const generatedAt = new Date();
+      const buffer = await buildGradebookWorkbook(gradebook, {
+        ...context,
+        preparedBy: req.user!.full_name,
+        generatedAt,
+        locale: req.query.lang === "hi" ? "hi" : "en",
+      });
+
+      const fileName = gradebookFileName(gradebook.course_title, generatedAt);
+      // ASCII fallback for old clients plus RFC 5987 filename* so a Hindi
+      // course title survives intact in modern browsers.
+      const asciiName = fileName.replace(/[^\x20-\x7E]/g, "_").replace(/"/g, "");
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
+      );
+      res.setHeader("Cache-Control", "no-store");
+      res.send(buffer);
     } catch (err) {
       res.status(400).json({ error: (err as Error).message });
     }

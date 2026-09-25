@@ -12,7 +12,12 @@ interface TraineeCareerSkillGapText {
   heading: string;
   subheading: string;
   auditEngineTag: string;
-  aadhaarVerified: string;
+  noSkillsTagged: string;
+  noSkillsShort: string;
+  strongMatch: string;
+  partialMatch: string;
+  aiOrder: string;
+  step: (n: number) => string;
   targetOpeningLabel: string;
   choosePrompt: string;
   checking: string;
@@ -32,25 +37,28 @@ interface TraineeCareerSkillGapText {
   overallLoading: string;
   jobsNeedingIt: (count: number) => string;
   startRemediation: string;
-  remediationSubtext: string;
   compareAlternative: string;
 }
 
 const content: Record<Locale, TraineeCareerSkillGapText> = {
   en: {
     heading: "What are you missing for this opportunity?",
-    subheading:
-      "Deterministic skill analysis paired with personalized national cooperative job recommendations.",
-    auditEngineTag: "Cooperative Public Infrastructure • Gap Audit Engine",
-    aadhaarVerified: "Aadhaar • DigiLocker Verified",
+    subheading: "Pick a job to see which of its required skills you already have, and which you still need to learn.",
+    auditEngineTag: "Skill-Gap Check",
+    noSkillsTagged: "The employer hasn't tagged any skills on this job yet, so there's nothing to compare.",
+    noSkillsShort: "No skills tagged",
+    strongMatch: "Strong match",
+    partialMatch: "Partial match",
+    aiOrder: "AI-suggested order",
+    step: (n) => `Step ${n}`,
     targetOpeningLabel: "Target Operational Opening",
     choosePrompt: "Choose a cooperative job posting…",
     checking: "Auditing your competency alignment…",
-    skillsYouHave: (count) => `You Have (Verified DPI Record) • ${count}`,
+    skillsYouHave: (count) => `Skills you have • ${count}`,
     noneYet: "None yet — complete certified modules to earn skills!",
-    skillsMissing: (count) => `Skills Missing (Remediation Needed) • ${count}`,
+    skillsMissing: (count) => `Skills to learn • ${count}`,
     allSkillsPresent: "You have every single skill this role requires! Full qualification achieved.",
-    learnFirst: "What to Learn First • Ranked Remediation Sequence",
+    learnFirst: "What to learn first",
     noSuggestionAvailable:
       "A suggested learning order isn't available right now — your skill gap list above is complete and validated.",
     sortedByFit: "Sorted by your best fit first, based on verified skills.",
@@ -59,28 +67,31 @@ const content: Record<Locale, TraineeCareerSkillGapText> = {
     overallHeading: "Your Overall Sector Skill Gap",
     overallSubheadingMatched:
       "Across the cooperative positions you match best, closing these gaps yields maximum hiring eligibility.",
-    overallSubheadingFallback:
-      "Based on newest cooperative openings across PACS, DCCB, and UCB federations.",
+    overallSubheadingFallback: "Based on the newest job openings on the platform.",
     overallEmpty: "No shared gaps found — your current skills already cover what these jobs need!",
     overallLoading: "Auditing aggregate sector skills…",
     jobsNeedingIt: (count) => (count === 1 ? "Needed by 1 opening" : `Needed by ${count} openings`),
-    startRemediation: "Start Rapid Remediation",
-    remediationSubtext: "Estimated: 8-12 hrs module effort",
+    startRemediation: "See what to learn first",
     compareAlternative: "Quick compare cooperative roles:",
   },
   hi: {
     heading: "इस अवसर के लिए आपके पास क्या कमी है?",
-    subheading: "सहकारी नौकरी अनुशंसाओं के साथ प्रमाणित कौशल अंतर विश्लेषण।",
-    auditEngineTag: "सहकारी सार्वजनिक अवसंरचना • कौशल अंतर ऑडिट",
-    aadhaarVerified: "आधार • डिजिलॉकर सत्यापित",
+    subheading: "कोई नौकरी चुनें और देखें कि उसके लिए आवश्यक कौन-से कौशल आपके पास हैं और कौन-से सीखने बाकी हैं।",
+    auditEngineTag: "कौशल-अंतर जांच",
+    noSkillsTagged: "नियोक्ता ने इस नौकरी पर अभी कोई कौशल टैग नहीं किया है, इसलिए तुलना संभव नहीं है।",
+    noSkillsShort: "कोई कौशल टैग नहीं",
+    strongMatch: "अच्छा मिलान",
+    partialMatch: "आंशिक मिलान",
+    aiOrder: "AI द्वारा सुझाया गया क्रम",
+    step: (n) => `चरण ${n}`,
     targetOpeningLabel: "लक्षित सहकारी पद",
     choosePrompt: "एक सहकारी नौकरी पोस्टिंग चुनें…",
     checking: "आपकी दक्षताओं का ऑडिट किया जा रहा है…",
-    skillsYouHave: (count) => `आपके पास मौजूद कौशल (DPI रिकॉर्ड) • ${count}`,
+    skillsYouHave: (count) => `आपके पास मौजूद कौशल • ${count}`,
     noneYet: "अभी तक कोई नहीं — कौशल अर्जित करने के लिए पाठ्यक्रम पूरे करें!",
-    skillsMissing: (count) => `कौशल अंतर (सीखने की आवश्यकता) • ${count}`,
+    skillsMissing: (count) => `सीखने योग्य कौशल • ${count}`,
     allSkillsPresent: "इस पद के लिए आवश्यक सभी कौशल आपके पास हैं! पूर्ण पात्रता प्राप्त।",
-    learnFirst: "पहले क्या सीखें • प्राथमिकता क्रम",
+    learnFirst: "पहले क्या सीखें",
     noSuggestionAvailable:
       "सीखने का सुझाया गया क्रम अभी उपलब्ध नहीं है — ऊपर दी गई कौशल सूची सत्यापित है।",
     sortedByFit: "सत्यापित कौशलों के आधार पर सबसे उपयुक्त नौकरियां पहले।",
@@ -88,12 +99,11 @@ const content: Record<Locale, TraineeCareerSkillGapText> = {
     relatedToSkill: (name) => `आपके "${name}" कौशल से संबंधित (आंशिक क्रेडिट)।`,
     overallHeading: "आपका समग्र क्षेत्र कौशल अंतर",
     overallSubheadingMatched: "सहकारी पदों में इन कौशलों को पूरा करने से अधिकतम अवसर मिलेंगे।",
-    overallSubheadingFallback: "PACS, DCCB और UCB महासंघों की नवीनतम रिक्तियों पर आधारित।",
+    overallSubheadingFallback: "प्लेटफ़ॉर्म पर नवीनतम रिक्तियों पर आधारित।",
     overallEmpty: "कोई साझा अंतर नहीं मिला — आप पहले से ही पूरी तरह योग्य हैं!",
     overallLoading: "समग्र क्षेत्र कौशल अंतर जांचा जा रहा है…",
     jobsNeedingIt: (count) => `${count} रिक्तियों के लिए आवश्यक`,
-    startRemediation: "तुरंत सीखना शुरू करें",
-    remediationSubtext: "अनुमानित: 8-12 घंटे का अध्ययन",
+    startRemediation: "पहले क्या सीखें, देखें",
     compareAlternative: "वैकल्पिक भूमिकाओं की तुलना करें:",
   },
 };
@@ -169,18 +179,18 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
   const selectedJob = jobs.find((j) => j.id === selectedJobId) ?? null;
 
   const totalSkillsCount = (result?.acquired_skills.length ?? 0) + (result?.gap_skills.length ?? 0);
-  const matchPct = totalSkillsCount > 0
-    ? Math.round(((result?.acquired_skills.length ?? 0) / totalSkillsCount) * 100)
-    : selectedJobId && jobFit.has(selectedJobId)
-      ? Math.round((jobFit.get(selectedJobId) ?? 0.6) * 100)
-      : 65;
+  // Only a real comparison produces a percentage — a job with no tagged
+  // skills has nothing to compare, so it shows "—" rather than an invented
+  // number (docs/DECISIONS.md #67).
+  const matchPct =
+    totalSkillsCount > 0 ? Math.round(((result?.acquired_skills.length ?? 0) / totalSkillsCount) * 100) : null;
 
   const circleCircumference = 251.2; // 2 * PI * 40
-  const strokeOffset = circleCircumference - (matchPct / 100) * circleCircumference;
+  const strokeOffset = circleCircumference - ((matchPct ?? 0) / 100) * circleCircumference;
 
   return (
     <div className="flex flex-col gap-6 py-6 md:py-8 max-w-[1440px] mx-auto w-full">
-      {/* Sovereign Header */}
+      {/* Header */}
       <section className="relative w-full rounded-2xl bg-paper p-6 md:p-8 overflow-hidden shadow-sm border border-border-slate">
         <div className="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-gradient-to-br from-amber-200/40 via-blue-200/30 to-transparent blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -192,24 +202,11 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
                   {t.auditEngineTag}
                 </span>
               </span>
-              <span className="font-metric-mono text-xs text-slate-500">NCVET-DPI://v4.8.2</span>
             </div>
             <h1 className="font-display text-2xl md:text-3xl font-extrabold text-ink tracking-tight">
               {t.heading}
             </h1>
             <p className="font-body text-body-md text-slate-600 leading-relaxed">{t.subheading}</p>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="flex items-center gap-2.5 bg-surface-container-lowest px-4 py-2.5 rounded-xl shadow-xs border border-border-slate">
-              <span className="material-symbols-outlined text-primary text-[20px]">fingerprint</span>
-              <div className="flex flex-col">
-                <span className="font-label-md text-xs font-bold text-ink">
-                  {t.aadhaarVerified}
-                </span>
-                <span className="font-metric-mono text-[10px] text-slate-500">Tier-1 Validated</span>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -315,7 +312,7 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                       <span className="font-display text-2xl font-extrabold text-white leading-none">
-                        {matchPct}%
+                        {matchPct === null ? "—" : `${matchPct}%`}
                       </span>
                       <span className="font-metric-mono text-[9px] text-blue-200 uppercase tracking-wider">
                         Match
@@ -326,14 +323,18 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
                   <div className="flex flex-col">
                     <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/15 text-blue-100 font-metric-mono text-xs w-fit mb-1.5 border border-white/20">
                       <span className="w-2 h-2 rounded-full bg-secondary animate-ping" />
-                      {matchPct >= 80 ? "High Role Suitability" : "Substantial Baseline"}
+                      {matchPct === null ? t.noSkillsShort : matchPct >= 80 ? t.strongMatch : t.partialMatch}
                     </div>
                     <h2 className="font-headline text-lg md:text-xl font-bold text-white">
-                      {result.acquired_skills.length} of {totalSkillsCount} Required Competencies Verified
+                      {totalSkillsCount === 0
+                        ? t.noSkillsTagged
+                        : `${result.acquired_skills.length} of ${totalSkillsCount} required skills earned`}
                     </h2>
                     <p className="font-body text-xs md:text-sm text-blue-100 max-w-md mt-1">
-                      {result.gap_skills.length === 0
-                        ? "You are 100% qualified for this cooperative position."
+                      {totalSkillsCount === 0
+                        ? ""
+                        : result.gap_skills.length === 0
+                        ? "You have every skill this job asks for."
                         : `Complete ${result.gap_skills.length} target skills to reach full qualification for ${selectedJob?.title ?? "this role"}.`}
                     </p>
                   </div>
@@ -347,9 +348,6 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
                     <span className="material-symbols-outlined text-[18px]">bolt</span>
                     {t.startRemediation}
                   </a>
-                  <span className="font-metric-mono text-[11px] text-blue-200 text-center">
-                    {t.remediationSubtext}
-                  </span>
                 </div>
               </div>
             </div>
@@ -429,7 +427,7 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
                       {t.learnFirst}
                     </h3>
                     <span className="font-metric-mono text-[10px] text-slate-500">
-                      Cooperative AI Career Model
+                      {t.aiOrder}
                     </span>
                   </div>
                 </div>
@@ -442,9 +440,8 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-metric-mono text-[10px] text-secondary font-bold uppercase">
-                          Step 0{idx + 1} • High Impact
+                          {t.step(idx + 1)}
                         </span>
-                        <span className="font-metric-mono text-[10px] text-slate-500">3-4 hrs</span>
                       </div>
                       <span className="font-headline text-xs font-bold text-ink">
                         {step.skill_name}

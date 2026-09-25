@@ -129,14 +129,14 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
   return (
     <div className="w-full flex flex-col gap-6 text-left">
       {/* Page Header */}
-      <header className="bg-white rounded-2xl border border-border-slate px-6 py-5 flex flex-col justify-between gap-1 shadow-xs">
+      <header className="bg-surface-card rounded-2xl border border-border-slate px-6 py-5 flex flex-col justify-between gap-1 shadow-xs">
         <div className="flex items-center gap-2 mb-1">
           <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#FE932C]" />
           <span className="text-xs uppercase tracking-wider text-[#D97706] font-bold">
             Administration • AI RAG Corpus & Grounding Engine
           </span>
         </div>
-        <h1 className="font-display text-2xl lg:text-3xl font-extrabold text-[#00236F] m-0">
+        <h1 className="font-display text-2xl lg:text-3xl font-extrabold text-primary m-0">
           {t.heading}
         </h1>
         <p className="font-body text-xs text-slate-600 mt-1 max-w-2xl">{t.subheading}</p>
@@ -149,7 +149,7 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
             <span className="material-symbols-outlined text-[20px]">info</span>
           </div>
           <div>
-            <h3 className="font-display text-sm text-[#00236F] font-bold m-0 mb-1">
+            <h3 className="font-display text-sm text-primary font-bold m-0 mb-1">
               {t.guardrailsTitle}
             </h3>
             <p className="font-body text-xs text-slate-600 m-0 leading-relaxed">
@@ -170,8 +170,8 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Add Chunk Form */}
         <section className="lg:col-span-1">
-          <div className="bg-white rounded-2xl border border-border-slate p-6 shadow-xs sticky top-6">
-            <h2 className="font-display text-base font-bold text-[#00236F] mb-5 flex items-center gap-2 m-0">
+          <div className="bg-surface-card rounded-2xl border border-border-slate p-6 shadow-xs sticky top-6">
+            <h2 className="font-display text-base font-bold text-primary mb-5 flex items-center gap-2 m-0">
               <span className="material-symbols-outlined text-[#FE932C]">add_circle</span>
               {t.addNewChunk}
             </h2>
@@ -187,7 +187,7 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
                     id="sourceType"
                     value={sourceType}
                     onChange={(e) => setSourceType(e.target.value as ChatbotSourceType)}
-                    className="w-full bg-paper-light border border-border-slate rounded-xl px-3.5 py-2.5 appearance-none focus:outline-none focus:bg-white focus:border-[#00236F] text-xs font-semibold text-ink cursor-pointer"
+                    className="w-full bg-paper-light border border-border-slate rounded-xl px-3.5 py-2.5 appearance-none focus:outline-none focus:bg-surface-card focus:border-[#00236F] text-xs font-semibold text-ink cursor-pointer"
                   >
                     {CHATBOT_SOURCE_TYPES.map((type) => (
                       <option key={type} value={type}>
@@ -218,7 +218,7 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
                   maxLength={4000}
                   rows={8}
                   placeholder={t.placeholder}
-                  className="w-full bg-paper-light border border-border-slate rounded-xl p-3.5 focus:outline-none focus:bg-white focus:border-[#00236F] text-xs text-ink leading-relaxed resize-y"
+                  className="w-full bg-paper-light border border-border-slate rounded-xl p-3.5 focus:outline-none focus:bg-surface-card focus:border-[#00236F] text-xs text-ink leading-relaxed resize-y"
                 />
               </div>
 
@@ -238,8 +238,8 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
         {/* List of Existing Entries */}
         <section className="lg:col-span-2 space-y-4">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="font-display text-base font-bold text-[#00236F] flex items-center gap-2 m-0">
-              <span className="material-symbols-outlined text-[#00236F]">list_alt</span>
+            <h2 className="font-display text-base font-bold text-primary flex items-center gap-2 m-0">
+              <span className="material-symbols-outlined text-primary">list_alt</span>
               {t.existingEntries(chunks.length)}
             </h2>
           </div>
@@ -261,7 +261,7 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
               return (
                 <article
                   key={chunk.id}
-                  className="bg-white rounded-2xl border border-border-slate p-5 hover:border-[#FE932C]/40 transition-all shadow-xs"
+                  className="bg-surface-card rounded-2xl border border-border-slate p-5 hover:border-[#FE932C]/40 transition-all shadow-xs"
                 >
                   <div className="flex justify-between items-start mb-3">
                     <span
@@ -285,7 +285,7 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
 
                   <div className="mt-4 pt-3 border-t border-border-slate/50 flex justify-between items-center text-slate-500 text-[11px]">
                     <span>{t.added(new Date(chunk.created_at).toLocaleDateString(locale === "hi" ? "hi-IN" : undefined))}</span>
-                    <span className="font-metric-mono font-semibold text-[#00236F]">#KB-{chunk.id.slice(0, 8).toUpperCase()}</span>
+                    <span className="font-metric-mono font-semibold text-primary">#KB-{chunk.id.slice(0, 8).toUpperCase()}</span>
                   </div>
                 </article>
               );

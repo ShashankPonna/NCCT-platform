@@ -1,3 +1,4 @@
+import ExcelJS from "exceljs";
 import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -47,6 +48,16 @@ vi.mock("../assessmentScoring.js", () => ({
   getCourseGradebook: getCourseGradebookMock,
 }));
 
+// The export's DB loader is mocked; its workbook builder is the real one, so
+// the export tests below download and parse a genuine .xlsx.
+const { loadGradebookExportContextMock } = vi.hoisted(() => ({
+  loadGradebookExportContextMock: vi.fn(),
+}));
+vi.mock("../gradebookExport.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../gradebookExport.js")>()),
+  loadGradebookExportContext: loadGradebookExportContextMock,
+}));
+
 function buildApp() {
   const app = express();
   app.use(express.json());
@@ -64,6 +75,7 @@ beforeEach(() => {
   getUserMock.mockReset();
   getCourseMarksTallyMock.mockReset();
   getCourseGradebookMock.mockReset();
+  loadGradebookExportContextMock.mockReset();
   for (const mock of [profilesMock, coursesMock, programmeTrainersMock]) {
     mock.result.data = null;
     mock.result.error = null;
@@ -168,5 +180,107 @@ describe("GET /api/courses/:id/gradebook", () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual(gradebook);
     expect(getCourseGradebookMock).toHaveBeenCalledWith("course-1");
+  });
+});
+
+describe("GET /api/courses/:id/gradebook/export", () => {
+  const gradebook = {
+    course_id: "course-1",
+    course_title: "Foundations",
+    assessments: [
+      { id: "t1", title: "Governance Test", module_title: "Governance", kind: "module_test", total_marks: 30, pass_threshold_percent: 60 },
+    ],
+    rows: [
+      {
+        trainee_id: "t-1",
+        full_name: "Asha Patil",
+        cells: { t1: { best_marks_obtained: 30, best_total_marks: 30, best_score_percent: 100, passed: true, attempts: 1 } },
+        totals: { marks_obtained: 30, total_marks: 30, score_percent: 100, module_tests_passed: 1, module_tests_total: 1 },
+        certificate_code: "NCCT-ABC12345",
+      },
+    ],
+  };
+
+  it("returns 401 with no bearer token", async () => {
+    const res = await request(buildApp()).get("/api/courses/course-1/gradebook/export");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 403 for a trainee", async () => {
+    authenticateAs("trainee-1", "trainee");
+    const res = await request(buildApp())
+      .get("/api/courses/course-1/gradebook/export")
+      .set("Authorization", "Bearer token");
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 403 for a trainer not assigned to the course's programme — no file produced", async () => {
+    authenticateAs("trainer-2", "trainer");
+    coursesMock.result.data = { programme_id: "prog-1" };
+    programmeTrainersMock.result.data = null;
+
+    const res = await request(buildApp())
+      .get("/api/courses/course-1/gradebook/export")
+      .set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(403);
+    expect(getCourseGradebookMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 when the course doesn't exist", async () => {
+    authenticateAs("admin-1", "admin");
+    getCourseGradebookMock.mockResolvedValue(null);
+
+    const res = await request(buildApp())
+      .get("/api/courses/course-1/gradebook/export")
+      .set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(404);
+  });
+
+  it("streams a real .xlsx for the assigned trainer, named after the course and prepared in their name", async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: "trainer-1" } }, error: null });
+    profilesMock.result.data = { role: "trainer", full_name: "Rajesh Kumar" };
+    coursesMock.result.data = { programme_id: "prog-1" };
+    programmeTrainersMock.result.data = { trainer_id: "trainer-1" };
+    getCourseGradebookMock.mockResolvedValue(gradebook);
+    loadGradebookExportContextMock.mockResolvedValue({
+      programmeTitle: "Cooperative Management Basics",
+      institutionName: "VAMNICOM Pune",
+      affiliations: { "t-1": "Village PACS" },
+    });
+
+    const res = await request(buildApp())
+      .get("/api/courses/course-1/gradebook/export")
+      .set("Authorization", "Bearer token")
+      .responseType("blob");
+
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toContain("spreadsheetml.sheet");
+    expect(res.headers["content-disposition"]).toMatch(/attachment; filename="Gradebook - Foundations - \d{4}-\d{2}-\d{2}\.xlsx"/);
+    expect(loadGradebookExportContextMock).toHaveBeenCalledWith("course-1", ["t-1"]);
+
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(res.body as unknown as ArrayBuffer);
+    const sheet = workbook.getWorksheet("Gradebook")!;
+    expect(String(sheet.getCell("A3").value)).toContain("Rajesh Kumar");
+    expect(sheet.getRow(6).getCell(2).value).toBe("Asha Patil");
+    expect(sheet.getRow(6).getCell(3).value).toBe("Village PACS");
+    expect(sheet.getRow(6).getCell(4).value).toBe(30);
+  });
+
+  it("renders Hindi labels with ?lang=hi", async () => {
+    authenticateAs("admin-1", "admin");
+    getCourseGradebookMock.mockResolvedValue(gradebook);
+    loadGradebookExportContextMock.mockResolvedValue({ programmeTitle: null, institutionName: null, affiliations: {} });
+
+    const res = await request(buildApp())
+      .get("/api/courses/course-1/gradebook/export?lang=hi")
+      .set("Authorization", "Bearer token")
+      .responseType("blob");
+
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(res.body as unknown as ArrayBuffer);
+    expect(workbook.getWorksheet("अंक पुस्तिका")).toBeTruthy();
   });
 });

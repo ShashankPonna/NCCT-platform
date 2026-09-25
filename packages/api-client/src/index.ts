@@ -117,6 +117,40 @@ async function apiFetch<T>(
   return res.json();
 }
 
+// Binary-download counterpart to apiFetch: same auth and error handling,
+// but returns the body as a Blob plus the server-chosen filename.
+async function apiFetchFile(path: string, accessToken: string): Promise<{ blob: Blob; fileName: string | null }> {
+  const res = await fetch(`${apiBaseUrl}/api${path}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(
+      res.status,
+      typeof body === "object" && body && "error" in body
+        ? JSON.stringify((body as { error: unknown }).error)
+        : `Request failed: ${res.status}`,
+    );
+  }
+  return { blob: await res.blob(), fileName: parseContentDispositionFileName(res.headers.get("Content-Disposition")) };
+}
+
+// Prefers RFC 5987 `filename*=UTF-8''...` (keeps non-ASCII names intact)
+// over the plain ASCII `filename="..."` fallback.
+export function parseContentDispositionFileName(header: string | null): string | null {
+  if (!header) return null;
+  const extended = /filename\*=UTF-8''([^;]+)/i.exec(header);
+  if (extended) {
+    try {
+      return decodeURIComponent(extended[1].trim());
+    } catch {
+      // fall through to the plain filename
+    }
+  }
+  const plain = /filename="([^"]+)"/i.exec(header);
+  return plain ? plain[1] : null;
+}
+
 // F1 — own profile. getProfile (below, used by session bootstrap) returns
 // only id/role/full_name; this returns the whole editable row.
 export function getProfileDetails(accessToken: string) {
@@ -1123,4 +1157,11 @@ export function markNotificationRead(accessToken: string, notificationId: string
 
 export function markAllNotificationsRead(accessToken: string) {
   return apiFetch<void>("/notifications/read-all", accessToken, { method: "POST" });
+}
+
+// Gradebook as a structured Excel workbook (docs/DECISIONS.md #66). Same
+// access rule as getCourseGradebook — admin, or a trainer assigned to the
+// course's programme. `locale` only changes the sheet's labels.
+export function downloadCourseGradebookExcel(accessToken: string, courseId: string, locale: "en" | "hi" = "en") {
+  return apiFetchFile(`/courses/${courseId}/gradebook/export?lang=${locale}`, accessToken);
 }

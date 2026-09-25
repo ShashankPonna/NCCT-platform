@@ -200,7 +200,9 @@ function App() {
             email={session.email}
           />
         )}
-        {currentTab === "employer" && <EmployerDashboard accessToken={session.accessToken} />}
+        {currentTab === "employer" && (
+          <EmployerDashboard accessToken={session.accessToken} currentUserId={session.userId} />
+        )}
       </div>
     </ManagementShell>
   );

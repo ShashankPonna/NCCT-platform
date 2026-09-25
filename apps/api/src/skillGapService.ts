@@ -1,4 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
 import { JOB_MATCH_COUNT, SKILL_SEMANTIC_SIMILARITY_THRESHOLD } from "@ncct/constants";
 import type {
   RelatedSkillMatch,
@@ -8,6 +7,7 @@ import type {
   SkillGapResult,
 } from "@ncct/shared-types";
 import { embedText } from "./chatbotService.js";
+import { groqChat, type GroqChat } from "./groqClient.js";
 import { matchJobsForTrainee } from "./jobMatchingService.js";
 import { cosineSimilarity } from "./routes/attendance.js";
 import { supabaseAdmin } from "./supabaseClient.js";
@@ -252,12 +252,13 @@ export async function getSkillGapAcrossJobs(traineeId: string): Promise<SkillGap
 }
 
 interface RankOptions {
-  /** Injectable for tests so they never reach the real Gemini API. */
-  client?: GoogleGenAI;
+  /** Injectable for tests so they never reach the real Groq API. */
+  chat?: GroqChat;
 }
 
 /**
- * Optional "what to learn first" ranking over the gap, via Gemini. This is
+ * Optional "what to learn first" ranking over the gap, via Groq (moved from
+ * Gemini — docs/DECISIONS.md #68). This is
  * a genuinely optional enrichment layer, not the feature itself — the gap
  * above is fully deterministic set subtraction. Any failure here (missing
  * key, model error, malformed response) degrades to `null`, which the UI
@@ -271,35 +272,34 @@ export async function rankMissingSkills(
   if (gapSkills.length === 0) return null;
 
   try {
-    const client = options.client ?? new GoogleGenAI({});
+    const chat = options.chat ?? groqChat;
     const skillList = gapSkills.map((s) => `- ${s.id}: ${s.name}`).join("\n");
 
-    const response = await client.models.generateContent({
-      model: "gemini-3.1-flash-lite",
-      contents: `A trainee is missing these skills for a job they're interested in:\n${skillList}\n\nRank them in the order they should learn them (most foundational / highest-impact first), with a one-sentence reason each.`,
-      config: {
-        systemInstruction:
-          "You output only JSON matching the requested schema. Every skill_id in your output must be copied exactly from the input list — never invent one.",
-        maxOutputTokens: 1024,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              skill_id: { type: "string" },
-              reason: { type: "string" },
-            },
-            required: ["skill_id", "reason"],
-          },
+    // JSON mode guarantees syntactically valid JSON but not the shape, so
+    // the prompt pins it and the parsing below still validates every item.
+    const response = await chat({
+      messages: [
+        {
+          role: "system",
+          content:
+            'You output only a JSON object of the form {"ranking": [{"skill_id": string, "reason": string}]}. Every skill_id in your output must be copied exactly from the input list — never invent one.',
         },
-      },
+        {
+          role: "user",
+          content: `A trainee is missing these skills for a job they're interested in:\n${skillList}\n\nRank them in the order they should learn them (most foundational / highest-impact first), with a one-sentence reason each. Respond in JSON.`,
+        },
+      ],
+      response_format: { type: "json_object" },
     });
 
-    const text = (response.text ?? "").trim();
+    const text = (response.content ?? "").trim();
     if (!text) return null;
 
-    const parsed = JSON.parse(text) as { skill_id: string; reason: string }[];
+    const json: unknown = JSON.parse(text);
+    const parsed = (
+      Array.isArray(json) ? json : ((json as { ranking?: unknown }).ranking ?? [])
+    ) as { skill_id: string; reason: string }[];
+    if (!Array.isArray(parsed)) return null;
     const skillById = new Map(gapSkills.map((s) => [s.id, s]));
 
     const ranked: SkillGapReasoningItem[] = [];

@@ -48,6 +48,9 @@ interface ManagementShellText {
     employer: string;
     profile: string;
   };
+  // One-word labels for the phone bottom bar — the full labels above don't
+  // fit its ~60px slots, and cutting them at the first space gave "My".
+  navShort: ManagementShellText["nav"];
   roles: {
     admin: string;
     trainer: string;
@@ -63,14 +66,10 @@ interface ManagementShellText {
   lightMode: string;
   darkMode: string;
   highContrast: string;
-  searchPlaceholder: string;
   toggleTheme: string;
   myProfile: string;
   signOut: string;
   footerCopyright: string;
-  footerPrivacy: string;
-  footerTerms: string;
-  footerSupport: string;
 }
 
 const content: Record<Locale, ManagementShellText> = {
@@ -87,6 +86,18 @@ const content: Record<Locale, ManagementShellText> = {
       employer: "Trainee Search & Talent Pool",
       profile: "My Profile",
     },
+    navShort: {
+      dashboard: "Dashboard",
+      users: "Users",
+      programmes: "Programmes",
+      courses: "Courses",
+      content: "Content",
+      attendance: "Attendance",
+      terminal: "Kiosk",
+      chatbot: "Chatbot",
+      employer: "Talent",
+      profile: "Profile",
+    },
     roles: {
       admin: "Administrator",
       trainer: "Trainer",
@@ -102,14 +113,10 @@ const content: Record<Locale, ManagementShellText> = {
     lightMode: "Switch to Light Mode",
     darkMode: "Switch to Dark Mode",
     highContrast: "High Contrast Toggle",
-    searchPlaceholder: "Search institutes, candidates, programmes, kiosks...",
     toggleTheme: "Toggle Theme",
     myProfile: "My profile",
     signOut: "Sign Out",
     footerCopyright: "2026 National Council for Cooperative Training (NCCT) — Ministry of Cooperation, Govt. of India",
-    footerPrivacy: "Privacy Policy",
-    footerTerms: "Terms of Service",
-    footerSupport: "Support",
   },
   hi: {
     nav: {
@@ -123,6 +130,18 @@ const content: Record<Locale, ManagementShellText> = {
       chatbot: "चैटबॉट ज्ञान आधार",
       employer: "प्रशिक्षणार्थी खोज एवं शॉर्टलिस्ट",
       profile: "मेरी प्रोफ़ाइल",
+    },
+    navShort: {
+      dashboard: "डैशबोर्ड",
+      users: "उपयोगकर्ता",
+      programmes: "कार्यक्रम",
+      courses: "पाठ्यक्रम",
+      content: "सामग्री",
+      attendance: "उपस्थिति",
+      terminal: "कियोस्क",
+      chatbot: "चैटबॉट",
+      employer: "खोज",
+      profile: "प्रोफ़ाइल",
     },
     roles: {
       admin: "प्रशासक",
@@ -139,14 +158,10 @@ const content: Record<Locale, ManagementShellText> = {
     lightMode: "लाइट मोड में बदलें",
     darkMode: "डार्क मोड में बदलें",
     highContrast: "उच्च कंट्रास्ट टॉगल",
-    searchPlaceholder: "कार्यक्रम, सामग्री, उपयोगकर्ता खोजें...",
     toggleTheme: "थीम टॉगल करें",
     myProfile: "मेरी प्रोफ़ाइल",
     signOut: "साइन आउट",
     footerCopyright: "2026 राष्ट्रीय सहकारी प्रशिक्षण परिषद। सर्वाधिकार सुरक्षित।",
-    footerPrivacy: "गोपनीयता नीति",
-    footerTerms: "सेवा की शर्तें",
-    footerSupport: "सहायता",
   },
 };
 
@@ -171,7 +186,6 @@ export function ManagementShell({
 }: ManagementShellProps) {
   const { locale } = useLocale();
   const t = content[locale];
-  const [searchQuery, setSearchQuery] = useState("");
   const [contrastHigh, setContrastHigh] = useState(false);
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
@@ -338,20 +352,6 @@ export function ManagementShell({
             </button>
           </div>
 
-          {/* Search Bar (Desktop) */}
-          <div className="relative group mx-auto hidden max-w-md flex-1 lg:block">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-outline transition-colors group-focus-within:text-interactive">
-              search
-            </span>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t.searchPlaceholder}
-              className="h-10 w-full rounded-xl border border-border-slate bg-paper-light pl-9 pr-4 text-sm text-on-surface transition-all outline-none focus:bg-white focus:border-interactive focus:ring-1 focus:ring-interactive placeholder:text-on-surface-variant/60"
-            />
-          </div>
-
           {/* Actions & Profile. Icon buttons trimmed from 36px to 32px and
               gaps tightened below md: — this cluster measured 235px on its
               own at 375px width, `shrink-0` (deliberately, so icons don't
@@ -463,17 +463,6 @@ export function ManagementShell({
             <span className="material-symbols-outlined text-sm">copyright</span>
             <span className="text-label-sm">{t.footerCopyright}</span>
           </div>
-          <div className="flex gap-6 text-label-sm text-interactive">
-            <a href="#" className="hover:underline">
-              {t.footerPrivacy}
-            </a>
-            <a href="#" className="hover:underline">
-              {t.footerTerms}
-            </a>
-            <a href="#" className="hover:underline">
-              {t.footerSupport}
-            </a>
-          </div>
         </div>
       </footer>
 
@@ -481,13 +470,13 @@ export function ManagementShell({
       <nav className="fixed bottom-0 left-0 z-50 flex h-14 w-full items-center justify-around border-t border-outline-variant bg-surface-card px-2 shadow-lg md:hidden transition-colors overflow-x-auto">
         {roleNavItems.map((item) => {
           const isActive = activeTab === item.id;
-          const label = t.nav[item.labelKey];
+          const label = t.navShort[item.labelKey];
           return (
             <button
               key={item.id}
               type="button"
               onClick={() => onNavigate(item.id)}
-              className={`relative flex h-full flex-1 flex-col items-center justify-center gap-1 transition-transform active:scale-90 ${
+              className={`relative flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1 px-0.5 transition-transform active:scale-90 ${
                 isActive ? "text-secondary" : "text-on-surface-variant"
               }`}
             >
@@ -498,8 +487,8 @@ export function ManagementShell({
               >
                 {item.icon}
               </span>
-              <span className="text-[10px] font-medium leading-tight truncate max-w-[60px]">
-                {label.split(" ")[0]}
+              <span className="text-[10px] font-medium leading-tight truncate max-w-full">
+                {label}
               </span>
             </button>
           );

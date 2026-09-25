@@ -5,6 +5,8 @@ import {
   deleteInstitution,
   deleteUser,
   getInstitutions,
+  getJobs,
+  getProgrammes,
   listUsers,
   updateInstitution,
   updateUser,
@@ -24,21 +26,6 @@ interface CreatedUser {
   role: Role;
   temp_password?: string;
 }
-
-interface EmployerOrgItem {
-  id: string;
-  name: string;
-  sector: string;
-  activeJobs: number;
-}
-
-const DEFAULT_EMPLOYER_ORGS: EmployerOrgItem[] = [
-  { id: "emp-1", name: "Amul Dairy Federation (GCMMF)", sector: "Dairy & Cold Chain", activeJobs: 14 },
-  { id: "emp-2", name: "HAFED Agro Haryana", sector: "Agri-Processing & Warehousing", activeJobs: 8 },
-  { id: "emp-3", name: "Mehsana District Central Co-op Bank", sector: "Cooperative Banking", activeJobs: 6 },
-  { id: "emp-4", name: "Sitapur Kisan Seva Samiti PACS", sector: "Primary Credit & Fertilizer", activeJobs: 3 },
-  { id: "emp-5", name: "Bihar State Milk Co-op Fed (COMFED / Sudha)", sector: "Dairy Processing", activeJobs: 5 },
-];
 
 function parseTraineeCsv(text: string) {
   const rows = text
@@ -65,7 +52,13 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
   const [users, setUsers] = useState<AdminUserRow[]>([]);
   const [userQuery, setUserQuery] = useState("");
   const [userRoleFilter, setUserRoleFilter] = useState<Role | "">("");
-  const [userStatusFilter, setUserStatusFilter] = useState<"all" | "active">("all");
+  // Unfiltered totals and the employer list, loaded independently of the
+  // directory's role/search filter (docs/DECISIONS.md #67) — these used to
+  // fall back to invented numbers ("1,842", "29", "114") and a hardcoded list
+  // of five famous employers whenever the real data was empty.
+  const [allUsers, setAllUsers] = useState<AdminUserRow[]>([]);
+  const [jobCountByEmployer, setJobCountByEmployer] = useState<Map<string, number>>(new Map());
+  const [programmeCountByInstitution, setProgrammeCountByInstitution] = useState<Map<string, number>>(new Map());
   const [editingInstId, setEditingInstId] = useState<string | null>(null);
   const [editInstName, setEditInstName] = useState("");
   const [showAddInstModal, setShowAddInstModal] = useState(false);
@@ -77,9 +70,11 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const provisionFormRef = useRef<HTMLDivElement>(null);
+  const directoryRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     void refreshInstitutions();
+    void refreshTotals();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken]);
 
@@ -96,12 +91,33 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
     }
   }
 
-  async function refreshUsers() {
+  async function refreshTotals() {
+    try {
+      const [everyone, jobs, programmes] = await Promise.all([
+        listUsers(accessToken, {}),
+        getJobs(),
+        getProgrammes(accessToken),
+      ]);
+      setAllUsers(everyone);
+      const jobCounts = new Map<string, number>();
+      for (const job of jobs) jobCounts.set(job.employer_id, (jobCounts.get(job.employer_id) ?? 0) + 1);
+      setJobCountByEmployer(jobCounts);
+      const programmeCounts = new Map<string, number>();
+      for (const programme of programmes) {
+        programmeCounts.set(programme.institution_id, (programmeCounts.get(programme.institution_id) ?? 0) + 1);
+      }
+      setProgrammeCountByInstitution(programmeCounts);
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  async function refreshUsers(filters: { role: Role | ""; q: string } = { role: userRoleFilter, q: userQuery }) {
     try {
       setUsers(
         await listUsers(accessToken, {
-          ...(userRoleFilter ? { role: userRoleFilter } : {}),
-          ...(userQuery.trim() ? { q: userQuery.trim() } : {}),
+          ...(filters.role ? { role: filters.role } : {}),
+          ...(filters.q.trim() ? { q: filters.q.trim() } : {}),
         }),
       );
     } catch (err) {
@@ -113,7 +129,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
     setError(null);
     try {
       await updateUser(accessToken, id, { role });
-      await refreshUsers();
+      await Promise.all([refreshUsers(), refreshTotals()]);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -126,7 +142,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
     setError(null);
     try {
       await deleteUser(accessToken, row.id);
-      await refreshUsers();
+      await Promise.all([refreshUsers(), refreshTotals()]);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -145,6 +161,10 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
         role,
         full_name: String(form.get("full_name") ?? "").trim(),
         password: String(form.get("password") ?? "").trim() || undefined,
+        phone: String(form.get("phone") ?? "").trim() || undefined,
+        ...(role === "trainee"
+          ? { cooperative_affiliation: String(form.get("cooperative_affiliation") ?? "").trim() || undefined }
+          : {}),
         ...(role === "employer"
           ? {
               org_name: String(form.get("org_name") ?? "").trim() || undefined,
@@ -158,7 +178,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
       ]);
       formEl.reset();
       setSelectedRole("trainee");
-      await refreshUsers();
+      await Promise.all([refreshUsers(), refreshTotals()]);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -179,7 +199,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
       setImportResult(result);
       setCsv("");
       setStagedFileName(null);
-      await refreshUsers();
+      await Promise.all([refreshUsers(), refreshTotals()]);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -246,7 +266,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
     }
   }
 
-  const employerCount = users.filter((u) => u.role === "employer").length;
+  const employers = allUsers.filter((u) => u.role === "employer");
 
   return (
     <div className="flex flex-col w-full text-left gap-6">
@@ -256,12 +276,12 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
           <div className="flex items-center gap-2">
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#FE932C]" />
             <span className="font-label-sm text-xs uppercase tracking-wider text-[#D97706] font-bold">
-              Administration • Sovereign Entity & User Registry
+              Administration • Users & Institutions
             </span>
           </div>
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
             <div>
-              <h1 className="font-display text-2xl lg:text-3xl text-[#00236F] tracking-tight font-extrabold">
+              <h1 className="font-display text-2xl lg:text-3xl text-primary tracking-tight font-extrabold">
                 Users & Institutions Management
               </h1>
               <p className="font-body text-sm text-slate-600 max-w-4xl mt-1">
@@ -272,18 +292,18 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
             <div className="flex flex-wrap items-center gap-3 self-start lg:self-auto">
               <div className="bg-paper-light border border-border-slate px-4 py-2 rounded-xl flex items-center gap-2 shadow-xs">
                 <span className="text-xs text-slate-500 uppercase tracking-wider font-bold">
-                  Active Users:
+                  Users:
                 </span>
-                <span className="font-metric-mono text-sm text-[#00236F] font-bold">
-                  {users.length > 0 ? users.length.toLocaleString() : "1,842"}
+                <span className="font-metric-mono text-sm text-primary font-bold">
+                  {allUsers.length.toLocaleString()}
                 </span>
               </div>
               <div className="bg-paper-light border border-border-slate px-4 py-2 rounded-xl flex items-center gap-2 shadow-xs">
                 <span className="text-xs text-slate-500 uppercase tracking-wider font-bold">
                   Institutions:
                 </span>
-                <span className="font-metric-mono text-sm text-[#00236F] font-bold">
-                  {institutions.length > 0 ? institutions.length : "29"}
+                <span className="font-metric-mono text-sm text-primary font-bold">
+                  {institutions.length}
                 </span>
               </div>
               <div className="bg-amber-50/80 border border-amber-200/80 px-4 py-2 rounded-xl flex items-center gap-2 shadow-xs">
@@ -291,7 +311,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                   Employer Orgs:
                 </span>
                 <span className="font-metric-mono text-sm text-amber-800 font-bold">
-                  {employerCount > 0 ? employerCount : "114"}
+                  {employers.length}
                 </span>
               </div>
             </div>
@@ -307,7 +327,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
       )}
 
       {/* SECTION 2: EXISTING ACCOUNTS TABLE */}
-      <section className="bg-white rounded-2xl shadow-xs overflow-hidden flex flex-col border border-border-slate">
+      <section ref={directoryRef} className="bg-surface-card rounded-2xl shadow-xs overflow-hidden flex flex-col border border-border-slate">
         {/* Toolbar */}
         <div className="p-5 bg-paper flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border-b border-border-slate/70">
           <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-3xl">
@@ -321,7 +341,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                 onKeyDown={(e) => {
                   if (e.key === "Enter") void refreshUsers();
                 }}
-                className="w-full h-11 pl-10 pr-4 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] border border-border-slate transition-all"
+                className="w-full h-11 pl-10 pr-4 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-surface-card focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] border border-border-slate transition-all"
                 placeholder="Search user by name, email, or ID..."
                 type="text"
               />
@@ -331,22 +351,13 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                 aria-label="Filter by role"
                 value={userRoleFilter}
                 onChange={(e) => setUserRoleFilter(e.target.value as Role | "")}
-                className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] cursor-pointer min-w-[130px] border border-border-slate font-medium"
+                className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-surface-card focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] cursor-pointer min-w-[130px] border border-border-slate font-medium"
               >
                 <option value="">All Roles</option>
                 <option value="admin">Admin</option>
                 <option value="trainer">Trainer</option>
                 <option value="trainee">Trainee</option>
                 <option value="employer">Employer</option>
-              </select>
-              <select
-                aria-label="Filter by status"
-                value={userStatusFilter}
-                onChange={(e) => setUserStatusFilter(e.target.value as "all" | "active")}
-                className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] cursor-pointer min-w-[130px] border border-border-slate font-medium"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
               </select>
             </div>
           </div>
@@ -356,7 +367,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
             className="h-11 px-5 bg-[#FE932C] hover:bg-[#E07D1E] text-white text-sm rounded-xl flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer font-bold shrink-0"
           >
             <span className="material-symbols-outlined text-[20px]">person_add</span>
-            <span>+ Quick Provision</span>
+            <span>Quick Provision</span>
           </button>
         </div>
 
@@ -375,10 +386,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                   Assigned Role
                 </th>
                 <th className="py-3.5 px-4" scope="col">
-                  Affiliated Institution / Org
-                </th>
-                <th className="py-3.5 px-4" scope="col">
-                  System Status
+                  Organisation / Affiliation
                 </th>
                 <th className="py-3.5 px-6 text-right" scope="col">
                   Actions
@@ -389,7 +397,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
               {users.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-10 text-center text-slate-500">
-                    No users match your criteria. Click "+ Quick Provision" to register an account.
+                    No users match your criteria. Click "Quick Provision" to register an account.
                   </td>
                 </tr>
               ) : (
@@ -421,7 +429,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                           : "bg-emerald-600 text-white";
 
                   return (
-                    <tr key={row.id} className="hover:bg-slate-50/70 transition-colors">
+                    <tr key={row.id} className="hover:bg-surface-container transition-colors">
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
                           <div
@@ -430,7 +438,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                             {initials}
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="font-bold text-[#00236F] truncate">
+                            <span className="font-bold text-primary truncate">
                               {row.full_name || "Unnamed Account"}
                               {isSelf && (
                                 <span className="ml-1 text-xs text-[#D97706] font-normal">(You)</span>
@@ -456,7 +464,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                             <select
                               value={row.role}
                               onChange={(e) => void handleChangeRole(row.id, e.target.value as Role)}
-                              className="text-xs bg-paper-light border border-border-slate rounded-lg px-2 py-1 text-slate-600 cursor-pointer outline-none hover:bg-white"
+                              className="text-xs bg-paper-light border border-border-slate rounded-lg px-2 py-1 text-slate-600 cursor-pointer outline-none hover:bg-surface-card"
                               title="Change user role"
                             >
                               {ROLES.map((r) => (
@@ -469,36 +477,17 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                         </div>
                       </td>
                       <td className="py-4 px-4 text-slate-700 font-medium text-xs">
-                        {row.role === "employer"
-                          ? "Cooperative Partner Org"
-                          : institutions[0]?.name || "RICM Regional Center"}
-                      </td>
-                      <td className="py-4 px-4">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          Active
-                        </span>
+                        {(row.role === "employer" ? row.org_name : row.cooperative_affiliation) ?? "—"}
                       </td>
                       <td className="py-4 px-6 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newRole = row.role === "trainer" ? "admin" : "trainer";
-                              if (!isSelf) void handleChangeRole(row.id, newRole);
-                            }}
-                            disabled={isSelf}
-                            className="h-8 px-3 bg-paper-light hover:bg-slate-200/70 text-[#00236F] border border-border-slate text-xs font-semibold rounded-lg transition-colors disabled:opacity-40 cursor-pointer"
-                          >
-                            Edit Role
-                          </button>
                           <button
                             type="button"
                             disabled={isSelf}
                             onClick={() => void handleDeleteUser(row)}
                             className="h-8 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold rounded-lg transition-colors disabled:opacity-40 cursor-pointer"
                           >
-                            Deactivate
+                            Delete
                           </button>
                         </div>
                       </td>
@@ -513,33 +502,9 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
         {/* Table Pagination Footer */}
         <div className="p-4 bg-paper flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-border-slate/60">
           <span className="text-xs text-slate-500">
-            Showing <span className="text-[#00236F] font-bold">{Math.min(1, users.length)}–{users.length}</span> of{" "}
-            <span className="text-[#00236F] font-bold">{users.length}</span> accounts
+            Showing <span className="text-primary font-bold">{users.length}</span> account{users.length === 1 ? "" : "s"}
+            {userRoleFilter || userQuery.trim() ? " matching your filters" : ""}
           </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled
-              className="h-8 px-3 bg-paper-light border border-border-slate text-slate-400 opacity-50 text-xs font-semibold rounded-lg cursor-not-allowed"
-            >
-              Previous
-            </button>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                className="w-8 h-8 bg-[#00236F] text-white text-xs rounded-lg flex items-center justify-center font-bold"
-              >
-                1
-              </button>
-            </div>
-            <button
-              type="button"
-              disabled
-              className="h-8 px-3 bg-paper-light border border-border-slate text-slate-400 opacity-50 text-xs font-semibold rounded-lg cursor-not-allowed"
-            >
-              Next
-            </button>
-          </div>
         </div>
       </section>
 
@@ -551,14 +516,14 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
           <div
             id="quick-provision-card"
             ref={provisionFormRef}
-            className="bg-white rounded-2xl shadow-xs overflow-hidden flex flex-col border border-border-slate"
+            className="bg-surface-card rounded-2xl shadow-xs overflow-hidden flex flex-col border border-border-slate"
           >
             <div className="p-5 bg-paper flex items-start gap-3.5 border-b border-border-slate/60">
               <div className="w-10 h-10 rounded-xl bg-[#00236F] text-white flex items-center justify-center shrink-0 shadow-xs">
                 <span className="material-symbols-outlined text-[22px]">person_add</span>
               </div>
               <div>
-                <h2 className="font-display text-lg text-[#00236F] font-bold">
+                <h2 className="font-display text-lg text-primary font-bold">
                   Provision Single Account
                 </h2>
                 <p className="font-body text-xs text-slate-600 mt-0.5">
@@ -578,7 +543,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                     name="full_name"
                     required
                     placeholder="e.g. Ramesh Kumar"
-                    className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] border border-border-slate transition-all"
+                    className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-surface-card focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] border border-border-slate transition-all"
                     type="text"
                   />
                 </div>
@@ -591,7 +556,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                     name="email"
                     required
                     placeholder="user@society.coop"
-                    className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] border border-border-slate transition-all"
+                    className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-surface-card focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] border border-border-slate transition-all"
                     type="email"
                   />
                 </div>
@@ -607,7 +572,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                     name="role"
                     value={selectedRole}
                     onChange={(e) => setSelectedRole(e.target.value as Role)}
-                    className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] cursor-pointer border border-border-slate font-medium"
+                    className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-surface-card focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] cursor-pointer border border-border-slate font-medium"
                     required
                   >
                     <option value="admin">Admin</option>
@@ -624,7 +589,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                     id="new-phone"
                     name="phone"
                     placeholder="+91 98765 43210"
-                    className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] border border-border-slate transition-all"
+                    className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-surface-card focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] border border-border-slate transition-all"
                     type="tel"
                   />
                 </div>
@@ -640,7 +605,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                       name="org_name"
                       required
                       placeholder="e.g. Amul Dairy Federation"
-                      className="h-10 px-3 bg-white text-ink text-sm rounded-lg outline-none border border-amber-300 focus:border-amber-500"
+                      className="h-10 px-3 bg-surface-card text-ink text-sm rounded-lg outline-none border border-amber-300 focus:border-amber-500"
                       type="text"
                     />
                   </div>
@@ -649,36 +614,27 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                     <input
                       name="org_sector"
                       placeholder="e.g. Dairy Processing"
-                      className="h-10 px-3 bg-white text-ink text-sm rounded-lg outline-none border border-amber-300 focus:border-amber-500"
+                      className="h-10 px-3 bg-surface-card text-ink text-sm rounded-lg outline-none border border-amber-300 focus:border-amber-500"
                       type="text"
                     />
                   </div>
                 </div>
               )}
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-700" htmlFor="new-institution">
-                  Sponsoring Institution / Employer Org
-                </label>
-                <select
-                  id="new-institution"
-                  name="institution"
-                  className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] cursor-pointer border border-border-slate font-medium"
-                >
-                  <option value="vamnicom">VAMNICOM Pune (National Apex)</option>
-                  <option value="ricm-gandhinagar">RICM Gandhinagar</option>
-                  <option value="ricm-lucknow">RICM Lucknow</option>
-                  <option value="ricm-bengaluru">RICM Bengaluru</option>
-                  <option value="icm-patna">ICM Patna</option>
-                  {institutions.map((inst) => (
-                    <option key={inst.id} value={inst.id}>
-                      {inst.name}
-                    </option>
-                  ))}
-                  <option value="gcmmf-amul">Amul Dairy Federation (GCMMF)</option>
-                  <option value="hafed">HAFED Agro Haryana</option>
-                </select>
-              </div>
+              {selectedRole === "trainee" && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-slate-700" htmlFor="new-affiliation">
+                    Cooperative / PACS Affiliation
+                  </label>
+                  <input
+                    id="new-affiliation"
+                    name="cooperative_affiliation"
+                    placeholder="e.g. Village PACS, Baramati"
+                    className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-surface-card focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] border border-border-slate/60"
+                    type="text"
+                  />
+                </div>
+              )}
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-bold text-slate-700" htmlFor="new-pwd">
@@ -688,7 +644,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                   id="new-pwd"
                   name="password"
                   placeholder="Leave blank to auto-generate secure password"
-                  className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] border border-border-slate transition-all"
+                  className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-surface-card focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] border border-border-slate transition-all"
                   type="text"
                 />
               </div>
@@ -700,7 +656,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                   className="w-full h-11 bg-[#FE932C] hover:bg-[#E07D1E] text-white text-sm rounded-xl flex items-center justify-center gap-2 transition-colors font-bold cursor-pointer disabled:opacity-50 shadow-xs"
                 >
                   <span className="material-symbols-outlined text-[20px]">badge</span>
-                  <span>{busy ? "Provisioning..." : "+ Create Account & Issue Credentials"}</span>
+                  <span>{busy ? "Provisioning..." : "Create Account & Issue Credentials"}</span>
                 </button>
               </div>
             </form>
@@ -719,10 +675,10 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                   {createdUsers.map((u, i) => (
                     <div
                       key={i}
-                      className="flex items-center justify-between p-3 bg-white rounded-xl border border-border-slate text-sm shadow-xs"
+                      className="flex items-center justify-between p-3 bg-surface-card rounded-xl border border-border-slate text-sm shadow-xs"
                     >
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-[#00236F]">{u.email}</span>
+                        <span className="font-bold text-primary">{u.email}</span>
                         <span className="px-2 py-0.5 rounded-full bg-paper-light border border-border-slate text-[11px] font-bold uppercase text-slate-700">
                           {u.role}
                         </span>
@@ -738,14 +694,14 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
           </div>
 
           {/* CARD 2: Institution Profiles */}
-          <div className="bg-white rounded-2xl shadow-xs overflow-hidden flex flex-col border border-border-slate">
+          <div className="bg-surface-card rounded-2xl shadow-xs overflow-hidden flex flex-col border border-border-slate">
             <div className="p-5 bg-paper flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-slate/60">
               <div className="flex items-start gap-3.5">
                 <div className="w-10 h-10 rounded-xl bg-[#00236F] text-white flex items-center justify-center shrink-0 shadow-xs">
                   <span className="material-symbols-outlined text-[22px]">corporate_fare</span>
                 </div>
                 <div>
-                  <h2 className="font-display text-lg text-[#00236F] font-bold">
+                  <h2 className="font-display text-lg text-primary font-bold">
                     Institution Profiles
                   </h2>
                   <p className="font-body text-xs text-slate-600 mt-0.5">
@@ -756,10 +712,10 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
               <button
                 type="button"
                 onClick={() => setShowAddInstModal(!showAddInstModal)}
-                className="h-9 px-3.5 bg-paper-light hover:bg-slate-200/60 border border-border-slate text-[#00236F] text-xs rounded-xl flex items-center gap-1.5 self-start sm:self-center transition-colors cursor-pointer font-bold shrink-0"
+                className="h-9 px-3.5 bg-paper-light hover:bg-slate-200/60 border border-border-slate text-primary text-xs rounded-xl flex items-center gap-1.5 self-start sm:self-center transition-colors cursor-pointer font-bold shrink-0"
               >
                 <span className="material-symbols-outlined text-[16px]">add</span>
-                <span>+ Add Institution</span>
+                <span>Add Institution</span>
               </button>
             </div>
 
@@ -777,17 +733,17 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                     name="name"
                     required
                     placeholder="Institution Name *"
-                    className="h-10 px-3 bg-white text-ink text-xs rounded-xl border border-border-slate outline-none focus:border-[#00236F]"
+                    className="h-10 px-3 bg-surface-card text-ink text-xs rounded-xl border border-border-slate outline-none focus:border-[#00236F]"
                   />
                   <input
                     name="state"
                     placeholder="State (e.g. Gujarat)"
-                    className="h-10 px-3 bg-white text-ink text-xs rounded-xl border border-border-slate outline-none focus:border-[#00236F]"
+                    className="h-10 px-3 bg-surface-card text-ink text-xs rounded-xl border border-border-slate outline-none focus:border-[#00236F]"
                   />
                   <input
                     name="district"
                     placeholder="District / City"
-                    className="h-10 px-3 bg-white text-ink text-xs rounded-xl border border-border-slate outline-none focus:border-[#00236F]"
+                    className="h-10 px-3 bg-surface-card text-ink text-xs rounded-xl border border-border-slate outline-none focus:border-[#00236F]"
                   />
                 </div>
                 <div className="flex justify-end gap-2 pt-1">
@@ -810,35 +766,11 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
             )}
 
             <div className="divide-y divide-border-slate/40 flex flex-col">
-              {/* Default Reference Items */}
-              <div className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors">
-                <div className="flex flex-col min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-[#00236F] truncate text-sm">
-                      VAMNICOM Pune
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-[#00236F] text-white text-[10px] font-bold uppercase tracking-wider">
-                      National Apex
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1 text-slate-500 text-xs">
-                    <span>Western Zone (Maharashtra)</span>
-                    <span>•</span>
-                    <span className="font-metric-mono text-[#00236F] font-semibold">12 Batches Active</span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="h-8 px-3 bg-paper-light hover:bg-slate-200/60 border border-border-slate text-[#00236F] text-xs rounded-lg shrink-0 cursor-pointer font-bold"
-                >
-                  Configure
-                </button>
-              </div>
 
               {institutions.map((inst) => (
                 <div
                   key={inst.id}
-                  className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors"
+                  className="p-4 flex items-center justify-between gap-4 hover:bg-surface-container transition-colors"
                 >
                   <div className="flex flex-col min-w-0 flex-1">
                     {editingInstId === inst.id ? (
@@ -846,7 +778,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                         <input
                           value={editInstName}
                           onChange={(e) => setEditInstName(e.target.value)}
-                          className="h-8 px-2.5 bg-white border border-border-slate rounded-lg text-xs flex-1 outline-none"
+                          className="h-8 px-2.5 bg-surface-card border border-border-slate rounded-lg text-xs flex-1 outline-none"
                         />
                         <button
                           type="button"
@@ -866,17 +798,28 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                     ) : (
                       <>
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-[#00236F] truncate text-sm">
+                          <span className="font-bold text-primary truncate text-sm">
                             {inst.name}
                           </span>
-                          <span className="px-2 py-0.5 rounded-full bg-paper-light border border-border-slate text-slate-600 text-[10px] font-bold uppercase tracking-wider">
-                            Regional Institute
-                          </span>
+                          {inst.type && (
+                            <span className="px-2 py-0.5 rounded-full bg-paper-light border border-border-slate text-slate-600 text-[10px] font-bold uppercase tracking-wider">
+                              {inst.type.replace(/_/g, " ")}
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 mt-1 text-slate-500 text-xs">
-                          <span>{inst.location || "India"}</span>
-                          <span>•</span>
-                          <span className="font-metric-mono text-[#00236F] font-semibold">Active Cohort</span>
+                          {inst.location && (
+                            <>
+                              <span>{inst.location}</span>
+                              <span>•</span>
+                            </>
+                          )}
+                          <span className="font-metric-mono text-primary font-semibold">
+                            {(() => {
+                              const count = programmeCountByInstitution.get(inst.id) ?? 0;
+                              return `${count} programme${count === 1 ? "" : "s"}`;
+                            })()}
+                          </span>
                         </div>
                       </>
                     )}
@@ -889,7 +832,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                           setEditingInstId(inst.id);
                           setEditInstName(inst.name);
                         }}
-                        className="h-8 px-2.5 bg-paper-light hover:bg-slate-200/60 border border-border-slate text-[#00236F] text-xs rounded-lg cursor-pointer font-semibold"
+                        className="h-8 px-2.5 bg-paper-light hover:bg-slate-200/60 border border-border-slate text-primary text-xs rounded-lg cursor-pointer font-semibold"
                       >
                         Rename
                       </button>
@@ -906,13 +849,6 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                 </div>
               ))}
             </div>
-
-            <div className="p-4 bg-paper border-t border-border-slate/60">
-              <span className="text-xs text-[#D97706] flex items-center gap-1 font-bold">
-                <span>View All {institutions.length > 0 ? institutions.length : 29} Registered Institutes</span>
-                <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-              </span>
-            </div>
           </div>
 
           <AdminHostelManager accessToken={accessToken} institutions={institutions} />
@@ -921,13 +857,13 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
         {/* COLUMN 2 */}
         <div className="flex flex-col gap-6">
           {/* CARD 3: Bulk Trainee Import */}
-          <div className="bg-white rounded-2xl shadow-xs overflow-hidden flex flex-col border border-border-slate">
+          <div className="bg-surface-card rounded-2xl shadow-xs overflow-hidden flex flex-col border border-border-slate">
             <div className="p-5 bg-paper flex items-start gap-3.5 border-b border-border-slate/60">
               <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 text-[#D97706] flex items-center justify-center shrink-0 shadow-xs">
                 <span className="material-symbols-outlined text-[22px]">upload_file</span>
               </div>
               <div>
-                <h2 className="font-display text-lg text-[#00236F] font-bold">
+                <h2 className="font-display text-lg text-primary font-bold">
                   Bulk Trainee Import
                 </h2>
                 <p className="font-body text-xs text-slate-600 mt-0.5">
@@ -951,7 +887,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                 className="border-2 border-dashed border-border-slate hover:border-[#FE932C] bg-paper-light hover:bg-paper rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all"
               >
                 <span className="material-symbols-outlined text-[40px] text-[#FE932C]">cloud_upload</span>
-                <p className="text-sm font-bold text-[#00236F] mt-2">
+                <p className="text-sm font-bold text-primary mt-2">
                   Drop candidate CSV roster here, or <span className="text-[#D97706] underline">Browse Computer</span>
                 </p>
                 <p className="text-xs text-slate-500 mt-1 max-w-sm">
@@ -975,7 +911,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                 <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-200 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-[20px] text-[#D97706]">description</span>
-                    <span className="text-xs text-[#00236F] font-bold">{stagedFileName}</span>
+                    <span className="text-xs text-primary font-bold">{stagedFileName}</span>
                     <span className="text-xs text-slate-500 font-metric-mono">({stagedFileSize} KB)</span>
                   </div>
                   <button
@@ -1024,7 +960,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                   </label>
                   <select
                     id="bulk-institute"
-                    className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] cursor-pointer border border-border-slate font-medium"
+                    className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-surface-card focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] cursor-pointer border border-border-slate font-medium"
                   >
                     <option value="ricm-g">RICM Gandhinagar</option>
                     <option value="ricm-p">ICM Patna</option>
@@ -1038,7 +974,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                   </label>
                   <select
                     id="bulk-course"
-                    className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] cursor-pointer border border-border-slate font-medium"
+                    className="h-11 px-3.5 bg-paper-light text-ink text-sm rounded-xl outline-none focus:bg-surface-card focus:ring-2 focus:ring-[#00236F]/20 focus:border-[#00236F] cursor-pointer border border-border-slate font-medium"
                   >
                     <option value="pacs-mgmt">PACS Accounting & Governance (Level 1)</option>
                     <option value="dairy-mgmt">Dairy Cooperative Enterprise Module</option>
@@ -1072,7 +1008,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
               {/* Import Result Banner */}
               {importResult && (
                 <div className="p-3.5 bg-paper-light rounded-xl border border-border-slate text-sm">
-                  <span className="font-bold text-[#00236F] block mb-1 text-xs">
+                  <span className="font-bold text-primary block mb-1 text-xs">
                     Last Import: {importResult.created} created, {importResult.failed} failed
                   </span>
                   <div className="space-y-1 max-h-36 overflow-y-auto">
@@ -1091,14 +1027,14 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
           </div>
 
           {/* CARD 4: Employer Organizations */}
-          <div className="bg-white rounded-2xl shadow-xs overflow-hidden flex flex-col border border-border-slate">
+          <div className="bg-surface-card rounded-2xl shadow-xs overflow-hidden flex flex-col border border-border-slate">
             <div className="p-5 bg-paper flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-slate/60">
               <div className="flex items-start gap-3.5">
                 <div className="w-10 h-10 rounded-xl bg-[#00236F] text-white flex items-center justify-center shrink-0 shadow-xs">
                   <span className="material-symbols-outlined text-[22px]">apartment</span>
                 </div>
                 <div>
-                  <h2 className="font-display text-lg text-[#00236F] font-bold">
+                  <h2 className="font-display text-lg text-primary font-bold">
                     Employer Organizations
                   </h2>
                   <p className="font-body text-xs text-slate-600 mt-0.5">
@@ -1112,46 +1048,74 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                   setSelectedRole("employer");
                   provisionFormRef.current?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="h-9 px-3.5 bg-paper-light hover:bg-slate-200/60 border border-border-slate text-[#00236F] text-xs rounded-xl flex items-center gap-1.5 self-start sm:self-center transition-colors cursor-pointer font-bold shrink-0"
+                className="h-9 px-3.5 bg-paper-light hover:bg-slate-200/60 border border-border-slate text-primary text-xs rounded-xl flex items-center gap-1.5 self-start sm:self-center transition-colors cursor-pointer font-bold shrink-0"
               >
                 <span className="material-symbols-outlined text-[16px]">add</span>
-                <span>+ Add Employer Org</span>
+                <span>Add Employer Org</span>
               </button>
             </div>
 
             <div className="divide-y divide-border-slate/40 flex flex-col">
-              {DEFAULT_EMPLOYER_ORGS.map((org) => (
-                <div
-                  key={org.id}
-                  className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors"
-                >
-                  <div className="flex flex-col min-w-0">
-                    <span className="font-bold text-[#00236F] truncate text-sm">
-                      {org.name}
-                    </span>
-                    <div className="flex items-center gap-2 mt-1 text-slate-500 text-xs">
-                      <span>Sector: {org.sector}</span>
-                      <span>•</span>
-                      <span className="font-metric-mono text-[#D97706] font-semibold">
-                        {org.activeJobs} Active Job Postings
-                      </span>
+              {employers.length === 0 ? (
+                <p className="p-4 text-xs text-slate-500">
+                  No employer accounts yet. Use &quot;+ Add Employer Org&quot; to create one.
+                </p>
+              ) : (
+                employers.map((employer) => {
+                  const jobCount = jobCountByEmployer.get(employer.id) ?? 0;
+                  return (
+                    <div
+                      key={employer.id}
+                      className="p-4 flex items-center justify-between gap-4 hover:bg-surface-container transition-colors"
+                    >
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-bold text-primary truncate text-sm">
+                          {employer.org_name || employer.full_name || employer.email}
+                        </span>
+                        <div className="flex items-center gap-2 mt-1 text-slate-500 text-xs">
+                          {employer.org_sector && (
+                            <>
+                              <span>Sector: {employer.org_sector}</span>
+                              <span>•</span>
+                            </>
+                          )}
+                          <span className="font-metric-mono text-[#D97706] font-semibold">
+                            {jobCount} job posting{jobCount === 1 ? "" : "s"}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const q = employer.email ?? employer.full_name ?? "";
+                          setUserRoleFilter("employer");
+                          setUserQuery(q);
+                          void refreshUsers({ role: "employer", q });
+                          directoryRef.current?.scrollIntoView({ behavior: "smooth" });
+                        }}
+                        className="h-8 px-3 bg-paper-light hover:bg-slate-200/60 border border-border-slate text-primary text-xs rounded-lg shrink-0 cursor-pointer font-bold"
+                      >
+                        View Account
+                      </button>
                     </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="h-8 px-3 bg-paper-light hover:bg-slate-200/60 border border-border-slate text-[#00236F] text-xs rounded-lg shrink-0 cursor-pointer font-bold"
-                  >
-                    Manage
-                  </button>
-                </div>
-              ))}
+                  );
+                })
+              )}
             </div>
-
             <div className="p-4 bg-paper border-t border-border-slate/60">
-              <span className="text-xs text-[#D97706] flex items-center gap-1 font-bold">
-                <span>Manage All {employerCount > 0 ? employerCount : 114} Registered Employers</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setUserRoleFilter("employer");
+                  setUserQuery("");
+                  void refreshUsers({ role: "employer", q: "" });
+                  directoryRef.current?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="text-xs text-[#D97706] flex items-center gap-1 font-bold cursor-pointer hover:underline"
+              >
+                <span>Show all {employers.length} employers in the directory</span>
                 <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-              </span>
+              </button>
             </div>
           </div>
         </div>

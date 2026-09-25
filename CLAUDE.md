@@ -58,11 +58,11 @@ Full detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 ## Important Commands
 
 - `pnpm install` — install all workspace dependencies (run from repo root).
-- `pnpm dev:api` / `pnpm dev:web` / `pnpm dev:mobile` — run one app's dev server.
+- `pnpm dev:api` / `pnpm dev:web` — run the API / web dev server. `pnpm dev:mobile` builds the web app, syncs it into Capacitor and opens Android Studio (`pnpm --filter mobile ios` for Xcode).
 - `pnpm lint` — lint every workspace project (each app's own linter, see Coding Conventions).
 - `pnpm typecheck` — typecheck every workspace project.
 - `pnpm format` / `pnpm format:check` — Prettier write/check across the repo.
-- `pnpm test` — run every workspace project's test suite (currently only `apps/api` has one; see Testing Requirements).
+- `pnpm test` — run every workspace project's test suite (currently `apps/api` and `packages/api-client`; see Testing Requirements).
 
 ## Development Workflow
 

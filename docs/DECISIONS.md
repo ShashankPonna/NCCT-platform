@@ -643,3 +643,103 @@ The schema migration was initially **not** applicable from this session — no `
 Files: `packages/constants` (`NOTIFICATION_TYPES`, poll interval, list limit); `packages/shared-types` (`NotificationType`, `NotificationData`, `AppNotification`, `NotificationsPage`); `packages/api-client`; `apps/api/src/notificationService.ts` (+10 unit tests); `apps/api/src/routes/notifications.ts` (+8 tests); triggers in `nominations.ts`, `lessons.ts`, `assessmentQuestions.ts` (+2 tests), `timetable.ts`, `programmeTrainers.ts`, `jobInterests.ts`, `hostelAssignment.ts`, and `certificateService.ts`, each with trigger/no-trigger assertions in its existing test file; `apps/web/src/notifications/{NotificationBell.tsx,notificationContent.ts}`; both shells take a `notificationBell` slot, filled by `TraineeApp.tsx` and `App.tsx` with per-role click navigation. `pnpm --filter api test` 612/612, `pnpm --filter web build`/`lint` clean.
 
 **Not built (deliberately)**: push, email, or SMS delivery (provider `TBD`); timed reminders such as "class starts in 1 hour" (no background scheduler exists in this project); per-category mute settings.
+
+### 66. Gradebook export to a structured Excel workbook — `exceljs` added, generated server-side
+
+**Decision**: per direct user request ("give me an option to extract gradebook marks into an Excel file, structured for the respective faculty"), the staff gradebook (#53) gets a **Download Excel** button. `GET /courses/:id/gradebook/export` returns a real `.xlsx`, built from exactly the same `getCourseGradebook` data the on-screen table uses. It sits behind the identical access rule — admin, or a trainer assigned to the course's programme via `requireProgrammeAccess` (#52) — so "respective faculty" is enforced server-side, not just by hiding a button. An unassigned trainer gets 403 and no file is produced.
+
+**New dependency, justified per CLAUDE.md**: nothing in the monorepo writes spreadsheets (the only document library is `pdfkit`, for certificates). A CSV would have needed no dependency, but it can't carry what "structured" means here: bold headers, frozen panes, number formats, pass/fail colours, merged title rows, autofilters, and more than one sheet. `exceljs` (^4.4.0, bundled TypeScript types) was added to `apps/api` only. Generation is server-side, like certificate PDFs, so there is one definition of what each number means and the browser/mobile bundle doesn't grow. Its install reports several deprecated *transitive* dependencies (`fstream`, `rimraf@2`, `glob@7`, `uuid@8`); 4.4.0 is its current release.
+
+**Workbook layout** (`apps/api/src/gradebookExport.ts`, a pure builder plus a small DB context loader):
+- **Sheet "Gradebook"** (one row per trainee):
+  - **Header**: a title row, programme and institution, and "Prepared by" (the requesting faculty member) with a generation time in IST.
+  - **Columns**: S.No, Trainee, Cooperative/PACS, then each graded module test (its module and max marks in the header), then practice quizzes (marked "not counted"), then Total, Max, Score %, Tests Passed, Result, and Certificate No.
+  - **Cells**: marks are real numbers, with green fill for passed and red for failed. Each marks cell carries a note with the percentage and attempt count.
+  - **Summary rows**: Class average and Pass rate, followed by a legend.
+  - **Layout**: header row and name columns frozen, autofilter, landscape fit-to-width for printing.
+- **Sheet "Attempt Details"**: long format, one row per trainee per assessment, *including* unattempted ones, for filtering and pivoting ("who hasn't attempted Test 2?").
+- **Localized labels**: `?lang=hi` renders labels in Hindi — the client passes the viewer's current language — while the data is untouched. The filename is dated in **IST**, since a UTC date misnamed anything exported between midnight and 05:30 IST (caught during live verification).
+
+**Two accuracy rules, found by inspecting the real exported file** (not by unit tests, whose fixture had assumed the wrong API shape):
+- The tally API reports `0` marks and `0%` for a trainee who never sat a module test. In a gradebook that reads as "sat the test and scored nothing", and it dragged the live class average from the true 66.7% down to 40%. Such trainees now show "Not attempted" and are excluded from the class average. The **on-screen gradebook had the same misleading "0/30 (0%)"** and was fixed to match. Averages everywhere count only trainees who actually attempted.
+- A trainee whose best attempt at a module test failed is shown as **"Not yet passed"**, not "In progress" — that's the row a faculty member most needs to find. Result labels, in order: Certified → Tests passed (certificate still needs every lesson) → Not yet passed → In progress → Not started.
+
+**Client plumbing**:
+- CORS now exposes `Content-Disposition`, so the browser can use the server-chosen filename. The header carries both an ASCII fallback and an RFC 5987 `filename*`, so a Hindi course title survives.
+- `packages/api-client` gained `apiFetchFile` and `downloadCourseGradebookExcel`, plus `parseContentDispositionFileName`. That last one is real parsing logic, so, per CLAUDE.md's "every new shared-package function needs a unit test", `packages/api-client` got its first `test` script (Vitest, same version as `apps/api`) and 4 tests.
+- `apps/web/src/saveFile.ts` does a normal download in browsers. Inside the Capacitor app, where `<a download>` does nothing in the Android/iOS WebView, it writes to the device's **Documents** folder via the already-installed `@capacitor/filesystem` and tells the user where the file went.
+
+**Status**: Active. No schema change. Verified live against the real database: the assigned trainer downloads a valid 2-sheet workbook with correct names, affiliations, marks, results, and certificate numbers; an unassigned trainer gets 403; the Hindi export works; the filename carries the IST date.
+
+Tests: `apps/api/src/gradebookExport.test.ts` (15 — generates real `.xlsx` files and reads them back with ExcelJS); `courseMarks.test.ts` (+6 export route tests, using the *real* builder with only the DB loader mocked, so they parse a genuine downloaded file); `packages/api-client/src/index.test.ts` (4).
+
+**Not verified**: the native Android/iOS save-to-Documents path. There is no device or emulator in this environment, so it's code-reviewed but untested on hardware.
+
+### 67. UI truthfulness audit — every Stitch mock-up value removed or replaced with the real feature it imitated
+
+**Decision**: per direct user request ("find the gimmicky features … remove them if there's no trace of them functioning, or rename them to the existing feature that best matches that position"), the whole web UI was audited. The method was two passes: a script that parses every `<button>`/`<a>` in every `.tsx` for controls with no handler or link target, and a sweep for mock data arrays, hardcoded statistics, invented fallbacks, and claims of integrations the platform doesn't have.
+
+The rule applied everywhere:
+- A **real feature matching the position** → wire it in.
+- **No real feature** → remove it.
+- An **honest version of a claim exists** → reword to it.
+
+Most of what was found was the Stitch design mock-ups (#20's re-skin) never having been reconciled with real data.
+
+**The findings that could actively mislead a real user** (the reason this mattered beyond polish):
+- **Trainee Home — "Stipend Eligible (₹ 6,500)"**: told trainees they were owed money; no stipend system exists. Removed.
+- **Trainee certificates — a fabricated "Recent Credential Verification Log"**: told each trainee that "Saraswat Co-operative Bank" (a real bank) and "VAMNICOM Examination Registry" had verified their certificate "Today, 11:24 AM", beside a "Live Ledger Active" indicator. No verification logging exists at all. Removed.
+- **Employer "Contact" button** showed the same made-up phone number, "+91 98765 43210", for every candidate. **"Send Bulk Interview Invitation"** claimed invites were "dispatched … via NCCT SMS & Email"; no SMS or email system exists. Both are now **"Mark contacted"** — a real `job_interests` status change that notifies the trainee in-app (#65).
+- **Employer talent search** appended **6 invented trainees** to every real result set, and pre-ticked 4 of them as shortlisted. Real trainees also got a fake certificate ID when they had none, a fake "RICM Regional Center" institute, "Available immediately", and a uniform "merit 90". The pagination claimed "of 1,482 profiles".
+- **"Aadhaar / DigiLocker / UIDAI verified", "ISO-27001", "NCVET credits" (literally certificate count × 4), "W3C", "SHA-256:"** (printed before a plain certificate code), **"NCVET-DPI://v4.8.2", "Tier-1 Validated"**: none of these integrations exist anywhere in the codebase. Removed, or reworded to the true property (e.g. "Publicly verifiable"; "cryptographic, tamper-proof" became "verifiable by its code, no login needed").
+- **Admin "Edit Role"**: one click silently promoted any non-trainer to trainer and any trainer to admin, with no confirmation. Removed — the role dropdown beside it is the real, deliberate control. **"Deactivate"** actually permanently deleted the account; relabelled **"Delete"** to match its own "cannot be undone" confirmation.
+
+**Screen by screen**:
+- **`EmployerDashboard.tsx`** — logic rebuilt on real search results only:
+  - Removed the region and availability filters, the merit/proximity sorts, the fake "82% / +24.6% demand" block, and the fake pagination. Sorting is now by certificate count or name.
+  - **Shortlisting is real and per-job**: it's the selected job's `job_interests`, it prompts you to pick a job first, and it surfaces API errors instead of swallowing them.
+  - "My Postings" now shows only the employer's own jobs. `GET /jobs` is the public board, so the component takes `currentUserId`; selecting another employer's job previously failed with "Job not found".
+  - The CSV export uses real fields, is properly escaped, and has a BOM so Excel reads Hindi names.
+- **`TrainerCoursesDashboard.tsx`** — rebuilt:
+  - The 4 invented cohorts are gone.
+  - Real programmes had fake codes, batches, "4/4 modules", enrolment, schedule ("Mon, Wed 10:00"), room, and sync notes. Each card now shows the course count, approved-nomination enrolment against capacity, the next timetable session with its location, and a status derived from the programme's dates.
+  - The fake Q3/Q4 term filter became a real Ongoing/Upcoming/Completed filter. "Propose New Batch", which only added a local card "awaiting Academic Council approval", was removed; programmes are admin-created.
+- **`AdminUserManager.tsx`**:
+  - Header totals used invented fallbacks ("1,842 / 29 / 114") whenever real counts were 0; they now always show real counts.
+  - The 5 hardcoded famous employers (Amul, HAFED…) with a dead "Manage" button became real employer accounts with real job-posting counts, and "View Account" filters the user directory to that account.
+  - The user table's "Institution / Org" column showed the *first* institution for every non-employer; it now shows the real `org_name` / `cooperative_affiliation`. The fake "Active" status column and status filter were removed, along with the fake pagination.
+  - The hardcoded "VAMNICOM · 12 Batches Active · Configure" row and the "Regional Institute · Active Cohort" badges are gone; each institution shows its real type and real programme count.
+  - **Create-user form bug**: its Phone field and "Sponsoring Institution" dropdown were silently discarded. Phone is now sent; the dropdown became the real Cooperative/PACS affiliation field for trainees.
+- **`trainee/TraineeHome.tsx`** — rebuilt from real nominations, lesson progress, timetable, certificates, shortlists, and AI job matches (#28):
+  - Removed the fake stats (94% attendance, "4 Skills", "3 Badges" fallback, "PACSLab-4"), the invented faculty ("Dr. Arvind Kulkarni, NCUI"), the fake "100% Done / Micro-Credential Minted" modules, the "45%" progress fallback, and the 3 invented jobs with fake salaries.
+  - The pathway stepper is now reached and dated from real records.
+- **`TraineeLearnLessons.tsx`**: a hardcoded "NABARD CAS Rule 14(B)" note and "Crucial Takeaways" block appeared on *every* lesson, whatever its subject. Removed.
+- **`TraineeCareerSkillGap.tsx`**: the match gauge showed an invented **65%** when a job had no tagged skills; it now shows "—" and says so. Every learning step claimed "High Impact · 3-4 hrs", and the page promised an "8-12 hrs" estimate. Removed.
+- **Shells**:
+  - Both header search boxes were fake — the trainee one discarded the query and just opened Learn, and the management one was wired to nothing. Removed.
+  - The trainee header's permanent "Online (Auto-synced)" now shows real connectivity, the same signal as the offline write-queue.
+  - Privacy/Terms/Support footer links went to `#` (no such pages exist). Removed.
+  - The notification bell had already been made real (#65).
+- **`AnalyticsDashboard.tsx`**: the 2026/2025 year picker changed nothing; it now filters the certificates-by-month chart and offers only years that have data. "Current Quarter" was relabelled "All time", which is what the data actually covers.
+- **`HomePage.tsx`** (public landing):
+  - "140+ Partner Institutions" and "50,000+ Certified Trainees" were replaced with true platform facts (2 languages; offline learning in the app).
+  - "Live National Network · Active" became "Get started".
+  - A sample code "NCCT-2024-8A9X ✓ Valid", which a visitor could type into the verifier and get "not found", now scrolls to the real verification box.
+
+**Deliberately kept**: neutral placeholder labels used when a field is empty (e.g. "Cooperative Training Course" on a certificate with no course title) — labels, not invented facts. The Employer "About this list" note was reworded to only true statements.
+
+**Status**: Active. Web-only; no API or schema change. A re-run of the scanner finds **0** controls with no handler or target. The claim-word sweep finds no remaining unsupported integration claims.
+
+Verified live against the real database, as each role, that every API call the rebuilt screens make succeeds and returns real data: the employer sees their own 2 postings of 9 total and 5 real opted-in trainees; the trainer's cards read 2 courses, 4 enrolled, 2 upcoming sessions; the admin totals read 58 users and 5 employers; the trainee Home reads 2 certificates, 5/6 lessons, and a real 68% top job match.
+
+`pnpm --filter web build`/`lint` clean. Originals of the three rebuilt screens are kept outside the repo for reference.
+
+**Not verified**: visual rendering in a browser — no browser automation is available in this environment.
+
+**Mobile app (addendum to #66/#67)**: `apps/mobile` has no UI code of its own (#22) — the Capacitor app ships `apps/web`'s build — so every change above reaches Android and iOS once the web build is re-synced; no mobile-specific screen changes were needed. The one native gap was saving a generated file, which the gradebook Excel export (#66) does via `saveFile.ts` → `@capacitor/filesystem` → `Directory.Documents`. Per that plugin's own README:
+- **Android** needs `READ_`/`WRITE_EXTERNAL_STORAGE` on Android 10 and older, plus `android:requestLegacyExternalStorage="true"` for Android 10 itself; Android 11+ lets the app write its own files without them. Both permissions were added with `android:maxSdkVersion="29"`, so newer phones are never asked for them.
+- **iOS** needs `UIFileSharingEnabled` and `LSSupportsOpeningDocumentsInPlace` in `Info.plist`, or saved files stay in the app's private sandbox where the user can never reach them — which would make the "Saved to Documents" message untrue. Both keys were added.
+
+Both files were validated (`plutil -lint`, XML parse). Web rebuilt; `npx cap sync android` and `npx cap copy ios` run (iOS `sync`'s CocoaPods step needs full Xcode, which this machine lacks — `copy` delivers the same web assets). A check of the synced bundles in both platforms confirmed the new UI strings are present and every removed fake is absent. The only match, "98765 43210", is the input placeholder showing the phone-number format in two forms, not a claim. Not verified on a device or emulator.
+
+**Addendum (2026-09-26, SIH readiness sweep):** a later headless-browser pass found four more #67-class fakes that the first audit missed: the admin dashboard's stat-tile footers ("+12% / +5.4% / +24% vs last period", "Stable vs last period") were hardcoded strings. There is no period-over-period data behind them, and computing a real trend would need history the analytics payload doesn't carry. So they were replaced, under the same rule, with real facts from the payload the tiles already receive: programmes by mode, certificates issued this calendar month, certified out of approved trainees, and total employer shortlist actions.

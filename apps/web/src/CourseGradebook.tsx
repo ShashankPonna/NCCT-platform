@@ -1,7 +1,8 @@
-import { getCourseGradebook } from "@ncct/api-client";
+import { downloadCourseGradebookExcel, getCourseGradebook } from "@ncct/api-client";
 import type { CourseGradebook as CourseGradebookData } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
+import { saveFile } from "./saveFile.js";
 
 interface CourseGradebookProps {
   accessToken: string;
@@ -18,11 +19,17 @@ interface CourseGradebookText {
   notAttempted: string;
   passed: string;
   notPassed: string;
+  downloadExcel: string;
+  preparing: string;
+  savedToDocuments: (fileName: string) => string;
 }
 
 const content: Record<Locale, CourseGradebookText> = {
   en: {
     heading: "Gradebook",
+    downloadExcel: "Download Excel",
+    preparing: "Preparing…",
+    savedToDocuments: (fileName) => `Saved to Documents: ${fileName}`,
     trainee: "Trainee",
     overallMarks: "Overall",
     certificate: "Certificate",
@@ -34,6 +41,9 @@ const content: Record<Locale, CourseGradebookText> = {
   },
   hi: {
     heading: "ग्रेडबुक",
+    downloadExcel: "एक्सेल डाउनलोड करें",
+    preparing: "तैयार किया जा रहा है…",
+    savedToDocuments: (fileName) => `Documents में सहेजा गया: ${fileName}`,
     trainee: "प्रशिक्षणार्थी",
     overallMarks: "कुल",
     certificate: "प्रमाणपत्र",
@@ -54,6 +64,8 @@ export function CourseGradebook({ accessToken, courseId }: CourseGradebookProps)
   const t = content[locale];
   const [gradebook, setGradebook] = useState<CourseGradebookData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState<string | null>(null);
 
   // A fresh mount (the caller keys this by courseId) already starts with
   // null state, so this effect only needs to kick off the fetch.
@@ -63,14 +75,48 @@ export function CourseGradebook({ accessToken, courseId }: CourseGradebookProps)
       .catch((err: Error) => setError(err.message));
   }, [accessToken, courseId]);
 
-  if (error) return <p className="form-error">{error}</p>;
-  if (!gradebook) return null;
+  // Excel export (docs/DECISIONS.md #66) — the server builds the workbook,
+  // with labels in the viewer's current language, and names the file.
+  async function handleDownloadExcel() {
+    if (!gradebook) return;
+    setExporting(true);
+    setExportMessage(null);
+    setError(null);
+    try {
+      const { blob, fileName } = await downloadCourseGradebookExcel(accessToken, courseId, locale);
+      const result = await saveFile(blob, fileName ?? `Gradebook - ${gradebook.course_title}.xlsx`);
+      if (result.kind === "saved-to-documents") setExportMessage(t.savedToDocuments(result.fileName));
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  if (!gradebook) return error ? <p className="form-error">{error}</p> : null;
 
   const moduleTestColumns = gradebook.assessments.filter((a) => a.kind === "module_test");
 
   return (
     <div className="course-gradebook legacy-ui">
-      <h4>{t.heading}</h4>
+      <div className="course-gradebook-header">
+        <h4>{t.heading}</h4>
+        {gradebook.rows.length > 0 && (
+          <button
+            type="button"
+            className="course-gradebook-export"
+            onClick={() => void handleDownloadExcel()}
+            disabled={exporting}
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">
+              download
+            </span>
+            {exporting ? t.preparing : t.downloadExcel}
+          </button>
+        )}
+      </div>
+      {error && <p className="form-error">{error}</p>}
+      {exportMessage && <p className="course-gradebook-export-note">{exportMessage}</p>}
       {gradebook.rows.length === 0 ? (
         <p>{t.noRoster}</p>
       ) : (
@@ -109,7 +155,10 @@ export function CourseGradebook({ accessToken, courseId }: CourseGradebookProps)
                   );
                 })}
                 <td>
-                  {row.totals.score_percent !== null
+                  {/* The tally reports 0 / 0% for a trainee who never sat a
+                      module test; show that as not attempted, not a score —
+                      same rule as the Excel export (DECISIONS.md #66). */}
+                  {row.totals.score_percent !== null && moduleTestColumns.some((a) => row.cells[a.id])
                     ? `${t.cellMarks(row.totals.marks_obtained, row.totals.total_marks)} (${row.totals.score_percent}%)`
                     : t.notAttempted}
                 </td>

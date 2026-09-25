@@ -600,7 +600,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
   return (
     <div className="flex flex-col h-full w-full overflow-hidden text-left gap-4">
       {/* Header */}
-      <header className="bg-white rounded-2xl border border-border-slate px-6 py-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0 shadow-xs">
+      <header className="bg-surface-card rounded-2xl border border-border-slate px-6 py-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0 shadow-xs">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#FE932C]" />
@@ -608,7 +608,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
               Administration • Programme & Cohort Governance
             </span>
           </div>
-          <h1 className="font-display text-2xl lg:text-3xl text-[#00236F] tracking-tight font-extrabold m-0">
+          <h1 className="font-display text-2xl lg:text-3xl text-primary tracking-tight font-extrabold m-0">
             {t.heading}
           </h1>
           <p className="font-body text-xs text-slate-600 mt-1 max-w-3xl">{t.subheading}</p>
@@ -633,7 +633,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
       )}
 
       {/* Master-Detail Dual-Pane Layout */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden rounded-2xl border border-border-slate bg-white shadow-xs">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden rounded-2xl border border-border-slate bg-surface-card shadow-xs">
         {/* Master List (Left Column) */}
         <div className="w-full md:w-80 lg:w-96 bg-paper border-r border-border-slate/70 flex flex-col overflow-hidden shrink-0">
           {/* Search Box */}
@@ -646,7 +646,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t.searchPlaceholder}
-                className="w-full bg-paper-light border border-border-slate rounded-xl pl-10 pr-4 py-2.5 text-xs text-ink focus:outline-none focus:bg-white focus:border-[#00236F] focus:ring-1 focus:ring-[#00236F]/20 transition-all"
+                className="w-full bg-paper-light border border-border-slate rounded-xl pl-10 pr-4 py-2.5 text-xs text-ink focus:outline-none focus:bg-surface-card focus:border-[#00236F] focus:ring-1 focus:ring-[#00236F]/20 transition-all"
                 type="text"
               />
             </div>
@@ -665,12 +665,12 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                     onClick={() => void selectProgramme(p.id)}
                     className={`p-4 border-b border-border-slate/40 cursor-pointer transition-all flex flex-col gap-2 relative ${
                       isSelected
-                        ? "bg-white border-l-4 border-l-[#FE932C] shadow-xs"
-                        : "hover:bg-white/60"
+                        ? "bg-surface-card border-l-4 border-l-[#FE932C] shadow-xs"
+                        : "hover:bg-surface-card/60"
                     }`}
                   >
                     <div className="flex justify-between items-start gap-2">
-                      <h3 className="font-bold text-sm text-[#00236F] m-0 line-clamp-1">
+                      <h3 className="font-bold text-sm text-primary m-0 line-clamp-1">
                         {p.title}
                       </h3>
                       <span
@@ -702,7 +702,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
         </div>
 
         {/* Detail Section (Right Column) */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-white">
+        <div className="flex-1 flex flex-col overflow-hidden bg-surface-card">
           {selectedProg ? (
             <>
               {/* Detail Header */}
@@ -710,7 +710,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                 <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                   <div>
                     <div className="flex items-center gap-3 mb-2 flex-wrap">
-                      <h2 className="font-display text-xl lg:text-2xl text-[#00236F] font-bold m-0">
+                      <h2 className="font-display text-xl lg:text-2xl text-primary font-bold m-0">
                         {selectedProg.title}
                       </h2>
                       <span className="bg-emerald-50 text-emerald-700 px-3 py-0.5 rounded-full text-xs border border-emerald-200 font-bold uppercase tracking-wider">
@@ -724,12 +724,12 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                 </div>
 
                 {/* Stats / Meta Info Bar */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-5 p-4 bg-white rounded-xl border border-border-slate shadow-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-5 p-4 bg-surface-card rounded-xl border border-border-slate shadow-xs">
                   <div>
                     <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">
                       {t.institution}
                     </p>
-                    <p className="text-xs text-[#00236F] font-bold mt-1 truncate">
+                    <p className="text-xs text-primary font-bold mt-1 truncate">
                       {selectedInst?.name ?? t.independentCentral}
                     </p>
                   </div>
@@ -759,11 +759,11 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
               </div>
 
               {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-white">
+              <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-surface-card">
                 {/* Nominations Section */}
                 <div>
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-display text-base text-[#00236F] font-bold m-0">
+                    <h3 className="font-display text-base text-primary font-bold m-0">
                       {t.nominationsHeading(nominations.length)}
                     </h3>
                     {selectedProg.capacity != null && (
@@ -807,7 +807,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                                   {initials}
                                 </div>
                                 <div>
-                                  <h4 className="font-bold text-xs text-[#00236F] m-0">
+                                  <h4 className="font-bold text-xs text-primary m-0">
                                     {traineeName}
                                   </h4>
                                   {supportingInfo && (
@@ -821,7 +821,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                                       ` · ${t.decidedOn(new Date(nom.decided_at).toLocaleDateString(dateLocale))}`}
                                   </p>
                                   {nom.hostel_name && nom.hostel_room_number && (
-                                    <p className="flex items-center gap-1 text-[11px] text-[#00236F] font-semibold m-0 mt-1">
+                                    <p className="flex items-center gap-1 text-[11px] text-primary font-semibold m-0 mt-1">
                                       <span className="material-symbols-outlined text-[14px]">bed</span>
                                       {t.assignedRoom(nom.hostel_name, nom.hostel_room_number)}
                                     </p>
@@ -884,7 +884,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                                     setRoomChoice((prev) => ({ ...prev, [nom.id]: e.target.value }))
                                   }
                                   aria-label={t.hostelRoomLabel}
-                                  className="flex-1 min-w-0 h-8 px-2 bg-white text-ink text-xs rounded-lg border border-border-slate outline-none focus:border-[#00236F]"
+                                  className="flex-1 min-w-0 h-8 px-2 bg-surface-card text-ink text-xs rounded-lg border border-border-slate outline-none focus:border-[#00236F]"
                                 >
                                   <option value="">{t.noRoom}</option>
                                   {roomOptions.map((option) => (
@@ -917,7 +917,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                 {/* Timetable Section */}
                 <div>
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-display text-base text-[#00236F] font-bold m-0">
+                    <h3 className="font-display text-base text-primary font-bold m-0">
                       {t.timetableHeading(sessions.length)}
                     </h3>
                     <button
@@ -938,7 +938,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                       onSubmit={(e) => void handleCreateSession(e)}
                       className="mb-6 bg-paper p-5 rounded-2xl border border-border-slate shadow-xs space-y-4"
                     >
-                      <h4 className="font-display text-sm font-bold text-[#00236F] m-0">{t.newTimetableSession}</h4>
+                      <h4 className="font-display text-sm font-bold text-primary m-0">{t.newTimetableSession}</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
                           <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -947,7 +947,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                           <input
                             name="title"
                             placeholder={t.sessionTitlePlaceholder}
-                            className="w-full bg-white border border-border-slate rounded-xl px-3 py-2 text-xs text-ink outline-none focus:border-[#00236F]"
+                            className="w-full bg-surface-card border border-border-slate rounded-xl px-3 py-2 text-xs text-ink outline-none focus:border-[#00236F]"
                             type="text"
                           />
                         </div>
@@ -958,7 +958,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                           <input
                             name="starts_at"
                             required
-                            className="w-full bg-white border border-border-slate rounded-xl px-3 py-2 text-xs text-ink outline-none focus:border-[#00236F]"
+                            className="w-full bg-surface-card border border-border-slate rounded-xl px-3 py-2 text-xs text-ink outline-none focus:border-[#00236F]"
                             type="datetime-local"
                           />
                         </div>
@@ -969,7 +969,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                           <input
                             name="ends_at"
                             required
-                            className="w-full bg-white border border-border-slate rounded-xl px-3 py-2 text-xs text-ink outline-none focus:border-[#00236F]"
+                            className="w-full bg-surface-card border border-border-slate rounded-xl px-3 py-2 text-xs text-ink outline-none focus:border-[#00236F]"
                             type="datetime-local"
                           />
                         </div>
@@ -980,7 +980,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                           <input
                             name="location"
                             placeholder={t.locationPlaceholder}
-                            className="w-full bg-white border border-border-slate rounded-xl px-3 py-2 text-xs text-ink outline-none focus:border-[#00236F]"
+                            className="w-full bg-surface-card border border-border-slate rounded-xl px-3 py-2 text-xs text-ink outline-none focus:border-[#00236F]"
                             type="text"
                           />
                         </div>
@@ -989,7 +989,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                         <button
                           type="button"
                           onClick={() => setShowSessionForm(false)}
-                          className="px-4 py-2 rounded-xl text-xs font-medium border border-border-slate text-slate-600 hover:bg-slate-100"
+                          className="px-4 py-2 rounded-xl text-xs font-medium border border-border-slate text-slate-600 hover:bg-surface-container"
                         >
                           {t.cancel}
                         </button>
@@ -1025,7 +1025,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                         return (
                           <div
                             key={sess.id}
-                            className="flex items-center gap-4 p-4 bg-paper-light rounded-xl border border-border-slate hover:bg-white transition-colors shadow-xs"
+                            className="flex items-center gap-4 p-4 bg-paper-light rounded-xl border border-border-slate hover:bg-surface-card transition-colors shadow-xs"
                           >
                             <div className="bg-[#00236F] text-white p-2.5 rounded-xl text-center min-w-[64px] shadow-xs">
                               <div className="text-[10px] uppercase font-bold tracking-wider">
@@ -1036,7 +1036,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                               </div>
                             </div>
                             <div className="flex-1">
-                              <h4 className="font-bold text-xs text-[#00236F] m-0">
+                              <h4 className="font-bold text-xs text-primary m-0">
                                 {sess.title || t.scheduledSessionFallback}
                               </h4>
                               <p className="text-xs text-slate-500 m-0 flex items-center gap-1.5 mt-0.5">
@@ -1046,7 +1046,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                               </p>
                               <div className="flex flex-wrap items-center gap-2 mt-2">
                                 <span className="text-[11px] text-slate-500 font-medium">{t.sessionUuidLabel}</span>
-                                <code className="font-metric-mono text-xs text-[#00236F] font-bold bg-white px-2 py-0.5 rounded border border-border-slate break-all select-all">
+                                <code className="font-metric-mono text-xs text-primary font-bold bg-surface-card px-2 py-0.5 rounded border border-border-slate break-all select-all">
                                   {sess.check_in_code}
                                 </code>
                                 <button
@@ -1054,7 +1054,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                                   onClick={() => void handleCopySessionId(sess.check_in_code)}
                                   title={t.copySessionUuidTitle}
                                   aria-label={t.copySessionUuidAria(sess.check_in_code)}
-                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-border-slate text-[#00236F] hover:bg-slate-100 text-[11px] font-semibold cursor-pointer"
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-border-slate text-primary hover:bg-surface-container text-[11px] font-semibold cursor-pointer"
                                 >
                                   <span className="material-symbols-outlined text-[14px]">
                                     {copiedSessionId === sess.check_in_code ? "check" : "content_copy"}
@@ -1074,7 +1074,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                     trainers can manage this programme's courses, content, and attendance. */}
                 {isAdmin && (
                   <div>
-                    <h3 className="font-display text-base text-[#00236F] font-bold m-0 mb-1">
+                    <h3 className="font-display text-base text-primary font-bold m-0 mb-1">
                       {t.assignedTrainers(assignedTrainers.length)}
                     </h3>
                     <p className="text-xs text-slate-600 mb-3">{t.assignedTrainersBody}</p>
@@ -1086,7 +1086,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                         {assignedTrainers.map((tr) => (
                           <span
                             key={tr.trainer_id}
-                            className="inline-flex items-center gap-2 bg-paper-light border border-border-slate rounded-full pl-3 pr-1.5 py-1 text-xs font-medium text-[#00236F]"
+                            className="inline-flex items-center gap-2 bg-paper-light border border-border-slate rounded-full pl-3 pr-1.5 py-1 text-xs font-medium text-primary"
                           >
                             {tr.full_name ?? tr.trainer_id.slice(0, 8)}
                             <button
@@ -1107,7 +1107,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                       <select
                         value={trainerToAssign}
                         onChange={(e) => setTrainerToAssign(e.target.value)}
-                        className="flex-1 h-10 bg-paper-light border border-border-slate rounded-xl px-3.5 text-xs text-ink focus:bg-white focus:border-[#00236F] outline-none cursor-pointer"
+                        className="flex-1 h-10 bg-paper-light border border-border-slate rounded-xl px-3.5 text-xs text-ink focus:bg-surface-card focus:border-[#00236F] outline-none cursor-pointer"
                       >
                         <option value="">{t.selectTrainerToAssign}</option>
                         {trainerProfiles
@@ -1122,7 +1122,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                         type="button"
                         onClick={() => void handleAssignTrainer()}
                         disabled={!trainerToAssign || assigningTrainer}
-                        className="px-4 h-10 bg-paper-light border border-border-slate text-[#00236F] font-bold rounded-xl text-xs hover:bg-slate-100 disabled:opacity-50 cursor-pointer"
+                        className="px-4 h-10 bg-paper-light border border-border-slate text-primary font-bold rounded-xl text-xs hover:bg-surface-container disabled:opacity-50 cursor-pointer"
                       >
                         {assigningTrainer ? t.assigning : t.assignTrainer}
                       </button>
@@ -1134,7 +1134,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                 {isAdmin && (
                   <div>
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-display text-base text-[#00236F] font-bold m-0">
+                      <h3 className="font-display text-base text-primary font-bold m-0">
                         {t.skillsGranted(programmeSkillIds.size)}
                       </h3>
                       <button
@@ -1159,13 +1159,13 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                           }
                         }}
                         placeholder={t.newSkillPlaceholder}
-                        className="flex-1 h-10 bg-paper-light border border-border-slate rounded-xl px-3.5 text-xs text-ink focus:bg-white focus:border-[#00236F] outline-none"
+                        className="flex-1 h-10 bg-paper-light border border-border-slate rounded-xl px-3.5 text-xs text-ink focus:bg-surface-card focus:border-[#00236F] outline-none"
                         type="text"
                       />
                       <button
                         type="button"
                         onClick={() => void handleCreateSkill()}
-                        className="px-4 h-10 bg-paper-light border border-border-slate text-[#00236F] font-bold rounded-xl text-xs hover:bg-slate-100 cursor-pointer"
+                        className="px-4 h-10 bg-paper-light border border-border-slate text-primary font-bold rounded-xl text-xs hover:bg-surface-container cursor-pointer"
                       >
                         {t.addToTaxonomy}
                       </button>
@@ -1187,9 +1187,9 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
       {/* Create Programme Modal Overlay */}
       {isAdmin && showCreateModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border border-border-slate shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden text-left">
+          <div className="bg-surface-card rounded-2xl border border-border-slate shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden text-left">
             <div className="p-5 border-b border-border-slate/60 flex justify-between items-center bg-paper">
-              <h2 className="font-display text-lg text-[#00236F] font-bold m-0">{t.createNewProgramme}</h2>
+              <h2 className="font-display text-lg text-primary font-bold m-0">{t.createNewProgramme}</h2>
               <button
                 type="button"
                 onClick={() => setShowCreateModal(false)}
@@ -1207,7 +1207,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                   name="title"
                   required
                   placeholder={t.programmeTitlePlaceholder}
-                  className="w-full bg-paper-light border border-border-slate rounded-xl px-3.5 py-2.5 text-xs text-ink focus:bg-white focus:ring-1 focus:ring-[#00236F]/20 focus:border-[#00236F] outline-none"
+                  className="w-full bg-paper-light border border-border-slate rounded-xl px-3.5 py-2.5 text-xs text-ink focus:bg-surface-card focus:ring-1 focus:ring-[#00236F]/20 focus:border-[#00236F] outline-none"
                   type="text"
                 />
               </div>
@@ -1220,7 +1220,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                   <select
                     name="institution_id"
                     required
-                    className="w-full bg-paper-light border border-border-slate rounded-xl px-3.5 py-2.5 text-xs text-ink focus:bg-white focus:border-[#00236F] outline-none cursor-pointer"
+                    className="w-full bg-paper-light border border-border-slate rounded-xl px-3.5 py-2.5 text-xs text-ink focus:bg-surface-card focus:border-[#00236F] outline-none cursor-pointer"
                   >
                     <option value="">{t.selectInstitution}</option>
                     {institutions.map((i) => (
@@ -1237,7 +1237,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                   <select
                     name="mode"
                     defaultValue="online"
-                    className="w-full bg-paper-light border border-border-slate rounded-xl px-3.5 py-2.5 text-xs text-ink focus:bg-white focus:border-[#00236F] outline-none cursor-pointer"
+                    className="w-full bg-paper-light border border-border-slate rounded-xl px-3.5 py-2.5 text-xs text-ink focus:bg-surface-card focus:border-[#00236F] outline-none cursor-pointer"
                   >
                     {PROGRAMME_MODES.map((m) => (
                       <option key={m} value={m}>
@@ -1256,7 +1256,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                     placeholder={t.capacityPlaceholder}
                     type="number"
                     min="1"
-                    className="w-full bg-paper-light border border-border-slate rounded-xl px-3.5 py-2.5 text-xs text-ink focus:bg-white focus:border-[#00236F] outline-none"
+                    className="w-full bg-paper-light border border-border-slate rounded-xl px-3.5 py-2.5 text-xs text-ink focus:bg-surface-card focus:border-[#00236F] outline-none"
                   />
                 </div>
                 <div>
@@ -1264,7 +1264,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                   <input
                     name="start_date"
                     type="date"
-                    className="w-full bg-paper-light border border-border-slate rounded-xl px-3.5 py-2.5 text-xs text-ink focus:bg-white focus:border-[#00236F] outline-none"
+                    className="w-full bg-paper-light border border-border-slate rounded-xl px-3.5 py-2.5 text-xs text-ink focus:bg-surface-card focus:border-[#00236F] outline-none"
                   />
                 </div>
                 <div>
@@ -1272,7 +1272,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                   <input
                     name="end_date"
                     type="date"
-                    className="w-full bg-paper-light border border-border-slate rounded-xl px-3.5 py-2.5 text-xs text-ink focus:bg-white focus:border-[#00236F] outline-none"
+                    className="w-full bg-paper-light border border-border-slate rounded-xl px-3.5 py-2.5 text-xs text-ink focus:bg-surface-card focus:border-[#00236F] outline-none"
                   />
                 </div>
               </div>
@@ -1284,7 +1284,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                 <input
                   name="target_audience"
                   placeholder={t.targetAudiencePlaceholder}
-                  className="w-full bg-paper-light border border-border-slate rounded-xl px-3.5 py-2.5 text-xs text-ink focus:bg-white focus:border-[#00236F] outline-none"
+                  className="w-full bg-paper-light border border-border-slate rounded-xl px-3.5 py-2.5 text-xs text-ink focus:bg-surface-card focus:border-[#00236F] outline-none"
                   type="text"
                 />
               </div>
@@ -1295,7 +1295,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                   name="description"
                   rows={3}
                   placeholder={t.descriptionPlaceholder}
-                  className="w-full bg-paper-light border border-border-slate rounded-xl p-3 text-xs text-ink focus:bg-white focus:border-[#00236F] outline-none"
+                  className="w-full bg-paper-light border border-border-slate rounded-xl p-3 text-xs text-ink focus:bg-surface-card focus:border-[#00236F] outline-none"
                 />
               </div>
 
@@ -1303,7 +1303,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold border border-border-slate text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold border border-border-slate text-slate-600 hover:bg-surface-container cursor-pointer"
                 >
                   {t.cancel}
                 </button>

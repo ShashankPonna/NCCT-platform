@@ -38,7 +38,10 @@ import { visibilitySettingsRouter } from "./routes/visibilitySettings.js";
 
 export const app = express();
 
-app.use(cors());
+// Content-Disposition is exposed so a cross-origin client can read a
+// server-chosen download filename (e.g. the gradebook export's, which keeps
+// a Hindi course title intact) — browsers hide it from JS by default.
+app.use(cors({ exposedHeaders: ["Content-Disposition"] }));
 app.use(express.json());
 
 app.get("/health", (_req, res) => {

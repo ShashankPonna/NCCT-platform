@@ -8,149 +8,77 @@ import {
   getSkills,
   setJobSkills,
   shortlistTrainee,
+  updateJobInterestStatus,
 } from "@ncct/api-client";
-import type { Job, JobInterest, Skill, TraineeSearchResult } from "@ncct/shared-types";
+import type { Job, JobInterest, JobInterestStatus, Skill, TraineeSearchResult } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import { saveFile } from "./saveFile.js";
 import { SkillChips, SkillPicker } from "./SkillPicker.js";
 
 interface EmployerDashboardProps {
   accessToken: string;
+  // GET /jobs is the public job board (every employer's postings), so the
+  // caller's id is what narrows "My Postings" to this employer's own.
+  currentUserId: string;
 }
 
 type InterestRow = JobInterest & { profiles: { full_name: string | null } | null };
 
+// One row of the talent search. Every field comes from the real search
+// result — nothing is padded with invented values (docs/DECISIONS.md #67);
+// a trainee with no certificate yet simply shows none.
 interface CandidateItem {
   id: string;
   name: string;
-  certId: string;
-  avatarBg: string;
   initials: string;
+  certificateCount: number;
+  certId: string | null;
   skills: string[];
-  // Real taxonomy skill ids (DECISIONS.md #45) — absent/empty for the
-  // hardcoded demo rows below, which aren't real, verifiable trainees and
-  // so correctly never match a real skill_id filter.
-  skillIds?: string[];
-  course: string;
-  institute: string;
-  location: string;
-  region: string;
-  specialization: string;
-  availability: "Immediate" | "Within 7 Days" | "Within 15 Days" | "Next Month";
-  verifiedScore: number;
+  course: string | null;
+  institute: string | null;
+  location: string | null;
 }
 
-const DEFAULT_CANDIDATES: CandidateItem[] = [
-  {
-    id: "cand-1",
-    name: "Ramesh V. Patel",
-    certId: "NCCT-2024-GJ-89",
-    avatarBg: "bg-primary-container text-on-primary",
-    initials: "RP",
-    skills: ["PACS Accounting", "Tally Prime", "GST Day-Book"],
-    course: "PACS Digitalization & Accounts",
-    institute: "ICM Gandhinagar",
-    location: "Anand, Gujarat",
-    region: "gujarat",
-    specialization: "pacs",
-    availability: "Immediate",
-    verifiedScore: 92,
-  },
-  {
-    id: "cand-2",
-    name: "Pooja M. Deshmukh",
-    certId: "NCCT-2024-MH-41",
-    avatarBg: "bg-secondary text-on-secondary",
-    initials: "PD",
-    skills: ["Cold Storage Logistics", "Milk Fat Testing"],
-    course: "Dairy Co-op Cold Chain (ICM)",
-    institute: "VAMNICOM Pune",
-    location: "Surat, Gujarat",
-    region: "gujarat",
-    specialization: "coldchain",
-    availability: "Within 7 Days",
-    verifiedScore: 88,
-  },
-  {
-    id: "cand-3",
-    name: "Anand Kumar Shukla",
-    certId: "NCCT-2024-UP-11",
-    avatarBg: "bg-primary-container text-on-primary",
-    initials: "AK",
-    skills: ["NABARD Credit Norms", "PACS Accounting"],
-    course: "NABARD Cooperative Credit L-1",
-    institute: "ICM Lucknow",
-    location: "Lucknow, UP",
-    region: "up",
-    specialization: "pacs",
-    availability: "Immediate",
-    verifiedScore: 94,
-  },
-  {
-    id: "cand-4",
-    name: "Manish Soren",
-    certId: "NCCT-2024-BR-62",
-    avatarBg: "bg-surface-tint text-on-primary",
-    initials: "MS",
-    skills: ["GST & Audit", "Society Day-Book"],
-    course: "GST & Society Auditing",
-    institute: "ICM Patna",
-    location: "Patna, Bihar",
-    region: "bihar",
-    specialization: "tally",
-    availability: "Within 15 Days",
-    verifiedScore: 86,
-  },
-  {
-    id: "cand-5",
-    name: "Bhavna C. Chaudhari",
-    certId: "NCCT-2024-GJ-94",
-    avatarBg: "bg-primary text-on-primary",
-    initials: "BC",
-    skills: ["Milk Testing", "Co-op Governance"],
-    course: "Dairy Co-op Cold Chain (ICM)",
-    institute: "ICM Gandhinagar",
-    location: "Gandhinagar, Gujarat",
-    region: "gujarat",
-    specialization: "milk",
-    availability: "Immediate",
-    verifiedScore: 91,
-  },
-  {
-    id: "cand-6",
-    name: "Dharmesh K. Rathod",
-    certId: "NCCT-2024-GJ-102",
-    avatarBg: "bg-primary-container text-on-primary",
-    initials: "DK",
-    skills: ["PACS Accounting", "By-law Compliance"],
-    course: "PACS Digitalization & Accounts",
-    institute: "ICM Gandhinagar",
-    location: "Mehsana, Gujarat",
-    region: "gujarat",
-    specialization: "governance",
-    availability: "Immediate",
-    verifiedScore: 85,
-  },
-];
+function toCandidate(result: TraineeSearchResult): CandidateItem {
+  const latest = result.certificates[0];
+  const name = result.full_name?.trim() || `Trainee ${result.trainee_id.slice(0, 4)}`;
+  return {
+    id: result.trainee_id,
+    name,
+    initials: name.slice(0, 2).toUpperCase(),
+    certificateCount: result.certificates.length,
+    certId: latest?.certificate_code ?? null,
+    skills: result.skills.map((s) => s.name),
+    course: latest?.programme_title ?? null,
+    institute: latest?.institution_name ?? null,
+    location: latest?.institution_location ?? null,
+  };
+}
 
-export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
+const STATUS_LABEL: Record<JobInterestStatus, string> = {
+  shortlisted: "Shortlisted",
+  viewed: "Viewed",
+  contacted: "Contacted",
+};
+
+function csvCell(value: string | number | null): string {
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
+export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashboardProps) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [interests, setInterests] = useState<InterestRow[]>([]);
   const [results, setResults] = useState<TraineeSearchResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pendingTraineeId, setPendingTraineeId] = useState<string | null>(null);
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterRegion, setFilterRegion] = useState("all");
   const [filterSkill, setFilterSkill] = useState("all");
-  const [filterAvailability, setFilterAvailability] = useState("all");
-  const [sortBy, setSortBy] = useState("merit");
+  const [sortBy, setSortBy] = useState<"certificates" | "name">("certificates");
 
-  // Shortlist state
-  const [shortlistedIds, setShortlistedIds] = useState<Set<string>>(
-    new Set(["cand-2", "cand-3", "cand-5", "cand-6"]),
-  );
   const [showPostJobModal, setShowPostJobModal] = useState(false);
   const [showManageJobsModal, setShowManageJobsModal] = useState(false);
   const [contactToast, setContactToast] = useState<string | null>(null);
@@ -169,27 +97,22 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fetches real trainees from the backend on mount and re-fetches whenever
-  // a real taxonomy skill is selected (DECISIONS.md #45) — an exact
-  // server-side match, not just filtering whatever page of `results`
-  // happened to load initially. Reverts to the unfiltered fetch when "all"
-  // is chosen again. Failures here stay silent (`.catch(() => {})`,
-  // matching the original "if available" fetch this replaces) — the mock
-  // candidates below still render either way, this only affects the real
-  // rows merged in alongside them.
+  // Real, opted-in trainees only (the API starts from visible_to_employers).
+  // Re-fetched whenever a taxonomy skill is picked — an exact server-side
+  // match (DECISIONS.md #45).
   useEffect(() => {
     getEmployerTrainees(accessToken, filterSkill !== "all" ? { skill_id: filterSkill } : {})
       .then(setResults)
-      .catch(() => {});
+      .catch((err: Error) => setError(err.message));
   }, [accessToken, filterSkill]);
 
   async function loadOwnJobs() {
     setError(null);
     try {
-      const fetchedJobs = await getJobs();
-      setJobs(fetchedJobs);
-      if (fetchedJobs.length > 0 && !selectedJobId) {
-        void loadInterests(fetchedJobs[0].id);
+      const ownJobs = (await getJobs()).filter((job) => job.employer_id === currentUserId);
+      setJobs(ownJobs);
+      if (ownJobs.length > 0 && !selectedJobId) {
+        void loadInterests(ownJobs[0].id);
       }
     } catch (err) {
       setError((err as Error).message);
@@ -209,6 +132,11 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
     } catch (err) {
       setError((err as Error).message);
     }
+  }
+
+  function showToast(message: string) {
+    setContactToast(message);
+    setTimeout(() => setContactToast(null), 4500);
   }
 
   async function handleCreateJob(e: React.FormEvent<HTMLFormElement>) {
@@ -233,8 +161,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
       setSelectedSkillIds(new Set());
       await loadOwnJobs();
       setShowPostJobModal(false);
-      setContactToast(`Job posting "${title}" published successfully!`);
-      setTimeout(() => setContactToast(null), 4000);
+      showToast(`Job posting "${title}" published.`);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -265,96 +192,87 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
     }
   }
 
-  // Merge default candidates with real backend trainees if present
-  const allCandidates: CandidateItem[] = [
-    ...DEFAULT_CANDIDATES,
-    ...results.map((r, idx) => ({
-      id: r.trainee_id,
-      name: r.full_name || `Candidate #${r.trainee_id.slice(0, 4)}`,
-      certId: r.certificates[0]?.certificate_code || `NCCT-2024-CERT-${100 + idx}`,
-      avatarBg: "bg-primary-container text-on-primary",
-      initials: (r.full_name || "CA").slice(0, 2).toUpperCase(),
-      // Real taxonomy skills (DECISIONS.md #45) — falls back to a plain
-      // label only when this trainee genuinely has none tagged yet, rather
-      // than a fake placeholder claiming a skill that was never verified.
-      skills: r.skills.length > 0 ? r.skills.map((s) => s.name) : ["Certified Co-op Trainee"],
-      skillIds: r.skills.map((s) => s.id),
-      course: r.certificates[0]?.programme_title || "NCCT Cooperative Certificate",
-      institute: r.certificates[0]?.institution_name || "RICM Regional Center",
-      location: r.certificates[0]?.institution_location || "National",
-      region: "all",
-      specialization: "all",
-      availability: "Immediate" as const,
-      verifiedScore: 90,
-    })),
-  ];
+  const candidates = results.map(toCandidate);
+  const candidateById = new Map(candidates.map((c) => [c.id, c]));
 
-  const filteredCandidates = allCandidates
+  const filteredCandidates = candidates
     .filter((cand) => {
-      const q = searchQuery.toLowerCase();
-      const matchQ =
-        !q ||
-        cand.name.toLowerCase().includes(q) ||
-        cand.certId.toLowerCase().includes(q) ||
-        cand.skills.some((s) => s.toLowerCase().includes(q)) ||
-        cand.location.toLowerCase().includes(q);
-
-      const matchReg = filterRegion === "all" || cand.region === filterRegion;
-      const matchSkill = filterSkill === "all" || (cand.skillIds ?? []).includes(filterSkill);
-      const matchAvail =
-        filterAvailability === "all" ||
-        (filterAvailability === "immediate" && cand.availability === "Immediate") ||
-        (filterAvailability === "15days" && (cand.availability === "Within 15 Days" || cand.availability === "Within 7 Days"));
-
-      return matchQ && matchReg && matchSkill && matchAvail;
+      const q = searchQuery.trim().toLowerCase();
+      if (!q) return true;
+      return [cand.name, cand.certId, cand.course, cand.location, ...cand.skills].some((field) =>
+        field?.toLowerCase().includes(q),
+      );
     })
-    .sort((a, b) => {
-      if (sortBy === "merit") return b.verifiedScore - a.verifiedScore;
-      if (sortBy === "availability") return a.availability === "Immediate" ? -1 : 1;
-      return a.location.localeCompare(b.location);
-    });
+    .sort((a, b) =>
+      sortBy === "certificates"
+        ? b.certificateCount - a.certificateCount || a.name.localeCompare(b.name)
+        : a.name.localeCompare(b.name),
+    );
 
-  function toggleShortlist(id: string) {
-    setShortlistedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else {
-        next.add(id);
-        // Call backend API if active job selected
-        if (selectedJobId) {
-          void shortlistTrainee(accessToken, selectedJobId, id).catch(() => {});
-        }
-      }
-      return next;
-    });
+  const selectedJob = jobs.find((job) => job.id === selectedJobId) ?? null;
+  // The shortlist *is* the selected job's job_interests rows — saved
+  // server-side, and each one notifies the trainee (DECISIONS.md #65).
+  const shortlistedIds = new Set(interests.map((interest) => interest.trainee_id));
+
+  async function handleShortlist(traineeId: string) {
+    if (!selectedJobId) {
+      setError('Choose one of your job postings first ("My Postings") — a shortlist is always for a specific job.');
+      return;
+    }
+    setError(null);
+    setPendingTraineeId(traineeId);
+    try {
+      await shortlistTrainee(accessToken, selectedJobId, traineeId);
+      await loadInterests(selectedJobId);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setPendingTraineeId(null);
+    }
   }
 
-  const shortlistedCandidates = allCandidates.filter((c) => shortlistedIds.has(c.id));
-
-  function handleDownloadShortlistCsv() {
-    const headers = ["Candidate Name", "Certification ID", "Course", "Institution", "Location", "Score", "Availability"];
-    const rows = shortlistedCandidates.map((c) => [
-      `"${c.name}"`,
-      `"${c.certId}"`,
-      `"${c.course}"`,
-      `"${c.institute}"`,
-      `"${c.location}"`,
-      `"${c.verifiedScore}%"`,
-      `"${c.availability}"`,
-    ]);
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `ncct_shortlisted_trainees_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // "Contacted" is a real status on the shortlist entry, and changing it
+  // sends the trainee an in-app notification — replacing the old buttons
+  // that faked an SMS/email dispatch and showed a made-up phone number.
+  async function markContacted(targets: InterestRow[]) {
+    if (!selectedJobId || targets.length === 0) return;
+    setError(null);
+    setBusy(true);
+    try {
+      await Promise.all(
+        targets.map((interest) => updateJobInterestStatus(accessToken, selectedJobId, interest.id, "contacted")),
+      );
+      await loadInterests(selectedJobId);
+      showToast(
+        targets.length === 1
+          ? `${targets[0].profiles?.full_name ?? "Candidate"} marked as contacted — they've been notified in the app.`
+          : `${targets.length} candidates marked as contacted — each has been notified in the app.`,
+      );
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
   }
 
-  function handleSendBulkInvite() {
-    setContactToast(`Interview invitations dispatched to ${shortlistedCandidates.length} shortlisted candidates via NCCT SMS & Email.`);
-    setTimeout(() => setContactToast(null), 5000);
+  async function handleDownloadShortlistCsv() {
+    const header = ["Candidate Name", "Certificate Code", "Programme", "Institution", "Location", "Status"];
+    const rows = interests.map((interest) => {
+      const cand = candidateById.get(interest.trainee_id);
+      return [
+        interest.profiles?.full_name ?? cand?.name ?? interest.trainee_id,
+        cand?.certId ?? "",
+        cand?.course ?? "",
+        cand?.institute ?? "",
+        cand?.location ?? "",
+        STATUS_LABEL[interest.status],
+      ];
+    });
+    const csv = [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
+    // Leading BOM so Excel reads non-English names as UTF-8.
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+    const jobPart = selectedJob ? selectedJob.title.replace(/[\\/:*?"<>|]+/g, "-") : "shortlist";
+    await saveFile(blob, `Shortlist - ${jobPart}.csv`);
   }
 
   return (
@@ -384,18 +302,18 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
         <div className="flex flex-col gap-space-xs max-w-2xl">
           <div className="flex items-center gap-space-xs">
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 text-primary font-label-sm text-label-sm uppercase tracking-wider font-bold border border-blue-200">
-              <span className="material-symbols-outlined text-[14px] text-secondary">verified_user</span> NCCT Verified Roster
+              <span className="material-symbols-outlined text-[14px] text-secondary">verified_user</span> Opted-in trainees only
             </span>
             <span className="text-outline-variant font-body-sm text-body-sm">•</span>
             <span className="font-metric-mono text-body-sm text-on-surface-variant">
-              Active Candidates: <span className="font-bold text-primary">1,482</span>
+              Candidates: <span className="font-bold text-primary">{candidates.length}</span>
             </span>
           </div>
           <h1 className="font-headline-lg text-headline-lg text-primary tracking-tight font-bold">
             Trainee Search & Talent Pool
           </h1>
           <p className="font-body-md text-body-md text-on-surface-variant">
-            Search verified NCCT-certified candidates and manage shortlisted talent for cooperative society postings.
+            Search trainees who have opted in to employer visibility, and shortlist them for your job postings.
           </p>
         </div>
 
@@ -414,7 +332,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
             className="min-h-[48px] px-space-lg py-space-sm bg-secondary-container hover:bg-secondary text-primary hover:text-on-primary font-label-lg text-label-lg rounded-xl flex items-center gap-space-xs transition-all shadow-xs active:translate-y-0.5 font-bold cursor-pointer"
           >
             <span className="material-symbols-outlined text-[22px]">add_circle</span>
-            <span>+ Post a Job</span>
+            <span>Post a Job</span>
           </button>
         </div>
       </section>
@@ -423,9 +341,9 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
       <section className="bg-surface-container-lowest p-space-md rounded-2xl shadow-xs flex flex-col gap-space-md border border-border-slate">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-space-md">
           {/* Search Input */}
-          <div className="md:col-span-4 flex flex-col gap-1">
+          <div className="md:col-span-7 flex flex-col gap-1">
             <label className="font-label-md text-label-md text-on-surface font-semibold flex items-center gap-1" htmlFor="search-input">
-              Candidate or Certification ID
+              Name, skill, or certificate code
             </label>
             <div className="relative w-full">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px] pointer-events-none">
@@ -435,44 +353,17 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                 id="search-input"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="e.g. Ramesh Patel, NCCT-2024-GJ-89"
+                placeholder="e.g. Asha, Financial Record-Keeping, NCCT-JU3E8VT3"
                 type="text"
-                className="w-full min-h-[48px] pl-10 pr-space-md bg-paper-light text-on-surface rounded-xl font-body-sm text-body-sm focus:outline-none focus:bg-white focus:ring-2 focus:ring-secondary-container border border-border-slate/60"
+                className="w-full min-h-[48px] pl-10 pr-space-md bg-paper-light text-on-surface rounded-xl font-body-sm text-body-sm focus:outline-none focus:bg-surface-card focus:ring-2 focus:ring-secondary-container border border-border-slate/60"
               />
             </div>
           </div>
 
-          {/* Location Dropdown */}
-          <div className="md:col-span-3 flex flex-col gap-1">
-            <label className="font-label-md text-label-md text-on-surface font-semibold" htmlFor="filter-location">
-              Target State / Region
-            </label>
-            <div className="relative w-full">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px] pointer-events-none">
-                location_on
-              </span>
-              <select
-                id="filter-location"
-                value={filterRegion}
-                onChange={(e) => setFilterRegion(e.target.value)}
-                className="w-full min-h-[48px] pl-10 pr-8 bg-surface-container-low text-on-surface rounded font-body-sm text-body-sm appearance-none focus:outline-none focus:ring-2 focus:ring-secondary-container border border-outline-variant/40 cursor-pointer"
-              >
-                <option value="all">All Regions (Pan India)</option>
-                <option value="gujarat">Gujarat (Anand, Mehsana, Surat)</option>
-                <option value="up">Uttar Pradesh (Lucknow, Varanasi)</option>
-                <option value="bihar">Bihar (Patna, Muzaffarpur)</option>
-                <option value="maharashtra">Maharashtra (Pune, Kolhapur)</option>
-              </select>
-              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[20px]">
-                expand_more
-              </span>
-            </div>
-          </div>
-
-          {/* Skills Dropdown */}
-          <div className="md:col-span-3 flex flex-col gap-1">
+          {/* Skills Dropdown — exact taxonomy match, filtered server-side */}
+          <div className="md:col-span-5 flex flex-col gap-1">
             <label className="font-label-md text-label-md text-on-surface font-semibold" htmlFor="filter-skills">
-              Cooperative Trade / Skill
+              Skill
             </label>
             <div className="relative w-full">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px] pointer-events-none">
@@ -484,7 +375,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                 onChange={(e) => setFilterSkill(e.target.value)}
                 className="w-full min-h-[48px] pl-10 pr-8 bg-surface-container-low text-on-surface rounded font-body-sm text-body-sm appearance-none focus:outline-none focus:ring-2 focus:ring-secondary-container border border-outline-variant/40 cursor-pointer"
               >
-                <option value="all">All Trade Specializations</option>
+                <option value="all">All skills</option>
                 {skills.map((skill) => (
                   <option key={skill.id} value={skill.id}>
                     {skill.name}
@@ -496,89 +387,51 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
               </span>
             </div>
           </div>
+        </div>
 
-          {/* Availability Dropdown */}
-          <div className="md:col-span-2 flex flex-col gap-1">
-            <label className="font-label-md text-label-md text-on-surface font-semibold" htmlFor="filter-availability">
-              Availability
-            </label>
-            <div className="relative w-full">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px] pointer-events-none">
-                calendar_today
+        {(filterSkill !== "all" || searchQuery) && (
+          <div className="flex items-center flex-wrap gap-space-xs pt-space-xs border-t border-outline-variant/20">
+            <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider pr-space-xs font-bold">
+              Filters Applied:
+            </span>
+            {filterSkill !== "all" && (
+              <span className="inline-flex items-center gap-1.5 px-space-sm py-1 rounded bg-surface-container text-primary font-body-sm text-body-sm font-medium">
+                Skill: {skills.find((s) => s.id === filterSkill)?.name ?? filterSkill}
+                <button type="button" onClick={() => setFilterSkill("all")} className="hover:text-error flex items-center">
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                </button>
               </span>
-              <select
-                id="filter-availability"
-                value={filterAvailability}
-                onChange={(e) => setFilterAvailability(e.target.value)}
-                className="w-full min-h-[48px] pl-10 pr-8 bg-surface-container-low text-on-surface rounded font-body-sm text-body-sm appearance-none focus:outline-none focus:ring-2 focus:ring-secondary-container border border-outline-variant/40 cursor-pointer"
-              >
-                <option value="all">Any Availability</option>
-                <option value="immediate">Immediate</option>
-                <option value="15days">Within 15 Days</option>
-                <option value="nextmonth">Next Month</option>
-              </select>
-              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[20px]">
-                expand_more
+            )}
+            {searchQuery && (
+              <span className="inline-flex items-center gap-1.5 px-space-sm py-1 rounded bg-surface-container text-primary font-body-sm text-body-sm font-medium">
+                Keyword: {searchQuery}
+                <button type="button" onClick={() => setSearchQuery("")} className="hover:text-error flex items-center">
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                </button>
               </span>
-            </div>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery("");
+                setFilterSkill("all");
+              }}
+              className="font-label-sm text-label-sm text-secondary hover:underline ml-space-sm font-bold cursor-pointer"
+            >
+              Reset All Filters
+            </button>
           </div>
-        </div>
-
-        {/* Active Filter Tags */}
-        <div className="flex items-center flex-wrap gap-space-xs pt-space-xs border-t border-outline-variant/20">
-          <span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider pr-space-xs font-bold">
-            Filters Applied:
-          </span>
-          {filterRegion !== "all" && (
-            <span className="inline-flex items-center gap-1.5 px-space-sm py-1 rounded bg-surface-container text-primary font-body-sm text-body-sm font-medium">
-              State: {filterRegion.toUpperCase()}
-              <button type="button" onClick={() => setFilterRegion("all")} className="hover:text-error flex items-center">
-                <span className="material-symbols-outlined text-[16px]">close</span>
-              </button>
-            </span>
-          )}
-          {filterSkill !== "all" && (
-            <span className="inline-flex items-center gap-1.5 px-space-sm py-1 rounded bg-surface-container text-primary font-body-sm text-body-sm font-medium">
-              Skill: {skills.find((s) => s.id === filterSkill)?.name ?? filterSkill}
-              <button type="button" onClick={() => setFilterSkill("all")} className="hover:text-error flex items-center">
-                <span className="material-symbols-outlined text-[16px]">close</span>
-              </button>
-            </span>
-          )}
-          {searchQuery && (
-            <span className="inline-flex items-center gap-1.5 px-space-sm py-1 rounded bg-surface-container text-primary font-body-sm text-body-sm font-medium">
-              Keyword: {searchQuery}
-              <button type="button" onClick={() => setSearchQuery("")} className="hover:text-error flex items-center">
-                <span className="material-symbols-outlined text-[16px]">close</span>
-              </button>
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              setSearchQuery("");
-              setFilterRegion("all");
-              setFilterSkill("all");
-              setFilterAvailability("all");
-            }}
-            className="font-label-sm text-label-sm text-secondary hover:underline ml-space-sm font-bold cursor-pointer"
-          >
-            Reset All Filters
-          </button>
-        </div>
+        )}
       </section>
 
-      {/* 2-Column Main Layout: Candidate Roster (68%) & Shortlist Drawer (32%) */}
+      {/* 2-Column Main Layout: Candidate Roster & Shortlist Drawer */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
-        {/* Candidate Roster Table Column (approx 68% -> col-span-8) */}
         <section className="lg:col-span-8 flex flex-col gap-space-md">
           <div className="bg-surface-container-lowest rounded-2xl shadow-xs overflow-hidden border border-border-slate">
             {/* Table Control & Sorting Header */}
-            <div className="px-space-md py-space-sm bg-paper-light flex items-center justify-between border-b border-border-slate/60">
+            <div className="px-space-md py-space-sm bg-paper-light flex items-center justify-between gap-space-sm flex-wrap border-b border-border-slate/60">
               <div className="flex items-center gap-space-sm">
-                <span className="font-headline-sm text-headline-sm text-primary font-bold">
-                  Certified Trainees
-                </span>
+                <span className="font-headline-sm text-headline-sm text-primary font-bold">Trainees</span>
                 <span className="px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary font-metric-mono text-label-sm font-bold">
                   {filteredCandidates.length} Found
                 </span>
@@ -587,34 +440,42 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                 <span className="font-label-sm text-label-sm text-on-surface-variant font-bold">Sort by:</span>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-white text-on-surface rounded-lg px-2.5 py-1 font-body-sm text-body-sm border border-border-slate focus:outline-none cursor-pointer"
+                  onChange={(e) => setSortBy(e.target.value as "certificates" | "name")}
+                  className="bg-surface-container-low text-on-surface rounded-lg px-2.5 py-1 font-body-sm text-body-sm border border-border-slate focus:outline-none cursor-pointer"
                 >
-                  <option value="merit">NCCT Exam Merit (High to Low)</option>
-                  <option value="availability">Availability (Immediate First)</option>
-                  <option value="proximity">Proximity to Dairy Hubs</option>
+                  <option value="certificates">Most certificates</option>
+                  <option value="name">Name (A–Z)</option>
                 </select>
               </div>
             </div>
+
+            {!selectedJob && (
+              <p className="px-space-md py-space-sm bg-amber-50 text-amber-900 border-b border-amber-200 font-body-sm text-body-sm">
+                {jobs.length === 0
+                  ? 'Post a job first ("Post a Job") — shortlisting is always for one of your job postings.'
+                  : 'Pick a job in "My Postings" to shortlist trainees for it.'}
+              </p>
+            )}
 
             {/* Trainee Candidates Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-paper text-on-surface-variant font-label-md text-label-md border-b border-border-slate">
-                    <th className="py-space-sm px-space-md uppercase font-bold tracking-wider text-xs">Trainee Candidate</th>
-                    <th className="py-space-sm px-space-md uppercase font-bold tracking-wider text-xs">Verified Competencies</th>
-                    <th className="py-space-sm px-space-md uppercase font-bold tracking-wider text-xs">NCCT Certification</th>
+                    <th className="py-space-sm px-space-md uppercase font-bold tracking-wider text-xs">Trainee</th>
+                    <th className="py-space-sm px-space-md uppercase font-bold tracking-wider text-xs">Skills</th>
+                    <th className="py-space-sm px-space-md uppercase font-bold tracking-wider text-xs">Latest Certificate</th>
                     <th className="py-space-sm px-space-md uppercase font-bold tracking-wider text-xs">Location</th>
-                    <th className="py-space-sm px-space-md uppercase font-bold tracking-wider text-xs">Availability</th>
                     <th className="py-space-sm px-space-md uppercase font-bold tracking-wider text-xs text-right">Shortlist</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-slate/40 font-body-sm text-body-sm">
                   {filteredCandidates.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-on-surface-variant">
-                        No candidates match your current filter selection.
+                      <td colSpan={5} className="py-8 text-center text-on-surface-variant">
+                        {candidates.length === 0
+                          ? "No trainees have opted in to employer visibility yet."
+                          : "No trainees match your current filters."}
                       </td>
                     </tr>
                   ) : (
@@ -624,9 +485,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                         <tr key={cand.id} className="hover:bg-paper-light/60 transition-colors">
                           <td className="py-space-md px-space-md">
                             <div className="flex items-center gap-space-sm">
-                              <div
-                                className={`w-10 h-10 rounded-xl ${cand.avatarBg} flex items-center justify-center font-display text-headline-sm shrink-0 font-bold shadow-2xs`}
-                              >
+                              <div className="w-10 h-10 rounded-xl bg-primary-container text-on-primary flex items-center justify-center font-display text-headline-sm shrink-0 font-bold shadow-2xs">
                                 {cand.initials}
                               </div>
                               <div className="flex flex-col min-w-0">
@@ -634,81 +493,67 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
                                   <span className="font-label-lg text-label-lg text-primary truncate font-bold">
                                     {cand.name}
                                   </span>
-                                  <span
-                                    className="material-symbols-outlined text-[16px] text-on-tertiary-container shrink-0"
-                                    title="NCCT Certified Biometric"
-                                  >
-                                    verified
-                                  </span>
+                                  {cand.certificateCount > 0 && (
+                                    <span
+                                      className="material-symbols-outlined text-[16px] text-on-tertiary-container shrink-0"
+                                      title={`Holds ${cand.certificateCount} NCCT certificate${cand.certificateCount === 1 ? "" : "s"} — each can be checked on the public verification page`}
+                                    >
+                                      verified
+                                    </span>
+                                  )}
                                 </div>
                                 <span className="font-metric-mono text-label-sm text-on-surface-variant">
-                                  ID: {cand.certId}
+                                  {cand.certId ? `Cert: ${cand.certId}` : "No certificate yet"}
                                 </span>
                               </div>
                             </div>
                           </td>
                           <td className="py-space-md px-space-md">
                             <div className="flex flex-wrap gap-1 max-w-[200px]">
-                              {cand.skills.map((skill, si) => (
-                                <span
-                                  key={si}
-                                  className="px-2 py-0.5 rounded-lg bg-paper text-ink font-metric-mono text-xs border border-border-slate/50"
-                                >
-                                  {skill}
-                                </span>
-                              ))}
+                              {cand.skills.length === 0 ? (
+                                <span className="text-on-surface-variant">—</span>
+                              ) : (
+                                cand.skills.map((skill) => (
+                                  <span
+                                    key={skill}
+                                    className="px-2 py-0.5 rounded-lg bg-paper text-ink font-metric-mono text-xs border border-border-slate/50"
+                                  >
+                                    {skill}
+                                  </span>
+                                ))
+                              )}
                             </div>
                           </td>
                           <td className="py-space-md px-space-md">
                             <div className="flex flex-col">
-                              <span className="font-label-md text-label-md text-primary font-bold">
-                                {cand.course}
-                              </span>
-                              <span className="font-body-sm text-body-sm text-on-surface-variant">
-                                Inst: {cand.institute}
-                              </span>
+                              <span className="font-label-md text-label-md text-primary font-bold">{cand.course ?? "—"}</span>
+                              {cand.institute && (
+                                <span className="font-body-sm text-body-sm text-on-surface-variant">{cand.institute}</span>
+                              )}
                             </div>
                           </td>
                           <td className="py-space-md px-space-md">
                             <div className="flex items-center gap-1 font-body-sm text-body-sm text-on-surface">
-                              <span className="material-symbols-outlined text-[16px] text-on-surface-variant">
-                                place
-                              </span>
-                              {cand.location}
+                              <span className="material-symbols-outlined text-[16px] text-on-surface-variant">place</span>
+                              {cand.location ?? "—"}
                             </div>
-                          </td>
-                          <td className="py-space-md px-space-md">
-                            <span
-                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-label-sm text-label-sm font-bold border ${
-                                cand.availability === "Immediate"
-                                  ? "bg-blue-50 text-primary border-blue-200"
-                                  : "bg-secondary-fixed text-on-secondary-fixed border-secondary/20"
-                              }`}
-                            >
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full ${
-                                  cand.availability === "Immediate"
-                                    ? "bg-primary"
-                                    : "bg-secondary"
-                                }`}
-                              />
-                              {cand.availability}
-                            </span>
                           </td>
                           <td className="py-space-md px-space-md text-right">
                             <button
                               type="button"
-                              onClick={() => toggleShortlist(cand.id)}
-                              className={`min-h-[40px] px-3.5 py-1.5 rounded-xl inline-flex items-center gap-1 transition-all cursor-pointer font-bold text-xs shadow-2xs ${
+                              onClick={() => void handleShortlist(cand.id)}
+                              disabled={isShortlisted || pendingTraineeId === cand.id}
+                              title={selectedJob ? `Shortlist for "${selectedJob.title}"` : "Pick a job posting first"}
+                              className={`min-h-[40px] px-3.5 py-1.5 rounded-xl inline-flex items-center gap-1 transition-all font-bold text-xs shadow-2xs ${
                                 isShortlisted
-                                  ? "bg-primary text-on-primary"
-                                  : "bg-paper hover:bg-secondary-container hover:text-primary text-on-surface border border-border-slate"
+                                  ? "bg-primary text-on-primary cursor-default"
+                                  : "bg-paper hover:bg-secondary-container hover:text-primary text-on-surface border border-border-slate cursor-pointer disabled:opacity-50"
                               }`}
                             >
                               <span className="material-symbols-outlined text-[18px]">
                                 {isShortlisted ? "check_circle" : "bookmark_add"}
                               </span>
-                              <span>{isShortlisted ? "Shortlisted" : "Shortlist"}</span>
+                              <span>{isShortlisted ? "Shortlisted" : pendingTraineeId === cand.id ? "Saving…" : "Shortlist"}</span>
                             </button>
                           </td>
                         </tr>
@@ -719,200 +564,119 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
               </table>
             </div>
 
-            {/* Table Footer Pagination */}
-            <div className="px-space-md py-space-sm bg-paper-light flex items-center justify-between border-t border-border-slate/60">
+            <div className="px-space-md py-space-sm bg-paper-light border-t border-border-slate/60">
               <span className="font-body-sm text-body-sm text-on-surface-variant">
-                Showing <strong className="text-on-surface font-metric-mono">1–{filteredCandidates.length}</strong> of{" "}
-                <strong className="text-on-surface font-metric-mono">1,482</strong> qualified profiles
+                Showing <strong className="text-on-surface font-metric-mono">{filteredCandidates.length}</strong> of{" "}
+                <strong className="text-on-surface font-metric-mono">{candidates.length}</strong> opted-in trainee
+                {candidates.length === 1 ? "" : "s"}
               </span>
-              <div className="flex items-center gap-space-xs">
-                <button
-                  type="button"
-                  disabled
-                  className="min-h-[36px] px-2.5 bg-white border border-border-slate text-on-surface-variant rounded-lg opacity-40 cursor-not-allowed"
-                >
-                  <span className="material-symbols-outlined text-[18px]">chevron_left</span>
-                </button>
-                <span className="px-3 py-1 bg-primary text-on-primary rounded-lg font-label-sm text-label-sm font-bold shadow-xs">
-                  1
-                </span>
-                <button
-                  type="button"
-                  className="px-3 py-1 bg-white border border-border-slate text-on-surface hover:bg-paper rounded-lg font-label-sm text-label-sm cursor-pointer"
-                >
-                  2
-                </button>
-                <button
-                  type="button"
-                  className="min-h-[36px] px-2.5 bg-white border border-border-slate text-on-surface hover:bg-paper rounded-lg cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[18px]">chevron_right</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Cooperative Skill Metrics Visual Block */}
-          <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-xs flex flex-col md:flex-row items-center justify-between gap-space-md border border-border-slate">
-            <div className="flex flex-col gap-1 max-w-sm">
-              <span className="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-bold">
-                Placement Metric
-              </span>
-              <h3 className="font-headline-sm text-headline-sm text-primary font-bold">
-                PACS Certified Candidates
-              </h3>
-              <p className="font-body-sm text-body-sm text-on-surface-variant">
-                82% of available candidates hold hands-on validation in computerized society day-book management.
-              </p>
-            </div>
-            <div className="w-full md:w-auto flex items-center gap-space-md bg-paper-light p-3.5 rounded-xl border border-border-slate/60">
-              <svg className="w-36 h-12 text-primary" fill="none" viewBox="0 0 144 48" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M4 36L30 24L56 30L82 12L108 18L134 6"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="3"
-                />
-                <circle cx="134" cy="6" r="4" className="fill-secondary-container" />
-              </svg>
-              <div className="flex flex-col">
-                <span className="font-metric-mono text-headline-md text-headline-md text-primary font-bold">
-                  +24.6%
-                </span>
-                <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">
-                  Demand this cycle
-                </span>
-              </div>
             </div>
           </div>
         </section>
 
-        {/* Side Panel — Candidate Shortlist Drawer (approx 32% -> col-span-4) */}
+        {/* Side Panel — the selected job's real shortlist (job_interests) */}
         <aside className="lg:col-span-4 flex flex-col gap-space-md sticky top-20">
           <div className="bg-surface-container-lowest rounded-2xl shadow-xs overflow-hidden flex flex-col border border-border-slate">
-            {/* Drawer Header */}
-            <div className="p-space-md bg-primary-container text-on-primary flex items-center justify-between">
-              <div className="flex items-center gap-space-xs">
-                <span className="material-symbols-outlined text-secondary-container text-[24px]">
-                  fact_check
+            <div className="p-space-md bg-primary-container text-on-primary flex items-center justify-between gap-space-xs">
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-space-xs">
+                  <span className="material-symbols-outlined text-secondary-container text-[24px]">fact_check</span>
+                  <h2 className="font-headline-sm text-headline-sm font-bold">Shortlist</h2>
+                </div>
+                <span className="font-body-sm text-body-sm opacity-80 truncate">
+                  {selectedJob ? `For: ${selectedJob.title}` : "No job selected"}
                 </span>
-                <h2 className="font-headline-sm text-headline-sm font-bold">Shortlisted Candidates</h2>
               </div>
-              <span className="px-2.5 py-0.5 bg-secondary-container text-primary rounded-full font-metric-mono text-label-sm font-bold shadow-xs">
-                {shortlistedCandidates.length} Selected
+              <span className="px-2.5 py-0.5 bg-secondary-container text-primary rounded-full font-metric-mono text-label-sm font-bold shadow-xs shrink-0">
+                {interests.length}
               </span>
             </div>
 
-            {/* Shortlisted Items Container */}
             <div className="p-space-md flex flex-col gap-space-sm max-h-[520px] overflow-y-auto custom-scrollbar">
-              {shortlistedCandidates.length === 0 ? (
+              {interests.length === 0 ? (
                 <p className="text-center py-8 text-on-surface-variant text-sm">
-                  No candidates shortlisted yet. Click "Shortlist" on any candidate from the roster.
+                  {selectedJob
+                    ? 'Nobody shortlisted for this job yet. Click "Shortlist" on a trainee.'
+                    : 'Pick a job in "My Postings" to see its shortlist.'}
                 </p>
               ) : (
-                shortlistedCandidates.map((cand) => (
-                  <div
-                    key={cand.id}
-                    className="p-space-sm bg-paper-light rounded-xl flex flex-col gap-space-xs relative group transition-all hover:bg-paper border border-border-slate/60"
-                  >
-                    <div className="flex items-start justify-between gap-space-xs">
-                      <div className="flex items-center gap-space-xs">
-                        <div
-                          className={`w-8 h-8 rounded-lg ${cand.avatarBg} flex items-center justify-center font-display text-label-md shrink-0 font-bold shadow-2xs`}
+                interests.map((interest) => {
+                  const cand = candidateById.get(interest.trainee_id);
+                  const name = interest.profiles?.full_name ?? cand?.name ?? `Trainee ${interest.trainee_id.slice(0, 4)}`;
+                  return (
+                    <div
+                      key={interest.id}
+                      className="p-space-sm bg-paper-light rounded-xl flex flex-col gap-space-xs border border-border-slate/60"
+                    >
+                      <div className="flex items-start justify-between gap-space-xs">
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-label-md text-label-md text-primary leading-tight font-bold truncate">{name}</span>
+                          {cand?.course && (
+                            <span className="font-body-sm text-body-sm text-on-surface-variant text-xs truncate">{cand.course}</span>
+                          )}
+                        </div>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shrink-0 ${
+                            interest.status === "contacted"
+                              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                              : "bg-blue-50 text-blue-800 border border-blue-200"
+                          }`}
                         >
-                          {cand.initials}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="font-label-md text-label-md text-primary leading-tight font-bold">
-                            {cand.name}
-                          </span>
-                          <span className="font-body-sm text-body-sm text-on-surface-variant text-xs">
-                            {cand.location}
-                          </span>
-                        </div>
+                          {STATUS_LABEL[interest.status]}
+                        </span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => toggleShortlist(cand.id)}
-                        className="text-on-surface-variant hover:text-error p-1 rounded transition-colors cursor-pointer"
-                        title="Remove candidate"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">close</span>
-                      </button>
+                      {interest.status !== "contacted" && (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void markContacted([interest])}
+                          className="self-end min-h-[36px] px-space-md py-1 bg-primary hover:bg-primary/90 text-on-primary font-label-sm text-label-sm rounded-xl flex items-center gap-1 transition-all shadow-2xs font-bold cursor-pointer disabled:opacity-50"
+                          title="Records that you've reached out, and notifies the trainee in the app"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">mark_email_read</span>
+                          <span>Mark contacted</span>
+                        </button>
+                      )}
                     </div>
-
-                    <div className="pt-1">
-                      <span className="inline-block px-2 py-0.5 rounded-lg bg-white border border-border-slate/50 text-on-surface font-label-sm text-label-sm truncate max-w-full font-medium">
-                        {cand.course}
-                      </span>
-                    </div>
-
-                    <div className="pt-space-xs flex items-center justify-between gap-space-xs">
-                      <span className="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-0.5">
-                        <span className="material-symbols-outlined text-[14px] text-on-tertiary-container">
-                          check_circle
-                        </span>{" "}
-                        Score: <strong className="font-metric-mono">{cand.verifiedScore}%</strong>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setContactToast(`Direct line for ${cand.name} opened. Contact: +91 98765 43210`);
-                          setTimeout(() => setContactToast(null), 4000);
-                        }}
-                        className="min-h-[36px] px-space-md py-1 bg-primary hover:bg-primary/90 text-on-primary font-label-sm text-label-sm rounded-xl flex items-center gap-1 transition-all active:translate-y-0.5 shadow-2xs font-bold cursor-pointer"
-                      >
-                        <span className="material-symbols-outlined text-[16px]">call</span>
-                        <span>Contact</span>
-                      </button>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
-            {/* Shortlist Side Actions Block */}
             <div className="p-space-md bg-paper-light flex flex-col gap-space-xs border-t border-border-slate/60">
               <button
                 type="button"
-                disabled={shortlistedCandidates.length === 0}
-                onClick={handleSendBulkInvite}
-                className="w-full min-h-[48px] px-space-md bg-secondary-container hover:bg-secondary text-primary hover:text-on-primary font-label-md text-label-md rounded-xl flex items-center justify-center gap-space-xs transition-all shadow-xs active:translate-y-0.5 font-bold cursor-pointer disabled:opacity-40"
+                disabled={busy || interests.every((interest) => interest.status === "contacted")}
+                onClick={() => void markContacted(interests.filter((interest) => interest.status !== "contacted"))}
+                className="w-full min-h-[48px] px-space-md bg-secondary-container hover:bg-secondary text-primary hover:text-on-primary font-label-md text-label-md rounded-xl flex items-center justify-center gap-space-xs transition-all shadow-xs font-bold cursor-pointer disabled:opacity-40"
               >
                 <span className="material-symbols-outlined text-[20px]">forward_to_inbox</span>
-                <span>Send Bulk Interview Invitation</span>
+                <span>Mark all as contacted</span>
               </button>
               <button
                 type="button"
-                disabled={shortlistedCandidates.length === 0}
-                onClick={handleDownloadShortlistCsv}
-                className="w-full min-h-[48px] px-space-md bg-white hover:bg-paper text-on-surface font-label-md text-label-md rounded-xl flex items-center justify-center gap-space-xs transition-colors shadow-2xs border border-border-slate font-bold cursor-pointer disabled:opacity-40"
+                disabled={interests.length === 0}
+                onClick={() => void handleDownloadShortlistCsv()}
+                className="w-full min-h-[48px] px-space-md bg-surface-card hover:bg-paper text-on-surface font-label-md text-label-md rounded-xl flex items-center justify-center gap-space-xs transition-colors shadow-2xs border border-border-slate font-bold cursor-pointer disabled:opacity-40"
               >
                 <span className="material-symbols-outlined text-[20px]">download</span>
-                <span>Download Shortlist Summary (CSV)</span>
+                <span>Download Shortlist (CSV)</span>
               </button>
             </div>
           </div>
 
-          {/* Cooperative Guidance Note */}
           <div className="p-space-md bg-paper-light rounded-2xl flex items-start gap-space-sm border border-border-slate/60">
-            <span className="material-symbols-outlined text-secondary text-[24px] shrink-0 mt-0.5">
-              shield
-            </span>
+            <span className="material-symbols-outlined text-secondary text-[24px] shrink-0 mt-0.5">shield</span>
             <div className="flex flex-col gap-0.5">
-              <span className="font-label-md text-label-md text-primary font-bold">
-                NCCT Placement Protocol
-              </span>
+              <span className="font-label-md text-label-md text-primary font-bold">About this list</span>
               <p className="font-body-sm text-body-sm text-on-surface-variant">
-                Candidate certifications are digitally signed by regional ICM directors and validated for immediate
-                cooperative federation placement under Ministry of Cooperation guidelines.
+                Only trainees who have opted in to employer visibility appear here. Every certificate code can be checked on
+                the platform&apos;s public certificate verification page.
               </p>
             </div>
           </div>
         </aside>
       </div>
-
       {/* Post Opportunity Modal */}
       {showPostJobModal && (
         <div className="fixed inset-0 bg-primary/60 backdrop-blur-xs z-50 flex items-center justify-center p-space-md animate-fade-in">
@@ -1052,7 +816,7 @@ export function EmployerDashboard({ accessToken }: EmployerDashboardProps) {
             <div className="space-y-3">
               {jobs.length === 0 ? (
                 <div className="text-center py-8 text-on-surface-variant">
-                  No active job postings. Click "+ Post a Job" to publish an opening.
+                  No active job postings. Click "Post a Job" to publish an opening.
                 </div>
               ) : (
                 jobs.map((j) => (

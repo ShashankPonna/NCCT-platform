@@ -249,7 +249,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                     placeholder={t.sessionIdPlaceholder}
                     inputMode="numeric"
                     maxLength={6}
-                    className="w-full h-touch-target bg-paper-light border border-border-slate rounded-xl px-3 pl-10 font-metric-mono tracking-widest text-body-md text-on-surface focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                    className="w-full h-touch-target bg-paper-light border border-border-slate rounded-xl px-3 pl-10 font-metric-mono tracking-widest text-body-md text-on-surface focus:bg-surface-card focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                     type="text"
                   />
                 </div>
@@ -269,7 +269,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                   type="button"
                   disabled={busy || !sessionCode.trim()}
                   onClick={() => void handleLoadRoster()}
-                  className="h-touch-target px-6 bg-white border border-border-slate text-primary hover:bg-paper-light disabled:opacity-50 rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer shadow-2xs"
+                  className="h-touch-target px-6 bg-surface-card border border-border-slate text-primary hover:bg-paper-light disabled:opacity-50 rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer shadow-2xs"
                 >
                   <span className="material-symbols-outlined text-[18px]">group</span>
                   {t.loadRoster}
@@ -448,14 +448,14 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
                 <p className="font-label-sm text-label-sm text-outline mb-1 uppercase tracking-wider font-semibold">
                   {t.directUrl}
                 </p>
-                <p className="font-metric-mono text-[12px] text-primary break-all bg-white p-2.5 rounded-lg border border-border-slate select-all">
+                <p className="font-metric-mono text-[12px] text-primary break-all bg-surface-card p-2.5 rounded-lg border border-border-slate select-all">
                   {checkInUrl}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={handleCopyLink}
-                className="mt-4 w-full h-touch-target bg-white border border-border-slate text-primary hover:bg-paper-light rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+                className="mt-4 w-full h-touch-target bg-surface-card border border-border-slate text-primary hover:bg-paper-light rounded-xl font-label-md text-label-md font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
               >
                 <span className="material-symbols-outlined text-[18px]">
                   {copied ? "check" : "content_copy"}

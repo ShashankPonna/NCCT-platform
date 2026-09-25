@@ -93,7 +93,7 @@ describe("POST /api/career-counsellor/ask", () => {
 
   it("returns 503 with the real reason when the service fails", async () => {
     authenticateAs("trainee-1", "trainee");
-    askCareerCounsellorMock.mockRejectedValue(new Error("GEMINI_API_KEY is not set"));
+    askCareerCounsellorMock.mockRejectedValue(new Error("GROQ_API_KEY is not set"));
 
     const res = await request(buildApp())
       .post("/api/career-counsellor/ask")
@@ -101,6 +101,6 @@ describe("POST /api/career-counsellor/ask", () => {
       .send({ question: "hi" });
 
     expect(res.status).toBe(503);
-    expect(res.body.error).toContain("GEMINI_API_KEY");
+    expect(res.body.error).toContain("GROQ_API_KEY");
   });
 });

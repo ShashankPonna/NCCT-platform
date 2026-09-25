@@ -27,19 +27,17 @@ const { fromMock, tableData, embedTextMock, matchJobsForTraineeMock } = vi.hoist
 
 vi.mock("./supabaseClient.js", () => ({ supabaseAdmin: { from: fromMock } }));
 
-// getSkillGap calls rankMissingSkills internally with no injected client
-// when it isn't given one (see the tests below) — without this, that would
-// construct a real GoogleGenAI client and attempt a real network call in
-// every getSkillGap test, same trap chatbotService.test.ts's comment on
-// mocking @huggingface/transformers already flags for the embedding model.
-vi.mock("@google/genai", () => ({
-  GoogleGenAI: vi.fn().mockImplementation(() => ({
-    models: { generateContent: vi.fn().mockRejectedValue(new Error("no API key in test env")) },
-  })),
+// getSkillGap calls rankMissingSkills internally with no injected chat
+// function when it isn't given one (see the tests below) — without this,
+// that would make a real Groq request in every getSkillGap test, same trap
+// chatbotService.test.ts's comment on mocking @huggingface/transformers
+// already flags for the embedding model.
+vi.mock("./groqClient.js", () => ({
+  groqChat: vi.fn().mockRejectedValue(new Error("no API key in test env")),
 }));
 
 // getSkillGap also calls findRelatedSkills internally with no injected
-// embed function — same reasoning as the GoogleGenAI mock above, this
+// embed function — same reasoning as the groqClient mock above, this
 // avoids loading the real local transformer model in every getSkillGap
 // test. Defaults to rejecting so related_skills degrades to [] unless a
 // test explicitly overrides it.
@@ -140,24 +138,26 @@ describe("getSkillGap", () => {
 
 describe("rankMissingSkills", () => {
   it("returns null with no gap skills, never calling the model", async () => {
-    const generateContentMock = vi.fn();
+    const chatMock = vi.fn();
     const result = await rankMissingSkills([], {
-      client: { models: { generateContent: generateContentMock } } as never,
+      chat: chatMock,
     });
     expect(result).toBeNull();
-    expect(generateContentMock).not.toHaveBeenCalled();
+    expect(chatMock).not.toHaveBeenCalled();
   });
 
   it("returns a ranked list built from the model's JSON response", async () => {
-    const generateContentMock = vi.fn().mockResolvedValue({
-      text: JSON.stringify([
-        { skill_id: SKILL_B.id, reason: "Needed before Bookkeeping" },
-        { skill_id: SKILL_A.id, reason: "Builds on Tally" },
-      ]),
+    const chatMock = vi.fn().mockResolvedValue({
+      content: JSON.stringify({
+        ranking: [
+          { skill_id: SKILL_B.id, reason: "Needed before Bookkeeping" },
+          { skill_id: SKILL_A.id, reason: "Builds on Tally" },
+        ],
+      }),
     });
 
     const result = await rankMissingSkills([SKILL_A, SKILL_B], {
-      client: { models: { generateContent: generateContentMock } } as never,
+      chat: chatMock,
     });
 
     expect(result).toEqual([
@@ -167,31 +167,45 @@ describe("rankMissingSkills", () => {
   });
 
   it("degrades to null, not an error, when the model call fails", async () => {
-    const generateContentMock = vi.fn().mockRejectedValue(new Error("no API key"));
+    const chatMock = vi.fn().mockRejectedValue(new Error("no API key"));
     const result = await rankMissingSkills([SKILL_A], {
-      client: { models: { generateContent: generateContentMock } } as never,
+      chat: chatMock,
     });
     expect(result).toBeNull();
   });
 
+  it("asks Groq for JSON mode", async () => {
+    const chatMock = vi.fn().mockResolvedValue({ content: JSON.stringify({ ranking: [] }) });
+    await rankMissingSkills([SKILL_A], { chat: chatMock });
+    expect(chatMock.mock.calls[0][0].response_format).toEqual({ type: "json_object" });
+  });
+
+  it("degrades to null when the JSON has no ranking array", async () => {
+    const chatMock = vi.fn().mockResolvedValue({ content: JSON.stringify({ ranking: "nope" }) });
+    const result = await rankMissingSkills([SKILL_A], { chat: chatMock });
+    expect(result).toBeNull();
+  });
+
   it("degrades to null when the model returns malformed JSON", async () => {
-    const generateContentMock = vi.fn().mockResolvedValue({ text: "not json" });
+    const chatMock = vi.fn().mockResolvedValue({ content: "not json" });
     const result = await rankMissingSkills([SKILL_A], {
-      client: { models: { generateContent: generateContentMock } } as never,
+      chat: chatMock,
     });
     expect(result).toBeNull();
   });
 
   it("drops any skill_id the model invents that wasn't in the input", async () => {
-    const generateContentMock = vi.fn().mockResolvedValue({
-      text: JSON.stringify([
-        { skill_id: "made-up-id", reason: "hallucinated" },
-        { skill_id: SKILL_A.id, reason: "real" },
-      ]),
+    const chatMock = vi.fn().mockResolvedValue({
+      content: JSON.stringify({
+        ranking: [
+          { skill_id: "made-up-id", reason: "hallucinated" },
+          { skill_id: SKILL_A.id, reason: "real" },
+        ],
+      }),
     });
 
     const result = await rankMissingSkills([SKILL_A], {
-      client: { models: { generateContent: generateContentMock } } as never,
+      chat: chatMock,
     });
 
     expect(result).toEqual([{ rank: 1, skill_id: SKILL_A.id, skill_name: SKILL_A.name, reason: "real" }]);
@@ -202,7 +216,7 @@ const SKILL_C = { id: "skill-c", name: "Excel", category: null };
 
 // A tiny fake embedding space, injected via findRelatedSkills' own `embed`
 // option rather than mocking the module — same pattern rankMissingSkills's
-// `client` option already uses. Vectors are hand-picked 2D points so cosine
+// `chat` option already uses. Vectors are hand-picked 2D points so cosine
 // similarity is easy to reason about: A and B point the same direction
 // (similarity 1), C points perpendicular (similarity 0).
 function fakeEmbed(text: string): Promise<number[]> {

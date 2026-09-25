@@ -400,7 +400,7 @@ export function QuizTestDetail({ quiz }: { quiz: QuizTakerState }) {
 
           {result.certificate && (
             <p>
-              <a href={`?verify=${result.certificate.certificate_code}`}>
+              <a href={`/?verify=${encodeURIComponent(result.certificate.certificate_code)}`}>
                 {t.viewCertificate(result.certificate.certificate_code)}
               </a>
             </p>
