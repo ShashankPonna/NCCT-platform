@@ -13,7 +13,7 @@ import type {
   Certificate,
   QuestionResult,
 } from "@ncct/shared-types";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { useOnlineStatus } from "./offline/network.js";
 import { enqueueWrite } from "./offline/syncManager.js";
@@ -283,10 +283,40 @@ export function QuizAssessmentList({ quiz }: { quiz: QuizTakerState }) {
 // real test reads like one instead of being squeezed into a sidebar.
 export function QuizTestDetail({ quiz }: { quiz: QuizTakerState }) {
   const { t, selectedAssessment, questions, answers, result, queued, attemptLimitReached, online } = quiz;
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Redirect the viewport to the start of the test the moment it's opened
+  // (direct user request) — the detail panel now lives in the page's large
+  // main column rather than inline below the picker, so on a narrow/mobile
+  // layout (the two columns stack) it can otherwise render off-screen below
+  // the fold with no visual cue that anything happened.
+  useEffect(() => {
+    if (selectedAssessment) {
+      containerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    // Deliberately keyed on the id, not the whole object, so re-fetching the
+    // same assessment (e.g. a fresh `getAssessments` after an edit) doesn't
+    // re-trigger the scroll.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAssessment?.id]);
+
+  // Same for landing on the result/score once grading (or offline queuing)
+  // completes — the result block replaces the question form in place, so
+  // scrolling back to the top of this same panel is enough to bring it into
+  // view without a second ref.
+  useEffect(() => {
+    if (result || queued) {
+      containerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [result, queued]);
+
   if (!selectedAssessment) return null;
 
   return (
-    <div className="quiz-taker quiz-taker-detail legacy-ui rounded-xl border border-border-low-contrast bg-surface-card p-6">
+    <div
+      ref={containerRef}
+      className="quiz-taker quiz-taker-detail legacy-ui rounded-xl border border-border-low-contrast bg-surface-card p-6"
+    >
       <button type="button" className="quiz-back-button" onClick={quiz.closeAssessment}>
         {t.backToTests}
       </button>
