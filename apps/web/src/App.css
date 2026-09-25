@@ -341,7 +341,12 @@
   max-width: 720px;
 }
 
-.quiz-assessment-card {
+/* `.legacy-ui button` (App.css above) sets its own padding/border/background
+   on every bare <button>, at higher specificity (class+type) than a single
+   class like `.quiz-assessment-card` — so these overrides are qualified with
+   `.legacy-ui` too, to actually win rather than being silently clipped back
+   to the generic button look. */
+.legacy-ui .quiz-assessment-card {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -357,12 +362,12 @@
     box-shadow 0.15s ease;
 }
 
-.quiz-assessment-card:hover {
+.legacy-ui .quiz-assessment-card:hover {
   border-color: var(--accent-border);
   box-shadow: var(--shadow);
 }
 
-.quiz-assessment-card.is-selected {
+.legacy-ui .quiz-assessment-card.is-selected {
   border-color: var(--accent);
   background: var(--accent-bg);
 }
@@ -393,6 +398,16 @@
 .quiz-assessment-meta {
   font-size: 14px;
   color: var(--text);
+}
+
+.legacy-ui .quiz-back-button {
+  margin-bottom: 16px;
+  padding: 6px 4px;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .quiz-form-big {
@@ -502,7 +517,7 @@
   background: var(--accent-bg);
 }
 
-.quiz-submit-button {
+.legacy-ui .quiz-submit-button {
   display: block;
   width: 100%;
   margin-top: 8px;
@@ -516,7 +531,7 @@
   cursor: pointer;
 }
 
-.quiz-submit-button:hover {
+.legacy-ui .quiz-submit-button:hover {
   filter: brightness(1.05);
 }
 

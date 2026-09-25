@@ -30,7 +30,7 @@ import {
 import { getDownloadManifest } from "../offline/storage.js";
 import { enqueueWrite } from "../offline/syncManager.js";
 import type { DownloadedLesson } from "../offline/types.js";
-import { QuizTaker } from "../QuizTaker.js";
+import { QuizAssessmentList, QuizTestDetail, useQuizTaker } from "../QuizTaker.js";
 import { CourseMarksTally } from "./CourseMarksTally.js";
 import { SelfHostedVideoPlayer } from "../SelfHostedVideoPlayer.js";
 import { YouTubeVideoPlayer } from "../YouTubeVideoPlayer.js";
@@ -178,6 +178,8 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
   const [contentLocale, setContentLocale] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
 
+  const quiz = useQuizTaker(accessToken, selectedModuleId);
+
   const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set());
   const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
   // Distinct from `progress.completed_at` (server-confirmed) — a lesson
@@ -313,6 +315,7 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
   }
 
   async function selectLesson(lesson: Lesson) {
+    quiz.closeAssessment();
     setSelectedLesson(lesson);
     setContentLocale("");
     setVideoUrl(null);
@@ -679,13 +682,13 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
           />
         )}
 
-        {selectedModuleId && (
-          <QuizTaker key={selectedModuleId} accessToken={accessToken} moduleId={selectedModuleId} />
-        )}
+        {selectedModuleId && <QuizAssessmentList quiz={quiz} />}
       </div>
 
       <div className="md:col-span-8">
-        {selectedLesson ? (
+        {quiz.selectedAssessment ? (
+          <QuizTestDetail quiz={quiz} />
+        ) : selectedLesson ? (
           <div className="flex h-full min-h-[500px] flex-col rounded-xl border border-border-low-contrast bg-surface-card p-6">
             <div className="mb-4 flex items-center justify-between gap-2">
               <h1 className="font-headline text-headline-lg-mobile text-primary md:text-headline-lg">

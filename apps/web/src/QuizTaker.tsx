@@ -18,11 +18,6 @@ import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { useOnlineStatus } from "./offline/network.js";
 import { enqueueWrite } from "./offline/syncManager.js";
 
-interface QuizTakerProps {
-  accessToken: string;
-  moduleId: string;
-}
-
 interface SubmitResult {
   attempt: AssessmentAttempt;
   breakdown: QuestionResult[];
@@ -50,6 +45,8 @@ interface QuizTakerText {
   viewCertificate: (code: string) => string;
   certificateError: (message: string) => string;
   tryAgain: string;
+  backToTests: string;
+  pickTestPrompt: string;
 }
 
 const content: Record<Locale, QuizTakerText> = {
@@ -74,6 +71,8 @@ const content: Record<Locale, QuizTakerText> = {
     viewCertificate: (code) => `View your certificate (${code})`,
     certificateError: (message) => `Certificate could not be generated: ${message}`,
     tryAgain: "Try again",
+    backToTests: "← Back to tests",
+    pickTestPrompt: "Pick a test from the list to open it here.",
   },
   hi: {
     assessments: "मूल्यांकन",
@@ -96,10 +95,40 @@ const content: Record<Locale, QuizTakerText> = {
     viewCertificate: (code) => `अपना प्रमाणपत्र देखें (${code})`,
     certificateError: (message) => `प्रमाणपत्र उत्पन्न नहीं किया जा सका: ${message}`,
     tryAgain: "पुनः प्रयास करें",
+    backToTests: "← परीक्षण सूची पर वापस जाएं",
+    pickTestPrompt: "इसे यहां खोलने के लिए सूची से एक परीक्षण चुनें।",
   },
 };
 
-export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
+export interface QuizTakerState {
+  t: QuizTakerText;
+  assessments: AssessmentWithTotals[];
+  selectedAssessment: AssessmentWithTotals | null;
+  questions: AssessmentQuestionForTrainee[];
+  attemptsUsed: number;
+  answers: Record<string, string>;
+  setAnswer: (questionId: string, optionId: string) => void;
+  result: SubmitResult | null;
+  error: string | null;
+  attemptLimitReached: boolean;
+  queued: boolean;
+  online: boolean;
+  openAssessment: (assessment: AssessmentWithTotals) => void;
+  closeAssessment: () => void;
+  handleSubmit: (e: React.FormEvent) => void;
+  retake: () => void;
+}
+
+// Split into a hook (all state/data-fetching) plus two presentational
+// components (`QuizAssessmentList`, `QuizTestDetail`) instead of one
+// component that renders both the picker and the test inline — the caller
+// (TraineeLearnLessons) puts the two in different halves of its two-column
+// layout: the list alongside the lesson list on the left, the opened test in
+// the large main content column on the right where the lesson detail
+// normally lives, so a big test doesn't have to fit in a narrow sidebar.
+// Direct user request: "on opening this, it should appear to right side
+// bigger screen."
+export function useQuizTaker(accessToken: string, moduleId: string | null): QuizTakerState {
   const { locale } = useLocale();
   const t = content[locale];
   const [assessments, setAssessments] = useState<AssessmentWithTotals[]>([]);
@@ -116,15 +145,30 @@ export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
   const [queued, setQueued] = useState(false);
   const online = useOnlineStatus();
 
-  // Reset-on-moduleId-change comes from the parent mounting this component
-  // with `key={moduleId}` (a fresh mount) rather than resetting state here.
+  function closeAssessment() {
+    setSelectedAssessment(null);
+    setQuestions([]);
+    setAnswers({});
+    setResult(null);
+    setQueued(false);
+    setAttemptLimitReached(false);
+  }
+
+  // This hook is called once per module (not remounted per module the way a
+  // component keyed by moduleId would be), so switching modules has to reset
+  // the opened test explicitly rather than relying on a fresh mount.
   useEffect(() => {
+    setAssessments([]);
+    closeAssessment();
+    setError(null);
+    if (!moduleId) return;
     getAssessments(accessToken, moduleId)
       .then(setAssessments)
       .catch((err: Error) => setError(err.message));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken, moduleId]);
 
-  async function selectAssessment(assessment: AssessmentWithTotals) {
+  async function openAssessment(assessment: AssessmentWithTotals) {
     setSelectedAssessment(assessment);
     setAnswers({});
     setResult(null);
@@ -144,6 +188,10 @@ export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
     } catch (err) {
       setError((err as Error).message);
     }
+  }
+
+  function setAnswer(questionId: string, optionId: string) {
+    setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -179,22 +227,45 @@ export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
     setAnswers({});
   }
 
+  return {
+    t,
+    assessments,
+    selectedAssessment,
+    questions,
+    attemptsUsed,
+    answers,
+    setAnswer,
+    result,
+    error,
+    attemptLimitReached,
+    queued,
+    online,
+    openAssessment,
+    closeAssessment,
+    handleSubmit,
+    retake,
+  };
+}
+
+// The picker — meant for a narrow sidebar alongside the module/lesson list.
+export function QuizAssessmentList({ quiz }: { quiz: QuizTakerState }) {
+  const { t } = quiz;
+  if (quiz.assessments.length === 0 && !quiz.error) return null;
   return (
     // See AssessmentBuilder.tsx's identical comment: `legacy-ui` is applied
     // here directly rather than relying on the caller (TraineeLearnLessons
-    // doesn't wrap this one), so the quiz's radio/text inputs get real
-    // styling and don't trigger iOS's zoom-on-focus behavior on mobile.
+    // doesn't wrap this one), so the card buttons get real font/reset
+    // styling rather than the browser default.
     <div className="quiz-taker legacy-ui">
       <h3>{t.assessments}</h3>
-      {error && <p className="form-error">{error}</p>}
-
+      {quiz.error && <p className="form-error">{quiz.error}</p>}
       <div className="quiz-assessment-list">
-        {assessments.map((a) => (
+        {quiz.assessments.map((a) => (
           <button
             key={a.id}
             type="button"
-            className={`quiz-assessment-card${selectedAssessment?.id === a.id ? " is-selected" : ""}`}
-            onClick={() => void selectAssessment(a)}
+            className={`quiz-assessment-card${quiz.selectedAssessment?.id === a.id ? " is-selected" : ""}`}
+            onClick={() => void quiz.openAssessment(a)}
           >
             <span className={`quiz-kind-badge quiz-kind-${a.kind}`}>{t.kind[a.kind]}</span>
             <span className="quiz-assessment-title">{a.title}</span>
@@ -204,66 +275,70 @@ export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
           </button>
         ))}
       </div>
+    </div>
+  );
+}
 
-      {selectedAssessment && selectedAssessment.max_attempts !== null && (
-        <p className="quiz-attempts-note">
-          {t.attemptsUsed(attemptsUsed, selectedAssessment.max_attempts)}
-        </p>
+// The opened test itself — meant for the large main-content column, so a
+// real test reads like one instead of being squeezed into a sidebar.
+export function QuizTestDetail({ quiz }: { quiz: QuizTakerState }) {
+  const { t, selectedAssessment, questions, answers, result, queued, attemptLimitReached, online } = quiz;
+  if (!selectedAssessment) return null;
+
+  return (
+    <div className="quiz-taker quiz-taker-detail legacy-ui rounded-xl border border-border-low-contrast bg-surface-card p-6">
+      <button type="button" className="quiz-back-button" onClick={quiz.closeAssessment}>
+        {t.backToTests}
+      </button>
+
+      {selectedAssessment.max_attempts !== null && (
+        <p className="quiz-attempts-note">{t.attemptsUsed(quiz.attemptsUsed, selectedAssessment.max_attempts)}</p>
       )}
 
-      {selectedAssessment && attemptLimitReached && !result && (
-        <p className="form-error">{t.attemptsExhausted}</p>
-      )}
+      {attemptLimitReached && !result && <p className="form-error">{t.attemptsExhausted}</p>}
 
-      {selectedAssessment &&
-        questions.length > 0 &&
-        !result &&
-        !queued &&
-        !attemptLimitReached && (
-          <form onSubmit={handleSubmit} className="quiz-form quiz-form-big">
-            <div className="quiz-paper-header">
-              <h2>{selectedAssessment.title}</h2>
-              <p className="quiz-paper-meta">
-                {t.assessmentSummary(
-                  selectedAssessment.question_count,
-                  selectedAssessment.total_marks,
-                  selectedAssessment.pass_threshold_percent,
-                )}
-              </p>
-            </div>
-            {!online && <p className="quiz-offline-notice">{t.offlineNotice}</p>}
-            {selectedAssessment.kind === "quiz" && <p className="quiz-practice-note">{t.practiceNote}</p>}
-            {questions.map((q, i) => (
-              <fieldset key={q.id} className="quiz-question">
-                <legend>
-                  <span className="quiz-question-number">{i + 1}</span>
-                  <span className="quiz-question-text">{q.question_text}</span>
-                  <span className="quiz-question-marks">{t.questionMarks(q.marks)}</span>
-                </legend>
-                <div className="quiz-option-list">
-                  {q.options.map((opt) => (
-                    <label
-                      key={opt.id}
-                      className={`quiz-option${answers[q.id] === opt.id ? " is-selected" : ""}`}
-                    >
-                      <input
-                        type="radio"
-                        name={`q-${q.id}`}
-                        value={opt.id}
-                        checked={answers[q.id] === opt.id}
-                        onChange={() => setAnswers((prev) => ({ ...prev, [q.id]: opt.id }))}
-                      />
-                      <span className="quiz-option-text">{opt.text}</span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-            ))}
-            <button type="submit" className="quiz-submit-button">
-              {online ? t.submitOnline : t.submitOffline}
-            </button>
-          </form>
-        )}
+      {questions.length > 0 && !result && !queued && !attemptLimitReached && (
+        <form onSubmit={quiz.handleSubmit} className="quiz-form quiz-form-big">
+          <div className="quiz-paper-header">
+            <h2>{selectedAssessment.title}</h2>
+            <p className="quiz-paper-meta">
+              {t.assessmentSummary(
+                selectedAssessment.question_count,
+                selectedAssessment.total_marks,
+                selectedAssessment.pass_threshold_percent,
+              )}
+            </p>
+          </div>
+          {!online && <p className="quiz-offline-notice">{t.offlineNotice}</p>}
+          {selectedAssessment.kind === "quiz" && <p className="quiz-practice-note">{t.practiceNote}</p>}
+          {questions.map((q, i) => (
+            <fieldset key={q.id} className="quiz-question">
+              <legend>
+                <span className="quiz-question-number">{i + 1}</span>
+                <span className="quiz-question-text">{q.question_text}</span>
+                <span className="quiz-question-marks">{t.questionMarks(q.marks)}</span>
+              </legend>
+              <div className="quiz-option-list">
+                {q.options.map((opt) => (
+                  <label key={opt.id} className={`quiz-option${answers[q.id] === opt.id ? " is-selected" : ""}`}>
+                    <input
+                      type="radio"
+                      name={`q-${q.id}`}
+                      value={opt.id}
+                      checked={answers[q.id] === opt.id}
+                      onChange={() => quiz.setAnswer(q.id, opt.id)}
+                    />
+                    <span className="quiz-option-text">{opt.text}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ))}
+          <button type="submit" className="quiz-submit-button">
+            {online ? t.submitOnline : t.submitOffline}
+          </button>
+        </form>
+      )}
 
       {queued && (
         <div className="quiz-result">
@@ -274,14 +349,10 @@ export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
       {result && (
         <div className="quiz-result">
           <p>
-            {t.score(
-              result.attempt.marks_obtained ?? 0,
-              result.attempt.total_marks ?? 0,
-              result.attempt.score_percent,
-            )}
+            {t.score(result.attempt.marks_obtained ?? 0, result.attempt.total_marks ?? 0, result.attempt.score_percent)}
             <strong>{result.attempt.passed ? t.passed : t.notPassed}</strong>
           </p>
-          {selectedAssessment?.kind === "quiz" && <p className="quiz-practice-note">{t.practiceNote}</p>}
+          {selectedAssessment.kind === "quiz" && <p className="quiz-practice-note">{t.practiceNote}</p>}
 
           <h4>{t.breakdownHeading}</h4>
           <ul>
@@ -304,15 +375,11 @@ export function QuizTaker({ accessToken, moduleId }: QuizTakerProps) {
               </a>
             </p>
           )}
-          {result.certificateError && (
-            <p className="form-error">{t.certificateError(result.certificateError)}</p>
-          )}
+          {result.certificateError && <p className="form-error">{t.certificateError(result.certificateError)}</p>}
 
-          {selectedAssessment &&
-            !result.attempt.passed &&
-            (selectedAssessment.max_attempts === null ||
-              attemptsUsed < selectedAssessment.max_attempts) && (
-              <button type="button" onClick={retake}>
+          {!result.attempt.passed &&
+            (selectedAssessment.max_attempts === null || quiz.attemptsUsed < selectedAssessment.max_attempts) && (
+              <button type="button" onClick={quiz.retake}>
                 {t.tryAgain}
               </button>
             )}
