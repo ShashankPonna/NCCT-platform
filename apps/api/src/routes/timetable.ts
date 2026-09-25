@@ -2,6 +2,7 @@ import { createTimetableSessionSchema } from "@ncct/validation";
 import { Router } from "express";
 import { generateNumericCode } from "../codeGenerator.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { notifySessionScheduled } from "../notificationService.js";
 import { requireProgrammeAccess } from "../programmeAccess.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
@@ -51,6 +52,7 @@ timetableRouter.post(
         .single();
 
       if (!error) {
+        void notifySessionScheduled({ programmeId: req.params.id, sessionTitle: data.title, startsAt: data.starts_at, location: data.location });
         res.status(201).json(data);
         return;
       }

@@ -1,6 +1,7 @@
 import { createLessonSchema, updateLessonSchema } from "@ncct/validation";
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { notifyLessonPublished } from "../notificationService.js";
 import {
   getProgrammeIdForLesson,
   getProgrammeIdForModule,
@@ -32,6 +33,7 @@ lessonsRouter.post(
       res.status(400).json({ error: error.message });
       return;
     }
+    void notifyLessonPublished({ moduleId: req.params.id, lessonId: data.id, lessonTitle: data.title });
     res.status(201).json(data);
   },
 );

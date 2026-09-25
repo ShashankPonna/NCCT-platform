@@ -1,4 +1,5 @@
 import type { TraineeHostelAssignment } from "@ncct/shared-types";
+import { notifyHostelAssigned } from "./notificationService.js";
 import { supabaseAdmin } from "./supabaseClient.js";
 
 // Shared by nominations.ts (assign while approving) and hostels.ts (assign or
@@ -68,5 +69,10 @@ export async function upsertHostelAssignment(input: {
     .select()
     .single();
   if (error) return { ok: false, status: 400, error: error.message };
+  void notifyHostelAssigned({
+    programmeId: input.programmeId,
+    traineeId: input.traineeId,
+    roomId: input.roomId,
+  });
   return { ok: true, value: data as TraineeHostelAssignment };
 }

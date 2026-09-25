@@ -59,6 +59,23 @@ vi.mock("../supabaseClient.js", () => ({
   getSupabaseForUser: () => ({ from: fromMock }),
 }));
 
+// Notification fan-out is a fire-and-forget side effect (docs/DECISIONS.md
+// #65) — mocked so it can't touch this file's table mocks, and so tests can
+// assert the right trigger fires.
+const notificationMocks = vi.hoisted(() => ({
+  notify: vi.fn(() => Promise.resolve()),
+  notifyNominationDecided: vi.fn(() => Promise.resolve()),
+  notifyNominationSubmitted: vi.fn(() => Promise.resolve()),
+  notifyLessonPublished: vi.fn(() => Promise.resolve()),
+  notifyAssessmentAvailable: vi.fn(() => Promise.resolve()),
+  notifySessionScheduled: vi.fn(() => Promise.resolve()),
+  notifyHostelAssigned: vi.fn(() => Promise.resolve()),
+  notifyJobShortlisted: vi.fn(() => Promise.resolve()),
+  notifyJobInterestUpdated: vi.fn(() => Promise.resolve()),
+  notifyTrainerAssigned: vi.fn(() => Promise.resolve()),
+}));
+vi.mock("../notificationService.js", () => notificationMocks);
+
 function buildApp() {
   const app = express();
   app.use(express.json());
@@ -90,6 +107,7 @@ function assignTrainerToAssessment() {
 }
 
 beforeEach(() => {
+  for (const fn of Object.values(notificationMocks)) fn.mockClear();
   getUserMock.mockReset();
   profilesMock.result.data = null;
   profilesMock.result.error = null;
@@ -162,6 +180,22 @@ describe("POST /api/assessments/:id/questions", () => {
 
     expect(res.status).toBe(201);
     expect(res.body.correct_option_id).toBe("a");
+    // count mock defaults to null (= 0 existing) → this was the first question
+    expect(notificationMocks.notifyAssessmentAvailable).toHaveBeenCalledWith("assess-1");
+  });
+
+  it("does not re-announce the assessment when adding a later question", async () => {
+    authenticateAs("admin-1", "admin");
+    questionsMock.result.count = 2;
+    questionsMock.result.data = { id: "q-3", assessment_id: "assess-1", ...validQuestion };
+
+    const res = await request(buildApp())
+      .post("/api/assessments/assess-1/questions")
+      .set("Authorization", "Bearer token")
+      .send(validQuestion);
+
+    expect(res.status).toBe(201);
+    expect(notificationMocks.notifyAssessmentAvailable).not.toHaveBeenCalled();
   });
 });
 
@@ -220,6 +254,25 @@ describe("POST /api/assessments/:id/questions/bulk", () => {
 
     expect(res.status).toBe(201);
     expect(res.body).toHaveLength(2);
+    expect(notificationMocks.notifyAssessmentAvailable).not.toHaveBeenCalled();
+  });
+
+  it("announces the assessment exactly once when a bulk import fills an empty one", async () => {
+    authenticateAs("admin-1", "admin");
+    questionsMock.result.count = 0;
+    questionsMock.result.data = [
+      { id: "q-1", assessment_id: "assess-1", ...validQuestion },
+      { id: "q-2", assessment_id: "assess-1", ...validQuestion },
+      { id: "q-3", assessment_id: "assess-1", ...validQuestion },
+    ];
+
+    const res = await request(buildApp())
+      .post("/api/assessments/assess-1/questions/bulk")
+      .set("Authorization", "Bearer token")
+      .send({ questions: [validQuestion, validQuestion, validQuestion] });
+
+    expect(res.status).toBe(201);
+    expect(notificationMocks.notifyAssessmentAvailable).toHaveBeenCalledTimes(1);
   });
 });
 

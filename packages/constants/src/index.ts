@@ -21,6 +21,26 @@ export const CONTENT_TYPES = ["video", "pdf", "slides", "text", "interactive"] a
 // docs/DECISIONS.md #64 — reference data only, no capacity logic keys off it.
 export const HOSTEL_ROOM_TYPES = ["dorm", "shared", "single"] as const;
 
+// In-app notification event types (docs/DECISIONS.md #65) — must match the
+// CHECK constraint in migration 20260925000002_notifications.sql.
+export const NOTIFICATION_TYPES = [
+  "nomination_decided",
+  "nomination_submitted",
+  "lesson_published",
+  "assessment_available",
+  "session_scheduled",
+  "certificate_issued",
+  "hostel_assigned",
+  "job_shortlisted",
+  "job_interest_updated",
+  "trainer_assigned",
+] as const;
+
+// How often the bell re-checks the unread count, and how many notifications
+// the dropdown lists at most.
+export const NOTIFICATION_POLL_INTERVAL_MS = 60_000;
+export const NOTIFICATION_LIST_LIMIT = 30;
+
 // YouTube video IDs are always exactly 11 URL-safe characters.
 export const YOUTUBE_VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 

@@ -17,6 +17,7 @@ import { ProfileEditor } from "./ProfileEditor.js";
 import { PublicProfile } from "./PublicProfile.js";
 import { ResetPasswordForm } from "./ResetPasswordForm.js";
 import { TraineeApp } from "./trainee/TraineeApp.js";
+import { NotificationBell } from "./notifications/NotificationBell.js";
 import { TrainerCoursesDashboard } from "./TrainerCoursesDashboard.js";
 import { usePasswordRecovery } from "./usePasswordRecovery.js";
 import { useSession } from "./useSession.js";
@@ -151,6 +152,18 @@ function App() {
       fullName={session.fullName}
       activeTab={currentTab}
       onNavigate={(tab) => setActiveTab(tab)}
+      notificationBell={
+        <NotificationBell
+          accessToken={session.accessToken}
+          onNavigate={(target) => {
+            // Staff notifications are about programmes (a nomination to
+            // review, a programme newly assigned); anything else just
+            // opens the list without navigating.
+            if (target === "programmes") setActiveTab("programmes");
+            else if (target === "profile") setActiveTab("profile");
+          }}
+        />
+      }
     >
       {error && (
         <div className="mb-4 p-3 bg-error-container text-on-error-container rounded-lg text-sm text-left">

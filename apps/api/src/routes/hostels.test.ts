@@ -34,6 +34,23 @@ vi.mock("../supabaseClient.js", () => ({
   getSupabaseForUser: () => ({ from: fromMock }),
 }));
 
+// Notification fan-out is a fire-and-forget side effect (docs/DECISIONS.md
+// #65) — mocked so it can't touch this file's table mocks, and so tests can
+// assert the right trigger fires.
+const notificationMocks = vi.hoisted(() => ({
+  notify: vi.fn(() => Promise.resolve()),
+  notifyNominationDecided: vi.fn(() => Promise.resolve()),
+  notifyNominationSubmitted: vi.fn(() => Promise.resolve()),
+  notifyLessonPublished: vi.fn(() => Promise.resolve()),
+  notifyAssessmentAvailable: vi.fn(() => Promise.resolve()),
+  notifySessionScheduled: vi.fn(() => Promise.resolve()),
+  notifyHostelAssigned: vi.fn(() => Promise.resolve()),
+  notifyJobShortlisted: vi.fn(() => Promise.resolve()),
+  notifyJobInterestUpdated: vi.fn(() => Promise.resolve()),
+  notifyTrainerAssigned: vi.fn(() => Promise.resolve()),
+}));
+vi.mock("../notificationService.js", () => notificationMocks);
+
 function buildApp() {
   const app = express();
   app.use(express.json());
@@ -49,6 +66,7 @@ function authenticateAs(userId: string, role: string) {
 const ROOM_ID = "11111111-1111-4111-8111-111111111111";
 
 beforeEach(() => {
+  for (const fn of Object.values(notificationMocks)) fn.mockClear();
   getUserMock.mockReset();
   for (const mock of Object.values(mocks)) {
     mock.result.data = null;
@@ -253,6 +271,7 @@ describe("PUT /api/programmes/:id/hostel-assignments/:traineeId", () => {
       .send({ room_id: ROOM_ID });
     expect(res.status).toBe(400);
     expect(mocks.trainee_hostel_assignments.builder.upsert).not.toHaveBeenCalled();
+    expect(notificationMocks.notifyHostelAssigned).not.toHaveBeenCalled();
   });
 
   it("assigns the room for an approved nominee in the same institution", async () => {
@@ -280,6 +299,11 @@ describe("PUT /api/programmes/:id/hostel-assignments/:traineeId", () => {
       }),
       { onConflict: "trainee_id,programme_id" },
     );
+    expect(notificationMocks.notifyHostelAssigned).toHaveBeenCalledWith({
+      programmeId: "prog-1",
+      traineeId: "trainee-1",
+      roomId: ROOM_ID,
+    });
   });
 });
 

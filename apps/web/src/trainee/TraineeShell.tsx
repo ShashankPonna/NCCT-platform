@@ -22,7 +22,6 @@ interface TraineeShellText {
   highContrast: string;
   searchPlaceholder: string;
   toggleTheme: string;
-  notifications: string;
   myProfile: string;
   signOut: string;
   trainee: string;
@@ -69,7 +68,6 @@ const content: Record<Locale, TraineeShellText> = {
     highContrast: "High Contrast Toggle",
     searchPlaceholder: "Search Courses & Modules...",
     toggleTheme: "Toggle Theme",
-    notifications: "Notifications",
     myProfile: "My profile",
     signOut: "Sign Out",
     trainee: "Trainee",
@@ -114,7 +112,6 @@ const content: Record<Locale, TraineeShellText> = {
     highContrast: "उच्च कंट्रास्ट टॉगल",
     searchPlaceholder: "पाठ्यक्रम एवं मॉड्यूल खोजें...",
     toggleTheme: "थीम टॉगल करें",
-    notifications: "सूचनाएं",
     myProfile: "मेरी प्रोफ़ाइल",
     signOut: "साइन आउट",
     trainee: "प्रशिक्षणार्थी",
@@ -147,12 +144,15 @@ interface TraineeShellProps {
   active: TraineeTab;
   onNavigate: (tab: TraineeTab, subView?: string) => void;
   fullName: string | null;
+  // The real notification bell (docs/DECISIONS.md #65), passed in by the
+  // caller since the shell itself has no access token.
+  notificationBell?: React.ReactNode;
   children: React.ReactNode;
 }
 
 // Nav shell for the trainee portal with cohesive light & dark modes, accessibility controls,
 // sticky main header with search & profile, and desktop mega-menu navigation bar with dropdown sub-destinations.
-export function TraineeShell({ active, onNavigate, fullName, children }: TraineeShellProps) {
+export function TraineeShell({ active, onNavigate, fullName, notificationBell, children }: TraineeShellProps) {
   const { locale } = useLocale();
   const t = content[locale];
   const [searchQuery, setSearchQuery] = useState("");
@@ -339,24 +339,19 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
               onClick={toggleTheme}
               title={isDark ? t.lightMode : t.darkMode}
               aria-label={t.toggleTheme}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container md:h-9 md:w-9"
+              className="hidden h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container md:flex md:h-9 md:w-9"
             >
               <span className="material-symbols-outlined text-[18px] md:text-[20px]">
                 {isDark ? "light_mode" : "dark_mode"}
               </span>
             </button>
 
-            {/* Hidden below md: — see ManagementShell.tsx's identical
-                comment: still overflowed after every other trim, and this
-                isn't wired to a real notification system yet. */}
-            <button
-              type="button"
-              aria-label={t.notifications}
-              className="relative hidden h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container md:flex md:h-9 md:w-9"
-            >
-              <span className="material-symbols-outlined text-[18px] md:text-[20px]">notifications</span>
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-cta" />
-            </button>
+            {/* Real notifications (docs/DECISIONS.md #65) — shown at every
+                width, since trainees are mostly on phones. To keep the
+                375px header from overflowing, the theme toggle just above
+                is hidden below md: instead; the accessibility strip at the
+                top of the page has its own theme toggle at every width. */}
+            {notificationBell}
 
             <button
               type="button"

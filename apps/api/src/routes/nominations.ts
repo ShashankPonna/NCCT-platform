@@ -2,6 +2,7 @@ import { decideNominationSchema } from "@ncct/validation";
 import { Router } from "express";
 import { checkRoomForProgramme, upsertHostelAssignment } from "../hostelAssignment.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { notifyNominationDecided, notifyNominationSubmitted } from "../notificationService.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
 export const nominationsRouter = Router();
@@ -27,6 +28,7 @@ nominationsRouter.post(
       res.status(400).json({ error: error.message });
       return;
     }
+    void notifyNominationSubmitted({ programmeId: req.params.id, traineeId: req.user!.id });
     res.status(201).json(data);
   },
 );
@@ -184,6 +186,7 @@ nominationsRouter.patch(
         return;
       }
     }
+    void notifyNominationDecided({ programmeId: req.params.id, traineeId: data.trainee_id, status });
     res.json(data);
   },
 );

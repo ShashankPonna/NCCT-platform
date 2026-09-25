@@ -609,3 +609,37 @@ The schema migration was initially **not** applicable from this session — no `
 **Deletion is refused, not cascaded**: `trainee_hostel_assignments.room_id` deliberately has no `on delete cascade`, so deleting a room — or a hostel, which cascades to its rooms — that still has trainees assigned fails on the FK. The API reports that as a 409. This is the same "refuse rather than silently destroy history" stance `institutions` takes toward their programmes.
 
 **Status**: Active. **The migration is not yet applied to the live Supabase project** (no DDL access from this environment — same pattern as #52/#53). Files: `supabase/migrations/20260925000001_hostel_logistics.sql`; `packages/constants` (`HOSTEL_ROOM_TYPES`); `packages/validation` (hostel/room/assignment schemas; `decideNominationSchema` extended); `packages/shared-types` (`Hostel`, `HostelRoom`, `HostelWithRooms`, `TraineeHostelAssignment`, `MyHostelAssignment`; `NominationWithTrainee` gains `hostel_room_id`/`hostel_name`/`hostel_room_number`); `packages/api-client`; `apps/api/src/hostelAssignment.ts`; `apps/api/src/routes/hostels.ts` (+23 tests); `apps/api/src/routes/nominations.ts` (+5 tests); `apps/web/src/AdminHostelManager.tsx` (rendered in `AdminUserManager.tsx` under Institution Profiles); `apps/web/src/AdminProgrammeManager.tsx` (room picker and assigned-room display on nomination cards); `apps/web/src/trainee/HostelAssignmentCard.tsx`. `pnpm typecheck` (7/7), `pnpm --filter api test` (592/592, +28), `pnpm --filter web build`/`lint` clean.
+
+### 65. In-app notification engine — the bell becomes real; push/email/SMS stay `TBD`
+
+**Decision**: per direct user request ("set up a notification engine for assessments, content, lectures and other updates"), the placeholder bell in both web shells — whose own code comments said it "isn't wired to a real notification system yet", with an unconditional red dot — is now real. Scope was agreed with the user before building: **in-app only**. PRD §10 still lists the push provider (FCM/APNs) as `TBD`, and push, email, or SMS would each need a provider plus credentials. The engine is shaped so a future channel delivers these same rows rather than replacing them.
+
+**Model** (migration `20260925000002_notifications.sql`): one `notifications` row per recipient per event, with a CHECK-constrained `type` and a jsonb `data` of the event's *parameters* — programme title, lesson title, room number, status. Rendered text is never stored. `apps/web/src/notifications/notificationContent.ts` builds the title, body, icon, and click target per locale from `type` + `data`, so the same row reads correctly in English or Hindi. Storing English text would have made Hindi users see English notifications.
+
+**Triggers** (`apps/api/src/notificationService.ts`, called from the owning routes):
+- **Trainee, own events**: their nomination was approved, waitlisted, or rejected; their certificate was issued; their hostel room was assigned or changed; an employer shortlisted them or updated that shortlist (PRD §8's "trainee notified" employer flow, never built until now).
+- **Trainee, as a programme audience** (approved nominees only, the same roster definition attendance and the gradebook use): a new lesson; a new session; a new quiz or test.
+- **Admins**: a trainee submitted a nomination.
+- **Trainer**: they were assigned to a programme.
+
+**Two noise rules**:
+- A quiz or test announces itself when it gets its *first* question(s), not when an empty shell is created — an assessment with no questions can't be taken. Consequently, a bulk import of N questions produces one notification, not N.
+- A session back-filled into the past, a record of a class already held, notifies no one.
+
+**Best-effort, never blocking**: every notify helper swallows and logs its own failures, and routes call it as `void notifyX(...)` after their write has already succeeded — the same fire-and-forget posture as `embedJobBestEffort`. A notification can never turn a successful approval, lesson save, or certificate into an error.
+
+**Delivery by polling, not realtime**: the bell (`NotificationBell.tsx`) polls a count-only endpoint (`GET /notifications/unread-count`) every 60s (`NOTIFICATION_POLL_INTERVAL_MS`), on window focus, and when the tab becomes visible. It loads the list only when opened. Supabase Realtime would need the browser to hold a direct Supabase connection, which CLAUDE.md rules out ("clients never call Supabase directly"), and a minute's latency is fine for this kind of news. A failed poll while offline is silently skipped.
+
+**Security**: reads go through `req.supabase` under the new `notifications_select_own` RLS policy. There's no update policy, so marking read goes through `supabaseAdmin` but is always filtered by `recipient_id = req.user.id`. Marking someone else's id is a silent no-op (204), revealing nothing.
+
+**Mobile header**: the bell was previously hidden below `md:` to stop the 375px header overflowing. Trainees are mostly on phones, so the bell is now shown at every width, and the header's *duplicate* theme toggle is hidden below `md:` instead. The accessibility strip at the top of the page keeps its own theme toggle at every width, so no function is lost and the header keeps the same control count.
+
+**Status**: Active. Migration applied live by the user before implementation. Verified live end to end against the real database with the demo accounts — 14/14 checks:
+- **Audience**: approved trainees receive lesson, session, and quiz notifications; a rejected trainee receives none; one trainee never receives another's employer update.
+- **Noise rules**: a bulk 3-question import plus a 4th question later produced exactly one "new quiz" notification; a back-filled past session notified no one.
+- **Approval with room**: approving a nomination with a room produced both the decision and the room notifications.
+- **Read state**: a trainee cannot mark another trainee's notification read.
+
+Files: `packages/constants` (`NOTIFICATION_TYPES`, poll interval, list limit); `packages/shared-types` (`NotificationType`, `NotificationData`, `AppNotification`, `NotificationsPage`); `packages/api-client`; `apps/api/src/notificationService.ts` (+10 unit tests); `apps/api/src/routes/notifications.ts` (+8 tests); triggers in `nominations.ts`, `lessons.ts`, `assessmentQuestions.ts` (+2 tests), `timetable.ts`, `programmeTrainers.ts`, `jobInterests.ts`, `hostelAssignment.ts`, and `certificateService.ts`, each with trigger/no-trigger assertions in its existing test file; `apps/web/src/notifications/{NotificationBell.tsx,notificationContent.ts}`; both shells take a `notificationBell` slot, filled by `TraineeApp.tsx` and `App.tsx` with per-role click navigation. `pnpm --filter api test` 612/612, `pnpm --filter web build`/`lint` clean.
+
+**Not built (deliberately)**: push, email, or SMS delivery (provider `TBD`); timed reminders such as "class starts in 1 hour" (no background scheduler exists in this project); per-category mute settings.

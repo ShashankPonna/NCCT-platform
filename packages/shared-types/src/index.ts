@@ -10,6 +10,7 @@ import type {
   JOB_INTEREST_STATUSES,
   NOMINATION_DECISIONS,
   NOMINATION_STATUSES,
+  NOTIFICATION_TYPES,
   PROGRAMME_MODES,
   ROLES,
 } from "@ncct/constants";
@@ -29,6 +30,7 @@ export type JobInterestStatus = (typeof JOB_INTEREST_STATUSES)[number];
 export type DropoutRiskLevel = (typeof DROPOUT_RISK_LEVELS)[number];
 export type ChatbotSourceType = (typeof CHATBOT_SOURCE_TYPES)[number];
 export type HostelRoomType = (typeof HOSTEL_ROOM_TYPES)[number];
+export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
 export interface Institution {
   id: string;
@@ -758,4 +760,22 @@ export interface JobMatchesResult {
   // false when the trainee has no certificates/skills yet to base a match
   // on — a distinct "not enough profile data" state, not an error.
   hasProfileSignal: boolean;
+}
+
+// In-app notifications (docs/DECISIONS.md #65). `data` carries the event's
+// parameters (titles, ids, statuses) — the client renders the message text
+// per locale from `type` + `data`, so the same row reads in English or Hindi.
+export type NotificationData = Record<string, string | number | null>;
+
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  data: NotificationData;
+  read_at: string | null;
+  created_at: string;
+}
+
+export interface NotificationsPage {
+  notifications: AppNotification[];
+  unread_count: number;
 }

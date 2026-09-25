@@ -37,6 +37,23 @@ vi.mock("../supabaseClient.js", () => ({
   getSupabaseForUser: () => ({ from: fromMock }),
 }));
 
+// Notification fan-out is a fire-and-forget side effect (docs/DECISIONS.md
+// #65) — mocked so it can't touch this file's table mocks, and so tests can
+// assert the right trigger fires.
+const notificationMocks = vi.hoisted(() => ({
+  notify: vi.fn(() => Promise.resolve()),
+  notifyNominationDecided: vi.fn(() => Promise.resolve()),
+  notifyNominationSubmitted: vi.fn(() => Promise.resolve()),
+  notifyLessonPublished: vi.fn(() => Promise.resolve()),
+  notifyAssessmentAvailable: vi.fn(() => Promise.resolve()),
+  notifySessionScheduled: vi.fn(() => Promise.resolve()),
+  notifyHostelAssigned: vi.fn(() => Promise.resolve()),
+  notifyJobShortlisted: vi.fn(() => Promise.resolve()),
+  notifyJobInterestUpdated: vi.fn(() => Promise.resolve()),
+  notifyTrainerAssigned: vi.fn(() => Promise.resolve()),
+}));
+vi.mock("../notificationService.js", () => notificationMocks);
+
 function buildApp() {
   const app = express();
   app.use(express.json());
@@ -65,6 +82,7 @@ const validVideoLesson = {
 };
 
 beforeEach(() => {
+  for (const fn of Object.values(notificationMocks)) fn.mockClear();
   getUserMock.mockReset();
   profilesMock.result.data = null;
   profilesMock.result.error = null;
@@ -139,6 +157,11 @@ describe("POST /api/modules/:id/lessons", () => {
 
     expect(res.status).toBe(201);
     expect(res.body).toMatchObject({ id: "lesson-1", video_id: "dQw4w9WgXcQ" });
+    expect(notificationMocks.notifyLessonPublished).toHaveBeenCalledWith({
+      moduleId: "mod-1",
+      lessonId: "lesson-1",
+      lessonTitle: validVideoLesson.title,
+    });
   });
 
   it("creates a lesson without a video_id", async () => {

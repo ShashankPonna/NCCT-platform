@@ -2,6 +2,7 @@ import { assignTrainerSchema } from "@ncct/validation";
 import type { ProgrammeTrainerRow } from "@ncct/shared-types";
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { notifyTrainerAssigned } from "../notificationService.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
 export const programmeTrainersRouter = Router();
@@ -60,6 +61,7 @@ programmeTrainersRouter.post(
       res.status(400).json({ error: error.message });
       return;
     }
+    void notifyTrainerAssigned({ programmeId: req.params.id, trainerId: parsed.data.trainer_id });
     res.status(201).json(data);
   },
 );

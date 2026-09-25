@@ -104,7 +104,7 @@ See [docs/DATABASE.md](DATABASE.md) for the entity-level data model. Summary: on
 - **Supabase** — Auth, Postgres/pgvector, Storage.
 - **Gemini API** — chatbot response generation over retrieved context (see [DECISIONS.md](DECISIONS.md) #25 — originally Claude API).
 - **Face-recognition model** — runs in-process in Express (Node), not a separate hosted service, to avoid extra infra for MVP.
-- **Push notifications** — provider `TBD` (FCM/APNs).
+- **Push notifications** — provider `TBD` (FCM/APNs). An **in-app** notification engine exists ([DECISIONS.md](DECISIONS.md) #65): a `notifications` table fanned out by Express after key writes, read by a polled bell in both web shells. A future push channel would deliver the same rows rather than replace them.
 
 ## 11. Key Data Flows
 

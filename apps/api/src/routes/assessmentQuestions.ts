@@ -1,6 +1,7 @@
 import { bulkCreateQuestionsSchema, createQuestionSchema, updateQuestionSchema } from "@ncct/validation";
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { notifyAssessmentAvailable } from "../notificationService.js";
 import {
   getProgrammeIdForAssessment,
   getProgrammeIdForAssessmentQuestion,
@@ -28,6 +29,17 @@ assessmentQuestionsRouter.post(
       return;
     }
 
+    // Only the first question makes an assessment takeable, so only that
+    // one announces it (docs/DECISIONS.md #65) — later additions are edits.
+    const { count: existingCount, error: countError } = await supabaseAdmin
+      .from("assessment_questions")
+      .select("id", { count: "exact", head: true })
+      .eq("assessment_id", req.params.id);
+    if (countError) {
+      res.status(400).json({ error: countError.message });
+      return;
+    }
+
     const { data, error } = await supabaseAdmin
       .from("assessment_questions")
       .insert({ ...parsed.data, assessment_id: req.params.id })
@@ -38,6 +50,7 @@ assessmentQuestionsRouter.post(
       res.status(400).json({ error: error.message });
       return;
     }
+    if ((existingCount ?? 0) === 0) void notifyAssessmentAvailable(req.params.id);
     res.status(201).json(data);
   },
 );
@@ -79,6 +92,8 @@ assessmentQuestionsRouter.post(
       res.status(400).json({ error: error.message });
       return;
     }
+    // One "new test available" per import, never one per imported row.
+    if ((count ?? 0) === 0) void notifyAssessmentAvailable(req.params.id);
     res.status(201).json(data);
   },
 );

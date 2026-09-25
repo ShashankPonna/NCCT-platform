@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { ChatbotPanel } from "../ChatbotPanel.js";
 import { useAutoSync } from "../offline/syncManager.js";
+import { NotificationBell } from "../notifications/NotificationBell.js";
+import type { NotificationTarget } from "../notifications/notificationContent.js";
 import { ProfileEditor } from "../ProfileEditor.js";
 import { TraineeAttendance } from "./TraineeAttendance.js";
 import { TraineeCareer, type CareerView } from "./TraineeCareer.js";
@@ -50,9 +52,41 @@ export function TraineeApp({
     }
   }
 
+  // A notification says what it's about; this maps that onto the trainee's
+  // own tabs and sub-views (docs/DECISIONS.md #65).
+  function handleNotificationNavigate(target: NotificationTarget) {
+    switch (target) {
+      case "lessons":
+        handleNavigate("learn", "lessons");
+        break;
+      case "certificates":
+        handleNavigate("learn", "certificates");
+        break;
+      case "my-nominations":
+        handleNavigate("learn", "nominate");
+        break;
+      case "attendance":
+        handleNavigate("attendance");
+        break;
+      case "career":
+        handleNavigate("career", "jobs");
+        break;
+      case "profile":
+        handleNavigate("profile");
+        break;
+      case "programmes":
+        break;
+    }
+  }
+
   return (
     <>
-      <TraineeShell active={tab} onNavigate={handleNavigate} fullName={fullName}>
+      <TraineeShell
+        active={tab}
+        onNavigate={handleNavigate}
+        fullName={fullName}
+        notificationBell={<NotificationBell accessToken={accessToken} onNavigate={handleNotificationNavigate} />}
+      >
         {tab === "home" && (
           <TraineeHome accessToken={accessToken} fullName={fullName} onNavigate={handleNavigate} />
         )}

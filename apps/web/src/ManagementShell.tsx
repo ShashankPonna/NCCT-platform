@@ -65,7 +65,6 @@ interface ManagementShellText {
   highContrast: string;
   searchPlaceholder: string;
   toggleTheme: string;
-  notifications: string;
   myProfile: string;
   signOut: string;
   footerCopyright: string;
@@ -105,7 +104,6 @@ const content: Record<Locale, ManagementShellText> = {
     highContrast: "High Contrast Toggle",
     searchPlaceholder: "Search institutes, candidates, programmes, kiosks...",
     toggleTheme: "Toggle Theme",
-    notifications: "Notifications",
     myProfile: "My profile",
     signOut: "Sign Out",
     footerCopyright: "2026 National Council for Cooperative Training (NCCT) — Ministry of Cooperation, Govt. of India",
@@ -143,7 +141,6 @@ const content: Record<Locale, ManagementShellText> = {
     highContrast: "उच्च कंट्रास्ट टॉगल",
     searchPlaceholder: "कार्यक्रम, सामग्री, उपयोगकर्ता खोजें...",
     toggleTheme: "थीम टॉगल करें",
-    notifications: "सूचनाएं",
     myProfile: "मेरी प्रोफ़ाइल",
     signOut: "साइन आउट",
     footerCopyright: "2026 राष्ट्रीय सहकारी प्रशिक्षण परिषद। सर्वाधिकार सुरक्षित।",
@@ -158,6 +155,9 @@ interface ManagementShellProps {
   fullName: string | null;
   activeTab: ManagementTab;
   onNavigate: (tab: ManagementTab) => void;
+  // The real notification bell (docs/DECISIONS.md #65), passed in by the
+  // caller since the shell itself has no access token.
+  notificationBell?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -166,6 +166,7 @@ export function ManagementShell({
   fullName,
   activeTab,
   onNavigate,
+  notificationBell,
   children,
 }: ManagementShellProps) {
   const { locale } = useLocale();
@@ -362,28 +363,19 @@ export function ManagementShell({
               onClick={toggleTheme}
               title={isDark ? t.lightMode : t.darkMode}
               aria-label={t.toggleTheme}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container cursor-pointer md:h-9 md:w-9"
+              className="hidden h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container cursor-pointer md:flex md:h-9 md:w-9"
             >
               <span className="material-symbols-outlined text-[18px] md:text-[20px]">
                 {isDark ? "light_mode" : "dark_mode"}
               </span>
             </button>
 
-            {/* Hidden below md: — the header still overflowed 375px by
-                ~28px even after every other trim here, and this button
-                isn't wired to a real notification system yet (the red dot
-                is unconditional, not driven by actual state), making it the
-                lowest-cost thing left to drop on the smallest screens. */}
-            <button
-              type="button"
-              aria-label={t.notifications}
-              className="relative hidden h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container cursor-pointer md:flex md:h-9 md:w-9"
-            >
-              <span className="material-symbols-outlined text-[18px] md:text-[20px]">
-                notifications
-              </span>
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-cta" />
-            </button>
+            {/* Real notifications (docs/DECISIONS.md #65) — shown at every
+                width. To keep the 375px header from overflowing, the theme
+                toggle just above is hidden below md: instead; the
+                accessibility strip at the top of the page has its own theme
+                toggle at every width. */}
+            {notificationBell}
 
             <button
               type="button"

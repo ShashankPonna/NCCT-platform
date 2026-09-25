@@ -28,6 +28,7 @@ import type {
   HostelWithRooms,
   Institution,
   MyHostelAssignment,
+  NotificationsPage,
   TraineeHostelAssignment,
   Job,
   JobInterest,
@@ -1105,4 +1106,21 @@ export function askCareerCounsellor(accessToken: string, question: string) {
 // P3 AI Job Matching (DECISIONS.md #28).
 export function getJobMatches(accessToken: string) {
   return apiFetch<JobMatchesResult>("/job-matches/mine", accessToken);
+}
+
+// In-app notifications (docs/DECISIONS.md #65) — any role, own rows only.
+export function getMyNotifications(accessToken: string, limit?: number) {
+  return apiFetch<NotificationsPage>(`/notifications/mine${limit ? `?limit=${limit}` : ""}`, accessToken);
+}
+
+export function getUnreadNotificationCount(accessToken: string) {
+  return apiFetch<{ unread_count: number }>("/notifications/unread-count", accessToken);
+}
+
+export function markNotificationRead(accessToken: string, notificationId: string) {
+  return apiFetch<void>(`/notifications/${notificationId}/read`, accessToken, { method: "POST" });
+}
+
+export function markAllNotificationsRead(accessToken: string) {
+  return apiFetch<void>("/notifications/read-all", accessToken, { method: "POST" });
 }

@@ -57,11 +57,29 @@ vi.mock("./supabaseClient.js", () => ({
   getSupabaseForUser: () => ({ from: fromMock }),
 }));
 
+// Notification fan-out is a fire-and-forget side effect (docs/DECISIONS.md
+// #65) — mocked so it can't touch this file's table mocks, and so tests can
+// assert the right trigger fires.
+const notificationMocks = vi.hoisted(() => ({
+  notify: vi.fn(() => Promise.resolve()),
+  notifyNominationDecided: vi.fn(() => Promise.resolve()),
+  notifyNominationSubmitted: vi.fn(() => Promise.resolve()),
+  notifyLessonPublished: vi.fn(() => Promise.resolve()),
+  notifyAssessmentAvailable: vi.fn(() => Promise.resolve()),
+  notifySessionScheduled: vi.fn(() => Promise.resolve()),
+  notifyHostelAssigned: vi.fn(() => Promise.resolve()),
+  notifyJobShortlisted: vi.fn(() => Promise.resolve()),
+  notifyJobInterestUpdated: vi.fn(() => Promise.resolve()),
+  notifyTrainerAssigned: vi.fn(() => Promise.resolve()),
+}));
+vi.mock("./notificationService.js", () => notificationMocks);
+
 function queue(table: string, data: unknown) {
   (singleResults[table] ??= []).push({ data, error: null });
 }
 
 beforeEach(() => {
+  for (const fn of Object.values(notificationMocks)) fn.mockClear();
   fromMock.mockClear();
   uploadMock.mockClear();
   for (const key of Object.keys(singleResults)) delete singleResults[key];
@@ -226,6 +244,11 @@ describe("checkAndIssueCourseCertificate", () => {
       total_marks: null,
       score_percent: null,
     });
+    expect(notificationMocks.notify).toHaveBeenCalledWith(
+      ["trainee-1"],
+      "certificate_issued",
+      expect.objectContaining({ programme_id: "prog-1", certificate_code: expect.stringMatching(/^NCCT-/) }),
+    );
   }, 15000);
 
   it("does not issue a certificate if lessons are done but a module test hasn't been passed", async () => {
@@ -297,6 +320,7 @@ describe("checkAndIssueCourseCertificate", () => {
     await expect(
       checkAndIssueCourseCertificate({ traineeId: "trainee-1", courseId: "course-1" }),
     ).rejects.toThrow("bucket not found");
+    expect(notificationMocks.notify).not.toHaveBeenCalled();
   }, 15000);
 });
 

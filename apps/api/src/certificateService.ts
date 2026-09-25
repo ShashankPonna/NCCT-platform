@@ -8,6 +8,7 @@ import {
   type AttemptRow,
 } from "./assessmentScoring.js";
 import { generateCode } from "./codeGenerator.js";
+import { notify } from "./notificationService.js";
 import { supabaseAdmin } from "./supabaseClient.js";
 
 const CERTIFICATE_BUCKET = "certificates";
@@ -240,6 +241,12 @@ async function issueCertificateForCourse({
     .single();
   if (insertError) throw new Error(insertError.message);
 
+  void notify([traineeId], "certificate_issued", {
+    programme_id: course.programme_id,
+    programme_title: programme.title,
+    course_title: course.title,
+    certificate_code: certificateCode,
+  });
   return certificate;
 }
 

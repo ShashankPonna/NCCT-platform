@@ -36,6 +36,23 @@ vi.mock("../supabaseClient.js", () => ({
   getSupabaseForUser: () => ({ from: fromMock }),
 }));
 
+// Notification fan-out is a fire-and-forget side effect (docs/DECISIONS.md
+// #65) — mocked so it can't touch this file's table mocks, and so tests can
+// assert the right trigger fires.
+const notificationMocks = vi.hoisted(() => ({
+  notify: vi.fn(() => Promise.resolve()),
+  notifyNominationDecided: vi.fn(() => Promise.resolve()),
+  notifyNominationSubmitted: vi.fn(() => Promise.resolve()),
+  notifyLessonPublished: vi.fn(() => Promise.resolve()),
+  notifyAssessmentAvailable: vi.fn(() => Promise.resolve()),
+  notifySessionScheduled: vi.fn(() => Promise.resolve()),
+  notifyHostelAssigned: vi.fn(() => Promise.resolve()),
+  notifyJobShortlisted: vi.fn(() => Promise.resolve()),
+  notifyJobInterestUpdated: vi.fn(() => Promise.resolve()),
+  notifyTrainerAssigned: vi.fn(() => Promise.resolve()),
+}));
+vi.mock("../notificationService.js", () => notificationMocks);
+
 function buildApp() {
   const app = express();
   app.use(express.json());
@@ -56,6 +73,7 @@ const validSession = {
 };
 
 beforeEach(() => {
+  for (const fn of Object.values(notificationMocks)) fn.mockClear();
   getUserMock.mockReset();
   profilesMock.result.data = null;
   profilesMock.result.error = null;
@@ -116,6 +134,9 @@ describe("POST /api/programmes/:id/timetable", () => {
 
     expect(res.status).toBe(201);
     expect(res.body).toMatchObject({ id: "sess-2", programme_id: "prog-1" });
+    expect(notificationMocks.notifySessionScheduled).toHaveBeenCalledWith(
+      expect.objectContaining({ programmeId: "prog-1", startsAt: validSession.starts_at }),
+    );
   });
 
   it("returns 400 when ends_at is before starts_at", async () => {
@@ -127,6 +148,7 @@ describe("POST /api/programmes/:id/timetable", () => {
       .send({ ...validSession, starts_at: validSession.ends_at, ends_at: validSession.starts_at });
 
     expect(res.status).toBe(400);
+    expect(notificationMocks.notifySessionScheduled).not.toHaveBeenCalled();
   });
 
   it("creates the session for an admin, with a generated check_in_code", async () => {

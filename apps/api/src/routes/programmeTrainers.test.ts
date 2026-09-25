@@ -38,6 +38,23 @@ vi.mock("../supabaseClient.js", () => ({
   getSupabaseForUser: () => ({ from: fromMock }),
 }));
 
+// Notification fan-out is a fire-and-forget side effect (docs/DECISIONS.md
+// #65) — mocked so it can't touch this file's table mocks, and so tests can
+// assert the right trigger fires.
+const notificationMocks = vi.hoisted(() => ({
+  notify: vi.fn(() => Promise.resolve()),
+  notifyNominationDecided: vi.fn(() => Promise.resolve()),
+  notifyNominationSubmitted: vi.fn(() => Promise.resolve()),
+  notifyLessonPublished: vi.fn(() => Promise.resolve()),
+  notifyAssessmentAvailable: vi.fn(() => Promise.resolve()),
+  notifySessionScheduled: vi.fn(() => Promise.resolve()),
+  notifyHostelAssigned: vi.fn(() => Promise.resolve()),
+  notifyJobShortlisted: vi.fn(() => Promise.resolve()),
+  notifyJobInterestUpdated: vi.fn(() => Promise.resolve()),
+  notifyTrainerAssigned: vi.fn(() => Promise.resolve()),
+}));
+vi.mock("../notificationService.js", () => notificationMocks);
+
 function buildApp() {
   const app = express();
   app.use(express.json());
@@ -52,6 +69,7 @@ function authenticateAs(userId: string, role: string) {
 }
 
 beforeEach(() => {
+  for (const fn of Object.values(notificationMocks)) fn.mockClear();
   getUserMock.mockReset();
   for (const mock of [profilesMock, programmeTrainersMock]) {
     mock.result.data = null;
@@ -114,6 +132,10 @@ describe("POST /api/programmes/:id/trainers", () => {
 
     expect(res.status).toBe(201);
     expect(res.body).toMatchObject({ programme_id: "prog-1" });
+    expect(notificationMocks.notifyTrainerAssigned).toHaveBeenCalledWith({
+      programmeId: "prog-1",
+      trainerId: "22222222-2222-2222-2222-222222222222",
+    });
   });
 
   it("returns 409 when the trainer is already assigned", async () => {
