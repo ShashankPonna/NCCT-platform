@@ -2,7 +2,13 @@
 
 **This is a living document.** Update it whenever a significant feature, fix, or implementation change lands — see `CLAUDE.md`'s Development Workflow. It tracks _status_, not requirements or design: for what to build see [PRD.md](PRD.md), for how see [ARCHITECTURE.md](ARCHITECTURE.md)/[DATABASE.md](DATABASE.md)/[DECISIONS.md](DECISIONS.md). Nothing here duplicates their content beyond a one-line restatement per feature.
 
-Last updated: 2026-09-26 (34) (EduDisha brand verification + fresh dataset).
+Last updated: 2026-09-26 (35) (**New EduDisha logo applied everywhere** (DECISIONS.md #72).
+- **Full logo:** login, certificate verification, public profile.
+- **Symbol:** app headers, homepage, favicon and apple-touch icon, Android/iOS launcher icons.
+- **Splash screens:** full logo on every Android/iOS splash (these were still Capacitor's default X).
+- **Certificate PDF:** letterhead mark and watermark; all 8 certificates were re-rendered.
+- **Icon generator fixed:** it turned transparent backgrounds black.
+- **Checked:** screenshots of every changed screen; 651 API tests pass; APK rebuilt. Previous: 2026-09-26 (34) (EduDisha brand verification + fresh dataset).
 - **Database wiped and reseeded** at the user's request: backed up first; 25 people created through the real API (2 admins, 4 trainers, 4 employers, 15 trainees including Soham Patil and Shashank Ponna); 5 programmes; real verified YouTube lessons replacing the old `dQw4w9WgXcQ` placeholder; 8 genuine certificates.
 - **Brand check:**
   - Every screen for all four roles, plus the public home, verify, profile and login pages, was swept in headless Chrome at desktop and phone sizes in both themes, looking for 'COOP-NET' / 'Sahakar Utkarsh' text and a visible 'EduDisha'. All clean.

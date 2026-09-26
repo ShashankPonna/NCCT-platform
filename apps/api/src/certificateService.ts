@@ -13,6 +13,9 @@ const CERTIFICATE_BUCKET = "certificates";
 // resolves correctly whether this module runs from src (tsx) or dist (tsc
 // build) without any asset-copy build step.
 const FONTS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "assets", "fonts");
+// The EduDisha symbol (compass arrow over an open book), cropped from the
+// approved logo; transparent PNG. Used for the letterhead mark and watermark.
+const LOGO_SYMBOL = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "assets", "images", "logo-symbol.png");
 
 function generateCertificateCode(): string {
   return `EDU-${generateCode(8)}`;
@@ -471,76 +474,19 @@ function drawBorder(doc: PDFKit.PDFDocument, pageW: number, pageH: number) {
   }
 }
 
-/** The design's faint "joined cooperative circles" watermark (200×200 viewBox, 420px, 4.5%). */
+/** The EduDisha symbol as a faint centred watermark (420px at ~6%, as in the design). */
 function drawWatermark(doc: PDFKit.PDFDocument, cx: number, cy: number) {
-  const scale = px(420) / 200;
-  const at = (vx: number, vy: number): [number, number] => [
-    cx + (vx - 100) * scale,
-    cy + (vy - 100) * scale,
-  ];
+  const size = px(420);
   doc.save();
-  doc.opacity(0.045).strokeColor(NAVY).fillColor(NAVY);
-  doc.dash(6 * scale, { space: 3 * scale });
-  doc
-    .lineWidth(4 * scale)
-    .circle(...at(80, 100), 48 * scale)
-    .stroke();
-  doc.circle(...at(120, 100), 48 * scale).stroke();
-  doc.undash();
-  const [lx, ly] = at(100, 68);
-  const [bx, by] = at(100, 132);
-  doc
-    .moveTo(lx, ly)
-    .bezierCurveTo(...at(114, 80), ...at(114, 120), bx, by)
-    .bezierCurveTo(...at(86, 120), ...at(86, 80), lx, ly)
-    .fill();
-  doc
-    .lineWidth(3 * scale)
-    .circle(...at(100, 100), 16 * scale)
-    .stroke();
-  doc.circle(...at(80, 100), 4 * scale).fill();
-  doc.circle(...at(120, 100), 4 * scale).fill();
-  doc.dash(2 * scale, { space: 4 * scale }).lineWidth(1.5 * scale);
-  doc
-    .moveTo(...at(60, 70))
-    .lineTo(...at(140, 130))
-    .stroke();
-  doc
-    .moveTo(...at(60, 130))
-    .lineTo(...at(140, 70))
-    .stroke();
-  doc.undash();
+  doc.opacity(0.06);
+  doc.image(LOGO_SYMBOL, cx - size / 2, cy - size / 2, { width: size, height: size });
   doc.restore();
 }
 
-/** The navy tile with the abstract cooperative emblem (48×48 viewBox). */
+/** The EduDisha symbol in the letterhead's 56px slot (replaces the design's placeholder tile). */
 function drawEmblem(doc: PDFKit.PDFDocument, x: number, y: number) {
   const size = px(56);
-  doc.save();
-  doc.roundedRect(x, y, size, size, px(4)).fill(NAVY);
-  const inner = size - px(10) * 2;
-  const scale = inner / 48;
-  const at = (vx: number, vy: number): [number, number] => [
-    x + px(10) + vx * scale,
-    y + px(10) + vy * scale,
-  ];
-  doc
-    .lineWidth(2 * scale)
-    .circle(...at(24, 24), 21 * scale)
-    .stroke(ORANGE);
-  doc.lineWidth(1.5 * scale);
-  doc
-    .moveTo(...at(24, 8))
-    .lineTo(...at(24, 40))
-    .stroke(ORANGE);
-  doc
-    .moveTo(...at(8, 24))
-    .lineTo(...at(40, 24))
-    .stroke(ORANGE);
-  doc.circle(...at(24, 24), 8 * scale).fillAndStroke(CREAM, WHITE);
-  doc.polygon(at(24, 12), at(28, 24), at(24, 36), at(20, 24)).fill(ORANGE);
-  doc.circle(...at(24, 24), 3 * scale).fill(NAVY);
-  doc.restore();
+  doc.image(LOGO_SYMBOL, x, y, { width: size, height: size });
 }
 
 /** A generic signature flourish (160×40 viewBox) — deliberately no real person's signature. */

@@ -805,3 +805,22 @@ Both files were validated (`plutil -lint`, XML parse). Web rebuilt; `npx cap syn
 - **Tight-crop fix, 2026-09-26:** the source artwork itself has ~15–26% empty white margin baked into its own 1254×1254 canvas on every side (the actual drawing only fills ~53% of the width, ~71% of the height) — a straight resize carried that margin along, so the glyph looked tiny and over-padded once shrunk to favicon/badge/launcher-icon size (reported directly by the user from the browser favicon). Fixed by cropping to the artwork's real content bounding box (plus 8% breathing room) before every small-size resize — `logo-badge.png`/`favicon.png` regenerated from the crop, and `generate_app_icons.py`'s `load_source()` now does the same crop before rendering every Android/iOS size. `logo-full.png` itself is untouched — this only changes how tightly the existing artwork is framed for small placements, not the artwork.
 - `apps/web/public/favicon.png` — same 160px badge crop, replacing a leftover generic Vite favicon (`favicon.svg`, deleted) that had never actually been rebranded.
 - `apps/mobile/scripts/generate_app_icons.py` — a one-off Pillow script that resamples `logo-full.png` directly at each exact size the native shells need (Android `mipmap-{m,h,xh,xxh,xxxh}dpi` legacy + adaptive-foreground icons, iOS's single 1024×1024 App Store icon) rather than resizing once and letting the OS scale further — sidesteps the fact that no image tool (ImageMagick, `rsvg-convert`, `cairosvg`) was available in this environment beyond Pillow. Re-run it (`python generate_app_icons.py` from `apps/mobile/scripts/`) if the source artwork is ever replaced; it overwrites every generated PNG in place. The Android launcher icons in particular will look busy/indistinct at 48px mdpi — expected, per the decision above.
+
+### 72. EduDisha logo replaced with the approved compass-and-book lockup (amends #71)
+
+**Decision:** The approved logo is the compass arrow over an open book with three figures, and the "EduDisha" wordmark with the tagline "Skills | Certification | Opportunities". It replaces #71's illustration everywhere. Source: `apps/web/src/assets/logo-source.png` (transparent, 2172×724).
+
+**Derived assets:**
+- `logo-lockup.png`: full logo, trimmed.
+- `logo-full.png`: the symbol alone, on a transparent 1024² canvas.
+- `logo-badge.png`, `public/favicon.png`, `public/apple-touch-icon.png`: the symbol on a white tile.
+- `apps/api/assets/images/logo-symbol.png`: the symbol, for the certificate.
+- Every Android/iOS launcher icon, via the fixed `apps/mobile/scripts/generate_app_icons.py`.
+- Every Android/iOS splash screen, which were still Capacitor's default placeholder.
+
+**Where each is used:**
+- **Full logo:** only on surfaces that are always light, namely login, the certificate verification page and the public profile, where it sits on a white strip. Its navy "Edu" text disappears on the dark theme.
+- **Symbol badge + "EduDisha" text:** the theme-switching shells and the homepage.
+- **Certificate PDF:** the symbol replaces the design's placeholder emblem tile and the watermark. All 8 issued certificates were re-rendered, with codes, dates and marks unchanged.
+
+**Icon script fix:** the generator used to flatten sources with `.convert("RGB")`, which turned the new transparent background black on the iOS icon. It now trims on the alpha channel and keeps transparency.

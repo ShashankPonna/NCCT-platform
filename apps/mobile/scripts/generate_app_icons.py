@@ -4,14 +4,9 @@ apps/web/src/assets/logo-full.png, instead of resizing once and letting the
 OS scale it (each size is resampled directly from the full-resolution
 source for the best quality available at that size).
 
-The source artwork has ~15-26% empty white margin baked into its own
-1254x1254 canvas on every side (the actual drawing only fills about 53% of
-the width and 71% of the height) — resizing it as-is makes the glyph look
-tiny and over-padded at small sizes. load_source() crops that built-in
-margin out first; this changes nothing about the artwork itself, only how
-tightly it's framed before downsizing.
+The source is the symbol-only crop of the approved EduDisha logo (compass\narrow over an open book), on a transparent background. load_source() trims\nany empty margin before downsizing so the glyph doesn't look tiny and\nover-padded at small sizes; it changes nothing about the artwork itself.
 
-Run with: python generate_app_icons.py
+Run with: python generate_app_icons.py  (needs Pillow)
 """
 from PIL import Image, ImageChops
 
@@ -20,16 +15,25 @@ SOURCE = "../../web/src/assets/logo-full.png"
 
 
 def load_source() -> Image.Image:
-    im = Image.open(SOURCE).convert("RGB")
-    bg = Image.new("RGB", im.size, (255, 255, 255))
-    diff = ImageChops.difference(im, bg).point(lambda p: 255 if p > 10 else 0).convert("L")
-    l, t, r, b = diff.getbbox()
+    im = Image.open(SOURCE).convert("RGBA")
+    # Trim to the artwork. Transparent sources (the current logo) are trimmed on
+    # their alpha channel; opaque ones on difference-from-white. Transparency is
+    # kept, so the adaptive-icon foreground stays transparent and make_icon()
+    # supplies the white tile where one is wanted — flattening with
+    # .convert("RGB") here would turn a transparent background black.
+    if im.getchannel("A").getextrema()[0] < 255:
+        box = im.getchannel("A").point(lambda p: 255 if p > 10 else 0).getbbox()
+    else:
+        rgb = im.convert("RGB")
+        diff = ImageChops.difference(rgb, Image.new("RGB", im.size, (255, 255, 255)))
+        box = diff.point(lambda p: 255 if p > 10 else 0).convert("L").getbbox()
+    l, t, r, b = box
     cx, cy = (l + r) / 2, (t + b) / 2
     half = max(r - l, b - t) * 1.08 / 2
-    w, h = im.size
-    x0, y0 = max(0, cx - half), max(0, cy - half)
-    x1, y1 = min(w, cx + half), min(h, cy + half)
-    return im.crop((round(x0), round(y0), round(x1), round(y1))).convert("RGBA")
+    canvas = Image.new("RGBA", (round(half * 2), round(half * 2)), (0, 0, 0, 0))
+    part = im.crop((l, t, r, b))
+    canvas.paste(part, (round(half - (r - l) / 2), round(half - (b - t) / 2)), part)
+    return canvas
 
 
 def make_icon(source: Image.Image, size: int, fill_ratio: float, background) -> Image.Image:

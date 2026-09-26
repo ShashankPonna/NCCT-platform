@@ -1,6 +1,7 @@
 import { getPublicProfile } from "@ncct/api-client";
 import type { PublicProfileResult } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import logoLockup from "./assets/logo-lockup.png";
 
 interface PublicProfileProps {
   code: string;
@@ -117,9 +118,9 @@ export function PublicProfile({ code }: PublicProfileProps) {
           )}
         </div>
 
-        <p className="text-center font-label-sm text-on-surface-variant mt-2">
-          EduDisha
-        </p>
+        <div className="mx-auto mt-2 rounded-xl bg-white px-4 py-2">
+          <img src={logoLockup} alt="EduDisha" className="h-10 w-auto" />
+        </div>
       </div>
     </div>
   );

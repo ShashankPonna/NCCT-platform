@@ -1,5 +1,5 @@
 import { useState } from "react";
-import logo from "./assets/logo-badge.png";
+import logoLockup from "./assets/logo-lockup.png";
 import { ForgotPasswordForm } from "./ForgotPasswordForm.js";
 import { LoginForm } from "./LoginForm.js";
 
@@ -34,13 +34,14 @@ export function LoginPage({ error, onBack }: LoginPageProps) {
 
       {/* Main Centered Authentication Column */}
       <main className="w-full flex-1 flex flex-col items-center justify-center my-6">
-        {/* Centered Brand Lockup: 36px rounded-square logo next to bold 'EduDisha' */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <img src={logo} alt="EduDisha" className="w-[36px] h-[36px] rounded-[8px] object-cover shadow-xs flex-shrink-0" />
-          <span className="font-heading font-bold text-[22px] tracking-tight text-brand-primary">
-            EduDisha
-          </span>
-        </div>
+        {/* Full EduDisha logo (symbol + wordmark + tagline). Safe here because
+            this page is always light; theme-switching shells use the symbol
+            badge instead, since the navy wordmark vanishes on dark. */}
+        <img
+          src={logoLockup}
+          alt="EduDisha — Skills | Certification | Opportunities"
+          className="h-16 sm:h-20 w-auto mb-8"
+        />
 
         {/* The 420px Card Container: white bg, 1px #e2e8f0 border, 16px corner radius, shadow-md, 32px padding */}
         <div className="w-full max-w-[420px] bg-white border border-[#e2e8f0] rounded-[16px] shadow-md p-[32px] transition-all text-left">

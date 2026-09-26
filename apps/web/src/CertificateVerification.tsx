@@ -1,6 +1,7 @@
 import { getCertificate } from "@ncct/api-client";
 import type { Certificate } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import logoLockup from "./assets/logo-lockup.png";
 
 interface CertificateVerificationProps {
   code: string;
@@ -64,6 +65,10 @@ export function CertificateVerification({ code }: CertificateVerificationProps) 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-lg bg-surface-card border border-outline-variant rounded-2xl p-8 shadow-md text-left">
+        {/* White strip keeps the navy wordmark legible whatever the theme. */}
+        <div className="-mx-8 -mt-8 mb-6 flex justify-center rounded-t-2xl bg-white px-8 py-4 border-b border-outline-variant">
+          <img src={logoLockup} alt="EduDisha" className="h-12 w-auto" />
+        </div>
         <div className="flex items-center gap-3 mb-6 pb-4 border-b border-outline-variant">
           <div className="w-12 h-12 rounded-full bg-status-success/15 text-status-success flex items-center justify-center">
             <span className="material-symbols-outlined text-[28px]">verified</span>
