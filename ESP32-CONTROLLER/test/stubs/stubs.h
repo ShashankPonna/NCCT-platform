@@ -21,6 +21,7 @@ class Adafruit_SSD1306 {
 public:
   Adafruit_SSD1306(int, int, TwoWire*, int) {}
   bool begin(int, int) { return true; }
+  void setRotation(int) {} // orientation only, no effect on the logged text
   void clearDisplay() { g_oled.clear(); }
   void setTextSize(int) {}
   void setTextColor(int) {}

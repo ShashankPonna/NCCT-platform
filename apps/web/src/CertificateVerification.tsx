@@ -9,6 +9,7 @@ interface CertificateVerificationProps {
 type CertificateDisplay = Certificate & {
   pdf_url: string;
   trainee_name: string | null;
+  course_title: string | null;
   programme_title: string | null;
   institution_name: string | null;
 };
@@ -41,14 +42,13 @@ export function CertificateVerification({ code }: CertificateVerificationProps) 
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="w-full max-w-md bg-surface-card border border-outline-variant rounded-2xl p-8 shadow-md text-center">
-          <span className="material-symbols-outlined text-[56px] text-error mb-3">
-            cancel
-          </span>
+          <span className="material-symbols-outlined text-[56px] text-error mb-3">cancel</span>
           <h1 className="font-headline-md text-headline-md text-primary m-0 mb-2">
             Certificate Not Found
           </h1>
           <p className="font-body-md text-on-surface-variant mb-6">
-            No verified certificate matches code <strong className="font-mono">{code}</strong>. Please check the code or QR link and try again.
+            No verified certificate matches code <strong className="font-mono">{code}</strong>.
+            Please check the code or QR link and try again.
           </p>
           <a
             href="/"
@@ -90,6 +90,15 @@ export function CertificateVerification({ code }: CertificateVerificationProps) 
 
           <div>
             <span className="font-label-sm text-label-sm text-on-surface-variant uppercase block">
+              Course Completed
+            </span>
+            <span className="font-body-md text-primary font-medium">
+              {certificate.course_title ?? "Cooperative Training Course"}
+            </span>
+          </div>
+
+          <div>
+            <span className="font-label-sm text-label-sm text-on-surface-variant uppercase block">
               Training Programme
             </span>
             <span className="font-body-md text-primary font-medium">
@@ -116,6 +125,18 @@ export function CertificateVerification({ code }: CertificateVerificationProps) 
             </div>
           </div>
 
+          {certificate.total_marks !== null && (
+            <div>
+              <span className="font-label-sm text-label-sm text-on-surface-variant uppercase block">
+                Marks Obtained
+              </span>
+              <span className="font-body-md text-primary font-medium">
+                {certificate.marks_obtained} / {certificate.total_marks}
+                {certificate.score_percent !== null && ` (${certificate.score_percent}%)`}
+              </span>
+            </div>
+          )}
+
           <div>
             <span className="font-label-sm text-label-sm text-on-surface-variant uppercase block">
               Unique Verification Code
@@ -127,10 +148,7 @@ export function CertificateVerification({ code }: CertificateVerificationProps) 
         </div>
 
         <div className="mt-8 pt-4 border-t border-outline-variant flex justify-between items-center">
-          <a
-            href="/"
-            className="text-on-surface-variant hover:text-primary font-label-md text-sm"
-          >
+          <a href="/" className="text-on-surface-variant hover:text-primary font-label-md text-sm">
             NCCT Portal Home
           </a>
           {certificate.pdf_url && (

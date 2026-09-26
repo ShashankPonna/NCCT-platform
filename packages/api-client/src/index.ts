@@ -2,9 +2,16 @@ import type {
   AdminUserRow,
   Assessment,
   AssessmentAttempt,
+  AssessmentKind,
+  AssessmentWithTotals,
+  AttemptSubmissionResult,
+  CourseGradebook,
+  CourseMarksTally,
+  GradedResult,
   AssessmentQuestion,
   AssessmentQuestionForTrainee,
   AttendanceRecord,
+  AttendanceRosterEntry,
   BulkImportResult,
   Certificate,
   ChatbotAnswer,
@@ -15,7 +22,14 @@ import type {
   ContentType,
   Course,
   InteractiveConfig,
+  Hostel,
+  HostelRoom,
+  HostelRoomType,
+  HostelWithRooms,
   Institution,
+  MyHostelAssignment,
+  NotificationsPage,
+  TraineeHostelAssignment,
   Job,
   JobInterest,
   JobInterestStatus,
@@ -24,9 +38,11 @@ import type {
   Module,
   Nomination,
   NominationDecision,
+  NominationWithTrainee,
   Profile,
   Programme,
   ProgrammeMode,
+  ProgrammeTrainerRow,
   CareerCounsellorAnswer,
   JobMatchesResult,
   KioskProfileResult,
@@ -34,6 +50,7 @@ import type {
   QuestionOption,
   Role,
   Skill,
+  SkillGapAcrossJobsResult,
   SkillGapResult,
   TimetableSession,
   TraineeSearchResult,
@@ -98,6 +115,40 @@ async function apiFetch<T>(
     return undefined as T;
   }
   return res.json();
+}
+
+// Binary-download counterpart to apiFetch: same auth and error handling,
+// but returns the body as a Blob plus the server-chosen filename.
+async function apiFetchFile(path: string, accessToken: string): Promise<{ blob: Blob; fileName: string | null }> {
+  const res = await fetch(`${apiBaseUrl}/api${path}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(
+      res.status,
+      typeof body === "object" && body && "error" in body
+        ? JSON.stringify((body as { error: unknown }).error)
+        : `Request failed: ${res.status}`,
+    );
+  }
+  return { blob: await res.blob(), fileName: parseContentDispositionFileName(res.headers.get("Content-Disposition")) };
+}
+
+// Prefers RFC 5987 `filename*=UTF-8''...` (keeps non-ASCII names intact)
+// over the plain ASCII `filename="..."` fallback.
+export function parseContentDispositionFileName(header: string | null): string | null {
+  if (!header) return null;
+  const extended = /filename\*=UTF-8''([^;]+)/i.exec(header);
+  if (extended) {
+    try {
+      return decodeURIComponent(extended[1].trim());
+    } catch {
+      // fall through to the plain filename
+    }
+  }
+  const plain = /filename="([^"]+)"/i.exec(header);
+  return plain ? plain[1] : null;
 }
 
 // F1 — own profile. getProfile (below, used by session bootstrap) returns
@@ -232,20 +283,122 @@ export function createProgramme(
 // Admin review queue for one programme (distinct from getMyNominations,
 // which is a trainee's own list).
 export function getProgrammeNominations(accessToken: string, programmeId: string) {
-  return apiFetch<Nomination[]>(`/programmes/${programmeId}/nominations`, accessToken);
+  return apiFetch<NominationWithTrainee[]>(`/programmes/${programmeId}/nominations`, accessToken);
 }
 
+// `hostel` optionally assigns a room in the same action — only accepted by
+// the API when `status` is "approved" (docs/DECISIONS.md #64).
 export function decideNomination(
   accessToken: string,
   programmeId: string,
   nominationId: string,
   status: NominationDecision,
+  hostel?: { room_id: string; notes?: string },
 ) {
   return apiFetch<Nomination>(
     `/programmes/${programmeId}/nominations/${nominationId}`,
     accessToken,
-    { method: "PATCH", body: { status } },
+    {
+      method: "PATCH",
+      body: {
+        status,
+        ...(hostel ? { hostel_room_id: hostel.room_id, hostel_notes: hostel.notes } : {}),
+      },
+    },
   );
+}
+
+// Hostel/logistics reference data (docs/DECISIONS.md #64) — admin-only
+// record-keeping; no capacity or availability logic anywhere.
+export interface HostelInput {
+  name: string;
+  notes?: string | null;
+}
+
+export interface HostelRoomInput {
+  room_number: string;
+  type: HostelRoomType;
+  capacity?: number;
+}
+
+export function getHostels(accessToken: string, institutionId: string) {
+  return apiFetch<HostelWithRooms[]>(`/institutions/${institutionId}/hostels`, accessToken);
+}
+
+export function createHostel(accessToken: string, institutionId: string, body: HostelInput) {
+  return apiFetch<Hostel>(`/institutions/${institutionId}/hostels`, accessToken, { method: "POST", body });
+}
+
+export function updateHostel(accessToken: string, hostelId: string, body: Partial<HostelInput>) {
+  return apiFetch<Hostel>(`/hostels/${hostelId}`, accessToken, { method: "PATCH", body });
+}
+
+export function deleteHostel(accessToken: string, hostelId: string) {
+  return apiFetch<void>(`/hostels/${hostelId}`, accessToken, { method: "DELETE" });
+}
+
+export function createHostelRoom(accessToken: string, hostelId: string, body: HostelRoomInput) {
+  return apiFetch<HostelRoom>(`/hostels/${hostelId}/rooms`, accessToken, { method: "POST", body });
+}
+
+export function updateHostelRoom(accessToken: string, roomId: string, body: Partial<HostelRoomInput>) {
+  return apiFetch<HostelRoom>(`/hostel-rooms/${roomId}`, accessToken, { method: "PATCH", body });
+}
+
+export function deleteHostelRoom(accessToken: string, roomId: string) {
+  return apiFetch<void>(`/hostel-rooms/${roomId}`, accessToken, { method: "DELETE" });
+}
+
+export function assignHostelRoom(
+  accessToken: string,
+  programmeId: string,
+  traineeId: string,
+  body: { room_id: string; notes?: string | null },
+) {
+  return apiFetch<TraineeHostelAssignment>(
+    `/programmes/${programmeId}/hostel-assignments/${traineeId}`,
+    accessToken,
+    { method: "PUT", body },
+  );
+}
+
+export function unassignHostelRoom(accessToken: string, programmeId: string, traineeId: string) {
+  return apiFetch<void>(`/programmes/${programmeId}/hostel-assignments/${traineeId}`, accessToken, {
+    method: "DELETE",
+  });
+}
+
+export function getMyHostelAssignments(accessToken: string) {
+  return apiFetch<MyHostelAssignment[]>("/hostel-assignments/mine", accessToken);
+}
+
+// Programme-trainer assignment (docs/DECISIONS.md #52): which trainers an
+// admin has allotted to a programme — the API's own enforcement of this is
+// what actually matters (every content/attendance write route now checks
+// it), these just back the admin assignment UI and a trainer's own "which
+// programmes am I on" filter.
+export function assignProgrammeTrainer(accessToken: string, programmeId: string, trainerId: string) {
+  return apiFetch<ProgrammeTrainerRow>(`/programmes/${programmeId}/trainers`, accessToken, {
+    method: "POST",
+    body: { trainer_id: trainerId },
+  });
+}
+
+export function getProgrammeTrainers(accessToken: string, programmeId: string) {
+  return apiFetch<ProgrammeTrainerRow[]>(`/programmes/${programmeId}/trainers`, accessToken);
+}
+
+export function unassignProgrammeTrainer(accessToken: string, programmeId: string, trainerId: string) {
+  return apiFetch<void>(`/programmes/${programmeId}/trainers/${trainerId}`, accessToken, {
+    method: "DELETE",
+  });
+}
+
+// A trainer's own assigned programme ids — lets trainer-facing UI filter the
+// any-authenticated-user GET /programmes catalog read down to just the
+// programmes this trainer can actually author content or attendance for.
+export function getMyAssignedProgrammes(accessToken: string) {
+  return apiFetch<string[]>("/trainers/me/programmes", accessToken);
 }
 
 export function createTimetableSession(
@@ -284,6 +437,7 @@ export function getMyCertificates(accessToken: string) {
   return apiFetch<
     (Certificate & {
       pdf_url: string;
+      course_title: string | null;
       programme_title: string | null;
       institution_name: string | null;
     })[]
@@ -412,11 +566,36 @@ export async function uploadLessonVideoFile(
   });
 }
 
+// Signed URLs are short-lived (server TTL is 1800s, see
+// PLAYBACK_URL_TTL_SECONDS in lessonVideo.ts) but re-selecting the same
+// lesson within that window — navigating away and back, a remount — used
+// to always mint a brand-new one from scratch: a fresh DB lookup plus a
+// fresh B2 presign, on every single call, no matter how recently the last
+// one was issued. Caching client-side, keyed by lessonId only (the URL
+// itself is what's short-lived, not tied to a specific access token),
+// turns a repeat "select this lesson" into an instant local read instead
+// of a network round trip. Capped well under the server's own TTL
+// (5 minutes, not 30) rather than trusting the full window: this cache has
+// no way to know if a trainer replaces the lesson's video mid-session, and
+// a short cap keeps that staleness window narrow without giving up the
+// main win — re-selecting a lesson you were just looking at.
+const LESSON_VIDEO_URL_CACHE_TTL_MS = 5 * 60 * 1000;
+const lessonVideoUrlCache = new Map<string, { url: string | null; expiresAt: number }>();
+
 export function getLessonVideoUrl(accessToken: string, lessonId: string) {
+  const cached = lessonVideoUrlCache.get(lessonId);
+  if (cached && cached.expiresAt > Date.now()) {
+    return Promise.resolve({ url: cached.url });
+  }
   return apiFetch<{ url: string | null; expires_in?: number }>(
     `/lessons/${lessonId}/video-url`,
     accessToken,
-  );
+  ).then((result) => {
+    const serverTtlMs = (result.expires_in ?? 1800) * 1000;
+    const ttlMs = Math.min(serverTtlMs, LESSON_VIDEO_URL_CACHE_TTL_MS);
+    lessonVideoUrlCache.set(lessonId, { url: result.url, expiresAt: Date.now() + ttlMs });
+    return result;
+  });
 }
 
 export function getLessonTranslations(accessToken: string, lessonId: string) {
@@ -472,6 +651,7 @@ export async function getCertificate(code: string): Promise<
   | (Certificate & {
       pdf_url: string;
       trainee_name: string | null;
+      course_title: string | null;
       programme_title: string | null;
       institution_name: string | null;
     })
@@ -487,19 +667,48 @@ export async function getCertificate(code: string): Promise<
   return res.json();
 }
 
-export function getAssessments(accessToken: string, moduleId: string) {
-  return apiFetch<Assessment[]>(`/modules/${moduleId}/assessments`, accessToken);
+// Assessments (docs/DECISIONS.md #53): practice quizzes and graded module
+// tests, marks per question, attempt limits, staff preview, marks tally.
+export interface AssessmentInput {
+  title: string;
+  kind?: AssessmentKind;
+  description?: string | null;
+  pass_threshold_percent?: number;
+  max_attempts?: number | null;
 }
 
-export function createAssessment(
-  accessToken: string,
-  moduleId: string,
-  body: { title: string; pass_threshold_percent?: number },
-) {
+export interface QuestionInput {
+  question_text: string;
+  options: QuestionOption[];
+  correct_option_id: string;
+  marks?: number;
+  position?: number;
+}
+
+export function getAssessments(accessToken: string, moduleId: string) {
+  return apiFetch<AssessmentWithTotals[]>(`/modules/${moduleId}/assessments`, accessToken);
+}
+
+export function createAssessment(accessToken: string, moduleId: string, body: AssessmentInput) {
   return apiFetch<Assessment>(`/modules/${moduleId}/assessments`, accessToken, {
     method: "POST",
     body,
   });
+}
+
+export function updateAssessment(
+  accessToken: string,
+  assessmentId: string,
+  body: Partial<AssessmentInput>,
+) {
+  return apiFetch<Assessment>(`/assessments/${assessmentId}`, accessToken, {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function deleteAssessment(accessToken: string, assessmentId: string) {
+  return apiFetch<void>(`/assessments/${assessmentId}`, accessToken, { method: "DELETE" });
 }
 
 export function getAssessmentQuestions(accessToken: string, assessmentId: string) {
@@ -509,12 +718,38 @@ export function getAssessmentQuestions(accessToken: string, assessmentId: string
 export function createAssessmentQuestion(
   accessToken: string,
   assessmentId: string,
-  body: { question_text: string; options: QuestionOption[]; correct_option_id: string },
+  body: QuestionInput,
 ) {
   return apiFetch<AssessmentQuestion>(`/assessments/${assessmentId}/questions`, accessToken, {
     method: "POST",
     body,
   });
+}
+
+export function bulkCreateAssessmentQuestions(
+  accessToken: string,
+  assessmentId: string,
+  questions: QuestionInput[],
+) {
+  return apiFetch<AssessmentQuestion[]>(`/assessments/${assessmentId}/questions/bulk`, accessToken, {
+    method: "POST",
+    body: { questions },
+  });
+}
+
+export function updateAssessmentQuestion(
+  accessToken: string,
+  questionId: string,
+  body: Partial<QuestionInput>,
+) {
+  return apiFetch<AssessmentQuestion>(`/questions/${questionId}`, accessToken, {
+    method: "PATCH",
+    body,
+  });
+}
+
+export function deleteAssessmentQuestion(accessToken: string, questionId: string) {
+  return apiFetch<void>(`/questions/${questionId}`, accessToken, { method: "DELETE" });
 }
 
 export function getAssessmentToTake(accessToken: string, assessmentId: string) {
@@ -526,11 +761,31 @@ export function submitAssessmentAttempt(
   assessmentId: string,
   answers: Record<string, string>,
 ) {
-  return apiFetch<{
-    attempt: AssessmentAttempt;
-    certificate: Certificate | null;
-    certificateError?: string;
-  }>(`/assessments/${assessmentId}/attempts`, accessToken, { method: "POST", body: { answers } });
+  return apiFetch<AttemptSubmissionResult>(`/assessments/${assessmentId}/attempts`, accessToken, {
+    method: "POST",
+    body: { answers },
+  });
+}
+
+// Staff-only: grades like a real attempt, reveals the answer key, records
+// nothing.
+export function previewAssessment(
+  accessToken: string,
+  assessmentId: string,
+  answers: Record<string, string>,
+) {
+  return apiFetch<GradedResult>(`/assessments/${assessmentId}/preview`, accessToken, {
+    method: "POST",
+    body: { answers },
+  });
+}
+
+export function getMyCourseMarks(accessToken: string, courseId: string) {
+  return apiFetch<CourseMarksTally>(`/courses/${courseId}/marks/mine`, accessToken);
+}
+
+export function getCourseGradebook(accessToken: string, courseId: string) {
+  return apiFetch<CourseGradebook>(`/courses/${courseId}/gradebook`, accessToken);
 }
 
 export function getAssessmentAttempts(accessToken: string, assessmentId: string) {
@@ -600,24 +855,52 @@ export function kioskFaceCheckIn(
   traineeId: string,
   embedding: number[],
 ) {
-  return apiFetch<AttendanceCheckInResult>(`/timetable/${sessionId}/kiosk-face-checkin`, accessToken, {
-    method: "POST",
-    body: { trainee_id: traineeId, embedding },
-  });
-}
-
-export function getAttendanceRoster(accessToken: string, sessionId: string) {
-  return apiFetch<(AttendanceRecord & { profiles: { full_name: string | null } | null })[]>(
-    `/timetable/${sessionId}/attendance`,
+  return apiFetch<AttendanceCheckInResult>(
+    `/timetable/${sessionId}/kiosk-face-checkin`,
     accessToken,
+    {
+      method: "POST",
+      body: { trainee_id: traineeId, embedding },
+    },
   );
 }
 
 export function getAttendanceQr(accessToken: string, sessionId: string) {
-  return apiFetch<{ qrDataUrl: string; checkInUrl: string }>(
+  return apiFetch<{ qrDataUrl: string; checkInUrl: string; checkInCode: string }>(
     `/timetable/${sessionId}/qr`,
     accessToken,
   );
+}
+
+// Full class roster (DECISIONS.md #47) — every approved nominee for the
+// session's programme, `attendance: null` when genuinely unmarked.
+export function getSessionRoster(accessToken: string, sessionId: string) {
+  return apiFetch<AttendanceRosterEntry[]>(`/timetable/${sessionId}/roster`, accessToken);
+}
+
+// Direct staff mark/unmark from the roster (DECISIONS.md #47) — a
+// trainer/admin ticking or un-ticking a trainee present, like a real
+// college ERP's attendance register. markAttendance is idempotent (marking
+// an already-present trainee, any method, is a no-op); unmarkAttendance
+// removes whatever row exists regardless of how it originally got there.
+export function markAttendance(accessToken: string, sessionId: string, traineeId: string) {
+  return apiFetch<AttendanceRecord>(`/timetable/${sessionId}/attendance/${traineeId}`, accessToken, {
+    method: "PUT",
+  });
+}
+
+export function unmarkAttendance(accessToken: string, sessionId: string, traineeId: string) {
+  return apiFetch<void>(`/timetable/${sessionId}/attendance/${traineeId}`, accessToken, {
+    method: "DELETE",
+  });
+}
+
+// Resolves a session's short numeric check_in_code to the real session row —
+// what both AttendanceManager's (faculty) and TraineeAttendance's (trainee
+// manual fallback) code-entry fields call before acting on the real id, so
+// neither ever has to handle a raw session UUID by hand.
+export function getSessionByCode(accessToken: string, code: string) {
+  return apiFetch<TimetableSession>(`/timetable-sessions/code/${code}`, accessToken);
 }
 
 // Job listings are public data (no requireAuth on the API side, matching
@@ -644,11 +927,14 @@ export function createJob(
 
 export function getEmployerTrainees(
   accessToken: string,
-  filters?: { q?: string; location?: string },
+  filters?: { q?: string; location?: string; skill_id?: string },
 ) {
   const params = new URLSearchParams();
   if (filters?.q) params.set("q", filters.q);
   if (filters?.location) params.set("location", filters.location);
+  // Exact taxonomy match (DECISIONS.md #45) — `q` above stays a fuzzy
+  // free-text match, this is the precise sibling.
+  if (filters?.skill_id) params.set("skill_id", filters.skill_id);
   const qs = params.toString();
   return apiFetch<TraineeSearchResult[]>(`/employer/trainees${qs ? `?${qs}` : ""}`, accessToken);
 }
@@ -825,6 +1111,24 @@ export function getSkillGap(accessToken: string, jobId: string) {
   return apiFetch<SkillGapResult>(`/skill-gap/${jobId}`, accessToken);
 }
 
+// F11's multi-job counterpart (DECISIONS.md #45).
+export function getSkillGapAcrossJobs(accessToken: string) {
+  return apiFetch<SkillGapAcrossJobsResult>("/skill-gap/mine", accessToken);
+}
+
+// A course's granted skills — the finer-grained sibling of
+// get/setProgrammeSkills above (DECISIONS.md #45).
+export function getCourseSkills(accessToken: string, courseId: string) {
+  return apiFetch<Skill[]>(`/courses/${courseId}/skills`, accessToken);
+}
+
+export function setCourseSkills(accessToken: string, courseId: string, skillIds: string[]) {
+  return apiFetch<void>(`/courses/${courseId}/skills`, accessToken, {
+    method: "PUT",
+    body: { skill_ids: skillIds },
+  });
+}
+
 // P2 AI Career Counsellor (DECISIONS.md #27).
 export function askCareerCounsellor(accessToken: string, question: string) {
   return apiFetch<CareerCounsellorAnswer>("/career-counsellor/ask", accessToken, {
@@ -836,4 +1140,28 @@ export function askCareerCounsellor(accessToken: string, question: string) {
 // P3 AI Job Matching (DECISIONS.md #28).
 export function getJobMatches(accessToken: string) {
   return apiFetch<JobMatchesResult>("/job-matches/mine", accessToken);
+}
+
+// In-app notifications (docs/DECISIONS.md #65) — any role, own rows only.
+export function getMyNotifications(accessToken: string, limit?: number) {
+  return apiFetch<NotificationsPage>(`/notifications/mine${limit ? `?limit=${limit}` : ""}`, accessToken);
+}
+
+export function getUnreadNotificationCount(accessToken: string) {
+  return apiFetch<{ unread_count: number }>("/notifications/unread-count", accessToken);
+}
+
+export function markNotificationRead(accessToken: string, notificationId: string) {
+  return apiFetch<void>(`/notifications/${notificationId}/read`, accessToken, { method: "POST" });
+}
+
+export function markAllNotificationsRead(accessToken: string) {
+  return apiFetch<void>("/notifications/read-all", accessToken, { method: "POST" });
+}
+
+// Gradebook as a structured Excel workbook (docs/DECISIONS.md #66). Same
+// access rule as getCourseGradebook — admin, or a trainer assigned to the
+// course's programme. `locale` only changes the sheet's labels.
+export function downloadCourseGradebookExcel(accessToken: string, courseId: string, locale: "en" | "hi" = "en") {
+  return apiFetchFile(`/courses/${courseId}/gradebook/export?lang=${locale}`, accessToken);
 }

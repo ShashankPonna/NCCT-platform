@@ -1,10 +1,12 @@
 import { FACE_EMBEDDING_DIMENSIONS } from "@ncct/constants";
 import { getHuman } from "./FaceCapture.js";
 
-// Camera-side helpers shared by the manual panel (KioskFaceCheckIn.tsx) and
-// the hardware-driven terminal (KioskTerminal.tsx). Pure functions, no React
-// — extracted so the two screens can't drift apart on the details that were
-// expensive to get right against the real board.
+// Camera-side helpers for the hardware-driven terminal (KioskTerminal.tsx),
+// which talks to a real networked ESP32-CAM board. Pure functions, no React.
+// The manual staff panel (StaffFaceCheckIn.tsx, DECISIONS.md #51) no longer
+// has a networked camera of its own to fetch a frame from — it uses this
+// device's own webcam via FaceCapture.tsx instead, so it has no use for
+// these HTTP-fetch-a-JPEG-frame helpers.
 
 // Measured against the real hardware, not guessed: the same 4KB QVGA frame
 // came back in 2.5s, 4.7s and 11.0s on three consecutive requests over this

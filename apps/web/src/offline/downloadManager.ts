@@ -70,6 +70,32 @@ export async function downloadLessonVideo(
   const filename = `${lesson.id}.mp4`;
   const path = localPathFor(lesson.id, filename);
 
+  // `downloadFile`'s own `recursive: true` (kept below, harmless) is
+  // documented in the TS types but is not reliably honoured by the native
+  // Android implementation — confirmed on a real device: the parent
+  // `lesson-downloads/<lessonId>/` folder never got created, and the
+  // download failed immediately with "open failed: ENOENT (No such file or
+  // directory)" trying to open a file whose containing directory doesn't
+  // exist. `Filesystem.mkdir` is the well-tested primitive for this, so the
+  // directory is created explicitly first. `recursive: true` here makes it
+  // behave like `mkdir -p` (creates `lesson-downloads` too if this is the
+  // first-ever download, and doesn't fail if some of the path already
+  // exists) — but some platform versions still throw "Directory exists"
+  // even with `recursive: true` set, so the call is deliberately
+  // best-effort: any error here is swallowed rather than surfaced, since a
+  // failure to (re)create an already-existing directory isn't a real
+  // problem, and a genuine filesystem-level failure will surface clearly
+  // from `downloadFile` itself right after.
+  try {
+    await Filesystem.mkdir({
+      path: `${DOWNLOAD_SUBDIR}/${lesson.id}`,
+      directory: DOWNLOAD_DIR,
+      recursive: true,
+    });
+  } catch {
+    // Directory already exists (or some other benign race) — proceed.
+  }
+
   let progressListener: { remove: () => void } | undefined;
   if (onProgress) {
     const handle = await Filesystem.addListener("progress", (event) => {

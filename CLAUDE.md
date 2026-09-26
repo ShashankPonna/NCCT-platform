@@ -11,11 +11,11 @@ An AI-enabled digital ecosystem for cooperative training institutions (NCCT / VA
 | Layer            | Choice                                                                                                                                            |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Web              | React (TypeScript)                                                                                                                                |
-| Mobile           | React (Vite/TypeScript), packaged as a native Android app via Capacitor — not React Native/Expo; see [docs/DECISIONS.md](docs/DECISIONS.md) #19  |
+| Mobile           | React (Vite/TypeScript), packaged as native Android **and iOS** apps via Capacitor — not React Native/Expo; see [docs/DECISIONS.md](docs/DECISIONS.md) #19, #36 (iOS platform added) |
 | Backend          | Node.js + Express (TypeScript) — single API for both clients                                                                                      |
 | Database         | Supabase (Postgres + Auth + Storage + pgvector)                                                                                                   |
 | Face recognition | `@vladmandic/human` (default); InsightFace `buffalo_l` via `onnxruntime-node` as swap-in alternative — see [docs/DECISIONS.md](docs/DECISIONS.md) |
-| Chatbot          | Gemini API + pgvector RAG — see [docs/DECISIONS.md](docs/DECISIONS.md) #25 (amends #17)                                                          |
+| Chatbot          | Groq API + pgvector RAG — see [docs/DECISIONS.md](docs/DECISIONS.md) #35 (amends #25, amends #17). F12's AI Career Counsellor and the skill-gap ranking also run on Groq (#68, amends #27) — one `GROQ_API_KEY`, no Gemini. |
 | Hosting/CI       | TBD — see Open Questions in [docs/PRD.md](docs/PRD.md)                                                                                            |
 
 Full detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -58,11 +58,11 @@ Full detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 ## Important Commands
 
 - `pnpm install` — install all workspace dependencies (run from repo root).
-- `pnpm dev:api` / `pnpm dev:web` / `pnpm dev:mobile` — run one app's dev server.
+- `pnpm dev:api` / `pnpm dev:web` — run the API / web dev server. `pnpm dev:mobile` builds the web app, syncs it into Capacitor and opens Android Studio (`pnpm --filter mobile ios` for Xcode).
 - `pnpm lint` — lint every workspace project (each app's own linter, see Coding Conventions).
 - `pnpm typecheck` — typecheck every workspace project.
 - `pnpm format` / `pnpm format:check` — Prettier write/check across the repo.
-- `pnpm test` — run every workspace project's test suite (currently only `apps/api` has one; see Testing Requirements).
+- `pnpm test` — run every workspace project's test suite (currently `apps/api` and `packages/api-client`; see Testing Requirements).
 
 ## Development Workflow
 

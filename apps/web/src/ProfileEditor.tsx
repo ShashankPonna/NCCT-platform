@@ -2,6 +2,7 @@ import { getProfileDetails, updateProfile } from "@ncct/api-client";
 import type { Profile, Role } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
+import { HostelAssignmentCard } from "./trainee/HostelAssignmentCard.js";
 import { NfcProfileCard } from "./trainee/NfcProfileCard.js";
 
 interface ProfileEditorProps {
@@ -379,6 +380,8 @@ export function ProfileEditor({ accessToken, role, email }: ProfileEditorProps) 
                 </button>
               </div>
             </form>
+
+            {role === "trainee" && <HostelAssignmentCard accessToken={accessToken} />}
 
             {role === "trainee" && (
               <NfcProfileCard

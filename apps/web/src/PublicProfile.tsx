@@ -104,7 +104,7 @@ export function PublicProfile({ code }: PublicProfileProps) {
                   </span>
                   <div className="text-left flex-1 min-w-0">
                     <p className="font-body-md font-semibold text-primary m-0 truncate">
-                      {cert.programme_title ?? "Cooperative Training Programme"}
+                      {cert.course_title ?? cert.programme_title ?? "Cooperative Training Course"}
                     </p>
                     <p className="font-body-sm text-on-surface-variant m-0">
                       {cert.institution_name ?? "NCCT"} ·{" "}

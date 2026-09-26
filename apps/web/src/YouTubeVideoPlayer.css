@@ -23,9 +23,49 @@
 
 .yt-player-empty {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 12px;
   background: #f1f1f1;
   color: #666;
   font-size: 14px;
+}
+
+.yt-player-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(0, 0, 0, 0.15);
+  border-top-color: #666;
+  border-radius: 50%;
+  animation: yt-player-spin 0.8s linear infinite;
+}
+
+/* Overlays the video itself once playback has started but the browser is
+   re-buffering (a real network stall against B2), as opposed to
+   .yt-player-empty above, which replaces the video entirely before a src
+   even exists. */
+.yt-player-buffering {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.yt-player-buffering .yt-player-spinner {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+}
+
+@keyframes yt-player-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

@@ -3,29 +3,41 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { contentTranslationsRouter } from "./contentTranslations.js";
 
-const { getUserMock, profilesMock, translationsMock, fromMock } = vi.hoisted(() => {
-  function createTableMock() {
-    const result: { data: unknown; error: unknown } = { data: null, error: null };
-    const builder: Record<string, ReturnType<typeof vi.fn>> = {};
-    for (const method of ["select", "insert", "update", "delete", "upsert", "eq"]) {
-      builder[method] = vi.fn(() => builder);
+const { getUserMock, profilesMock, translationsMock, lessonsMock, programmeTrainersMock, fromMock } =
+  vi.hoisted(() => {
+    function createTableMock() {
+      const result: { data: unknown; error: unknown } = { data: null, error: null };
+      const builder: Record<string, ReturnType<typeof vi.fn>> = {};
+      for (const method of ["select", "insert", "update", "delete", "upsert", "eq"]) {
+        builder[method] = vi.fn(() => builder);
+      }
+      for (const method of ["single", "maybeSingle", "order"]) {
+        builder[method] = vi.fn(() => Promise.resolve(result));
+      }
+      return { builder, result };
     }
-    for (const method of ["single", "maybeSingle", "order"]) {
-      builder[method] = vi.fn(() => Promise.resolve(result));
-    }
-    return { builder, result };
-  }
 
-  const profilesMock = createTableMock();
-  const translationsMock = createTableMock();
-  const tables: Record<string, ReturnType<typeof createTableMock>> = {
-    profiles: profilesMock,
-    content_translations: translationsMock,
-  };
-  const fromMock = vi.fn((table: string) => tables[table].builder);
-  const getUserMock = vi.fn();
-  return { getUserMock, profilesMock, translationsMock, fromMock };
-});
+    const profilesMock = createTableMock();
+    const translationsMock = createTableMock();
+    const lessonsMock = createTableMock();
+    const programmeTrainersMock = createTableMock();
+    const tables: Record<string, ReturnType<typeof createTableMock>> = {
+      profiles: profilesMock,
+      content_translations: translationsMock,
+      lessons: lessonsMock,
+      programme_trainers: programmeTrainersMock,
+    };
+    const fromMock = vi.fn((table: string) => tables[table].builder);
+    const getUserMock = vi.fn();
+    return {
+      getUserMock,
+      profilesMock,
+      translationsMock,
+      lessonsMock,
+      programmeTrainersMock,
+      fromMock,
+    };
+  });
 
 vi.mock("../supabaseClient.js", () => ({
   supabaseAdmin: { auth: { getUser: getUserMock }, from: fromMock },
@@ -45,12 +57,24 @@ function authenticateAs(userId: string, role: string) {
   profilesMock.result.error = null;
 }
 
+// requireProgrammeAccess's resolver reads the lesson's programme via
+// `lessons`, separate from the `content_translations` table the handler
+// itself touches — both need setting up for a trainer's success path.
+function assignTrainerToLesson() {
+  lessonsMock.result.data = { modules: { courses: { programme_id: "prog-1" } } };
+  programmeTrainersMock.result.data = { trainer_id: "trainer-1" };
+}
+
 beforeEach(() => {
   getUserMock.mockReset();
   profilesMock.result.data = null;
   profilesMock.result.error = null;
   translationsMock.result.data = null;
   translationsMock.result.error = null;
+  lessonsMock.result.data = null;
+  lessonsMock.result.error = null;
+  programmeTrainersMock.result.data = null;
+  programmeTrainersMock.result.error = null;
 });
 
 describe("GET /api/lessons/:id/translations", () => {
@@ -85,8 +109,21 @@ describe("PUT /api/lessons/:id/translations/:locale", () => {
     expect(res.status).toBe(403);
   });
 
+  it("returns 403 for a trainer not assigned to the lesson's programme", async () => {
+    authenticateAs("trainer-1", "trainer");
+    lessonsMock.result.data = { modules: { courses: { programme_id: "prog-1" } } };
+    programmeTrainersMock.result.data = null;
+
+    const res = await request(buildApp())
+      .put("/api/lessons/lesson-1/translations/hi")
+      .set("Authorization", "Bearer token")
+      .send({ title: "स्वागत" });
+    expect(res.status).toBe(403);
+  });
+
   it("returns 400 for a malformed locale", async () => {
     authenticateAs("trainer-1", "trainer");
+    assignTrainerToLesson();
     const res = await request(buildApp())
       .put("/api/lessons/lesson-1/translations/not-a-locale")
       .set("Authorization", "Bearer token")
@@ -96,6 +133,7 @@ describe("PUT /api/lessons/:id/translations/:locale", () => {
 
   it("returns 400 for a translation with no content at all", async () => {
     authenticateAs("trainer-1", "trainer");
+    assignTrainerToLesson();
     const res = await request(buildApp())
       .put("/api/lessons/lesson-1/translations/hi")
       .set("Authorization", "Bearer token")

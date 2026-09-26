@@ -40,6 +40,23 @@ vi.mock("../supabaseClient.js", () => ({
   getSupabaseForUser: () => ({ from: fromMock }),
 }));
 
+// Notification fan-out is a fire-and-forget side effect (docs/DECISIONS.md
+// #65) — mocked so it can't touch this file's table mocks, and so tests can
+// assert the right trigger fires.
+const notificationMocks = vi.hoisted(() => ({
+  notify: vi.fn(() => Promise.resolve()),
+  notifyNominationDecided: vi.fn(() => Promise.resolve()),
+  notifyNominationSubmitted: vi.fn(() => Promise.resolve()),
+  notifyLessonPublished: vi.fn(() => Promise.resolve()),
+  notifyAssessmentAvailable: vi.fn(() => Promise.resolve()),
+  notifySessionScheduled: vi.fn(() => Promise.resolve()),
+  notifyHostelAssigned: vi.fn(() => Promise.resolve()),
+  notifyJobShortlisted: vi.fn(() => Promise.resolve()),
+  notifyJobInterestUpdated: vi.fn(() => Promise.resolve()),
+  notifyTrainerAssigned: vi.fn(() => Promise.resolve()),
+}));
+vi.mock("../notificationService.js", () => notificationMocks);
+
 function buildApp() {
   const app = express();
   app.use(express.json());
@@ -54,6 +71,7 @@ function authenticateAs(userId: string, role: string) {
 }
 
 beforeEach(() => {
+  for (const fn of Object.values(notificationMocks)) fn.mockClear();
   getUserMock.mockReset();
   interestsMock.builder.insert.mockClear();
   for (const mock of [profilesMock, jobsMock, interestsMock, visibilityMock]) {
@@ -101,6 +119,7 @@ describe("POST /api/jobs/:jobId/interests", () => {
       .send({ trainee_id: TRAINEE_ID });
     expect(res.status).toBe(403);
     expect(interestsMock.builder.insert).not.toHaveBeenCalled();
+    expect(notificationMocks.notifyJobShortlisted).not.toHaveBeenCalled();
   });
 
   it("shortlists a visible trainee for the caller's own job", async () => {
@@ -116,6 +135,7 @@ describe("POST /api/jobs/:jobId/interests", () => {
 
     expect(res.status).toBe(201);
     expect(res.body).toMatchObject({ trainee_id: TRAINEE_ID });
+    expect(notificationMocks.notifyJobShortlisted).toHaveBeenCalledWith({ jobId: "job-1", traineeId: TRAINEE_ID });
   });
 
   it("returns 409 on a duplicate shortlist", async () => {
@@ -179,13 +199,18 @@ describe("PATCH /api/jobs/:jobId/interests/:interestId", () => {
   it("updates the interest status", async () => {
     authenticateAs("employer-1", "employer");
     jobsMock.result.data = { employer_id: "employer-1" };
-    interestsMock.result.data = { id: "interest-1", status: "viewed" };
+    interestsMock.result.data = { id: "interest-1", status: "viewed", trainee_id: TRAINEE_ID };
     const res = await request(buildApp())
       .patch("/api/jobs/job-1/interests/interest-1")
       .set("Authorization", "Bearer token")
       .send({ status: "viewed" });
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ status: "viewed" });
+    expect(notificationMocks.notifyJobInterestUpdated).toHaveBeenCalledWith({
+      jobId: "job-1",
+      traineeId: TRAINEE_ID,
+      status: "viewed",
+    });
   });
 });
 

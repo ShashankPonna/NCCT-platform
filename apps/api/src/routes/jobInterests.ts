@@ -1,6 +1,7 @@
 import { createJobInterestSchema, updateJobInterestStatusSchema } from "@ncct/validation";
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { notifyJobInterestUpdated, notifyJobShortlisted } from "../notificationService.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
 export const jobInterestsRouter = Router();
@@ -66,6 +67,7 @@ jobInterestsRouter.post(
       res.status(400).json({ error: error.message });
       return;
     }
+    void notifyJobShortlisted({ jobId: req.params.jobId, traineeId: parsed.data.trainee_id });
     res.status(201).json(data);
   },
 );
@@ -126,6 +128,7 @@ jobInterestsRouter.patch(
       res.status(404).json({ error: "Interest not found" });
       return;
     }
+    void notifyJobInterestUpdated({ jobId: req.params.jobId, traineeId: data.trainee_id, status: data.status });
     res.json(data);
   },
 );

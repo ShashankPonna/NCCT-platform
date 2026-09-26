@@ -10,6 +10,7 @@ import { careerCounsellorRouter } from "./routes/careerCounsellor.js";
 import { certificatesRouter } from "./routes/certificates.js";
 import { chatbotRouter } from "./routes/chatbot.js";
 import { contentTranslationsRouter } from "./routes/contentTranslations.js";
+import { courseMarksRouter } from "./routes/courseMarks.js";
 import { coursesRouter } from "./routes/courses.js";
 import { employerSearchRouter } from "./routes/employerSearch.js";
 import { faceEmbeddingsRouter } from "./routes/faceEmbeddings.js";
@@ -23,9 +24,12 @@ import { lessonVideoRouter } from "./routes/lessonVideo.js";
 import { lessonsRouter } from "./routes/lessons.js";
 import { modulesRouter } from "./routes/modules.js";
 import { nominationsRouter } from "./routes/nominations.js";
+import { notificationsRouter } from "./routes/notifications.js";
 import { profileRouter } from "./routes/profile.js";
 import { programmeProgressRouter } from "./routes/programmeProgress.js";
 import { programmesRouter } from "./routes/programmes.js";
+import { programmeTrainersRouter } from "./routes/programmeTrainers.js";
+import { hostelsRouter } from "./routes/hostels.js";
 import { publicProfileRouter } from "./routes/publicProfile.js";
 import { skillsRouter } from "./routes/skills.js";
 import { timetableRouter } from "./routes/timetable.js";
@@ -34,7 +38,10 @@ import { visibilitySettingsRouter } from "./routes/visibilitySettings.js";
 
 export const app = express();
 
-app.use(cors());
+// Content-Disposition is exposed so a cross-origin client can read a
+// server-chosen download filename (e.g. the gradebook export's, which keeps
+// a Hindi course title intact) — browsers hide it from JS by default.
+app.use(cors({ exposedHeaders: ["Content-Disposition"] }));
 app.use(express.json());
 
 app.get("/health", (_req, res) => {
@@ -45,8 +52,11 @@ app.use("/api", profileRouter);
 app.use("/api", institutionsRouter);
 app.use("/api", usersRouter);
 app.use("/api", programmesRouter);
+app.use("/api", programmeTrainersRouter);
+app.use("/api", hostelsRouter);
 app.use("/api", programmeProgressRouter);
 app.use("/api", nominationsRouter);
+app.use("/api", notificationsRouter);
 app.use("/api", timetableRouter);
 app.use("/api", coursesRouter);
 app.use("/api", modulesRouter);
@@ -58,6 +68,7 @@ app.use("/api", contentTranslationsRouter);
 app.use("/api", assessmentsRouter);
 app.use("/api", assessmentQuestionsRouter);
 app.use("/api", assessmentAttemptsRouter);
+app.use("/api", courseMarksRouter);
 app.use("/api", certificatesRouter);
 app.use("/api", publicProfileRouter);
 app.use("/api", attendanceRouter);

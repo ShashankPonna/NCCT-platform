@@ -53,9 +53,11 @@ const HUMAN_MODEL_BASE_PATH = "https://vladmandic.github.io/human-models/models/
 // loaded instance instead of re-downloading per mount.
 let humanPromise: Promise<import("@vladmandic/human").Human> | null = null;
 
-// Exported so the ESP32-CAM kiosk flow (AttendanceManager.tsx) can share
-// this exact loaded instance rather than loading Human's models a second
-// time — same singleton, just fed a different frame source than getUserMedia.
+// Exported so the ESP32-CAM kiosk terminal (kioskCapture.ts's
+// extractEmbedding, used by KioskTerminal.tsx) can share this exact loaded
+// instance rather than loading Human's models a second time — same
+// singleton, just fed a different frame source (a fetched JPEG) than
+// getUserMedia.
 export async function getHuman() {
   if (!humanPromise) {
     humanPromise = import("@vladmandic/human").then(async ({ Human }) => {
@@ -162,9 +164,10 @@ export function FaceCapture({ actionLabel, onCapture, disabled }: FaceCapturePro
 
   return (
     // `legacy-ui` applied directly (see AssessmentBuilder.tsx's comment) so
-    // this stays correctly styled on mobile wherever a future kiosk-facing
-    // caller re-embeds it (DECISIONS.md #21 — not wired into any screen
-    // today, kept for that reuse rather than deleted).
+    // this stays correctly styled wherever it's embedded — originally just
+    // FaceEnrollment.tsx, now also the staff-operated check-in panel
+    // (StaffFaceCheckIn.tsx, DECISIONS.md #51), which is exactly the
+    // kiosk-facing reuse this was kept generic enough for.
     <div className="face-capture legacy-ui">
       <video ref={videoRef} className="face-capture-video" muted playsInline />
       {error && <p className="form-error">{error}</p>}

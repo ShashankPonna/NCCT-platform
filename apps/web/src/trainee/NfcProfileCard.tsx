@@ -157,9 +157,12 @@ export function NfcProfileCard({
               enabled ? "bg-interactive" : "bg-outline-variant"
             }`}
           >
+            {/* See TraineeCareerJobs.tsx's identical toggle for why `left-1`
+                is required here — without it the thumb's translate-x lands
+                past the track's right edge instead of docking against it. */}
             <span
-              className={`absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white transition-transform ${
-                enabled ? "translate-x-6" : "translate-x-1"
+              className={`absolute left-1 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white transition-transform ${
+                enabled ? "translate-x-5" : "translate-x-0"
               }`}
             />
           </button>

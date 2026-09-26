@@ -3,7 +3,7 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { coursesRouter } from "./courses.js";
 
-const { getUserMock, profilesMock, coursesMock, fromMock } = vi.hoisted(() => {
+const { getUserMock, profilesMock, coursesMock, programmeTrainersMock, fromMock } = vi.hoisted(() => {
   function createTableMock() {
     const result: { data: unknown; error: unknown } = { data: null, error: null };
     const builder: Record<string, ReturnType<typeof vi.fn>> = {};
@@ -18,13 +18,15 @@ const { getUserMock, profilesMock, coursesMock, fromMock } = vi.hoisted(() => {
 
   const profilesMock = createTableMock();
   const coursesMock = createTableMock();
+  const programmeTrainersMock = createTableMock();
   const tables: Record<string, ReturnType<typeof createTableMock>> = {
     profiles: profilesMock,
     courses: coursesMock,
+    programme_trainers: programmeTrainersMock,
   };
   const fromMock = vi.fn((table: string) => tables[table].builder);
   const getUserMock = vi.fn();
-  return { getUserMock, profilesMock, coursesMock, fromMock };
+  return { getUserMock, profilesMock, coursesMock, programmeTrainersMock, fromMock };
 });
 
 vi.mock("../supabaseClient.js", () => ({
@@ -51,6 +53,8 @@ beforeEach(() => {
   profilesMock.result.error = null;
   coursesMock.result.data = null;
   coursesMock.result.error = null;
+  programmeTrainersMock.result.data = null;
+  programmeTrainersMock.result.error = null;
 });
 
 describe("POST /api/programmes/:id/courses", () => {
@@ -70,8 +74,19 @@ describe("POST /api/programmes/:id/courses", () => {
     expect(res.status).toBe(403);
   });
 
+  it("returns 403 for a trainer not assigned to the programme", async () => {
+    authenticateAs("trainer-1", "trainer");
+    programmeTrainersMock.result.data = null;
+    const res = await request(buildApp())
+      .post("/api/programmes/prog-1/courses")
+      .set("Authorization", "Bearer token")
+      .send({ title: "Basics" });
+    expect(res.status).toBe(403);
+  });
+
   it("returns 400 for an invalid body", async () => {
     authenticateAs("trainer-1", "trainer");
+    programmeTrainersMock.result.data = { trainer_id: "trainer-1" };
     const res = await request(buildApp())
       .post("/api/programmes/prog-1/courses")
       .set("Authorization", "Bearer token")
@@ -79,8 +94,9 @@ describe("POST /api/programmes/:id/courses", () => {
     expect(res.status).toBe(400);
   });
 
-  it("creates the course for a trainer", async () => {
+  it("creates the course for a trainer assigned to the programme", async () => {
     authenticateAs("trainer-1", "trainer");
+    programmeTrainersMock.result.data = { trainer_id: "trainer-1" };
     coursesMock.result.data = { id: "course-1", programme_id: "prog-1", title: "Basics" };
 
     const res = await request(buildApp())

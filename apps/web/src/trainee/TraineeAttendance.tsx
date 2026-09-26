@@ -1,4 +1,4 @@
-import { checkInWithQr, type AttendanceCheckInResult } from "@ncct/api-client";
+import { checkInWithQr, getSessionByCode, type AttendanceCheckInResult } from "@ncct/api-client";
 import { useEffect, useState } from "react";
 import { FaceEnrollment } from "../FaceEnrollment.js";
 import { useLocale, type Locale } from "../i18n/LocaleContext.js";
@@ -23,36 +23,39 @@ interface TraineeAttendanceText {
   queuedNotice: string;
   notMatched: (score: string) => string;
   checkedIn: (method: string, time: string) => string;
+  tooEarly: (time: string) => string;
 }
 
 const content: Record<Locale, TraineeAttendanceText> = {
   en: {
     heading: "Mark Attendance",
-    subheading: "Enter your session ID, then check in via QR code.",
+    subheading: "Enter the session code your trainer shared, or scan its QR code.",
     offlineNotice: "You're offline — check-in will be saved and sent once you're back online.",
-    sessionIdLabel: "Session ID",
-    sessionIdPlaceholder: "session UUID",
-    checkInButton: "Check in via QR",
+    sessionIdLabel: "Session Code",
+    sessionIdPlaceholder: "6-digit code",
+    checkInButton: "Check In",
     faceIdHeading: "Face ID",
     faceIdBody:
       "Enroll once here, on your own device. Staff at an institution kiosk can then verify your face against this enrollment to check you in — you never need to use your own camera for check-in itself.",
     queuedNotice: "Check-in saved — it will be sent once you're back online.",
     notMatched: (score) => `Check-in couldn't be confirmed (score ${score}). Please try QR check-in again.`,
     checkedIn: (method, time) => `Checked in via ${method} at ${time}.`,
+    tooEarly: (time) => `Check-in opens at ${time} — this session hasn't started yet.`,
   },
   hi: {
     heading: "उपस्थिति दर्ज करें",
-    subheading: "अपना सत्र आईडी दर्ज करें, फिर QR कोड से चेक-इन करें।",
+    subheading: "अपने प्रशिक्षक द्वारा साझा किया गया सत्र कोड दर्ज करें, या इसका QR कोड स्कैन करें।",
     offlineNotice: "आप ऑफ़लाइन हैं — चेक-इन सहेजा जाएगा और ऑनलाइन आते ही भेजा जाएगा।",
-    sessionIdLabel: "सत्र आईडी",
-    sessionIdPlaceholder: "सत्र UUID",
-    checkInButton: "QR से चेक-इन करें",
+    sessionIdLabel: "सत्र कोड",
+    sessionIdPlaceholder: "6-अंकीय कोड",
+    checkInButton: "चेक इन करें",
     faceIdHeading: "फेस आईडी",
     faceIdBody:
       "यहां अपने डिवाइस पर एक बार नामांकन करें। संस्थान कियोस्क पर स्टाफ फिर आपको चेक-इन करने के लिए इस नामांकन के विरुद्ध आपके चेहरे को सत्यापित कर सकता है — चेक-इन के लिए आपको कभी भी अपने कैमरे का उपयोग करने की आवश्यकता नहीं है।",
     queuedNotice: "चेक-इन सहेजा गया — ऑनलाइन आते ही यह भेजा जाएगा।",
     notMatched: (score) => `चेक-इन की पुष्टि नहीं हो सकी (स्कोर ${score})। कृपया पुनः QR चेक-इन आज़माएं।`,
     checkedIn: (method, time) => `${method} के माध्यम से ${time} पर चेक-इन हुआ।`,
+    tooEarly: (time) => `चेक-इन ${time} पर शुरू होगा — यह सत्र अभी शुरू नहीं हुआ है।`,
   },
 };
 
@@ -67,7 +70,7 @@ const content: Record<Locale, TraineeAttendanceText> = {
 export function TraineeAttendance({ accessToken, autoCheckInSessionId }: TraineeAttendanceProps) {
   const { locale } = useLocale();
   const t = content[locale];
-  const [sessionId, setSessionId] = useState(autoCheckInSessionId ?? "");
+  const [sessionCode, setSessionCode] = useState("");
   const [result, setResult] = useState<AttendanceCheckInResult | null>(null);
   const [queued, setQueued] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -107,6 +110,31 @@ export function TraineeAttendance({ accessToken, autoCheckInSessionId }: Trainee
     }
   }
 
+  // Manual fallback: resolve the short code the trainer shared to the
+  // session's real id, then check in exactly as the QR-scan path does. The
+  // API is the real, authoritative enforcement of "not before start time"
+  // (docs/DECISIONS.md #55) — this is purely a UX shortcut, since this path
+  // already has the full session object in hand and can skip a doomed round
+  // trip with a friendlier, locale-aware message instead of the server's
+  // English-only one.
+  async function handleCodeCheckIn() {
+    if (!sessionCode.trim()) return;
+    setError(null);
+    setBusy(true);
+    try {
+      const session = await getSessionByCode(accessToken, sessionCode.trim());
+      if (new Date(session.starts_at).getTime() > Date.now()) {
+        setError(t.tooEarly(new Date(session.starts_at).toLocaleString(locale === "hi" ? "hi-IN" : undefined)));
+        setBusy(false);
+        return;
+      }
+      await handleQrCheckIn(session.id);
+    } catch (err) {
+      setError((err as Error).message);
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="mx-auto flex max-w-2xl flex-col items-center gap-8 py-6 md:py-8">
       <div className="text-center">
@@ -123,34 +151,36 @@ export function TraineeAttendance({ accessToken, autoCheckInSessionId }: Trainee
         </div>
       )}
 
-      <div className="flex w-full flex-col gap-4 rounded-xl border border-border-low-contrast bg-surface-card p-6">
-        <label className="flex flex-col gap-2 text-label-md text-on-surface-variant">
+      <div className="flex w-full flex-col gap-4 rounded-2xl border border-border-slate bg-surface-container-lowest p-6 shadow-xs">
+        <label className="flex flex-col gap-2 font-label-md text-xs font-semibold text-slate-600">
           {t.sessionIdLabel}
           <input
             type="text"
-            value={sessionId}
-            onChange={(e) => setSessionId(e.target.value)}
+            inputMode="numeric"
+            maxLength={6}
+            value={sessionCode}
+            onChange={(e) => setSessionCode(e.target.value)}
             placeholder={t.sessionIdPlaceholder}
-            className="min-h-touch-target rounded border border-border-low-contrast bg-surface-container-lowest px-4 py-3 text-body-md focus:outline-none focus:ring-2 focus:ring-interactive"
+            className="min-h-touch-target rounded-xl border border-border-slate bg-paper px-4 py-3 font-metric-mono text-lg font-bold text-center tracking-widest text-primary focus:outline-none focus:ring-2 focus:ring-accent"
           />
         </label>
         <button
           type="button"
-          disabled={busy || !sessionId}
-          onClick={() => void handleQrCheckIn(sessionId)}
-          className="flex min-h-touch-target items-center justify-center gap-2 rounded-lg bg-cta py-3 font-bold text-white transition-colors hover:bg-cta-hover disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={busy || !sessionCode.trim()}
+          onClick={() => void handleCodeCheckIn()}
+          className="flex min-h-touch-target items-center justify-center gap-2 rounded-xl bg-secondary hover:bg-secondary-dark py-3.5 font-label-md text-sm font-bold text-white transition-all shadow-xs active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <span className="material-symbols-outlined">qr_code_scanner</span>
+          <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
           {t.checkInButton}
         </button>
       </div>
 
       <ErrorBanner message={error} />
 
-      <div className="flex w-full flex-col gap-4 rounded-xl border border-border-low-contrast bg-surface-card p-6">
+      <div className="flex w-full flex-col gap-4 rounded-2xl border border-border-slate bg-surface-container-lowest p-6 shadow-xs">
         <div>
-          <h2 className="text-headline-sm text-primary">{t.faceIdHeading}</h2>
-          <p className="mt-1 text-body-sm text-on-surface-variant">{t.faceIdBody}</p>
+          <h2 className="font-headline text-lg font-bold text-ink">{t.faceIdHeading}</h2>
+          <p className="mt-1 font-body text-xs md:text-sm text-slate-600">{t.faceIdBody}</p>
         </div>
         <FaceEnrollment accessToken={accessToken} />
       </div>

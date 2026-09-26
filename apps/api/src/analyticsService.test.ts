@@ -39,6 +39,9 @@ function reset() {
   tableData.attendance_records = { data: [], error: null };
   tableData.assessments = { data: [], error: null };
   tableData.assessment_attempts = { data: [], error: null };
+  tableData.skills = { data: [], error: null };
+  tableData.job_skills = { data: [], error: null };
+  tableData.programme_skills = { data: [], error: null };
 }
 
 beforeEach(reset);
@@ -76,6 +79,7 @@ describe("getDashboardAnalytics", () => {
       ],
       flagged: [],
     });
+    expect(result.skillDemand).toEqual({ topShortages: [] });
   });
 
   it("propagates a query error with the failing table named", async () => {
@@ -408,6 +412,86 @@ describe("getDashboardAnalytics", () => {
       expect(result.dropoutRisk.flagged.map((f) => f.traineeId)).toEqual(["high-risk", "low-risk-medium"]);
       expect(result.dropoutRisk.flagged[0].riskLevel).toBe("high");
       expect(result.dropoutRisk.flagged[1].riskLevel).toBe("medium");
+    });
+  });
+
+  describe("skillDemand", () => {
+    beforeEach(() => {
+      tableData.skills = {
+        data: [
+          { id: "s-tally", name: "Tally Prime", category: "Accounting" },
+          { id: "s-excel", name: "Excel", category: "Office" },
+          { id: "s-unused", name: "Unrequested Skill", category: null },
+        ],
+        error: null,
+      };
+    });
+
+    it("excludes a skill no job has tagged, even if trainees hold it", async () => {
+      tableData.programme_skills = { data: [{ programme_id: "p1", skill_id: "s-unused" }], error: null };
+      tableData.certificates = { data: [{ programme_id: "p1", trainee_id: "t1", issued_at: "2026-01-01" }], error: null };
+
+      const result = await getDashboardAnalytics();
+      expect(result.skillDemand.topShortages.map((r) => r.skillId)).not.toContain("s-unused");
+    });
+
+    it("computes demand from distinct jobs and supply from distinct trainees with a qualifying certificate", async () => {
+      tableData.job_skills = {
+        data: [
+          { job_id: "j1", skill_id: "s-tally" },
+          { job_id: "j2", skill_id: "s-tally" },
+          { job_id: "j1", skill_id: "s-excel" },
+        ],
+        error: null,
+      };
+      tableData.programme_skills = {
+        data: [
+          { programme_id: "p1", skill_id: "s-tally" },
+          { programme_id: "p2", skill_id: "s-excel" },
+        ],
+        error: null,
+      };
+      tableData.certificates = {
+        data: [
+          // Two trainees hold "Tally Prime" via p1; one holds "Excel" via p2.
+          { programme_id: "p1", trainee_id: "t1", issued_at: "2026-01-01" },
+          { programme_id: "p1", trainee_id: "t2", issued_at: "2026-01-01" },
+          { programme_id: "p2", trainee_id: "t3", issued_at: "2026-01-01" },
+          // Same trainee certified twice under the same programme must not
+          // double-count supply — the whole point of counting distinct
+          // trainee ids via a Set, not certificate rows.
+          { programme_id: "p1", trainee_id: "t1", issued_at: "2026-02-01" },
+        ],
+        error: null,
+      };
+
+      const result = await getDashboardAnalytics();
+
+      expect(result.skillDemand.topShortages).toEqual([
+        // Tally: demand 2 (j1, j2), supply 2 (t1, t2) => shortage 0.
+        { skillId: "s-tally", skillName: "Tally Prime", category: "Accounting", demand: 2, supply: 2, shortage: 0 },
+        // Excel: demand 1 (j1), supply 1 (t3) => shortage 0. Tie on
+        // shortage, so ranked below Tally by the demand tiebreaker.
+        { skillId: "s-excel", skillName: "Excel", category: "Office", demand: 1, supply: 1, shortage: 0 },
+      ]);
+    });
+
+    it("ranks a fully-unsupplied skill above a partially-supplied one at equal demand", async () => {
+      tableData.job_skills = {
+        data: [
+          { job_id: "j1", skill_id: "s-tally" },
+          { job_id: "j1", skill_id: "s-excel" },
+        ],
+        error: null,
+      };
+      tableData.programme_skills = { data: [{ programme_id: "p1", skill_id: "s-excel" }], error: null };
+      tableData.certificates = { data: [{ programme_id: "p1", trainee_id: "t1", issued_at: "2026-01-01" }], error: null };
+
+      const result = await getDashboardAnalytics();
+
+      // Tally: demand 1, supply 0 => shortage 1. Excel: demand 1, supply 1
+      // => shortage 0. Tally must rank first despite equal demand.
+      expect(result.skillDemand.topShortages.map((r) => r.skillId)).toEqual(["s-tally", "s-excel"]);
     });
   });
 });

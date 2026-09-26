@@ -41,6 +41,23 @@ interface InstitutionRow {
 interface CertificateRow {
   programme_id: string;
   issued_at: string;
+  trainee_id: string;
+}
+
+interface SkillRow {
+  id: string;
+  name: string;
+  category: string | null;
+}
+
+interface JobSkillRow {
+  job_id: string;
+  skill_id: string;
+}
+
+interface ProgrammeSkillRow {
+  programme_id: string;
+  skill_id: string;
 }
 
 interface JobInterestRow {
@@ -103,6 +120,10 @@ interface AssessmentAttemptRow {
 // list would grow linearly with every nomination ever made.
 const MAX_FLAGGED = 20;
 
+// Same reasoning as MAX_FLAGGED: an admin-facing "where to focus" list, not
+// a full skills-taxonomy export.
+const MAX_SKILL_SHORTAGES = 10;
+
 function monthKey(isoDate: string): string {
   return isoDate.slice(0, 7); // "YYYY-MM"
 }
@@ -132,13 +153,16 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
     attendanceRecordsResult,
     assessmentsResult,
     assessmentAttemptsResult,
+    skillsResult,
+    jobSkillsResult,
+    programmeSkillsResult,
   ] = await Promise.all([
     supabaseAdmin.from("programmes").select("id, title, mode"),
     supabaseAdmin
       .from("nominations")
       .select("programme_id, trainee_id, status, nominated_at, programmes(title, institution_id)"),
     supabaseAdmin.from("institutions").select("id, location"),
-    supabaseAdmin.from("certificates").select("programme_id, issued_at"),
+    supabaseAdmin.from("certificates").select("programme_id, issued_at, trainee_id"),
     supabaseAdmin.from("jobs").select("id", { count: "exact", head: true }),
     supabaseAdmin.from("job_interests").select("status"),
     supabaseAdmin.from("profiles").select("id, full_name"),
@@ -150,6 +174,9 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
     supabaseAdmin.from("attendance_records").select("session_id, trainee_id, recorded_at"),
     supabaseAdmin.from("assessments").select("id, module_id"),
     supabaseAdmin.from("assessment_attempts").select("assessment_id, trainee_id, passed, submitted_at"),
+    supabaseAdmin.from("skills").select("id, name, category"),
+    supabaseAdmin.from("job_skills").select("job_id, skill_id"),
+    supabaseAdmin.from("programme_skills").select("programme_id, skill_id"),
   ]);
 
   for (const [name, result] of [
@@ -168,6 +195,9 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
     ["attendance_records", attendanceRecordsResult],
     ["assessments", assessmentsResult],
     ["assessment_attempts", assessmentAttemptsResult],
+    ["skills", skillsResult],
+    ["job_skills", jobSkillsResult],
+    ["programme_skills", programmeSkillsResult],
   ] as const) {
     if (result.error) throw new Error(`Analytics query failed (${name}): ${result.error.message}`);
   }
@@ -186,6 +216,9 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
   const attendanceRecords = (attendanceRecordsResult.data ?? []) as AttendanceRecordRow[];
   const assessments = (assessmentsResult.data ?? []) as AssessmentRow[];
   const assessmentAttempts = (assessmentAttemptsResult.data ?? []) as AssessmentAttemptRow[];
+  const skills = (skillsResult.data ?? []) as SkillRow[];
+  const jobSkills = (jobSkillsResult.data ?? []) as JobSkillRow[];
+  const programmeSkills = (programmeSkillsResult.data ?? []) as ProgrammeSkillRow[];
 
   // --- programmesRun ---
   const modeCounts = new Map<ProgrammeMode, number>();
@@ -435,5 +468,65 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
     flagged: flagged.sort((a, b) => b.riskScore - a.riskScore).slice(0, MAX_FLAGGED),
   };
 
-  return { programmesRun, traineesByRegion, completionRates, certificatesIssued, placements, dropoutRisk };
+  // --- skillDemand (P1 Skill-Gap Analysis's institution-wide counterpart,
+  // DECISIONS.md #43) --- demand: how many distinct job postings tag each
+  // skill. supply: how many distinct trainees hold each skill, using the
+  // exact same acquisition rule skillGapService.getAcquiredSkillIds uses
+  // for one trainee — a certificate under a programme tagged with that
+  // skill — just aggregated across everyone instead of one trainee at a
+  // time.
+  const demandBySkill = new Map<string, number>();
+  for (const row of jobSkills) {
+    demandBySkill.set(row.skill_id, (demandBySkill.get(row.skill_id) ?? 0) + 1);
+  }
+
+  const programmeIdsBySkill = new Map<string, Set<string>>();
+  for (const row of programmeSkills) {
+    const set = programmeIdsBySkill.get(row.skill_id) ?? new Set<string>();
+    set.add(row.programme_id);
+    programmeIdsBySkill.set(row.skill_id, set);
+  }
+
+  const supplyBySkill = new Map<string, number>();
+  for (const [skillId, programmeIds] of programmeIdsBySkill) {
+    const trainees = new Set<string>();
+    for (const cert of certificates) {
+      if (programmeIds.has(cert.programme_id)) trainees.add(cert.trainee_id);
+    }
+    supplyBySkill.set(skillId, trainees.size);
+  }
+
+  const skillDemand = {
+    // Only skills at least one job actually requires — a skill nobody's
+    // hiring for isn't a training priority no matter how undersupplied it
+    // is. Ranked by shortage (demand - supply) first, raw demand as a
+    // tiebreaker, so the top of the list is "most worth building a
+    // programme around right now."
+    topShortages: skills
+      .filter((skill) => (demandBySkill.get(skill.id) ?? 0) > 0)
+      .map((skill) => {
+        const demand = demandBySkill.get(skill.id) ?? 0;
+        const supply = supplyBySkill.get(skill.id) ?? 0;
+        return {
+          skillId: skill.id,
+          skillName: skill.name,
+          category: skill.category,
+          demand,
+          supply,
+          shortage: demand - supply,
+        };
+      })
+      .sort((a, b) => b.shortage - a.shortage || b.demand - a.demand)
+      .slice(0, MAX_SKILL_SHORTAGES),
+  };
+
+  return {
+    programmesRun,
+    traineesByRegion,
+    completionRates,
+    certificatesIssued,
+    placements,
+    dropoutRisk,
+    skillDemand,
+  };
 }

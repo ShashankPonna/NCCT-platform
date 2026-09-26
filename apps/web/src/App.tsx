@@ -10,7 +10,6 @@ import { CertificateVerification } from "./CertificateVerification.js";
 import { ChatbotCorpusManager } from "./ChatbotCorpusManager.js";
 import { EmployerDashboard } from "./EmployerDashboard.js";
 import { HomePage } from "./HomePage.js";
-import { KioskNfcReader } from "./KioskNfcReader.js";
 import { KioskTerminal } from "./KioskTerminal.js";
 import { LoginPage } from "./LoginPage.js";
 import { ManagementShell, type ManagementTab } from "./ManagementShell.js";
@@ -18,6 +17,8 @@ import { ProfileEditor } from "./ProfileEditor.js";
 import { PublicProfile } from "./PublicProfile.js";
 import { ResetPasswordForm } from "./ResetPasswordForm.js";
 import { TraineeApp } from "./trainee/TraineeApp.js";
+import { NotificationBell } from "./notifications/NotificationBell.js";
+import { TrainerCoursesDashboard } from "./TrainerCoursesDashboard.js";
 import { usePasswordRecovery } from "./usePasswordRecovery.js";
 import { useSession } from "./useSession.js";
 
@@ -138,7 +139,7 @@ function App() {
     session.role === "admin"
       ? "dashboard"
       : session.role === "trainer"
-        ? "content"
+        ? "courses"
         : session.role === "employer"
           ? "employer"
           : "profile";
@@ -151,6 +152,18 @@ function App() {
       fullName={session.fullName}
       activeTab={currentTab}
       onNavigate={(tab) => setActiveTab(tab)}
+      notificationBell={
+        <NotificationBell
+          accessToken={session.accessToken}
+          onNavigate={(target) => {
+            // Staff notifications are about programmes (a nomination to
+            // review, a programme newly assigned); anything else just
+            // opens the list without navigating.
+            if (target === "programmes") setActiveTab("programmes");
+            else if (target === "profile") setActiveTab("profile");
+          }}
+        />
+      }
     >
       {error && (
         <div className="mb-4 p-3 bg-error-container text-on-error-container rounded-lg text-sm text-left">
@@ -164,10 +177,20 @@ function App() {
         {currentTab === "users" && (
           <AdminUserManager accessToken={session.accessToken} currentUserId={session.userId} />
         )}
-        {currentTab === "programmes" && <AdminProgrammeManager accessToken={session.accessToken} />}
+        {currentTab === "programmes" && (
+          <AdminProgrammeManager
+            accessToken={session.accessToken}
+            role={session.role === "trainer" ? "trainer" : "admin"}
+          />
+        )}
+        {currentTab === "courses" && (
+          <TrainerCoursesDashboard
+            accessToken={session.accessToken}
+            onNavigate={(tab) => setActiveTab(tab)}
+          />
+        )}
         {currentTab === "content" && <AdminCourseManager accessToken={session.accessToken} />}
         {currentTab === "attendance" && <AttendanceManager accessToken={session.accessToken} />}
-        {currentTab === "kiosk" && <KioskNfcReader accessToken={session.accessToken} />}
         {currentTab === "terminal" && <KioskTerminal accessToken={session.accessToken} />}
         {currentTab === "chatbot" && <ChatbotCorpusManager accessToken={session.accessToken} />}
         {currentTab === "profile" && (
@@ -177,7 +200,9 @@ function App() {
             email={session.email}
           />
         )}
-        {currentTab === "employer" && <EmployerDashboard accessToken={session.accessToken} />}
+        {currentTab === "employer" && (
+          <EmployerDashboard accessToken={session.accessToken} currentUserId={session.userId} />
+        )}
       </div>
     </ManagementShell>
   );

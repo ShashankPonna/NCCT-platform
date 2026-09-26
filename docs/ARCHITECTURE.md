@@ -29,7 +29,7 @@ flowchart TB
         Storage["Supabase Storage\n(videos, PDFs, images)"]
     end
 
-    ClaudeAPI["Gemini API\n(chatbot RAG)"]
+    ClaudeAPI["Groq API\n(chatbot, counsellor)"]
 
     Web -->|HTTPS/JSON, JWT| Auth
     Mobile -->|HTTPS/JSON, JWT| Auth
@@ -49,7 +49,7 @@ flowchart TB
 - Backend: Node.js + Express + TypeScript
 - Database: Supabase (Postgres, pgvector extension), Auth, Storage
 - Face recognition: `@vladmandic/human` (default) or InsightFace `buffalo_l` via `onnxruntime-node` — see [DECISIONS.md](DECISIONS.md)
-- Chatbot: Gemini API (`gemini-3.1-flash-lite`), retrieval via pgvector — see [DECISIONS.md](DECISIONS.md) #25
+- Chatbot, AI career counsellor and skill-gap ranking: Groq API (`openai/gpt-oss-120b`; the ranking uses `openai/gpt-oss-20b`) through one shared helper, `apps/api/src/groqClient.ts`; chatbot retrieval via pgvector — see [DECISIONS.md](DECISIONS.md) #35, #68
 - Monorepo tooling: pnpm workspaces (proposed default; Turborepo/Nx not adopted unless build-time pain justifies it later)
 
 ## 4. Repository Structure
@@ -102,16 +102,16 @@ See [docs/DATABASE.md](DATABASE.md) for the entity-level data model. Summary: on
 ## 10. External Services
 
 - **Supabase** — Auth, Postgres/pgvector, Storage.
-- **Gemini API** — chatbot response generation over retrieved context (see [DECISIONS.md](DECISIONS.md) #25 — originally Claude API).
+- **Groq API** — chatbot generation over retrieved context, the counsellor's tool-calling loop and the skill-gap ranking (see [DECISIONS.md](DECISIONS.md) #35, #68 — originally Claude API, then Gemini).
 - **Face-recognition model** — runs in-process in Express (Node), not a separate hosted service, to avoid extra infra for MVP.
-- **Push notifications** — provider `TBD` (FCM/APNs).
+- **Push notifications** — provider `TBD` (FCM/APNs). An **in-app** notification engine exists ([DECISIONS.md](DECISIONS.md) #65): a `notifications` table fanned out by Express after key writes, read by a polled bell in both web shells. A future push channel would deliver the same rows rather than replace them.
 
 ## 11. Key Data Flows
 
 - **Enrollment → Certification → Verification**: see PRD §8. Certificate PDF + QR generated server-side on assessment pass; verification page hits an open (no-auth) Express endpoint keyed by certificate ID.
 - **Attendance (face)**: the client extracts the embedding, never the server — this line described the original server-side design and was left stale through four reversals; see DECISIONS.md #16 (extraction moved to the browser), #21/#32 (kiosk ESP32-CAM as the frame source) and #33/#34 (the hardware terminal). Current flow, kiosk path: RC522 tap → `GET /api/kiosk/nfc-lookup/:uid` resolves the trainee and reports `face_enrolled` (no enrolled face means no recorded consent — the flow stops here and never reaches the camera, see §13) → student presses the capture button → the browser fetches one JPEG from the ESP32-CAM's `GET /capture` and runs `@vladmandic/human` locally, so the raw frame never leaves the kiosk machine → the 1024-d embedding alone is POSTed to `POST /api/timetable/:sessionId/kiosk-face-checkin` → Express **recomputes** cosine similarity in Node against that trainee's stored embeddings (1:1 verification of an already-identified trainee, not a pgvector 1:N search) and compares against `FACE_MATCH_THRESHOLD` → above threshold writes an `attendance_records` row; below threshold writes nothing and returns `fallbackToQr: true`; a duplicate returns 409. The trainee-facing self-service path (`POST /api/attendance`, `method: "face"`) is the same from the embedding onwards, differing only in that it infers the trainee from the JWT and sources its frame from `getUserMedia`.
 - **Offline sync**: mobile queues writes (progress, quiz results, attendance) locally while offline → on reconnect, replays them against the _same_ Express endpoints used when online (no separate sync API) → last-write-wins by timestamp on conflict.
-- **Chatbot**: user query embedded → pgvector similarity search over course/FAQ corpus → top matches + query sent to Gemini API → response returned.
+- **Chatbot**: user query embedded → pgvector similarity search over course/FAQ corpus → top matches + query sent to Groq → response returned.
 
 ## 12. Error Handling
 

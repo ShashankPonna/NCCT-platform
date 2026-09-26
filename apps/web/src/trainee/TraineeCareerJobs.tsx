@@ -129,9 +129,15 @@ export function TraineeCareerJobs({ accessToken }: TraineeCareerJobsProps) {
               visible ? "bg-interactive" : "bg-outline-variant"
             }`}
           >
+            {/* `left-1` anchors the thumb's untranslated position — without
+                it, the browser falls back to an ill-defined "static
+                position" for the absolutely-positioned span, so the
+                translate-x below lands somewhere other than intended
+                (visibly overshooting past the track's right edge when
+                `visible` is true). */}
             <span
-              className={`absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white transition-transform ${
-                visible ? "translate-x-6" : "translate-x-1"
+              className={`absolute left-1 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white transition-transform ${
+                visible ? "translate-x-5" : "translate-x-0"
               }`}
             />
           </button>

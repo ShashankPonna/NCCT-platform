@@ -37,6 +37,7 @@ public:
   void print(const char* c) { emit(c); }
   void println(const char* c) { emit(c); out.push_back(pending); pending.clear(); }
   void println(const String& v) { emit(v.s); out.push_back(pending); pending.clear(); }
+  void println() { out.push_back(pending); pending.clear(); } // real Serial.println() takes no args too
   int available() { return (int)in.size(); }
   int read() { if (in.empty()) return -1; int c = in[0]; in.erase(in.begin()); return c; }
 };

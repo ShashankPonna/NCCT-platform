@@ -1,7 +1,13 @@
-import { ApiError, bindNfcTag, kioskFaceCheckIn, kioskNfcLookup } from "@ncct/api-client";
+import {
+  ApiError,
+  bindNfcTag,
+  getSessionByCode,
+  kioskFaceCheckIn,
+  kioskNfcLookup,
+} from "@ncct/api-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { captureFrame, extractEmbedding, withCaptureRetries } from "./kioskCapture.js";
-import { useKioskSerial } from "./useKioskSerial.js";
+import { useKioskReader } from "./useKioskReader.js";
 
 interface KioskTerminalProps {
   accessToken: string;
@@ -16,45 +22,53 @@ interface LogEntry {
 // The hardware-driven kiosk: a student taps, positions, presses the button,
 // and gets a verdict on the OLED — no staff interaction per student.
 //
-// This screen exists as one component because a serial port can only be held
-// open by one holder, and both card taps and button presses arrive on that
-// same cable (see useKioskSerial.ts). Splitting NFC and face capture across
-// two tabs, as they were before, makes the hardware flow impossible.
+// This screen exists as one component because the reader (card taps, button
+// presses) and the camera both need to be resolved into one linear
+// conversation per student — splitting NFC and face capture across two tabs,
+// as they were before, makes that flow impossible.
 //
 // The browser is the only part that can run @vladmandic/human, so it stays in
 // the loop: it resolves the card, extracts the embedding, and relays the
 // server's verdict back to the ESP32. The match itself is always recomputed
 // server-side — this screen never decides it (CLAUDE.md).
+// The reader/camera addresses are the kiosk's own local hardware endpoints.
+// Both boards advertise themselves via mDNS at these fixed hostnames (see
+// the firmware's own MDNS_HOSTNAME, ESP32-CONTROLLER/arduino/kiosk_controller
+// and ESP32-CAM/arduino/kiosk_capture_server), which keep working across
+// DHCP lease changes and even a different network entirely — unlike a raw
+// numeric IP, which changes with both. No longer user-editable here: with
+// mDNS resolving on any normal network (true out of the box on macOS/Linux,
+// and in Chrome/Edge on Windows without any extra install), there's nothing
+// for a staff member to ever type. If mDNS is ever blocked on a given
+// network, fix it at the source — reflash that board's MDNS_HOSTNAME or
+// resolve the network issue — rather than hardcoding a numeric IP here that
+// would just go stale on the next DHCP lease.
+const READER_URL = "http://ncct-kiosk-reader.local";
+const CAM_URL = "http://ncct-kiosk-cam.local";
+
 export function KioskTerminal({ accessToken }: KioskTerminalProps) {
-  const [sessionId, setSessionId] = useState("");
-  const [camUrl, setCamUrl] = useState("");
+  // Staff type the short 6-digit check-in code, same as AttendanceManager /
+  // TraineeAttendance (docs/DECISIONS.md #38) — never the session's real
+  // UUID by hand. Resolved to the real id once, when Start is pressed
+  // (below), and held in sessionIdRef for the rest of the run.
+  const [sessionCode, setSessionCode] = useState("");
+  const [resolvingSession, setResolvingSession] = useState(false);
   const [log, setLog] = useState<LogEntry[]>([]);
   const [busy, setBusy] = useState(false);
   const [current, setCurrent] = useState<{ id: string; name: string } | null>(null);
 
-  // Binding lives here rather than only on the NFC Kiosk tab because a serial
-  // port can only be held by one screen: switching tabs to bind a new card
-  // would mean disconnecting the reader and reconnecting afterwards.
+  // Binding lives here rather than only on the NFC Kiosk tab so a student
+  // whose card isn't registered can be handled without leaving this screen.
   const [unboundUid, setUnboundUid] = useState<string | null>(null);
   const [bindTraineeId, setBindTraineeId] = useState("");
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Read inside the serial callback, which would otherwise capture whatever
-  // these were when the connection opened. Synced in an effect rather than
-  // assigned during render — a render-phase ref write is what React warns
-  // about, and these are only ever read later, from an async callback.
-  const sessionIdRef = useRef(sessionId);
-  const camUrlRef = useRef(camUrl);
+  // The real session UUID, resolved from sessionCode at Start — read inside
+  // the poll callback, which is why this lives in a ref rather than state.
+  const sessionIdRef = useRef<string | null>(null);
   const traineeRef = useRef<{ id: string; name: string } | null>(null);
   const busyRef = useRef(false);
-
-  useEffect(() => {
-    sessionIdRef.current = sessionId;
-  }, [sessionId]);
-  useEffect(() => {
-    camUrlRef.current = camUrl;
-  }, [camUrl]);
 
   const addLog = useCallback((text: string, kind: LogEntry["kind"] = "info") => {
     const at = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -112,15 +126,14 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
 
   const handleCapture = useCallback(async () => {
     const trainee = traineeRef.current;
-    const session = sessionIdRef.current.trim();
-    const cam = camUrlRef.current.trim();
+    const session = sessionIdRef.current;
 
     if (!trainee) {
       await sendRef.current("ERR:no card scanned");
       return;
     }
-    if (!session || !cam) {
-      addLog("Session ID or camera address not set", "bad");
+    if (!session) {
+      addLog("Session code not resolved — press Start first", "bad");
       await sendRef.current("ERR:kiosk not configured");
       return;
     }
@@ -135,7 +148,7 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
       if (!canvas) throw new Error("preview canvas not ready");
 
       const frame = await withCaptureRetries(
-        () => captureFrame(cam, canvas),
+        () => captureFrame(CAM_URL, canvas),
         (message, attempt, total) => addLog(`Capture attempt ${attempt}/${total}: ${message}`, "bad"),
       );
 
@@ -201,12 +214,36 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
     [handleCard, handleCapture, addLog],
   );
 
-  const { connected, error, connect, disconnect, send } = useKioskSerial(handleLine);
+  const { connected, error, start, stop, send } = useKioskReader(READER_URL, handleLine);
   useEffect(() => {
     sendRef.current = send;
   }, [send]);
 
-  const configured = sessionId.trim() !== "" && camUrl.trim() !== "";
+  const configured = sessionCode.trim() !== "";
+
+  // Resolves the 6-digit code to the real session id before actually
+  // connecting to the reader — a bad/unknown code should never get as far
+  // as "Live", it should fail right here with a clear reason.
+  const handleStart = useCallback(async () => {
+    const code = sessionCode.trim();
+    if (!code) return;
+    setResolvingSession(true);
+    try {
+      const session = await getSessionByCode(accessToken, code);
+      sessionIdRef.current = session.id;
+      addLog(`Session ${code} resolved`, "info");
+      start();
+    } catch (err) {
+      addLog(`Invalid session code: ${(err as Error).message}`, "bad");
+    } finally {
+      setResolvingSession(false);
+    }
+  }, [accessToken, sessionCode, start, addLog]);
+
+  const handleStop = useCallback(() => {
+    sessionIdRef.current = null;
+    stop();
+  }, [stop]);
 
   return (
     <div className="p-margin-mobile md:p-margin-desktop max-w-5xl mx-auto w-full flex flex-col gap-6 text-left">
@@ -215,8 +252,8 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
           Kiosk Terminal
         </h1>
         <p className="font-body-md text-body-md text-on-surface-variant mt-1">
-          Set the session and camera once, connect the reader, then leave it running. Students tap,
-          position themselves and press the button &mdash; no action needed here per student.
+          Set the session code, start it, then leave it running. Students tap, position themselves
+          and press the button &mdash; no action needed here per student.
         </p>
       </div>
 
@@ -227,24 +264,18 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
         </div>
       )}
 
-      <section className="bg-surface-card border border-outline-variant rounded-xl p-6 flex flex-col gap-4">
-        <h2 className="font-headline-sm text-headline-sm text-on-surface m-0">Setup</h2>
+      <section className="bg-surface-card border border-border-slate rounded-2xl p-6 flex flex-col gap-4 shadow-xs">
+        <h2 className="font-headline-sm text-headline-sm text-on-surface m-0 font-bold">Setup</h2>
         <div className="flex flex-col md:flex-row gap-3">
           <input
             id="kiosk-session"
-            value={sessionId}
-            onChange={(e) => setSessionId(e.target.value)}
-            placeholder="Session ID (UUID)"
-            disabled={busy}
-            className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 font-mono text-body-sm disabled:opacity-50"
-          />
-          <input
-            id="kiosk-cam"
-            value={camUrl}
-            onChange={(e) => setCamUrl(e.target.value)}
-            placeholder="http://<esp32-cam-ip>"
-            disabled={busy}
-            className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 font-mono text-body-sm disabled:opacity-50"
+            value={sessionCode}
+            onChange={(e) => setSessionCode(e.target.value)}
+            placeholder="Session code (6 digits)"
+            inputMode="numeric"
+            maxLength={6}
+            disabled={busy || connected || resolvingSession}
+            className="flex-1 h-touch-target bg-paper-light border border-border-slate rounded-xl px-4 font-metric-mono text-center tracking-widest text-lg disabled:opacity-50 focus:bg-surface-card outline-none focus:ring-2 focus:ring-secondary-container"
           />
         </div>
 
@@ -252,42 +283,40 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
           {!connected ? (
             <button
               type="button"
-              onClick={() => void connect()}
-              disabled={!configured}
-              className="h-touch-target px-6 bg-cta text-on-primary hover:bg-cta-hover disabled:opacity-50 rounded-full font-label-md text-label-md flex items-center gap-2"
+              onClick={() => void handleStart()}
+              disabled={!configured || resolvingSession}
+              className="h-touch-target px-6 bg-secondary-container text-primary hover:bg-secondary hover:text-on-primary disabled:opacity-50 rounded-xl font-label-md text-label-md font-bold flex items-center gap-2 cursor-pointer shadow-xs transition-all"
             >
-              <span className="material-symbols-outlined text-[18px]">usb</span>
-              Connect Reader
+              <span className="material-symbols-outlined text-[18px]">wifi</span>
+              {resolvingSession ? "Resolving..." : "Start Kiosk"}
             </button>
           ) : (
             <>
-              <span className="flex items-center gap-2 text-status-success font-label-md">
+              <span className="flex items-center gap-2 text-status-success font-label-md font-bold">
                 <span className="material-symbols-outlined text-[18px]">nfc</span>
                 Live &mdash; waiting for a card
               </span>
               <button
                 type="button"
-                onClick={() => void disconnect()}
-                className="h-touch-target px-5 border border-outline text-primary hover:bg-surface-container-highest rounded-full font-label-md text-label-md"
+                onClick={handleStop}
+                className="h-touch-target px-5 bg-surface-card border border-border-slate text-primary hover:bg-paper-light rounded-xl font-label-md text-label-md font-bold cursor-pointer transition-colors shadow-2xs"
               >
-                Disconnect
+                Stop
               </button>
             </>
           )}
           {!configured && (
-            <span className="font-body-sm text-on-surface-variant">
-              Enter a session ID and camera address first.
-            </span>
+            <span className="font-body-sm text-on-surface-variant">Enter a session code first.</span>
           )}
         </div>
       </section>
 
       {unboundUid && (
-        <section className="bg-surface-card border border-dashed border-outline-variant rounded-xl p-6 flex flex-col gap-3">
-          <h2 className="font-headline-sm text-headline-sm text-on-surface m-0">Bind this card</h2>
+        <section className="bg-surface-card border border-dashed border-border-slate rounded-2xl p-6 flex flex-col gap-3 shadow-xs">
+          <h2 className="font-headline-sm text-headline-sm text-on-surface m-0 font-bold">Bind this card</h2>
           <p className="font-body-sm text-body-sm text-on-surface-variant m-0">
             Card{" "}
-            <code className="font-mono bg-surface-container px-2 py-0.5 rounded">{unboundUid}</code>{" "}
+            <code className="font-metric-mono bg-paper px-2 py-0.5 rounded border border-border-slate/60">{unboundUid}</code>{" "}
             isn&rsquo;t linked to anyone yet. Nothing is written to the card &mdash; the link is stored
             against the trainee.
           </p>
@@ -297,13 +326,13 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
               value={bindTraineeId}
               onChange={(e) => setBindTraineeId(e.target.value)}
               placeholder="Trainee ID (UUID)"
-              className="flex-1 h-touch-target bg-surface-container-lowest border border-outline-variant rounded-lg px-3 font-mono text-body-sm"
+              className="flex-1 h-touch-target bg-paper-light border border-border-slate rounded-xl px-3 font-metric-mono text-body-sm outline-none focus:bg-surface-card"
             />
             <button
               type="button"
               onClick={() => void handleBind()}
               disabled={!bindTraineeId.trim()}
-              className="h-touch-target px-6 bg-cta text-on-primary hover:bg-cta-hover disabled:opacity-50 rounded-full font-label-md text-label-md"
+              className="h-touch-target px-6 bg-secondary-container text-primary hover:bg-secondary hover:text-on-primary disabled:opacity-50 rounded-xl font-label-md text-label-md font-bold cursor-pointer transition-all shadow-xs"
             >
               Bind Card
             </button>
@@ -312,11 +341,11 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <section className="bg-surface-card border border-outline-variant rounded-xl p-6 flex flex-col gap-3">
-          <h2 className="font-headline-sm text-headline-sm text-on-surface m-0">Last capture</h2>
+        <section className="bg-surface-card border border-border-slate rounded-2xl p-6 flex flex-col gap-3 shadow-xs">
+          <h2 className="font-headline-sm text-headline-sm text-on-surface m-0 font-bold">Last capture</h2>
           <canvas
             ref={canvasRef}
-            className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest"
+            className="w-full rounded-xl border border-border-slate bg-paper-light"
           />
           <p className="font-body-sm text-on-surface-variant m-0">
             {current
@@ -327,23 +356,23 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
           </p>
         </section>
 
-        <section className="bg-surface-card border border-outline-variant rounded-xl p-6 flex flex-col gap-2">
-          <h2 className="font-headline-sm text-headline-sm text-on-surface m-0 mb-1">Activity</h2>
+        <section className="bg-surface-card border border-border-slate rounded-2xl p-6 flex flex-col gap-2 shadow-xs">
+          <h2 className="font-headline-sm text-headline-sm text-on-surface m-0 mb-1 font-bold">Activity</h2>
           {log.length === 0 ? (
             <p className="font-body-sm text-on-surface-variant m-0">Nothing yet.</p>
           ) : (
             <ul className="flex flex-col gap-1.5 m-0 p-0 list-none">
               {log.map((entry, i) => (
                 <li key={`${entry.at}-${i}`} className="flex gap-3 font-body-sm text-body-sm">
-                  <span className="font-mono text-on-surface-variant shrink-0">{entry.at}</span>
+                  <span className="font-metric-mono text-on-surface-variant shrink-0">{entry.at}</span>
                   <span
                     className={
                       entry.kind === "good"
-                        ? "text-status-success"
+                        ? "text-status-success font-semibold"
                         : entry.kind === "bad"
-                          ? "text-status-rejected"
+                          ? "text-status-rejected font-semibold"
                           : entry.kind === "in"
-                            ? "text-primary"
+                            ? "text-primary font-semibold"
                             : "text-on-surface"
                     }
                   >

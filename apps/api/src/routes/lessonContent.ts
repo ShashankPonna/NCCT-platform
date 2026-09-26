@@ -2,6 +2,7 @@ import { LESSON_FILE_MAX_BYTES, LESSON_FILE_MIME_TYPES } from "@ncct/constants";
 import { Router } from "express";
 import multer from "multer";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { getProgrammeIdForLesson, requireProgrammeAccess } from "../programmeAccess.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
 export const lessonContentRouter = Router();
@@ -25,6 +26,7 @@ lessonContentRouter.post(
   "/lessons/:id/content",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForLesson(req.params.id)),
   upload.single("file"),
   async (req, res) => {
     if (!req.file) {

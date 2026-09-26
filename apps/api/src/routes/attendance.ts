@@ -3,6 +3,7 @@ import { attendanceCheckInSchema, kioskFaceCheckInSchema } from "@ncct/validatio
 import { Router } from "express";
 import QRCode from "qrcode";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { getProgrammeIdForSession, requireProgrammeAccess } from "../programmeAccess.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
 export const attendanceRouter = Router();
@@ -35,6 +36,20 @@ export function cosineSimilarity(a: number[], b: number[]): number {
   return dot / (Math.sqrt(magA) * Math.sqrt(magB));
 }
 
+// A trainee shouldn't be markable present for a class that hasn't started
+// yet — "on time" or late is fine (there's no upper bound: a staff-driven
+// manual mark or a late self-check-in must keep working for as long as the
+// roster stays open), only *before* `starts_at` is rejected. Exported for
+// the manual-mark route to reuse the identical rule if it ever needs to
+// (it deliberately doesn't today — see that route's own comment).
+export function isBeforeSessionStart(startsAt: string): boolean {
+  return new Date(startsAt).getTime() > Date.now();
+}
+
+function formatSessionStart(startsAt: string): string {
+  return new Date(startsAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+}
+
 // A trainee's own check-in, either method — own-row insert via req.supabase
 // (RLS `attendance_records_insert_own`, docs/DECISIONS.md #9), not
 // supabaseAdmin. For `face`, the client only ever supplies the raw embedding
@@ -43,6 +58,14 @@ export function cosineSimilarity(a: number[], b: number[]): number {
 // client, per CLAUDE.md's security rules. A below-threshold match does not
 // error and does not block the trainee — it reports `fallbackToQr: true` so
 // the client can offer the QR flow instead, per PRD §11's edge case.
+//
+// Checked before either branch: a trainee can't register presence for a
+// session that hasn't started (docs/DECISIONS.md #55) — on time or late is
+// fine, only early is rejected. An offline QR scan queued before start time
+// (see syncManager.ts) is unaffected: the check runs against real server
+// time at actual sync/insert, not the client's queued timestamp, and the
+// write-queue's existing "stop and retry the whole queue" behavior already
+// handles a still-too-early replay correctly as a transient failure.
 attendanceRouter.post("/attendance", requireAuth, requireRole("trainee"), async (req, res) => {
   const parsed = attendanceCheckInSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -50,6 +73,26 @@ attendanceRouter.post("/attendance", requireAuth, requireRole("trainee"), async 
     return;
   }
   const checkIn = parsed.data;
+
+  const { data: session, error: sessionError } = await req
+    .supabase!.from("timetable_sessions")
+    .select("starts_at")
+    .eq("id", checkIn.session_id)
+    .maybeSingle();
+  if (sessionError) {
+    res.status(400).json({ error: sessionError.message });
+    return;
+  }
+  if (!session) {
+    res.status(404).json({ error: "Session not found" });
+    return;
+  }
+  if (isBeforeSessionStart(session.starts_at)) {
+    res.status(400).json({
+      error: `Check-in isn't open yet — this session starts at ${formatSessionStart(session.starts_at)}`,
+    });
+    return;
+  }
 
   if (checkIn.method === "qr") {
     const { data, error } = await req
@@ -142,6 +185,7 @@ attendanceRouter.post(
   "/timetable/:sessionId/kiosk-face-checkin",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForSession(req.params.sessionId)),
   async (req, res) => {
     const parsed = kioskFaceCheckInSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -149,6 +193,29 @@ attendanceRouter.post(
       return;
     }
     const { trainee_id, embedding } = parsed.data;
+
+    // Same "not before start time" rule as the trainee's own check-in above
+    // — a staff-operated face capture still registers presence *now*, so
+    // it's subject to the same real-time rule, not exempt from it.
+    const { data: session, error: sessionError } = await supabaseAdmin
+      .from("timetable_sessions")
+      .select("starts_at")
+      .eq("id", req.params.sessionId)
+      .maybeSingle();
+    if (sessionError) {
+      res.status(400).json({ error: sessionError.message });
+      return;
+    }
+    if (!session) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
+    if (isBeforeSessionStart(session.starts_at)) {
+      res.status(400).json({
+        error: `Check-in isn't open yet — this session starts at ${formatSessionStart(session.starts_at)}`,
+      });
+      return;
+    }
 
     const { data: embeddings, error: embeddingsError } = await supabaseAdmin
       .from("face_embeddings")
@@ -207,22 +274,192 @@ attendanceRouter.post(
 // Roster + QR generation are admin/trainer-only cross-trainee reads, so both
 // go through supabaseAdmin, same pattern as nominations' admin routes.
 
+// Full class roster for a session (DECISIONS.md #47) — every trainee with
+// an *approved* nomination in the session's programme, joined against their
+// attendance_records row for this specific session (if any). An unmarked
+// trainee still appears here, with `attendance: null`, which is what a
+// faculty "tick the roster" screen actually needs — a plain
+// `select * from attendance_records where session_id = ...` (this route's
+// predecessor, removed in the same change) only ever shows who's already
+// checked in.
 attendanceRouter.get(
-  "/timetable/:sessionId/attendance",
+  "/timetable/:sessionId/roster",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForSession(req.params.sessionId)),
   async (req, res) => {
+    const { data: session, error: sessionError } = await supabaseAdmin
+      .from("timetable_sessions")
+      .select("programme_id")
+      .eq("id", req.params.sessionId)
+      .maybeSingle();
+    if (sessionError) {
+      res.status(400).json({ error: sessionError.message });
+      return;
+    }
+    if (!session) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
+
+    const [{ data: nominations, error: nominationsError }, { data: records, error: recordsError }] =
+      await Promise.all([
+        supabaseAdmin
+          .from("nominations")
+          .select("trainee_id, profiles(full_name)")
+          .eq("programme_id", session.programme_id)
+          .eq("status", "approved"),
+        supabaseAdmin.from("attendance_records").select("*").eq("session_id", req.params.sessionId),
+      ]);
+    if (nominationsError) {
+      res.status(400).json({ error: nominationsError.message });
+      return;
+    }
+    if (recordsError) {
+      res.status(400).json({ error: recordsError.message });
+      return;
+    }
+
+    const recordByTrainee = new Map((records ?? []).map((r) => [r.trainee_id, r]));
+    const roster = (
+      (nominations ?? []) as unknown as {
+        trainee_id: string;
+        profiles: { full_name: string | null } | null;
+      }[]
+    ).map((nom) => ({
+      trainee_id: nom.trainee_id,
+      full_name: nom.profiles?.full_name ?? null,
+      attendance: recordByTrainee.get(nom.trainee_id) ?? null,
+    }));
+    res.json(roster);
+  },
+);
+
+// Direct staff mark (DECISIONS.md #47) — a trainer/admin ticking a trainee
+// present on the roster, like a real college ERP's attendance register. The
+// same category of staff-asserted fact the kiosk face check-in above already
+// trusts once role middleware gates the caller: CLAUDE.md's "never trust a
+// client-reported ... attendance status" is about not trusting a
+// *self-reported* claim or a recomputable verdict (a face-match score, a
+// quiz score) — a manual mark has no such verdict to fake, it's staff
+// directly asserting a fact, the same way nomination decisions and content
+// authoring already work in this codebase.
+//
+// Deliberately has no "not before start time" check, unlike the two
+// self/kiosk check-in routes above (docs/DECISIONS.md #55) — staff need the
+// roster manageable indefinitely, including long after a slot ends (fixing
+// a missed scan, backfilling a paper register), and nothing here should
+// narrow that window. The early-check-in rule exists to stop a trainee
+// registering their own presence ahead of time, not to constrain when staff
+// can correct the record.
+//
+// Restricted to the session's actual roster (an approved nomination in its
+// programme) rather than any trainee id — the same integrity check a real
+// register enforces: you can't mark someone present who isn't enrolled.
+// Idempotent: marking an already-present trainee (any method) is a no-op
+// that returns the existing row rather than overwriting it, so a manual
+// mark can never silently erase which method a trainee actually used.
+attendanceRouter.put(
+  "/timetable/:sessionId/attendance/:traineeId",
+  requireAuth,
+  requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForSession(req.params.sessionId)),
+  async (req, res) => {
+    const { sessionId, traineeId } = req.params;
+
+    const { data: session, error: sessionError } = await supabaseAdmin
+      .from("timetable_sessions")
+      .select("programme_id")
+      .eq("id", sessionId)
+      .maybeSingle();
+    if (sessionError) {
+      res.status(400).json({ error: sessionError.message });
+      return;
+    }
+    if (!session) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
+
+    const { data: nomination, error: nominationError } = await supabaseAdmin
+      .from("nominations")
+      .select("trainee_id")
+      .eq("programme_id", session.programme_id)
+      .eq("trainee_id", traineeId)
+      .eq("status", "approved")
+      .maybeSingle();
+    if (nominationError) {
+      res.status(400).json({ error: nominationError.message });
+      return;
+    }
+    if (!nomination) {
+      res.status(404).json({ error: "Trainee is not an approved nominee for this session's programme" });
+      return;
+    }
+
+    const { data: existing, error: existingError } = await supabaseAdmin
+      .from("attendance_records")
+      .select("*")
+      .eq("session_id", sessionId)
+      .eq("trainee_id", traineeId)
+      .maybeSingle();
+    if (existingError) {
+      res.status(400).json({ error: existingError.message });
+      return;
+    }
+    if (existing) {
+      res.status(200).json(existing);
+      return;
+    }
+
     const { data, error } = await supabaseAdmin
       .from("attendance_records")
-      .select("*, profiles(full_name)")
+      .insert({ session_id: sessionId, trainee_id: traineeId, method: "manual", marked_by: req.user!.id })
+      .select()
+      .single();
+
+    if (error) {
+      // A concurrent mark between the check above and this insert — the
+      // other request won the race, so fetch and return its row rather
+      // than erroring on what is, from the caller's point of view, success.
+      if (error.code === UNIQUE_VIOLATION) {
+        const { data: winner } = await supabaseAdmin
+          .from("attendance_records")
+          .select("*")
+          .eq("session_id", sessionId)
+          .eq("trainee_id", traineeId)
+          .maybeSingle();
+        res.status(200).json(winner);
+        return;
+      }
+      res.status(400).json({ error: error.message });
+      return;
+    }
+    res.status(201).json(data);
+  },
+);
+
+// The undo side of the same feature — removes whatever attendance row
+// exists for this trainee/session, regardless of how it originally got
+// there (qr/face/manual). A faculty correcting a roster needs to be able to
+// un-tick a mistaken self-check-in too, not just its own manual marks.
+attendanceRouter.delete(
+  "/timetable/:sessionId/attendance/:traineeId",
+  requireAuth,
+  requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForSession(req.params.sessionId)),
+  async (req, res) => {
+    const { error } = await supabaseAdmin
+      .from("attendance_records")
+      .delete()
       .eq("session_id", req.params.sessionId)
-      .order("recorded_at", { ascending: true });
+      .eq("trainee_id", req.params.traineeId);
 
     if (error) {
       res.status(400).json({ error: error.message });
       return;
     }
-    res.json(data);
+    res.status(204).send();
   },
 );
 
@@ -236,10 +473,11 @@ attendanceRouter.get(
   "/timetable/:sessionId/qr",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForSession(req.params.sessionId)),
   async (req, res) => {
     const { data: session, error } = await supabaseAdmin
       .from("timetable_sessions")
-      .select("id")
+      .select("id, check_in_code")
       .eq("id", req.params.sessionId)
       .maybeSingle();
 
@@ -255,6 +493,6 @@ attendanceRouter.get(
     const publicWebUrl = process.env.PUBLIC_WEB_URL ?? "http://localhost:5173";
     const checkInUrl = `${publicWebUrl}/?checkin=${session.id}`;
     const qrDataUrl = await QRCode.toDataURL(checkInUrl, { width: 300 });
-    res.json({ qrDataUrl, checkInUrl });
+    res.json({ qrDataUrl, checkInUrl, checkInCode: session.check_in_code });
   },
 );

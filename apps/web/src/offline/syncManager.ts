@@ -1,4 +1,5 @@
 import {
+  ApiError,
   checkInWithQr,
   submitAssessmentAttempt,
   updateLessonProgress,
@@ -20,7 +21,16 @@ async function applyWrite(accessToken: string, write: QueuedWrite): Promise<void
       await updateLessonProgress(accessToken, write.lessonId, write.body);
       return;
     case "quiz_attempt":
-      await submitAssessmentAttempt(accessToken, write.assessmentId, write.answers);
+      try {
+        await submitAssessmentAttempt(accessToken, write.assessmentId, write.answers);
+      } catch (err) {
+        // 409 = the assessment's attempt limit was already used up by the
+        // time this synced — a permanent refusal, not a transient failure.
+        // Dropping it keeps one exhausted test from blocking every write
+        // queued behind it forever.
+        if (err instanceof ApiError && err.status === 409) return;
+        throw err;
+      }
       return;
     case "qr_checkin":
       await checkInWithQr(accessToken, write.sessionId);

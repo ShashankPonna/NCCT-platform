@@ -1,4 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
 import {
   CHATBOT_MIN_SIMILARITY,
   CHATBOT_RETRIEVAL_COUNT,
@@ -7,15 +6,30 @@ import {
 } from "@ncct/constants";
 import type { ChatbotAnswer, RetrievedChunk } from "@ncct/shared-types";
 import { pipeline } from "@huggingface/transformers";
+import { groqChat } from "./groqClient.js";
 import { supabaseAdmin } from "./supabaseClient.js";
+
+// F7's answer-generation model — Groq (docs/DECISIONS.md #35, amends #25).
+// Retrieval/grounding (below) is unchanged; only the final generation call
+// moved providers. The HTTP call, model choice and reasoning-effort setting
+// live in groqClient.ts, shared with the career counsellor and skill-gap
+// ranking (DECISIONS.md #68).
+async function callGroq(systemPrompt: string, userPrompt: string): Promise<string> {
+  const message = await groqChat({
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+  });
+  return message.content ?? "";
+}
 
 // Embeddings are generated locally rather than through a hosted embedding
 // API — see docs/DECISIONS.md #17. Loading the model is expensive (~15s cold,
 // downloads ~25MB once then caches on disk), so it's a lazily-initialized
 // module singleton: the first question pays for it, every later one doesn't.
-let embedderPromise: Promise<
-  Awaited<ReturnType<typeof pipeline<"feature-extraction">>>
-> | null = null;
+let embedderPromise: Promise<Awaited<ReturnType<typeof pipeline<"feature-extraction">>>> | null =
+  null;
 
 function getEmbedder() {
   if (!embedderPromise) {
@@ -81,13 +95,13 @@ const NO_CONTEXT_ANSWER =
   "I don't have information about that in the programme material available to me. Please contact your training institution for help with this question.";
 
 interface AnswerOptions {
-  /** Injectable for tests so they never reach the real Gemini API. */
-  client?: GoogleGenAI;
+  /** Injectable for tests so they never reach the real Groq API. */
+  generate?: (systemPrompt: string, userPrompt: string) => Promise<string>;
 }
 
 /**
  * Full RAG turn: embed the question, retrieve grounding chunks, then ask
- * Gemini to answer from them. When retrieval finds nothing above the
+ * the model to answer from them. When retrieval finds nothing above the
  * relevance floor this returns early WITHOUT calling the model at all —
  * cheaper, and it makes "no grounding" a structurally different outcome
  * than "the model decided it didn't know", which the caller can tell apart
@@ -103,21 +117,13 @@ export async function answerQuestion(
     return { answered: false, answer: NO_CONTEXT_ANSWER, sources: [] };
   }
 
-  const client = options.client ?? new GoogleGenAI({});
+  const generate = options.generate ?? callGroq;
   const referenceMaterial = chunks
     .map((chunk, index) => `[${index + 1}] ${chunk.content}`)
     .join("\n\n");
+  const userPrompt = `Reference material:\n\n${referenceMaterial}\n\nQuestion: ${question}`;
 
-  const response = await client.models.generateContent({
-    model: "gemini-3.1-flash-lite",
-    contents: `Reference material:\n\n${referenceMaterial}\n\nQuestion: ${question}`,
-    config: {
-      systemInstruction: SYSTEM_PROMPT,
-      maxOutputTokens: 1024,
-    },
-  });
-
-  const answer = (response.text ?? "").trim();
+  const answer = (await generate(SYSTEM_PROMPT, userPrompt)).trim();
 
   return {
     answered: true,

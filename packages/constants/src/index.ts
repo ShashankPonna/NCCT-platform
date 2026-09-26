@@ -2,6 +2,14 @@ export const ROLES = ["admin", "trainer", "trainee", "employer"] as const;
 
 export const PROGRAMME_MODES = ["online", "offline", "hybrid"] as const;
 
+// 'quiz' = practice test (never gates a certificate, reveals answers after
+// submission); 'module_test' = graded module assessment that counts toward
+// the course marks tally and must be passed — docs/DECISIONS.md #53.
+export const ASSESSMENT_KINDS = ["quiz", "module_test"] as const;
+
+// Upper bound on MCQ options per question in the builder UI and validation.
+export const MAX_QUESTION_OPTIONS = 6;
+
 export const NOMINATION_STATUSES = ["pending", "approved", "waitlisted", "rejected"] as const;
 
 // A nomination can only be *decided* into one of these — "pending" is the
@@ -9,6 +17,29 @@ export const NOMINATION_STATUSES = ["pending", "approved", "waitlisted", "reject
 export const NOMINATION_DECISIONS = ["approved", "waitlisted", "rejected"] as const;
 
 export const CONTENT_TYPES = ["video", "pdf", "slides", "text", "interactive"] as const;
+
+// docs/DECISIONS.md #64 — reference data only, no capacity logic keys off it.
+export const HOSTEL_ROOM_TYPES = ["dorm", "shared", "single"] as const;
+
+// In-app notification event types (docs/DECISIONS.md #65) — must match the
+// CHECK constraint in migration 20260925000002_notifications.sql.
+export const NOTIFICATION_TYPES = [
+  "nomination_decided",
+  "nomination_submitted",
+  "lesson_published",
+  "assessment_available",
+  "session_scheduled",
+  "certificate_issued",
+  "hostel_assigned",
+  "job_shortlisted",
+  "job_interest_updated",
+  "trainer_assigned",
+] as const;
+
+// How often the bell re-checks the unread count, and how many notifications
+// the dropdown lists at most.
+export const NOTIFICATION_POLL_INTERVAL_MS = 60_000;
+export const NOTIFICATION_LIST_LIMIT = 30;
 
 // YouTube video IDs are always exactly 11 URL-safe characters.
 export const YOUTUBE_VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
@@ -44,7 +75,11 @@ export const SUGGESTED_LOCALES = ["en", "hi", "mr", "gu", "ta", "te", "kn", "bn"
 
 export const INTERACTIVE_EXERCISE_TYPES = ["matching"] as const;
 
-export const ATTENDANCE_METHODS = ["qr", "face"] as const;
+// "manual" (migration 20260901000018) is a trainer/admin directly ticking a
+// trainee present from the class roster — no scan, no embedding match, so
+// unlike "qr"/"face" it carries no independent verification signal of its
+// own; attendance_records.marked_by is the audit trail for who asserted it.
+export const ATTENDANCE_METHODS = ["qr", "face", "manual"] as const;
 
 // Matches the `face_embeddings.model` CHECK constraint. Only "human" is
 // actually implemented (extraction runs client-side via @vladmandic/human,
@@ -97,6 +132,23 @@ export const CHATBOT_MIN_SIMILARITY = 0.25;
 // matches" list is useful even when nothing is a strong match, unlike the
 // chatbot where an irrelevant answer would be actively misleading.
 export const JOB_MATCH_COUNT = 10;
+
+// F11 Skill-Gap Analysis's semantic partial-credit layer (DECISIONS.md #45):
+// a gap skill is flagged as "related to a skill you already have" when its
+// embedding similarity to the trainee's closest acquired skill clears this
+// floor. Calibrated against real sample pairs on this exact model
+// (EMBEDDING_MODEL above), not guessed: genuinely-related-but-distinct
+// skills (e.g. "Bookkeeping"/"Accounting" at 0.60, "Welding"/"Fabrication"
+// at 0.42, "Communication Skills"/"Public Speaking" at 0.45) clustered
+// above 0.40, while unrelated pairs (e.g. "Bookkeeping"/"Welding" at 0.11)
+// sat below 0.22 — a clear gap in between. Same category of hand-tuned,
+// not-measured-optimum starting point as FACE_MATCH_THRESHOLD. Note this
+// model does NOT consider a skill and the software that's used to perform
+// it as related by default — "Bookkeeping"/"Tally Prime" measured only
+// 0.14, below this floor — so that specific pairing will not surface as a
+// partial match; a domain-specific synonym list would catch that case,
+// this floor catches conceptually-adjacent skill names instead.
+export const SKILL_SEMANTIC_SIMILARITY_THRESHOLD = 0.4;
 
 // P6 Deep Training & Learning Analytics — dropout-risk flagging
 // (DECISIONS.md #29). Hand-tuned starting points, not measured optima —

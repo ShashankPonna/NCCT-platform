@@ -1,9 +1,12 @@
 import {
+  ASSESSMENT_KINDS,
   CHATBOT_SOURCE_TYPES,
   CONTENT_TYPES,
   FACE_EMBEDDING_DIMENSIONS,
+  HOSTEL_ROOM_TYPES,
   JOB_INTEREST_STATUSES,
   LOCALE_PATTERN,
+  MAX_QUESTION_OPTIONS,
   NOMINATION_DECISIONS,
   PROGRAMME_MODES,
   ROLES,
@@ -115,8 +118,48 @@ export const createProgrammeSchema = z.object({
 
 export const updateProgrammeSchema = createProgrammeSchema.partial();
 
-export const decideNominationSchema = z.object({
-  status: z.enum(NOMINATION_DECISIONS),
+const hostelNotesSchema = z.string().trim().max(500);
+
+// A room can optionally be assigned in the same action as approving
+// (docs/DECISIONS.md #64) — only when approving, since a waitlisted or
+// rejected trainee isn't attending and has nowhere to stay.
+export const decideNominationSchema = z
+  .object({
+    status: z.enum(NOMINATION_DECISIONS),
+    hostel_room_id: z.string().uuid().optional(),
+    hostel_notes: hostelNotesSchema.optional(),
+  })
+  .refine((body) => !body.hostel_room_id || body.status === "approved", {
+    message: "A hostel room can only be assigned when approving",
+    path: ["hostel_room_id"],
+  });
+
+export const createHostelSchema = z.object({
+  name: z.string().trim().min(1),
+  notes: hostelNotesSchema.nullable().optional(),
+});
+
+export const updateHostelSchema = createHostelSchema
+  .partial()
+  .refine((body) => Object.keys(body).length > 0, {
+    message: "At least one field must be provided",
+  });
+
+export const createHostelRoomSchema = z.object({
+  room_number: z.string().trim().min(1).max(20),
+  capacity: z.number().int().positive().max(100).optional(),
+  type: z.enum(HOSTEL_ROOM_TYPES),
+});
+
+export const updateHostelRoomSchema = createHostelRoomSchema
+  .partial()
+  .refine((body) => Object.keys(body).length > 0, {
+    message: "At least one field must be provided",
+  });
+
+export const assignHostelRoomSchema = z.object({
+  room_id: z.string().uuid(),
+  notes: hostelNotesSchema.nullable().optional(),
 });
 
 export const createTimetableSessionSchema = z
@@ -130,6 +173,10 @@ export const createTimetableSessionSchema = z
     message: "ends_at must be after starts_at",
     path: ["ends_at"],
   });
+
+export const assignTrainerSchema = z.object({
+  trainer_id: z.string().uuid(),
+});
 
 export const createCourseSchema = z.object({
   title: z.string().min(1),
@@ -204,18 +251,28 @@ export const updateLessonProgressSchema = z.object({
 
 export const createAssessmentSchema = z.object({
   title: z.string().min(1),
+  kind: z.enum(ASSESSMENT_KINDS).optional(),
+  description: z.string().max(2000).nullable().optional(),
   pass_threshold_percent: z.number().int().min(0).max(100).optional(),
+  // null = unlimited attempts.
+  max_attempts: z.number().int().min(1).max(100).nullable().optional(),
 });
 
 export const updateAssessmentSchema = createAssessmentSchema.partial();
 
 const questionOptionSchema = z.object({ id: z.string().min(1), text: z.string().min(1) });
+const questionOptionsSchema = z
+  .array(questionOptionSchema)
+  .min(2, "A question needs at least 2 options")
+  .max(MAX_QUESTION_OPTIONS, `A question can have at most ${MAX_QUESTION_OPTIONS} options`);
+const questionMarksSchema = z.number().int().min(1).max(100);
 
 export const createQuestionSchema = z
   .object({
     question_text: z.string().min(1),
-    options: z.array(questionOptionSchema).min(2, "A question needs at least 2 options"),
+    options: questionOptionsSchema,
     correct_option_id: z.string().min(1),
+    marks: questionMarksSchema.optional(),
     position: z.number().int().nonnegative().optional(),
   })
   .refine((q) => q.options.some((o) => o.id === q.correct_option_id), {
@@ -230,8 +287,9 @@ export const createQuestionSchema = z
 export const updateQuestionSchema = z
   .object({
     question_text: z.string().min(1).optional(),
-    options: z.array(questionOptionSchema).min(2, "A question needs at least 2 options").optional(),
+    options: questionOptionsSchema.optional(),
     correct_option_id: z.string().min(1).optional(),
+    marks: questionMarksSchema.optional(),
     position: z.number().int().nonnegative().optional(),
   })
   .refine(
@@ -241,7 +299,19 @@ export const updateQuestionSchema = z
       message: "correct_option_id must match one of the options' ids",
       path: ["correct_option_id"],
     },
-  );
+  )
+  .refine((q) => !q.options || new Set(q.options.map((o) => o.id)).size === q.options.length, {
+    message: "option ids must be unique",
+    path: ["options"],
+  });
+
+// CSV bulk import (docs/DECISIONS.md #57): the CSV is parsed into the same
+// per-question shape createQuestionSchema already validates for the
+// single-question form, so one bulk request is just several of those rows
+// re-checked server-side — CLAUDE.md's "never validate only on the client".
+export const bulkCreateQuestionsSchema = z.object({
+  questions: z.array(createQuestionSchema).min(1).max(200),
+});
 
 // Answers are keyed by question id; an unanswered question is simply absent
 // from the map rather than requiring a placeholder value.
@@ -368,35 +438,5 @@ export const setSkillIdsSchema = z.object({
 // arbitrarily large payload into the model call.
 export const askCareerCounsellorSchema = z.object({
   question: z.string().min(1).max(500),
-});
-
-// NFC Attendance Kiosk Schemas (ESP32/PN532 Kiosks)
-export const kioskTapCheckInSchema = z.object({
-  card_uid: z.string().min(4),
-  session_id: z.string().uuid().optional(),
-  tapped_at: z.string().datetime().optional(),
-});
-
-export const kioskBatchSyncSchema = z.object({
-  taps: z
-    .array(
-      z.object({
-        card_uid: z.string().min(4),
-        session_id: z.string().uuid().optional(),
-        tapped_at: z.string().datetime(),
-      }),
-    )
-    .min(1),
-});
-
-export const kioskCardEnrollSchema = z.object({
-  card_uid: z.string().min(4),
-  trainee_id: z.string().uuid(),
-  replace_existing: z.boolean().optional().default(false),
-  notes: z.string().optional(),
-});
-
-export const setKioskSessionSchema = z.object({
-  session_id: z.string().uuid().nullable(),
 });
 

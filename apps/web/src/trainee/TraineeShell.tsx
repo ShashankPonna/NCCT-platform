@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { LocaleToggle, useLocale, type Locale } from "../i18n/LocaleContext.js";
+import { useOnlineStatus } from "../offline/network.js";
 import { supabase } from "../supabaseClient.js";
 
 export type TraineeTab = "home" | "learn" | "attendance" | "career" | "profile";
@@ -20,9 +21,9 @@ interface TraineeShellText {
   lightMode: string;
   darkMode: string;
   highContrast: string;
-  searchPlaceholder: string;
   toggleTheme: string;
-  notifications: string;
+  online: string;
+  offline: string;
   myProfile: string;
   signOut: string;
   trainee: string;
@@ -45,9 +46,6 @@ interface TraineeShellText {
     faqDesc: string;
   };
   footerCopyright: string;
-  footerPrivacy: string;
-  footerTerms: string;
-  footerSupport: string;
 }
 
 const content: Record<Locale, TraineeShellText> = {
@@ -67,9 +65,9 @@ const content: Record<Locale, TraineeShellText> = {
     lightMode: "Switch to Light Mode",
     darkMode: "Switch to Dark Mode",
     highContrast: "High Contrast Toggle",
-    searchPlaceholder: "Search Courses & Modules...",
     toggleTheme: "Toggle Theme",
-    notifications: "Notifications",
+    online: "Online",
+    offline: "Offline — changes will sync later",
     myProfile: "My profile",
     signOut: "Sign Out",
     trainee: "Trainee",
@@ -92,9 +90,6 @@ const content: Record<Locale, TraineeShellText> = {
       faqDesc: "Official guidelines and curriculum chatbot",
     },
     footerCopyright: "2026 EduDisha. All rights reserved.",
-    footerPrivacy: "Privacy Policy",
-    footerTerms: "Terms of Service",
-    footerSupport: "Support",
   },
   hi: {
     nav: {
@@ -112,9 +107,9 @@ const content: Record<Locale, TraineeShellText> = {
     lightMode: "लाइट मोड में बदलें",
     darkMode: "डार्क मोड में बदलें",
     highContrast: "उच्च कंट्रास्ट टॉगल",
-    searchPlaceholder: "पाठ्यक्रम एवं मॉड्यूल खोजें...",
     toggleTheme: "थीम टॉगल करें",
-    notifications: "सूचनाएं",
+    online: "ऑनलाइन",
+    offline: "ऑफ़लाइन — बदलाव बाद में सिंक होंगे",
     myProfile: "मेरी प्रोफ़ाइल",
     signOut: "साइन आउट",
     trainee: "प्रशिक्षणार्थी",
@@ -137,9 +132,6 @@ const content: Record<Locale, TraineeShellText> = {
       faqDesc: "आधिकारिक दिशानिर्देश एवं पाठ्यक्रम चैटबॉट",
     },
     footerCopyright: "2026 EduDisha। सर्वाधिकार सुरक्षित।",
-    footerPrivacy: "गोपनीयता नीति",
-    footerTerms: "सेवा की शर्तें",
-    footerSupport: "सहायता",
   },
 };
 
@@ -147,15 +139,18 @@ interface TraineeShellProps {
   active: TraineeTab;
   onNavigate: (tab: TraineeTab, subView?: string) => void;
   fullName: string | null;
+  // The real notification bell (docs/DECISIONS.md #65), passed in by the
+  // caller since the shell itself has no access token.
+  notificationBell?: React.ReactNode;
   children: React.ReactNode;
 }
 
 // Nav shell for the trainee portal with cohesive light & dark modes, accessibility controls,
 // sticky main header with search & profile, and desktop mega-menu navigation bar with dropdown sub-destinations.
-export function TraineeShell({ active, onNavigate, fullName, children }: TraineeShellProps) {
+export function TraineeShell({ active, onNavigate, fullName, notificationBell, children }: TraineeShellProps) {
   const { locale } = useLocale();
   const t = content[locale];
-  const [searchQuery, setSearchQuery] = useState("");
+  const online = useOnlineStatus();
   const [contrastHigh, setContrastHigh] = useState(false);
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
@@ -178,13 +173,6 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
       localStorage.setItem("ncct-theme", "light");
     }
   }, [isDark]);
-
-  function handleSearchSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      onNavigate("learn", "lessons");
-    }
-  }
 
   function adjustFontSize(delta: number) {
     const root = document.documentElement;
@@ -294,8 +282,8 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
               onClick={() => onNavigate("home")}
               className="flex items-center gap-2 text-left transition-opacity hover:opacity-90 md:gap-3"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-container text-on-primary shadow-xs md:h-10 md:w-10">
-                <span className="material-symbols-outlined text-[20px] md:text-[22px]">school</span>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-white shadow-xs md:h-10 md:w-10">
+                <span className="material-symbols-outlined text-[20px] md:text-[22px]">account_balance</span>
               </div>
               <div className="flex flex-col">
                 <span className="font-headline text-headline-sm font-bold leading-tight text-on-surface">
@@ -308,46 +296,33 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
             </button>
           </div>
 
-          {/* Search Bar (Desktop) */}
-          <form onSubmit={handleSearchSubmit} className="relative group mx-auto hidden max-w-md flex-1 lg:block">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-outline transition-colors group-focus-within:text-interactive">
-              search
-            </span>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t.searchPlaceholder}
-              className="h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest pl-9 pr-4 text-sm text-on-surface transition-all outline-none focus:border-interactive focus:ring-1 focus:ring-interactive placeholder:text-on-surface-variant/60"
-            />
-          </form>
-
-          {/* Actions & Profile — sizes trimmed below md:, see
-              ManagementShell.tsx's identical comment. */}
+          {/* Actions & Profile */}
           <div className="flex shrink-0 items-center gap-1 md:gap-3">
+            {/* Real connectivity (the same signal the offline write-queue uses),
+                not a permanently "Online" label. */}
+            <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-lowest text-on-surface shadow-xs border border-border-slate">
+              <span className={`w-2 h-2 rounded-full ${online ? "bg-accent" : "bg-status-pending"}`}></span>
+              <span className="font-metric-mono text-xs text-on-surface-variant">{online ? t.online : t.offline}</span>
+            </div>
+
             <button
               type="button"
               onClick={toggleTheme}
               title={isDark ? t.lightMode : t.darkMode}
               aria-label={t.toggleTheme}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container md:h-9 md:w-9"
+              className="hidden h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container md:flex md:h-9 md:w-9"
             >
               <span className="material-symbols-outlined text-[18px] md:text-[20px]">
                 {isDark ? "light_mode" : "dark_mode"}
               </span>
             </button>
 
-            {/* Hidden below md: — see ManagementShell.tsx's identical
-                comment: still overflowed after every other trim, and this
-                isn't wired to a real notification system yet. */}
-            <button
-              type="button"
-              aria-label={t.notifications}
-              className="relative hidden h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container md:flex md:h-9 md:w-9"
-            >
-              <span className="material-symbols-outlined text-[18px] md:text-[20px]">notifications</span>
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-cta" />
-            </button>
+            {/* Real notifications (docs/DECISIONS.md #65) — shown at every
+                width, since trainees are mostly on phones. To keep the
+                375px header from overflowing, the theme toggle just above
+                is hidden below md: instead; the accessibility strip at the
+                top of the page has its own theme toggle at every width. */}
+            {notificationBell}
 
             <button
               type="button"
@@ -399,7 +374,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
               onClick={() => onNavigate("home")}
               className={`relative flex h-11 items-center gap-1.5 text-label-md font-semibold transition-colors ${
                 active === "home"
-                  ? "text-interactive after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-interactive"
+                  ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-secondary"
                   : "text-on-surface-variant hover:text-on-surface"
               }`}
             >
@@ -414,7 +389,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                 onClick={() => onNavigate("learn")}
                 className={`flex h-full items-center gap-1.5 text-label-md font-semibold transition-colors ${
                   active === "learn"
-                    ? "relative text-interactive after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-interactive"
+                    ? "relative text-primary font-bold after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-secondary"
                     : "text-on-surface-variant hover:text-on-surface"
                 }`}
               >
@@ -481,7 +456,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
               onClick={() => onNavigate("attendance")}
               className={`relative flex h-11 items-center gap-1.5 text-label-md font-semibold transition-colors ${
                 active === "attendance"
-                  ? "text-interactive after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-interactive"
+                  ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-secondary"
                   : "text-on-surface-variant hover:text-on-surface"
               }`}
             >
@@ -496,7 +471,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
                 onClick={() => onNavigate("career")}
                 className={`flex h-full items-center gap-1.5 text-label-md font-semibold transition-colors ${
                   active === "career"
-                    ? "relative text-interactive after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-interactive"
+                    ? "relative text-primary font-bold after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-secondary"
                     : "text-on-surface-variant hover:text-on-surface"
                 }`}
               >
@@ -589,17 +564,6 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
           <div className="flex items-center gap-2 text-on-surface-variant">
             <span className="material-symbols-outlined text-sm">copyright</span>
             <span className="text-label-sm">{t.footerCopyright}</span>
-          </div>
-          <div className="flex gap-6 text-label-sm text-interactive">
-            <a href="#" className="hover:underline">
-              {t.footerPrivacy}
-            </a>
-            <a href="#" className="hover:underline">
-              {t.footerTerms}
-            </a>
-            <a href="#" className="hover:underline">
-              {t.footerSupport}
-            </a>
           </div>
         </div>
       </footer>

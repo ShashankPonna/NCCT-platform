@@ -1,11 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { issueCertificateForPassingAttempt } from "./certificateService.js";
+import {
+  checkAndIssueCourseCertificate,
+  checkAndIssueCourseCertificateForAssessment,
+  checkAndIssueCourseCertificateForLesson,
+  renderCertificatePdf,
+  rerenderCertificate,
+} from "./certificateService.js";
 
+// Every .from(table) call consumes the next queued result for that table,
+// in the exact order the code under test issues its queries — mirrors real
+// supabase-js in one important way this test relies on: a filter chain
+// (.eq()/.in()/.not()/.order()) is itself awaitable without a trailing
+// .single()/.maybeSingle(), same as the real PostgrestFilterBuilder.
 const { fromMock, uploadMock, storageMock, singleResults } = vi.hoisted(() => {
-  // Each call to supabaseAdmin.from(table)... .single() resolves with the
-  // next entry queued for that table — lets each test set up the exact
-  // chain of lookups issueCertificateForPassingAttempt makes (assessment →
-  // module → course → programme → institution → profile) independently.
   const singleResults: Record<string, { data: unknown; error: unknown }[]> = {};
 
   function nextResult(table: string) {
@@ -14,11 +21,16 @@ const { fromMock, uploadMock, storageMock, singleResults } = vi.hoisted(() => {
   }
 
   function createTableMock(table: string) {
-    const builder: Record<string, ReturnType<typeof vi.fn>> = {};
-    for (const method of ["select", "insert", "eq"]) {
+    const builder: Record<string, unknown> = {};
+    for (const method of ["select", "insert", "update", "eq", "in", "not", "order"]) {
       builder[method] = vi.fn(() => builder);
     }
     builder.single = vi.fn(() => Promise.resolve(nextResult(table)));
+    builder.maybeSingle = vi.fn(() => Promise.resolve(nextResult(table)));
+    // Makes the builder itself awaitable for chains with no trailing
+    // .single()/.maybeSingle() (e.g. `.select("id").in("module_id", ids)`).
+    builder.then = (resolve: (v: unknown) => void, reject: (e: unknown) => void) =>
+      Promise.resolve(nextResult(table)).then(resolve, reject);
     return builder;
   }
 
@@ -47,66 +59,418 @@ vi.mock("./supabaseClient.js", () => ({
   getSupabaseForUser: () => ({ from: fromMock }),
 }));
 
+// Notification fan-out is a fire-and-forget side effect (docs/DECISIONS.md
+// #65) — mocked so it can't touch this file's table mocks, and so tests can
+// assert the right trigger fires.
+const notificationMocks = vi.hoisted(() => ({
+  notify: vi.fn(() => Promise.resolve()),
+  notifyNominationDecided: vi.fn(() => Promise.resolve()),
+  notifyNominationSubmitted: vi.fn(() => Promise.resolve()),
+  notifyLessonPublished: vi.fn(() => Promise.resolve()),
+  notifyAssessmentAvailable: vi.fn(() => Promise.resolve()),
+  notifySessionScheduled: vi.fn(() => Promise.resolve()),
+  notifyHostelAssigned: vi.fn(() => Promise.resolve()),
+  notifyJobShortlisted: vi.fn(() => Promise.resolve()),
+  notifyJobInterestUpdated: vi.fn(() => Promise.resolve()),
+  notifyTrainerAssigned: vi.fn(() => Promise.resolve()),
+}));
+vi.mock("./notificationService.js", () => notificationMocks);
+
 function queue(table: string, data: unknown) {
   (singleResults[table] ??= []).push({ data, error: null });
 }
 
 beforeEach(() => {
+  for (const fn of Object.values(notificationMocks)) fn.mockClear();
   fromMock.mockClear();
   uploadMock.mockClear();
   for (const key of Object.keys(singleResults)) delete singleResults[key];
 });
 
-describe("issueCertificateForPassingAttempt", () => {
-  it("derives programme/institution via the assessment→module→course→programme chain and inserts a certificate", async () => {
-    queue("assessments", { module_id: "mod-1", title: "Quiz 1" });
-    queue("modules", { course_id: "course-1" });
-    queue("courses", { programme_id: "prog-1" });
-    queue("programmes", { title: "Cooperative Management Basics", institution_id: "inst-1" });
-    queue("institutions", { name: "VAMNICOM" });
-    queue("profiles", { full_name: "Asha Patil" });
-    queue("certificates", {
-      id: "cert-1",
-      certificate_code: "NCCT-XXXXXXXX",
-      assessment_attempt_id: "attempt-1",
-      trainee_id: "trainee-1",
-      programme_id: "prog-1",
-      issuing_institution_id: "inst-1",
-      pdf_storage_path: "NCCT-XXXXXXXX.pdf",
-    });
+// Queues the chain issueCertificateForCourse walks once completion is
+// detected: courses → programmes → institutions → profiles, then the
+// certificates insert.
+function queueIssuanceLookups() {
+  queue("courses", { title: "Intro to Cooperative Banking", programme_id: "prog-1" });
+  queue("programmes", { title: "Cooperative Management Basics", institution_id: "inst-1" });
+  queue("institutions", { name: "VAMNICOM" });
+  queue("profiles", { full_name: "Asha Patil" });
+  queue("certificates", {
+    id: "cert-1",
+    certificate_code: "NCCT-XXXXXXXX",
+    course_id: "course-1",
+    trainee_id: "trainee-1",
+    programme_id: "prog-1",
+    issuing_institution_id: "inst-1",
+    pdf_storage_path: "NCCT-XXXXXXXX.pdf",
+  });
+}
 
-    const certificate = await issueCertificateForPassingAttempt({
-      attemptId: "attempt-1",
-      assessmentId: "assess-1",
+// Queues what loadCourseStructure reads, in order: the course, its modules,
+// then lessons and assessments (the latter with each question's marks).
+function queueStructure({
+  modules = [{ id: "mod-1", title: "Module 1" }],
+  lessons = [],
+  assessments = [],
+}: {
+  modules?: { id: string; title: string }[];
+  lessons?: { id: string }[];
+  assessments?: {
+    id: string;
+    module_id?: string;
+    kind?: "quiz" | "module_test";
+    pass_threshold_percent?: number;
+    marks?: number[];
+  }[];
+}) {
+  queue("courses", { title: "Intro to Cooperative Banking", programme_id: "prog-1" });
+  queue("modules", modules);
+  if (modules.length === 0) return;
+  queue("lessons", lessons);
+  queue(
+    "assessments",
+    assessments.map((a) => ({
+      id: a.id,
+      module_id: a.module_id ?? "mod-1",
+      title: a.id,
+      kind: a.kind ?? "module_test",
+      pass_threshold_percent: a.pass_threshold_percent ?? 60,
+      max_attempts: null,
+      assessment_questions: (a.marks ?? [1]).map((marks) => ({ marks })),
+    })),
+  );
+}
+
+function attempt(
+  id: string,
+  assessmentId: string,
+  scorePercent: number,
+  marksObtained: number,
+  totalMarks: number,
+  submittedAt: string,
+) {
+  return {
+    id,
+    assessment_id: assessmentId,
+    trainee_id: "trainee-1",
+    score_percent: scorePercent,
+    passed: scorePercent >= 60,
+    marks_obtained: marksObtained,
+    total_marks: totalMarks,
+    submitted_at: submittedAt,
+  };
+}
+
+function insertedCertificate() {
+  const builder = fromMock("certificates") as unknown as { insert: ReturnType<typeof vi.fn> };
+  return builder.insert.mock.calls.at(-1)?.[0] as Record<string, unknown> | undefined;
+}
+
+describe("checkAndIssueCourseCertificate", () => {
+  it("is a no-op if this trainee is already certified for the course", async () => {
+    queue("certificates", { id: "existing-cert" }); // existence check finds one
+
+    const result = await checkAndIssueCourseCertificate({
       traineeId: "trainee-1",
+      courseId: "course-1",
     });
 
-    expect(certificate).toMatchObject({ id: "cert-1", programme_id: "prog-1" });
-    // A real PDF was actually rendered and handed to Storage — not mocked
-    // away — so this also catches a pdfkit/qrcode wiring mistake.
+    expect(result).toBeNull();
+    expect(uploadMock).not.toHaveBeenCalled();
+    // Only the existence check should have run — nothing else looked up.
+    expect(fromMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("is a no-op if the course has no modules at all", async () => {
+    queue("certificates", null);
+    queueStructure({ modules: [] });
+
+    const result = await checkAndIssueCourseCertificate({
+      traineeId: "trainee-1",
+      courseId: "course-1",
+    });
+
+    expect(result).toBeNull();
+    expect(uploadMock).not.toHaveBeenCalled();
+  });
+
+  it("never certifies a course whose only content is a practice quiz", async () => {
+    queue("certificates", null);
+    queueStructure({ assessments: [{ id: "quiz-1", kind: "quiz" }] });
+
+    const result = await checkAndIssueCourseCertificate({
+      traineeId: "trainee-1",
+      courseId: "course-1",
+    });
+
+    expect(result).toBeNull();
+    expect(uploadMock).not.toHaveBeenCalled();
+  });
+
+  it("does not issue a certificate while some lessons are still incomplete", async () => {
+    queue("certificates", null);
+    queueStructure({ lessons: [{ id: "lesson-1" }, { id: "lesson-2" }] });
+    queue("lesson_progress", [{ lesson_id: "lesson-1" }]); // only 1 of 2 lessons done
+
+    const result = await checkAndIssueCourseCertificate({
+      traineeId: "trainee-1",
+      courseId: "course-1",
+    });
+
+    expect(result).toBeNull();
+    expect(uploadMock).not.toHaveBeenCalled();
+  });
+
+  it("issues a certificate with no marks once every lesson is complete on a course with no module tests", async () => {
+    queue("certificates", null);
+    queueStructure({ lessons: [{ id: "lesson-1" }, { id: "lesson-2" }] });
+    queue("lesson_progress", [{ lesson_id: "lesson-1" }, { lesson_id: "lesson-2" }]);
+    queueIssuanceLookups();
+
+    const result = await checkAndIssueCourseCertificate({
+      traineeId: "trainee-1",
+      courseId: "course-1",
+    });
+
+    expect(result).toMatchObject({ id: "cert-1", course_id: "course-1" });
     expect(uploadMock).toHaveBeenCalledTimes(1);
     const [path, buffer, options] = uploadMock.mock.calls[0];
     expect(path).toMatch(/^NCCT-[A-Z0-9]{8}\.pdf$/);
     expect(Buffer.isBuffer(buffer)).toBe(true);
+    // A real PDF was actually rendered, not mocked away.
     expect(buffer.length).toBeGreaterThan(100);
     expect(options).toMatchObject({ contentType: "application/pdf" });
+    expect(insertedCertificate()).toMatchObject({
+      assessment_attempt_id: null,
+      marks_obtained: null,
+      total_marks: null,
+      score_percent: null,
+    });
+    expect(notificationMocks.notify).toHaveBeenCalledWith(
+      ["trainee-1"],
+      "certificate_issued",
+      expect.objectContaining({
+        programme_id: "prog-1",
+        certificate_code: expect.stringMatching(/^NCCT-/),
+      }),
+    );
+  }, 15000);
+
+  it("does not issue a certificate if lessons are done but a module test hasn't been passed", async () => {
+    queue("certificates", null);
+    queueStructure({
+      lessons: [{ id: "lesson-1" }],
+      assessments: [{ id: "assess-1" }, { id: "assess-2" }],
+    });
+    queue("lesson_progress", [{ lesson_id: "lesson-1" }]);
+    queue("assessment_attempts", [attempt("attempt-1", "assess-1", 100, 1, 1, "2026-01-01")]);
+
+    const result = await checkAndIssueCourseCertificate({
+      traineeId: "trainee-1",
+      courseId: "course-1",
+    });
+
+    expect(result).toBeNull();
+    expect(uploadMock).not.toHaveBeenCalled();
+  });
+
+  it("issues a certificate carrying the best-attempt marks of every module test, ignoring practice quizzes", async () => {
+    queue("certificates", null);
+    queueStructure({
+      modules: [
+        { id: "mod-1", title: "Module 1" },
+        { id: "mod-2", title: "Module 2" },
+      ],
+      lessons: [{ id: "lesson-1" }, { id: "lesson-2" }],
+      assessments: [
+        { id: "assess-1", module_id: "mod-1", marks: [5, 5] },
+        { id: "quiz-1", module_id: "mod-1", kind: "quiz" },
+        { id: "assess-2", module_id: "mod-2", marks: [10, 10, 10] },
+      ],
+    });
+    queue("lesson_progress", [{ lesson_id: "lesson-1" }, { lesson_id: "lesson-2" }]);
+    queue("assessment_attempts", [
+      attempt("a1-fail", "assess-1", 50, 5, 10, "2026-01-01"),
+      attempt("a1-pass", "assess-1", 100, 10, 10, "2026-01-02"),
+      attempt("a2-pass", "assess-2", 67, 20, 30, "2026-01-03"),
+    ]);
+    queueIssuanceLookups();
+
+    const result = await checkAndIssueCourseCertificate({
+      traineeId: "trainee-1",
+      courseId: "course-1",
+    });
+
+    expect(result).toMatchObject({ id: "cert-1" });
+    expect(uploadMock).toHaveBeenCalledTimes(1);
+    // 10/10 + 20/30 = 30/40; the unattempted practice quiz is irrelevant.
+    expect(insertedCertificate()).toMatchObject({
+      assessment_attempt_id: "a2-pass",
+      marks_obtained: 30,
+      total_marks: 40,
+      score_percent: 75,
+    });
   }, 15000);
 
   it("propagates a Storage upload failure instead of inserting a certificate row", async () => {
-    queue("assessments", { module_id: "mod-1", title: "Quiz 1" });
-    queue("modules", { course_id: "course-1" });
-    queue("courses", { programme_id: "prog-1" });
+    queue("certificates", null);
+    queueStructure({ lessons: [{ id: "lesson-1" }] });
+    queue("lesson_progress", [{ lesson_id: "lesson-1" }]);
+    queue("courses", { title: "Intro to Cooperative Banking", programme_id: "prog-1" });
     queue("programmes", { title: "Programme", institution_id: "inst-1" });
     queue("institutions", { name: "Institution" });
     queue("profiles", { full_name: "Trainee" });
     uploadMock.mockResolvedValueOnce({ data: null, error: { message: "bucket not found" } });
 
     await expect(
-      issueCertificateForPassingAttempt({
-        attemptId: "attempt-1",
-        assessmentId: "assess-1",
-        traineeId: "trainee-1",
-      }),
+      checkAndIssueCourseCertificate({ traineeId: "trainee-1", courseId: "course-1" }),
     ).rejects.toThrow("bucket not found");
+    expect(notificationMocks.notify).not.toHaveBeenCalled();
   }, 15000);
+});
+
+describe("checkAndIssueCourseCertificateForLesson", () => {
+  it("resolves the lesson's course and delegates to checkAndIssueCourseCertificate", async () => {
+    queue("lessons", { module_id: "mod-1" });
+    queue("modules", { course_id: "course-1" });
+    queue("certificates", { id: "existing-cert" }); // already certified — short-circuits cleanly
+
+    const result = await checkAndIssueCourseCertificateForLesson({
+      traineeId: "trainee-1",
+      lessonId: "lesson-1",
+    });
+
+    expect(result).toBeNull();
+  });
+});
+
+describe("checkAndIssueCourseCertificateForAssessment", () => {
+  it("resolves the assessment's course and delegates to checkAndIssueCourseCertificate", async () => {
+    queue("assessments", { module_id: "mod-1" });
+    queue("modules", { course_id: "course-1" });
+    queue("certificates", { id: "existing-cert" }); // already certified — short-circuits cleanly
+
+    const result = await checkAndIssueCourseCertificateForAssessment({
+      traineeId: "trainee-1",
+      assessmentId: "assess-1",
+    });
+
+    expect(result).toBeNull();
+  });
+});
+
+// A PDF's page objects and embedded font names sit in uncompressed
+// dictionaries, so they can be checked straight off the bytes.
+function pdfFacts(pdf: Buffer) {
+  const raw = pdf.toString("latin1");
+  return {
+    header: raw.slice(0, 5),
+    pages: (raw.match(/\/Type \/Page\b/g) ?? []).length,
+    fonts: [...raw.matchAll(/\/BaseFont \/[A-Z]{6}\+([A-Za-z-]+)/g)].map((m) => m[1]),
+  };
+}
+
+const RENDER_BASE = {
+  institutionName: "VAMNICOM, Pune",
+  certificateCode: "NCCT-YVUPNFME",
+  issuedAt: new Date("2026-09-25T10:00:00Z"),
+  // A 1×1 PNG — the QR's pixels don't matter to layout.
+  qrPng: Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+    "base64",
+  ),
+  verificationUrl: "https://ncct-platform-1.onrender.com/?verify=NCCT-YVUPNFME",
+};
+
+describe("renderCertificatePdf (DECISIONS.md #69 design)", () => {
+  it("renders the graded variant as one A4 page with every design font embedded", async () => {
+    const pdf = await renderCertificatePdf({
+      ...RENDER_BASE,
+      traineeName: "Asha Patil",
+      courseTitle: "Financial Management for Cooperatives",
+      programmeTitle: "Cooperative Management Basics",
+      marks: { marksObtained: 30, totalMarks: 40, scorePercent: 75 },
+    });
+    const facts = pdfFacts(pdf);
+    expect(facts.header).toBe("%PDF-");
+    expect(facts.pages).toBe(1);
+    for (const font of [
+      "Cinzel",
+      "PlayfairDisplay",
+      "Roboto",
+      "JetBrainsMono",
+      "NotoSansDevanagari",
+    ]) {
+      expect(facts.fonts.some((name) => name.startsWith(font))).toBe(true);
+    }
+  }, 15000);
+
+  it("keeps the ungraded variant and very long names/titles on a single page", async () => {
+    const pdf = await renderCertificatePdf({
+      ...RENDER_BASE,
+      institutionName:
+        "Regional Institute of Cooperative Management, Bengaluru — Southern Regional Campus",
+      traineeName: "Venkata Subramanya Lakshminarayana Chakravarthy Ramaswamy Iyengar",
+      courseTitle:
+        "Advanced Dairy Cooperative Operations and Supply Chain Management for Rural Producer Organisations and Federations",
+      programmeTitle: "Advanced Dairy Cooperative Operations and Value Chain Development",
+      marks: null,
+    });
+    expect(pdfFacts(pdf).pages).toBe(1);
+  }, 15000);
+});
+
+describe("rerenderCertificate", () => {
+  function queueRerenderLookups(marks: {
+    marks_obtained: number | null;
+    total_marks: number | null;
+    score_percent: number | null;
+  }) {
+    queue("certificates", {
+      certificate_code: "NCCT-ABCDEFGH",
+      issued_at: "2026-09-25T10:00:00Z",
+      pdf_storage_path: "NCCT-ABCDEFGH.pdf",
+      trainee_id: "trainee-1",
+      course_id: "course-1",
+      programme_id: "prog-1",
+      issuing_institution_id: "inst-1",
+      ...marks,
+    });
+    queue("profiles", { full_name: "Asha Patil" });
+    queue("courses", { title: "Financial Management for Cooperatives" });
+    queue("programmes", { title: "Cooperative Management Basics" });
+    queue("institutions", { name: "VAMNICOM, Pune" });
+  }
+
+  it("uploads the new design to a fresh versioned path and repoints the row, leaving the old file", async () => {
+    queueRerenderLookups({ marks_obtained: 30, total_marks: 40, score_percent: 75 });
+
+    const result = await rerenderCertificate("cert-1");
+
+    expect(result.oldPath).toBe("NCCT-ABCDEFGH.pdf");
+    expect(result.newPath).toMatch(/^NCCT-ABCDEFGH-[a-z0-9]+\.pdf$/);
+    expect(uploadMock).toHaveBeenCalledTimes(1);
+    const [path, buffer, options] = uploadMock.mock.calls[0];
+    expect(path).toBe(result.newPath);
+    expect(pdfFacts(buffer).pages).toBe(1);
+    // Never overwrites — the previous PDF stays as a backup.
+    expect(options).toMatchObject({ contentType: "application/pdf", upsert: false });
+    const builder = fromMock.mock.results.find(
+      (r) => r.value && (r.value as { update: unknown }).update,
+    )!.value as { update: ReturnType<typeof vi.fn> };
+    expect(builder.update).toHaveBeenCalledWith({ pdf_storage_path: result.newPath });
+  }, 15000);
+
+  it("re-renders a certificate that has no marks (lesson-only course)", async () => {
+    queueRerenderLookups({ marks_obtained: null, total_marks: null, score_percent: null });
+    const result = await rerenderCertificate("cert-2");
+    expect(result.newPath).toMatch(/^NCCT-ABCDEFGH-/);
+    expect(uploadMock).toHaveBeenCalledTimes(1);
+  }, 15000);
+
+  it("throws, without uploading, when the certificate doesn't exist", async () => {
+    (singleResults.certificates ??= []).push({ data: null, error: { message: "no rows" } });
+    await expect(rerenderCertificate("missing")).rejects.toThrow("no rows");
+    expect(uploadMock).not.toHaveBeenCalled();
+  });
 });

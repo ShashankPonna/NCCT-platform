@@ -32,6 +32,12 @@ vi.mock("../supabaseClient.js", () => ({
   getSupabaseForUser: () => ({ from: fromMock }),
 }));
 
+const checkCertificateMock = vi.hoisted(() => vi.fn());
+
+vi.mock("../certificateService.js", () => ({
+  checkAndIssueCourseCertificateForLesson: checkCertificateMock,
+}));
+
 function buildApp() {
   const app = express();
   app.use(express.json());
@@ -47,6 +53,8 @@ function authenticateAs(userId: string, role: string) {
 
 beforeEach(() => {
   getUserMock.mockReset();
+  checkCertificateMock.mockReset();
+  checkCertificateMock.mockResolvedValue(null);
   profilesMock.result.data = null;
   profilesMock.result.error = null;
   progressMock.result.data = null;
@@ -123,7 +131,7 @@ describe("PATCH /api/lessons/:id/progress", () => {
     expect(res.status).toBe(400);
   });
 
-  it("upserts progress for the caller's own row", async () => {
+  it("upserts progress for the caller's own row, and checks course completion when completed_at is set", async () => {
     authenticateAs("trainee-1", "trainee");
     progressMock.result.data = {
       id: "prog-1",
@@ -140,5 +148,47 @@ describe("PATCH /api/lessons/:id/progress", () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ progress_percent: 100, trainee_id: "trainee-1" });
+    expect(checkCertificateMock).toHaveBeenCalledWith({
+      traineeId: "trainee-1",
+      lessonId: "lesson-1",
+    });
+  });
+
+  it("does not check course completion for a plain progress update with no completed_at", async () => {
+    authenticateAs("trainee-1", "trainee");
+    progressMock.result.data = {
+      id: "prog-1",
+      trainee_id: "trainee-1",
+      lesson_id: "lesson-1",
+      progress_percent: 40,
+    };
+
+    const res = await request(buildApp())
+      .patch("/api/lessons/lesson-1/progress")
+      .set("Authorization", "Bearer token")
+      .send({ progress_percent: 40 });
+
+    expect(res.status).toBe(200);
+    expect(checkCertificateMock).not.toHaveBeenCalled();
+  });
+
+  it("still returns 200 with the saved progress if the certificate check throws", async () => {
+    authenticateAs("trainee-1", "trainee");
+    progressMock.result.data = {
+      id: "prog-1",
+      trainee_id: "trainee-1",
+      lesson_id: "lesson-1",
+      progress_percent: 100,
+      completed_at: "2026-09-01T00:00:00.000Z",
+    };
+    checkCertificateMock.mockRejectedValue(new Error("Storage upload failed"));
+
+    const res = await request(buildApp())
+      .patch("/api/lessons/lesson-1/progress")
+      .set("Authorization", "Bearer token")
+      .send({ progress_percent: 100, completed_at: "2026-09-01T00:00:00.000Z" });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ progress_percent: 100 });
   });
 });

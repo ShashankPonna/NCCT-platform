@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>COOP-NET Admin Portal — Sahakar Utkarsh</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface-container-lowest":"#ffffff","primary":"#001026","on-tertiary-fixed-variant":"#005323","surface-bright":"#faf8ff","outline-variant":"#c4c6cf","surface-tint":"#495f82","on-error":"#ffffff","on-secondary-fixed-variant":"#6e3900","on-secondary":"#ffffff","on-primary-fixed":"#001c3b","on-primary-container":"#778db2","on-error-container":"#93000a","primary-container":"#0b2545","primary-fixed-dim":"#b1c7f0","background":"#faf8ff","inverse-primary":"#b1c7f0","surface-container":"#eaedff","error":"#ba1a1a","on-tertiary-container":"#3c9e57","tertiary-fixed-dim":"#79db8d","on-tertiary":"#ffffff","surface-container-highest":"#dae2fd","error-container":"#ffdad6","tertiary":"#001404","inverse-surface":"#283044","tertiary-container":"#002c0f","on-secondary-container":"#663500","tertiary-fixed":"#95f8a7","surface-container-low":"#f2f3ff","surface":"#faf8ff","secondary-fixed":"#ffdcc3","secondary":"#904d00","secondary-fixed-dim":"#ffb77d","on-surface-variant":"#44474e","primary-fixed":"#d5e3ff","inverse-on-surface":"#eef0ff","on-primary-fixed-variant":"#314769","surface-variant":"#dae2fd","surface-dim":"#d2d9f4","on-surface":"#131b2e","on-background":"#131b2e","on-primary":"#ffffff","outline":"#74777f","on-tertiary-fixed":"#00210a","surface-container-high":"#e2e7ff","on-secondary-fixed":"#2f1500","secondary-container":"#fe932c"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"space-md":"1rem","gutter-desktop":"1.5rem","space-lg":"1.5rem","space-xs":"0.25rem","margin-desktop":"2rem","space-xl":"2rem","space-sm":"0.5rem","gutter":"1rem","margin":"1rem","space-2xl":"3rem"},fontFamily:{"headline-md":["Public Sans"],"label-sm":["Public Sans"],"tabular-data":["Public Sans"],"label-md":["Public Sans"],"display-hero-mobile":["Public Sans"],"headline-lg-mobile":["Public Sans"],"headline-sm":["Public Sans"],"display-hero":["Public Sans"],"headline-lg":["Public Sans"],"label-lg":["Public Sans"],"body-sm":["Public Sans"],"body-lg":["Public Sans"],"body-md":["Public Sans"]},fontSize:{"headline-md":["1.375rem",{"lineHeight":"1.75rem","letterSpacing":"0em","fontWeight":"700"}],"label-sm":["0.75rem",{"lineHeight":"1rem","letterSpacing":"0.05em","fontWeight":"700"}],"tabular-data":["1rem",{"lineHeight":"1.5rem","letterSpacing":"0.02em","fontWeight":"600"}],"label-md":["0.875rem",{"lineHeight":"1.125rem","letterSpacing":"0.03em","fontWeight":"600"}],"display-hero-mobile":["2rem",{"lineHeight":"2.5rem","letterSpacing":"-0.01em","fontWeight":"800"}],"headline-lg-mobile":["1.5rem",{"lineHeight":"2rem","letterSpacing":"0em","fontWeight":"700"}],"headline-sm":["1.125rem",{"lineHeight":"1.5rem","letterSpacing":"0em","fontWeight":"700"}],"display-hero":["3rem",{"lineHeight":"3.5rem","letterSpacing":"-0.02em","fontWeight":"800"}],"headline-lg":["2rem",{"lineHeight":"2.5rem","letterSpacing":"-0.01em","fontWeight":"700"}],"label-lg":["1rem",{"lineHeight":"1.25rem","letterSpacing":"0.02em","fontWeight":"700"}],"body-sm":["0.875rem",{"lineHeight":"1.25rem","letterSpacing":"0.01em","fontWeight":"500"}],"body-lg":["1.125rem",{"lineHeight":"1.75rem","letterSpacing":"0em","fontWeight":"400"}],"body-md":["1rem",{"lineHeight":"1.5rem","letterSpacing":"0em","fontWeight":"400"}]}}}};</script></head><body class="bg-background font-body-md text-on-surface antialiased min-h-screen"><header class="fixed top-0 left-0 right-0 z-50 bg-primary-container text-on-primary shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-28 w-full px-gutter-desktop flex flex-col justify-between pt-space-xs"><div class="flex items-center justify-between gap-space-lg h-14"><div class="flex items-center gap-space-md min-w-max"><div class="w-9 h-9 bg-secondary-container flex items-center justify-center rounded text-primary font-bold"><span class="material-symbols-outlined text-[24px]">account_balance</span></div><div class="flex flex-col"><span class="font-label-lg text-label-lg uppercase text-on-primary tracking-wide leading-none">COOP-NET</span><span class="font-label-sm text-label-sm text-on-primary-container leading-none mt-1">NCCT Admin Portal — Sahakar Utkarsh</span></div></div><div class="flex-1 max-w-xl hidden lg:block"><div class="relative flex items-center w-full"><span class="material-symbols-outlined absolute left-space-md text-on-primary-container pointer-events-none text-[20px]">search</span><input class="w-full h-10 pl-10 pr-16 bg-primary text-on-primary placeholder-on-primary-container font-body-sm text-body-sm rounded outline-none focus:bg-primary/90 focus:ring-2 focus:ring-secondary-container" placeholder="Search institutes, candidates, programmes, kiosks..." type="text"/><div class="absolute right-space-sm flex items-center gap-1 bg-primary-container px-2 py-0.5 rounded text-on-primary-container font-label-sm text-label-sm pointer-events-none"><span class="text-[10px]">⌘</span><span>K</span></div></div></div><div class="flex items-center gap-space-md"><button aria-label="Notifications" class="relative w-10 h-10 flex items-center justify-center rounded text-on-primary hover:bg-primary hover:text-on-primary transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2 right-2 w-2.5 h-2.5 bg-secondary-container rounded-full"></span></button><button aria-label="System Settings" class="w-10 h-10 flex items-center justify-center rounded text-on-primary hover:bg-primary hover:text-on-primary transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">settings</span></button><div class="h-8 w-px bg-primary hidden md:block mx-1"></div><div class="flex items-center gap-space-sm pl-1"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="hidden xl:flex flex-col text-left"><span class="font-label-md text-label-md text-on-primary leading-tight">A. K. Sharma</span><span class="font-label-sm text-label-sm text-on-primary-container leading-tight">NCCT Super Admin</span></div></div></div></div><nav class="flex items-center gap-1 overflow-x-auto h-12 scrollbar-none" data-active-classes="bg-secondary-container text-primary font-label-md"><a class="px-space-md py-2 rounded font-label-md text-label-md text-on-primary-container hover:text-on-primary hover:bg-primary whitespace-nowrap transition-colors" data-path="overview" href="#">Overview</a><a class="px-space-md py-2 rounded font-label-md text-label-md text-on-primary-container hover:text-on-primary hover:bg-primary whitespace-nowrap transition-colors" data-path="users-institutions" href="#">Users &amp; Institutions</a><a class="px-space-md py-2 rounded font-label-md text-label-md text-on-primary-container hover:text-on-primary hover:bg-primary whitespace-nowrap transition-colors" data-path="programmes" href="#">Programmes</a><a class="px-space-md py-2 rounded font-label-md text-label-md text-on-primary-container hover:text-on-primary hover:bg-primary whitespace-nowrap transition-colors" data-path="nominations" href="#">Nominations</a><a class="px-space-md py-2 rounded font-label-md text-label-md text-on-primary-container hover:text-on-primary hover:bg-primary whitespace-nowrap transition-colors" data-path="nfc-kiosk" href="#">NFC Kiosk</a><a class="px-space-md py-2 rounded font-label-md text-label-md text-on-primary-container hover:text-on-primary hover:bg-primary whitespace-nowrap transition-colors" data-path="kiosk-terminal" href="#">Kiosk Terminal</a><a class="px-space-md py-2 rounded font-label-md text-label-md text-on-primary-container hover:text-on-primary hover:bg-primary whitespace-nowrap transition-colors" data-path="timetable" href="#">Timetable</a><a class="px-space-md py-2 rounded font-label-md text-label-md text-on-primary-container hover:text-on-primary hover:bg-primary whitespace-nowrap transition-colors" data-path="analytics" href="#">Analytics</a><a class="px-space-md py-2 rounded font-label-md text-label-md text-on-primary-container hover:text-on-primary hover:bg-primary whitespace-nowrap transition-colors" data-path="settings" href="#">Settings</a></nav></div></header><main class="w-full pt-28 bg-background min-h-[calc(100vh-4rem)]"><div class="flex flex-col w-full">
+<div class="w-full px-gutter-desktop py-space-xl flex flex-col gap-space-xl max-w-[1600px] mx-auto">
+<!-- TOP SECTION HEADER -->
+<section class="flex flex-col gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-2">
+<span class="inline-block w-2.5 h-2.5 bg-secondary-container"></span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary">Administration • Access &amp; Entity Registry</span>
+</div>
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-space-md">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Users &amp; Institutions Management</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-4xl mt-1">
+              Provision user accounts across NCCT institutes, govern cooperative employer partnerships, and configure regional training centers.
+            </p>
+</div>
+<div class="flex flex-wrap items-center gap-space-sm self-start lg:self-auto">
+<div class="bg-surface-container px-3.5 py-2 rounded flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Active Users:</span>
+<span class="font-tabular-data text-tabular-data text-primary">1,842</span>
+</div>
+<div class="bg-surface-container px-3.5 py-2 rounded flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Institutions:</span>
+<span class="font-tabular-data text-tabular-data text-primary">29</span>
+</div>
+<div class="bg-secondary-container/20 px-3.5 py-2 rounded flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Employer Orgs:</span>
+<span class="font-tabular-data text-tabular-data text-secondary">114</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 2: EXISTING ACCOUNTS TABLE -->
+<section class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+<!-- Toolbar -->
+<div class="p-space-lg bg-surface-container-low flex flex-col md:flex-row items-stretch md:items-center justify-between gap-space-md">
+<div class="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-space-sm max-w-3xl">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px] pointer-events-none">search</span>
+<input class="w-full h-11 pl-10 pr-4 bg-surface-container-lowest text-on-surface font-body-sm text-body-sm rounded outline-none focus:ring-2 focus:ring-secondary-container" placeholder="Search user by name, email, or ID..." type="text"/>
+</div>
+<div class="flex items-center gap-space-sm">
+<select aria-label="Filter by role" class="h-11 px-3 bg-surface-container-lowest text-on-surface font-body-sm text-body-sm rounded outline-none focus:ring-2 focus:ring-secondary-container cursor-pointer min-w-[130px]">
+<option value="">All Roles</option>
+<option value="admin">Admin</option>
+<option value="trainer">Trainer</option>
+<option value="trainee">Trainee</option>
+<option value="employer">Employer</option>
+</select>
+<select aria-label="Filter by status" class="h-11 px-3 bg-surface-container-lowest text-on-surface font-body-sm text-body-sm rounded outline-none focus:ring-2 focus:ring-secondary-container cursor-pointer min-w-[130px]">
+<option value="">All Status</option>
+<option value="active">Active</option>
+<option value="deactivated">Deactivated</option>
+</select>
+</div>
+</div>
+<button class="h-11 px-5 bg-secondary-container text-primary font-label-md text-label-md rounded flex items-center justify-center gap-2 hover:bg-secondary transition-colors" onclick="document.getElementById('quick-provision-card')?.scrollIntoView({ behavior: 'smooth' })" type="button">
+<span class="material-symbols-outlined text-[20px]">person_add</span>
+<span>+ Quick Provision</span>
+</button>
+</div>
+<!-- Data Table -->
+<div class="w-full overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<th class="py-3.5 px-space-lg" scope="col">User / Identifiers</th>
+<th class="py-3.5 px-space-md" scope="col">Email Address</th>
+<th class="py-3.5 px-space-md" scope="col">Assigned Role</th>
+<th class="py-3.5 px-space-md" scope="col">Affiliated Institution / Org</th>
+<th class="py-3.5 px-space-md" scope="col">System Status</th>
+<th class="py-3.5 px-space-lg text-right" scope="col">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container font-body-sm text-body-sm">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-4 px-space-lg">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-primary-container text-on-primary font-label-md text-label-md flex items-center justify-center shrink-0">
+                    VP
+                  </div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-primary truncate">Dr. Virendra Pillai</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">ID: USR-8841</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-space-md text-on-surface font-tabular-data">v.pillai@ricm.ac.in</td>
+<td class="py-4 px-space-md">
+<span class="inline-flex items-center px-2.5 py-1 rounded bg-surface-container-highest text-primary-container font-label-sm text-label-sm uppercase tracking-wider">Trainer</span>
+</td>
+<td class="py-4 px-space-md font-body-md text-primary">RICM Gandhinagar</td>
+<td class="py-4 px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-on-tertiary-container"></span>
+                  Active
+                </span>
+</td>
+<td class="py-4 px-space-lg text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="h-9 px-3 bg-surface-container-low hover:bg-surface-container text-primary font-label-sm text-label-sm rounded transition-colors" type="button">Edit</button>
+<button class="h-9 px-3 bg-error-container hover:bg-error/20 text-on-error-container font-label-sm text-label-sm rounded transition-colors" type="button">Deactivate</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-4 px-space-lg">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-md text-label-md flex items-center justify-center shrink-0">
+                    SV
+                  </div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-primary truncate">Sunita Verma</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">ID: USR-8842</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-space-md text-on-surface font-tabular-data">s.verma@bihardairy.coop</td>
+<td class="py-4 px-space-md">
+<span class="inline-flex items-center px-2.5 py-1 rounded bg-tertiary-fixed-dim/40 text-on-tertiary-fixed-variant font-label-sm text-label-sm uppercase tracking-wider">Trainee</span>
+</td>
+<td class="py-4 px-space-md font-body-md text-primary">Patna Dairy Cooperative Union</td>
+<td class="py-4 px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-on-tertiary-container"></span>
+                  Active
+                </span>
+</td>
+<td class="py-4 px-space-lg text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="h-9 px-3 bg-surface-container-low hover:bg-surface-container text-primary font-label-sm text-label-sm rounded transition-colors" type="button">Edit</button>
+<button class="h-9 px-3 bg-error-container hover:bg-error/20 text-on-error-container font-label-sm text-label-sm rounded transition-colors" type="button">Deactivate</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-4 px-space-lg">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-secondary-container/40 text-on-secondary-container font-label-md text-label-md flex items-center justify-center shrink-0">
+                    VR
+                  </div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-primary truncate">Vikramaditya Rathore</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">ID: USR-8843</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-space-md text-on-surface font-tabular-data">v.rathore@amuldairy.com</td>
+<td class="py-4 px-space-md">
+<span class="inline-flex items-center px-2.5 py-1 rounded bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-label-sm uppercase tracking-wider">Employer</span>
+</td>
+<td class="py-4 px-space-md font-body-md text-primary">Amul Dairy Federation</td>
+<td class="py-4 px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-on-tertiary-container"></span>
+                  Active
+                </span>
+</td>
+<td class="py-4 px-space-lg text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="h-9 px-3 bg-surface-container-low hover:bg-surface-container text-primary font-label-sm text-label-sm rounded transition-colors" type="button">Edit</button>
+<button class="h-9 px-3 bg-error-container hover:bg-error/20 text-on-error-container font-label-sm text-label-sm rounded transition-colors" type="button">Deactivate</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-4 px-space-lg">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-primary text-on-primary font-label-md text-label-md flex items-center justify-center shrink-0">
+                    AS
+                  </div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-primary truncate">Anand Kumar Sharma</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">ID: USR-8844</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-space-md text-on-surface font-tabular-data">ak.sharma@ncct.gov.in</td>
+<td class="py-4 px-space-md">
+<span class="inline-flex items-center px-2.5 py-1 rounded bg-primary-container text-on-primary font-label-sm text-label-sm uppercase tracking-wider">Admin</span>
+</td>
+<td class="py-4 px-space-md font-body-md text-primary">NCCT National HQ</td>
+<td class="py-4 px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-on-tertiary-container"></span>
+                  Active
+                </span>
+</td>
+<td class="py-4 px-space-lg text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="h-9 px-3 bg-surface-container-low hover:bg-surface-container text-primary font-label-sm text-label-sm rounded transition-colors" type="button">Edit</button>
+<button class="h-9 px-3 bg-error-container hover:bg-error/20 text-on-error-container font-label-sm text-label-sm rounded transition-colors" type="button">Deactivate</button>
+</div>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-4 px-space-lg">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-md text-label-md flex items-center justify-center shrink-0">
+                    MS
+                  </div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-primary truncate">Manpreet Singh</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">ID: USR-8845</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-space-md text-on-surface font-tabular-data">m.singh@dalsinghsarai-lamps.org</td>
+<td class="py-4 px-space-md">
+<span class="inline-flex items-center px-2.5 py-1 rounded bg-tertiary-fixed-dim/40 text-on-tertiary-fixed-variant font-label-sm text-label-sm uppercase tracking-wider">Trainee</span>
+</td>
+<td class="py-4 px-space-md font-body-md text-primary">Dalsinghsarai LAMPS Co-op</td>
+<td class="py-4 px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-on-tertiary-container"></span>
+                  Active
+                </span>
+</td>
+<td class="py-4 px-space-lg text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="h-9 px-3 bg-surface-container-low hover:bg-surface-container text-primary font-label-sm text-label-sm rounded transition-colors" type="button">Edit</button>
+<button class="h-9 px-3 bg-error-container hover:bg-error/20 text-on-error-container font-label-sm text-label-sm rounded transition-colors" type="button">Deactivate</button>
+</div>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="hover:bg-surface-container-low/60 transition-colors">
+<td class="py-4 px-space-lg">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-surface-variant text-on-surface-variant font-label-md text-label-md flex items-center justify-center shrink-0">
+                    RY
+                  </div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-primary truncate">Rajeshwar Yadav</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">ID: USR-8846</span>
+</div>
+</div>
+</td>
+<td class="py-4 px-space-md text-on-surface font-tabular-data">r.yadav@ricm-bengaluru.edu</td>
+<td class="py-4 px-space-md">
+<span class="inline-flex items-center px-2.5 py-1 rounded bg-surface-container-highest text-primary-container font-label-sm text-label-sm uppercase tracking-wider">Trainer</span>
+</td>
+<td class="py-4 px-space-md font-body-md text-primary">RICM Bengaluru</td>
+<td class="py-4 px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+                  Deactivated
+                </span>
+</td>
+<td class="py-4 px-space-lg text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="h-9 px-3 bg-surface-container-low hover:bg-surface-container text-primary font-label-sm text-label-sm rounded transition-colors" type="button">Edit</button>
+<button class="h-9 px-3 bg-secondary-container/20 hover:bg-secondary-container/40 text-secondary font-label-sm text-label-sm rounded transition-colors" type="button">Reactivate</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination Footer -->
+<div class="p-space-md bg-surface-container-low flex flex-col sm:flex-row items-center justify-between gap-space-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">
+          Showing <span class="text-primary font-semibold">1–6</span> of <span class="text-primary font-semibold">1,842</span> accounts
+        </span>
+<div class="flex items-center gap-2">
+<button class="h-9 px-3 bg-surface-container text-on-surface-variant opacity-50 font-label-sm text-label-sm rounded cursor-not-allowed" disabled="" type="button">Previous</button>
+<div class="flex items-center gap-1">
+<button class="w-9 h-9 bg-primary text-on-primary font-label-sm text-label-sm rounded flex items-center justify-center" type="button">1</button>
+<button class="w-9 h-9 bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm rounded flex items-center justify-center transition-colors" type="button">2</button>
+<button class="w-9 h-9 bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm rounded flex items-center justify-center transition-colors" type="button">3</button>
+<span class="px-1 text-on-surface-variant">…</span>
+<button class="w-9 h-9 bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm rounded flex items-center justify-center transition-colors" type="button">307</button>
+</div>
+<button class="h-9 px-3 bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm rounded transition-colors" type="button">Next</button>
+</div>
+</div>
+</section>
+<!-- SECTION 3: BALANCED 2-COLUMN DESKTOP GRID (FOUR CARDS) -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-space-xl items-start">
+<!-- COLUMN 1 -->
+<div class="flex flex-col gap-space-xl">
+<!-- CARD 1: Provision Single Account -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col" id="quick-provision-card">
+<div class="p-space-lg bg-surface-container-low flex items-start gap-3">
+<div class="w-10 h-10 rounded bg-primary-container text-on-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">person_add</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-primary">Provision Single Account</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                Manually provision a new individual user account with role-based permissions.
+              </p>
+</div>
+</div>
+<form class="p-space-lg flex flex-col gap-space-md" onsubmit="event.preventDefault();">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-primary" for="new-full-name">Full Name <span class="text-error">*</span></label>
+<input class="h-12 px-3.5 bg-surface-container-low text-on-surface font-body-md text-body-md rounded outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary-container" id="new-full-name" placeholder="e.g. Ramesh Kumar" required="" type="text"/>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-primary" for="new-email">Official Email Address <span class="text-error">*</span></label>
+<input class="h-12 px-3.5 bg-surface-container-low text-on-surface font-body-md text-body-md rounded outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary-container" id="new-email" placeholder="user@society.coop" required="" type="email"/>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-primary" for="new-role">Assign Role <span class="text-error">*</span></label>
+<select class="h-12 px-3.5 bg-surface-container-low text-on-surface font-body-md text-body-md rounded outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary-container cursor-pointer" id="new-role" required="">
+<option disabled="" selected="" value="">Select assigned role</option>
+<option value="admin">Admin</option>
+<option value="trainer">Trainer</option>
+<option value="trainee">Trainee</option>
+<option value="employer">Employer</option>
+</select>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-primary" for="new-phone">Phone / Aadhaar Linked No. <span class="text-error">*</span></label>
+<input class="h-12 px-3.5 bg-surface-container-low text-on-surface font-body-md text-body-md rounded outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary-container" id="new-phone" placeholder="+91 98765 43210" required="" type="tel"/>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-primary" for="new-institution">Sponsoring Institution / Employer Org <span class="text-error">*</span></label>
+<select class="h-12 px-3.5 bg-surface-container-low text-on-surface font-body-md text-body-md rounded outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary-container cursor-pointer" id="new-institution" required="">
+<option disabled="" selected="" value="">Select sponsoring organization or center</option>
+<option value="vamnicom">VAMNICOM Pune (National Apex)</option>
+<option value="ricm-gandhinagar">RICM Gandhinagar</option>
+<option value="ricm-lucknow">RICM Lucknow</option>
+<option value="ricm-bengaluru">RICM Bengaluru</option>
+<option value="icm-patna">ICM Patna</option>
+<option value="gcmmf-amul">Amul Dairy Federation (GCMMF)</option>
+<option value="hafed">HAFED Agro Haryana</option>
+</select>
+</div>
+<div class="pt-space-xs">
+<button class="w-full h-12 bg-secondary-container text-primary font-label-md text-label-md rounded flex items-center justify-center gap-2 hover:bg-secondary transition-colors" type="submit">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+<span>+ Create Account &amp; Issue Credentials</span>
+</button>
+</div>
+</form>
+</div>
+<!-- CARD 2: Institution Profiles -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="p-space-lg bg-surface-container-low flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded bg-primary-container text-on-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">corporate_fare</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-primary">Institution Profiles</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                  Governed NCCT national apex institutes, Regional Institutes (RICM), and ICM centers.
+                </p>
+</div>
+</div>
+<button class="h-9 px-3 bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm rounded flex items-center gap-1.5 self-start sm:self-center transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>+ Add Institution</span>
+</button>
+</div>
+<div class="divide-y divide-surface-container flex flex-col">
+<!-- Item 1 -->
+<div class="p-space-md flex items-center justify-between gap-space-md hover:bg-surface-container-low/50 transition-colors">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg text-primary truncate">VAMNICOM Pune</span>
+<span class="px-2 py-0.5 rounded bg-primary-container text-on-primary font-label-sm text-label-sm">National Apex</span>
+</div>
+<div class="flex items-center gap-2 mt-1 text-on-surface-variant font-body-sm text-body-sm">
+<span>Western Zone (Maharashtra)</span>
+<span>•</span>
+<span class="font-tabular-data text-primary">12 Batches Active</span>
+</div>
+</div>
+<button class="h-8 px-2.5 bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm rounded shrink-0" type="button">Configure</button>
+</div>
+<!-- Item 2 -->
+<div class="p-space-md flex items-center justify-between gap-space-md hover:bg-surface-container-low/50 transition-colors">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg text-primary truncate">RICM Gandhinagar</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm">Regional Institute</span>
+</div>
+<div class="flex items-center gap-2 mt-1 text-on-surface-variant font-body-sm text-body-sm">
+<span>Western Zone (Gujarat)</span>
+<span>•</span>
+<span class="font-tabular-data text-primary">8 Batches Active</span>
+</div>
+</div>
+<button class="h-8 px-2.5 bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm rounded shrink-0" type="button">Configure</button>
+</div>
+<!-- Item 3 -->
+<div class="p-space-md flex items-center justify-between gap-space-md hover:bg-surface-container-low/50 transition-colors">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg text-primary truncate">ICM Patna</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm">Co-op Mgmt Center</span>
+</div>
+<div class="flex items-center gap-2 mt-1 text-on-surface-variant font-body-sm text-body-sm">
+<span>Eastern Zone (Bihar)</span>
+<span>•</span>
+<span class="font-tabular-data text-primary">6 Batches Active</span>
+</div>
+</div>
+<button class="h-8 px-2.5 bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm rounded shrink-0" type="button">Configure</button>
+</div>
+<!-- Item 4 -->
+<div class="p-space-md flex items-center justify-between gap-space-md hover:bg-surface-container-low/50 transition-colors">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg text-primary truncate">RICM Lucknow</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm">Regional Institute</span>
+</div>
+<div class="flex items-center gap-2 mt-1 text-on-surface-variant font-body-sm text-body-sm">
+<span>Northern Zone (Uttar Pradesh)</span>
+<span>•</span>
+<span class="font-tabular-data text-primary">9 Batches Active</span>
+</div>
+</div>
+<button class="h-8 px-2.5 bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm rounded shrink-0" type="button">Configure</button>
+</div>
+<!-- Item 5 -->
+<div class="p-space-md flex items-center justify-between gap-space-md hover:bg-surface-container-low/50 transition-colors">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg text-primary truncate">RICM Bengaluru</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm">Regional Institute</span>
+</div>
+<div class="flex items-center gap-2 mt-1 text-on-surface-variant font-body-sm text-body-sm">
+<span>Southern Zone (Karnataka)</span>
+<span>•</span>
+<span class="font-tabular-data text-primary">7 Batches Active</span>
+</div>
+</div>
+<button class="h-8 px-2.5 bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm rounded shrink-0" type="button">Configure</button>
+</div>
+</div>
+<div class="p-space-md bg-surface-container-low">
+<a class="font-label-md text-label-md text-secondary hover:underline flex items-center gap-1" href="#">
+<span>View All 29 Institutes</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+<!-- COLUMN 2 -->
+<div class="flex flex-col gap-space-xl">
+<!-- CARD 3: Bulk Trainee Import -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="p-space-lg bg-surface-container-low flex items-start gap-3">
+<div class="w-10 h-10 rounded bg-secondary-container/30 text-secondary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">upload_file</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-primary">Bulk Trainee Import</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                Batch onboard rural trainees from CSV or Excel spreadsheets provided by state federations.
+              </p>
+</div>
+</div>
+<div class="p-space-lg flex flex-col gap-space-md">
+<!-- Drag and Drop Box -->
+<div class="border-2 border-dashed border-outline-variant bg-surface-container-low rounded-lg p-space-lg flex flex-col items-center justify-center text-center cursor-pointer hover:bg-surface-container transition-colors" id="drop-zone">
+<span class="material-symbols-outlined text-[40px] text-secondary">cloud_upload</span>
+<p class="font-label-md text-label-md text-primary mt-2">
+                Drop candidate CSV roster here, or <span class="text-secondary underline">Browse Computer</span>
+</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                Supports UTF-8 CSV, XLSX up to 25MB. Must include Aadhaar ID, Mobile, and Society Registration.
+              </p>
+<input accept=".csv,.xlsx" class="hidden" id="file-input" type="file"/>
+</div>
+<div class="flex items-center justify-between text-secondary">
+<a class="font-label-sm text-label-sm hover:underline flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[18px]">download</span>
+<span>Download NCCT Bulk Import Template (.csv)</span>
+</a>
+<span class="font-label-sm text-label-sm text-on-surface-variant">v2.1 Standard</span>
+</div>
+<!-- Target Batch / Institute Selector -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md pt-space-xs">
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-primary" for="bulk-institute">Regional Training Centre <span class="text-error">*</span></label>
+<select class="h-12 px-3.5 bg-surface-container-low text-on-surface font-body-md text-body-md rounded outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary-container cursor-pointer" id="bulk-institute">
+<option disabled="" selected="" value="">Select assigned institute</option>
+<option value="ricm-g">RICM Gandhinagar</option>
+<option value="ricm-p">ICM Patna</option>
+<option value="ricm-l">RICM Lucknow</option>
+<option value="vamnicom">VAMNICOM Pune</option>
+</select>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-primary" for="bulk-course">Programme Assignment <span class="text-error">*</span></label>
+<select class="h-12 px-3.5 bg-surface-container-low text-on-surface font-body-md text-body-md rounded outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary-container cursor-pointer" id="bulk-course">
+<option disabled="" selected="" value="">Select target course</option>
+<option value="pacs-mgmt">PACS Accounting &amp; Governance (Level 1)</option>
+<option value="dairy-mgmt">Dairy Cooperative Enterprise Module</option>
+<option value="warehouse-mgmt">Cooperative Warehousing Logistics</option>
+</select>
+</div>
+</div>
+<div class="pt-space-xs">
+<button class="w-full h-12 bg-primary-container text-on-primary font-label-md text-label-md rounded flex items-center justify-center gap-2 hover:bg-primary transition-colors cursor-pointer" id="bulk-upload-btn" type="button">
+<span class="material-symbols-outlined text-[20px]">file_upload</span>
+<span id="bulk-upload-label">Upload &amp; Verify Roster (0 files staged)</span>
+</button>
+</div>
+</div>
+</div>
+<!-- CARD 4: Employer Organizations -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="p-space-lg bg-surface-container-low flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded bg-primary-container text-on-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">apartment</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-primary">Employer Organizations</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                  Registered cooperative unions, PACS federations, and agro-allied enterprises actively recruiting.
+                </p>
+</div>
+</div>
+<button class="h-9 px-3 bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm rounded flex items-center gap-1.5 self-start sm:self-center transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>+ Add Employer Org</span>
+</button>
+</div>
+<div class="divide-y divide-surface-container flex flex-col">
+<!-- Employer 1 -->
+<div class="p-space-md flex items-center justify-between gap-space-md hover:bg-surface-container-low/50 transition-colors">
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-primary truncate">Amul Dairy Federation (GCMMF)</span>
+<div class="flex items-center gap-2 mt-1 text-on-surface-variant font-body-sm text-body-sm">
+<span>Sector: Dairy &amp; Cold Chain</span>
+<span>•</span>
+<span class="font-tabular-data text-secondary">14 Active Job Postings</span>
+</div>
+</div>
+<button class="h-8 px-2.5 bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm rounded shrink-0" type="button">Manage</button>
+</div>
+<!-- Employer 2 -->
+<div class="p-space-md flex items-center justify-between gap-space-md hover:bg-surface-container-low/50 transition-colors">
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-primary truncate">HAFED Agro Haryana</span>
+<div class="flex items-center gap-2 mt-1 text-on-surface-variant font-body-sm text-body-sm">
+<span>Sector: Agri-Processing &amp; Warehousing</span>
+<span>•</span>
+<span class="font-tabular-data text-secondary">8 Active Job Postings</span>
+</div>
+</div>
+<button class="h-8 px-2.5 bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm rounded shrink-0" type="button">Manage</button>
+</div>
+<!-- Employer 3 -->
+<div class="p-space-md flex items-center justify-between gap-space-md hover:bg-surface-container-low/50 transition-colors">
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-primary truncate">Mehsana District Central Co-op Bank</span>
+<div class="flex items-center gap-2 mt-1 text-on-surface-variant font-body-sm text-body-sm">
+<span>Sector: Cooperative Banking</span>
+<span>•</span>
+<span class="font-tabular-data text-secondary">6 Active Job Postings</span>
+</div>
+</div>
+<button class="h-8 px-2.5 bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm rounded shrink-0" type="button">Manage</button>
+</div>
+<!-- Employer 4 -->
+<div class="p-space-md flex items-center justify-between gap-space-md hover:bg-surface-container-low/50 transition-colors">
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-primary truncate">Sitapur Kisan Seva Samiti PACS</span>
+<div class="flex items-center gap-2 mt-1 text-on-surface-variant font-body-sm text-body-sm">
+<span>Sector: Primary Credit &amp; Fertilizer</span>
+<span>•</span>
+<span class="font-tabular-data text-secondary">3 Active Job Postings</span>
+</div>
+</div>
+<button class="h-8 px-2.5 bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm rounded shrink-0" type="button">Manage</button>
+</div>
+<!-- Employer 5 -->
+<div class="p-space-md flex items-center justify-between gap-space-md hover:bg-surface-container-low/50 transition-colors">
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-primary truncate">Bihar State Milk Co-op Fed (COMFED / Sudha)</span>
+<div class="flex items-center gap-2 mt-1 text-on-surface-variant font-body-sm text-body-sm">
+<span>Sector: Dairy Processing</span>
+<span>•</span>
+<span class="font-tabular-data text-secondary">5 Active Job Postings</span>
+</div>
+</div>
+<button class="h-8 px-2.5 bg-surface-container hover:bg-surface-container-high text-primary font-label-sm text-label-sm rounded shrink-0" type="button">Manage</button>
+</div>
+</div>
+<div class="p-space-md bg-surface-container-low">
+<a class="font-label-md text-label-md text-secondary hover:underline flex items-center gap-1" href="#">
+<span>Manage All 114 Registered Employers</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    // Interactive drag & drop micro-interaction for trainee roster file upload
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const uploadLabel = document.getElementById('bulk-upload-label');
+    const uploadBtn = document.getElementById('bulk-upload-btn');
+
+    if (dropZone && fileInput && uploadLabel) {
+      dropZone.addEventListener('click', () => fileInput.click());
+
+      ['dragenter', 'dragover'].forEach(name => {
+        dropZone.addEventListener(name, (e) => {
+          e.preventDefault();
+          dropZone.classList.add('bg-surface-container-highest');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(name => {
+        dropZone.addEventListener(name, (e) => {
+          e.preventDefault();
+          dropZone.classList.remove('bg-surface-container-highest');
+        });
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        if (e.dataTransfer && e.dataTransfer.files.length > 0) {
+          handleFile(e.dataTransfer.files[0]);
+        }
+      });
+
+      fileInput.addEventListener('change', (e) => {
+        if (e.target && e.target.files.length > 0) {
+          handleFile(e.target.files[0]);
+        }
+      });
+
+      function handleFile(file) {
+        uploadLabel.textContent = `Upload & Verify: ${file.name} (${Math.round(file.size / 1024)} KB)`;
+        if (uploadBtn) {
+          uploadBtn.classList.remove('bg-primary-container', 'text-on-primary');
+          uploadBtn.classList.add('bg-secondary-container', 'text-primary');
+        }
+      }
+    }
+  })();
+</script></main><footer class="w-full bg-surface-container-low text-on-surface-variant py-space-md"><div class="w-full px-gutter-desktop flex flex-col md:flex-row items-center justify-between gap-space-sm font-label-sm text-label-sm"><span>National Council for Cooperative Training (NCCT) — Ministry of Cooperation, Govt. of India</span><div class="flex items-center gap-space-md"><span>Sahakar Utkarsh Core v2.4</span><span>WCAG AAA Compliant</span></div></div></footer></body></html>

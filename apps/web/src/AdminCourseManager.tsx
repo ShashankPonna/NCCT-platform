@@ -2,22 +2,32 @@ import {
   createCourse,
   createLesson,
   createModule,
+  createSkill,
   getCourses,
+  getCourseSkills,
+  getLessonContentUrl,
   getLessons,
   getLessonVideoUploadUrl,
+  getLessonVideoUrl,
   getModules,
   getProgrammes,
+  getSkills,
+  setCourseSkills,
   updateLesson,
   uploadLessonContent,
   uploadLessonVideoFile,
   upsertLessonTranslation,
 } from "@ncct/api-client";
 import { LESSON_VIDEO_MIME_TYPES, SUGGESTED_LOCALES } from "@ncct/constants";
-import type { ContentType, Course, Lesson, Module, Programme } from "@ncct/shared-types";
+import type { ContentType, Course, Lesson, Module, Programme, Skill } from "@ncct/shared-types";
 import { createLessonSchema, localeSchema, youtubeVideoIdSchema } from "@ncct/validation";
 import { useEffect, useState } from "react";
 import { AssessmentBuilder } from "./AssessmentBuilder.js";
+import { CourseGradebook } from "./CourseGradebook.js";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
+import { SelfHostedVideoPlayer } from "./SelfHostedVideoPlayer.js";
+import { SkillPicker } from "./SkillPicker.js";
+import { YouTubeVideoPlayer } from "./YouTubeVideoPlayer.js";
 
 interface AdminCourseManagerProps {
   accessToken: string;
@@ -58,6 +68,20 @@ interface AdminCourseManagerText {
   ytPrefix: (id: string) => string;
   hideDetails: string;
   manage: string;
+  preview: string;
+  hidePreview: string;
+  loadingPreview: string;
+  noContentYet: string;
+  cannotPreviewInline: string;
+  openInNewTab: string;
+  skillsGranted: (count: number) => string;
+  hideSkillsGranted: string;
+  skillsGrantedBody: string;
+  courseSkillsUnavailable: string;
+  newSkillPlaceholder: string;
+  addToTaxonomy: string;
+  saveSkills: string;
+  saving: string;
   attachFile: string;
   uploading: string;
   fileAttached: string;
@@ -71,6 +95,7 @@ interface AdminCourseManagerText {
   localizedBodyPlaceholder: string;
   saveTranslation: string;
   moduleAssessments: string;
+  courseGradebook: string;
   invalidLessonPayload: string;
   invalidYoutubeId: string;
   invalidLocale: string;
@@ -112,6 +137,22 @@ const content: Record<Locale, AdminCourseManagerText> = {
     ytPrefix: (id) => `YT: ${id}`,
     hideDetails: "Hide Details",
     manage: "Manage",
+    preview: "Preview",
+    hidePreview: "Hide Preview",
+    loadingPreview: "Loading preview…",
+    noContentYet: "Nothing uploaded yet.",
+    cannotPreviewInline: "This file type can't be previewed inline.",
+    openInNewTab: "Open in new tab",
+    skillsGranted: (count) => `Skills Granted (${count})`,
+    hideSkillsGranted: "Hide Skills",
+    skillsGrantedBody:
+      "A trainee who earns a certificate for this specific course is read as having acquired every skill tagged here, in addition to anything tagged on the whole programme — this is what the Skill-Gap Check compares a job's required skills against.",
+    courseSkillsUnavailable:
+      "Course-level skill tagging isn't set up on this project yet — ask an admin to apply the pending database migration. Skills granted on the whole programme still work as before.",
+    newSkillPlaceholder: "New skill, e.g. Bookkeeping",
+    addToTaxonomy: "Add to Taxonomy",
+    saveSkills: "Save Skills",
+    saving: "Saving...",
     attachFile: "Attach File:",
     uploading: "Uploading…",
     fileAttached: "File attached",
@@ -125,6 +166,7 @@ const content: Record<Locale, AdminCourseManagerText> = {
     localizedBodyPlaceholder: "Localized body text (optional)",
     saveTranslation: "Save Translation",
     moduleAssessments: "Module Assessments",
+    courseGradebook: "Gradebook",
     invalidLessonPayload: "Invalid lesson payload",
     invalidYoutubeId: "Invalid YouTube ID",
     invalidLocale: "Locale must be a valid BCP 47 code (e.g. 'hi-IN')",
@@ -164,6 +206,22 @@ const content: Record<Locale, AdminCourseManagerText> = {
     ytPrefix: (id) => `YT: ${id}`,
     hideDetails: "विवरण छिपाएं",
     manage: "प्रबंधित करें",
+    preview: "पूर्वावलोकन",
+    hidePreview: "पूर्वावलोकन छिपाएं",
+    loadingPreview: "पूर्वावलोकन लोड हो रहा है…",
+    noContentYet: "अभी तक कुछ भी अपलोड नहीं किया गया है।",
+    cannotPreviewInline: "इस फ़ाइल प्रकार का इनलाइन पूर्वावलोकन नहीं किया जा सकता।",
+    openInNewTab: "नए टैब में खोलें",
+    skillsGranted: (count) => `प्रदत्त कौशल (${count})`,
+    hideSkillsGranted: "कौशल छिपाएं",
+    skillsGrantedBody:
+      "जो प्रशिक्षणार्थी इस विशिष्ट पाठ्यक्रम के लिए प्रमाणपत्र अर्जित करता है, उसे यहां टैग किए गए हर कौशल को — पूरे कार्यक्रम पर टैग किए गए कौशलों के अतिरिक्त — अर्जित माना जाता है। कौशल-अंतर जांच किसी नौकरी के आवश्यक कौशलों की तुलना इसी से करती है।",
+    courseSkillsUnavailable:
+      "इस प्रोजेक्ट पर पाठ्यक्रम-स्तरीय कौशल टैगिंग अभी सेट नहीं हुई है — किसी एडमिन से लंबित डेटाबेस माइग्रेशन लागू करने को कहें। पूरे कार्यक्रम पर दिए गए कौशल पहले की तरह काम करते रहेंगे।",
+    newSkillPlaceholder: "नया कौशल, उदा. बहीखाता",
+    addToTaxonomy: "वर्गीकरण में जोड़ें",
+    saveSkills: "कौशल सहेजें",
+    saving: "सहेजा जा रहा है...",
     attachFile: "फ़ाइल संलग्न करें:",
     uploading: "अपलोड हो रहा है…",
     fileAttached: "फ़ाइल संलग्न है",
@@ -177,11 +235,22 @@ const content: Record<Locale, AdminCourseManagerText> = {
     localizedBodyPlaceholder: "स्थानीयकृत मुख्य पाठ (वैकल्पिक)",
     saveTranslation: "अनुवाद सहेजें",
     moduleAssessments: "मॉड्यूल मूल्यांकन",
+    courseGradebook: "ग्रेडबुक",
     invalidLessonPayload: "अमान्य पाठ डेटा",
     invalidYoutubeId: "अमान्य YouTube आईडी",
     invalidLocale: "भाषा एक मान्य BCP 47 कोड होनी चाहिए (उदा. 'hi-IN')",
   },
 };
+
+// Only a real PDF renders inline in an <iframe> across browsers — a .ppt/
+// .pptx "slides" upload (both accepted by LESSON_FILE_MIME_TYPES) just
+// triggers a download or a blank frame, since no browser ships a native
+// PowerPoint viewer. storage_path keeps the original filename's extension
+// (`${lessonId}/${timestamp}-${originalname}`, see lessonContent.ts), so the
+// extension alone is enough to tell without adding a viewer dependency.
+function canInlinePreview(storagePath: string | null): boolean {
+  return storagePath != null && storagePath.toLowerCase().endsWith(".pdf");
+}
 
 export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
   const { locale } = useLocale();
@@ -201,6 +270,11 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
   const [showAddModule, setShowAddModule] = useState(false);
   const [showAddLesson, setShowAddLesson] = useState(false);
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+  // Only one lesson's content preview is fetched/shown at a time — a fresh
+  // signed URL per open, not cached, so it can't go stale mid-session.
+  const [previewLessonId, setPreviewLessonId] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   // Lesson sub-actions
   const [youtubeInputs, setYoutubeInputs] = useState<Record<string, string>>({});
@@ -215,6 +289,22 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
   // state — unlike video's B2 presigned-PUT path).
   const [fileUploading, setFileUploading] = useState<Record<string, boolean>>({});
 
+  // Course-level "Skills Granted" (DECISIONS.md #45) — the finer-grained
+  // sibling of AdminProgrammeManager.tsx's whole-programme skills section.
+  // Content-authoring, so admin+trainer here, matching this file's own
+  // existing access model rather than AdminProgrammeManager's admin-only
+  // gate on programme-wide grants.
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [courseSkillIds, setCourseSkillIds] = useState<Set<string>>(new Set());
+  const [newSkillName, setNewSkillName] = useState("");
+  const [savingCourseSkills, setSavingCourseSkills] = useState(false);
+  const [showCourseSkills, setShowCourseSkills] = useState(false);
+  // True when the course_skills table doesn't exist yet on this project —
+  // migration 20260901000017 not applied. This is an additive enrichment
+  // on top of course selection, so its own failure must never block loading
+  // the course's modules (see handleSelectCourse's separate try/catch).
+  const [courseSkillsUnavailable, setCourseSkillsUnavailable] = useState(false);
+
   useEffect(() => {
     getProgrammes(accessToken)
       .then((progs) => {
@@ -223,6 +313,9 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
           void handleSelectProgramme(progs[0].id);
         }
       })
+      .catch((err: Error) => setError(err.message));
+    getSkills(accessToken)
+      .then(setSkills)
       .catch((err: Error) => setError(err.message));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken]);
@@ -249,6 +342,8 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
     setSelectedCourseId(courseId);
     setSelectedModuleId(null);
     setLessons([]);
+    setShowCourseSkills(false);
+    setCourseSkillsUnavailable(false);
     setError(null);
     try {
       const mods = await getModules(accessToken, courseId);
@@ -256,6 +351,55 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
       if (mods.length > 0) {
         await handleSelectModule(mods[0].id);
       }
+    } catch (err) {
+      setError((err as Error).message);
+    }
+
+    // Deliberately its own try/catch, not bundled into the Promise.all
+    // above: this is an additive enrichment (DECISIONS.md #45), and a
+    // pending-migration failure here must never take the actual "select a
+    // course, see its modules" flow down with it — that regression is
+    // exactly what the bundled version did before this fix.
+    try {
+      const courseSkills = await getCourseSkills(accessToken, courseId);
+      setCourseSkillIds(new Set(courseSkills.map((s) => s.id)));
+    } catch {
+      setCourseSkillIds(new Set());
+      setCourseSkillsUnavailable(true);
+    }
+  }
+
+  function toggleCourseSkill(skillId: string) {
+    setCourseSkillIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(skillId)) next.delete(skillId);
+      else next.add(skillId);
+      return next;
+    });
+  }
+
+  async function handleSaveCourseSkills() {
+    if (!selectedCourseId) return;
+    setError(null);
+    setSavingCourseSkills(true);
+    try {
+      await setCourseSkills(accessToken, selectedCourseId, [...courseSkillIds]);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSavingCourseSkills(false);
+    }
+  }
+
+  async function handleCreateSkill() {
+    const name = newSkillName.trim();
+    if (!name) return;
+    setError(null);
+    try {
+      const skill = await createSkill(accessToken, { name });
+      setSkills((prev) => [...prev, skill].sort((a, b) => a.name.localeCompare(b.name)));
+      setCourseSkillIds((prev) => new Set(prev).add(skill.id));
+      setNewSkillName("");
     } catch (err) {
       setError((err as Error).message);
     }
@@ -411,6 +555,38 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
     }
   }
 
+  // Fetches whatever signed URL the content actually needs and toggles the
+  // preview panel — a YouTube-hosted video needs no fetch at all (the id
+  // alone is enough for YouTubeVideoPlayer), everything else (self-hosted
+  // video, PDF/slides) goes through the same short-lived signed-URL routes
+  // the trainee side already uses (getLessonVideoUrl/getLessonContentUrl).
+  async function handleTogglePreview(lesson: Lesson) {
+    if (previewLessonId === lesson.id) {
+      setPreviewLessonId(null);
+      setPreviewUrl(null);
+      return;
+    }
+    setPreviewLessonId(lesson.id);
+    setPreviewUrl(null);
+    setError(null);
+
+    if (lesson.content_type === "video" && lesson.video_id) return;
+    if (!lesson.storage_path) return; // nothing uploaded yet — empty state renders as-is
+
+    setPreviewLoading(true);
+    try {
+      const { url } =
+        lesson.content_type === "video"
+          ? await getLessonVideoUrl(accessToken, lesson.id)
+          : await getLessonContentUrl(accessToken, lesson.id);
+      setPreviewUrl(url);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
+
   async function handleSaveTranslation(lessonId: string) {
     const input = translationInputs[lessonId];
     if (!input?.locale || !input?.title) return;
@@ -441,26 +617,32 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
   const selectedModule = modules.find((m) => m.id === selectedModuleId);
 
   return (
-    <div className="p-margin-mobile md:p-margin-desktop max-w-max-width-desktop mx-auto w-full flex flex-col gap-6 text-left">
+    <div className="w-full flex flex-col gap-6 text-left">
       {/* Header with Programme Picker */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-outline-variant pb-4">
+      <div className="bg-surface-card rounded-2xl border border-border-slate px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-xs">
         <div>
-          <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg font-bold text-on-surface m-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#FE932C]" />
+            <span className="text-xs uppercase tracking-wider text-[#D97706] font-bold">
+              Administration • Curriculum & Courseware Engineering
+            </span>
+          </div>
+          <h1 className="font-display text-2xl lg:text-3xl font-extrabold text-primary m-0">
             {t.heading}
-          </h2>
-          <p className="font-body-md text-body-md text-on-surface-variant mt-1">{t.subheading}</p>
+          </h1>
+          <p className="font-body text-xs text-slate-600 mt-1 max-w-2xl">{t.subheading}</p>
         </div>
 
         {/* Programme Picker */}
         <div className="w-full md:w-80">
-          <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1">
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
             {t.selectProgramme}
           </label>
           <div className="relative">
             <select
               value={programmeId}
               onChange={(e) => void handleSelectProgramme(e.target.value)}
-              className="w-full h-touch-target appearance-none bg-surface-container-lowest border border-outline-variant rounded-lg px-4 font-body-md text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary pr-10"
+              className="w-full h-11 appearance-none bg-paper-light border border-border-slate rounded-xl px-3.5 text-xs text-ink font-semibold focus:outline-none focus:bg-surface-card focus:border-[#00236F] focus:ring-1 focus:ring-[#00236F]/20 pr-10 cursor-pointer transition-all"
             >
               {programmes.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -468,7 +650,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                 </option>
               ))}
             </select>
-            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">
+            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
               expand_more
             </span>
           </div>
@@ -476,9 +658,9 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
       </div>
 
       {error && (
-        <div className="bg-error-container text-on-error-container p-4 rounded-xl flex items-center gap-3 border border-error/20">
-          <span className="material-symbols-outlined text-error">error</span>
-          <p className="font-body-md text-body-md">{error}</p>
+        <div className="bg-rose-50 text-rose-900 p-4 rounded-xl flex items-center gap-3 border border-rose-200 text-xs font-medium">
+          <span className="material-symbols-outlined text-rose-600 shrink-0">error</span>
+          <p>{error}</p>
         </div>
       )}
 
@@ -486,16 +668,16 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Panel 1: Courses (Col 1-3) */}
         <div className="lg:col-span-3 flex flex-col gap-4">
-          <div className="bg-surface-card border border-outline-variant rounded-xl p-4 shadow-sm flex flex-col min-h-[520px]">
+          <div className="bg-surface-card border border-border-slate rounded-2xl p-5 shadow-xs flex flex-col min-h-[540px]">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-headline-sm text-headline-sm font-semibold m-0 text-primary">{t.courses}</h3>
+              <h3 className="font-display text-base font-bold m-0 text-primary">{t.courses}</h3>
               <button
                 type="button"
                 onClick={() => setShowAddCourse(!showAddCourse)}
                 aria-label={t.addCourseAria}
-                className="h-8 w-8 rounded-full hover:bg-surface-container flex items-center justify-center text-primary cursor-pointer transition-colors"
+                className="h-8 w-8 rounded-lg bg-paper-light border border-border-slate hover:bg-surface-container flex items-center justify-center text-primary cursor-pointer transition-colors"
               >
-                <span className="material-symbols-outlined text-[20px]">
+                <span className="material-symbols-outlined text-[18px]">
                   {showAddCourse ? "close" : "add"}
                 </span>
               </button>
@@ -503,26 +685,26 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
 
             {/* Inline Add Course */}
             {showAddCourse && (
-              <form onSubmit={(e) => void handleCreateCourse(e)} className="mb-3 p-3 bg-surface-container rounded-lg space-y-2">
+              <form onSubmit={(e) => void handleCreateCourse(e)} className="mb-3.5 p-3.5 bg-paper rounded-xl border border-border-slate space-y-2.5">
                 <input
                   name="title"
                   required
                   placeholder={t.courseTitlePlaceholder}
-                  className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-sm"
+                  className="w-full bg-surface-card border border-border-slate rounded-lg p-2 text-xs text-ink outline-none focus:border-[#00236F]"
                 />
                 <button
                   type="submit"
                   disabled={busy}
-                  className="w-full bg-cta text-on-primary py-1.5 rounded text-xs font-semibold hover:bg-cta-hover"
+                  className="w-full bg-[#FE932C] hover:bg-[#E07D1E] text-white py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-xs"
                 >
                   {t.createCourse}
                 </button>
               </form>
             )}
 
-            <div className="space-y-2 flex-1 overflow-y-auto pr-1 custom-scrollbar">
+            <div className="space-y-2 flex-1 overflow-y-auto pr-1">
               {courses.length === 0 ? (
-                <p className="text-xs text-on-surface-variant p-4 text-center">{t.noCoursesYet}</p>
+                <p className="text-xs text-slate-400 p-4 text-center">{t.noCoursesYet}</p>
               ) : (
                 courses.map((c) => {
                   const isSelected = c.id === selectedCourseId;
@@ -530,16 +712,16 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                     <div
                       key={c.id}
                       onClick={() => void handleSelectCourse(c.id)}
-                      className={`p-3 rounded-lg cursor-pointer transition-colors relative group border ${
+                      className={`p-3.5 rounded-xl cursor-pointer transition-all relative group border ${
                         isSelected
-                          ? "bg-surface-container border-primary"
-                          : "bg-surface-container-lowest border-transparent hover:border-outline-variant"
+                          ? "bg-amber-50/80 border-amber-300 shadow-xs"
+                          : "bg-paper-light border-border-slate/60 hover:bg-paper hover:border-border-slate"
                       }`}
                     >
-                      <div className="font-label-md text-label-md font-bold text-primary mb-1 line-clamp-2">
+                      <div className="font-bold text-xs text-primary mb-0.5 line-clamp-2">
                         {c.title}
                       </div>
-                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-primary opacity-0 group-hover:opacity-100 transition-opacity text-[18px]">
+                      <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[#D97706] opacity-0 group-hover:opacity-100 transition-opacity text-[18px]">
                         chevron_right
                       </span>
                     </div>
@@ -552,51 +734,105 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
 
         {/* Panel 2: Modules (Col 4-6) */}
         <div className="lg:col-span-3 flex flex-col gap-4">
-          <div className="bg-surface-card border border-outline-variant rounded-xl p-4 shadow-sm flex flex-col min-h-[520px]">
+          <div className="bg-surface-card border border-border-slate rounded-2xl p-5 shadow-xs flex flex-col min-h-[540px]">
             <div className="flex justify-between items-center mb-1">
-              <h3 className="font-headline-sm text-headline-sm font-semibold m-0 text-primary">{t.modules}</h3>
+              <h3 className="font-display text-base font-bold m-0 text-primary">{t.modules}</h3>
               {selectedCourseId && (
                 <button
                   type="button"
                   onClick={() => setShowAddModule(!showAddModule)}
                   aria-label={t.addModuleAria}
-                  className="h-8 w-8 rounded-full hover:bg-surface-container flex items-center justify-center text-primary cursor-pointer transition-colors"
+                  className="h-8 w-8 rounded-lg bg-paper-light border border-border-slate hover:bg-surface-container flex items-center justify-center text-primary cursor-pointer transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[20px]">
+                  <span className="material-symbols-outlined text-[18px]">
                     {showAddModule ? "close" : "add"}
                   </span>
                 </button>
               )}
             </div>
 
-            <div className="font-label-sm text-label-sm text-on-surface-variant mb-4 pb-2 border-b border-outline-variant truncate">
+            <div className="text-xs text-slate-500 mb-2 pb-2 border-b border-border-slate/60 truncate font-medium">
               {selectedCourse ? t.inContext(selectedCourse.title) : t.selectACourse}
             </div>
 
+            {/* Skills Granted (P1 Skill-Gap Analysis, DECISIONS.md #45) */}
+            {selectedCourseId && (
+              <div className="mb-4 pb-3 border-b border-border-slate/60">
+                <button
+                  type="button"
+                  onClick={() => setShowCourseSkills((prev) => !prev)}
+                  className="text-xs text-[#D97706] hover:underline font-bold"
+                >
+                  {showCourseSkills ? t.hideSkillsGranted : t.skillsGranted(courseSkillIds.size)}
+                </button>
+                {showCourseSkills && courseSkillsUnavailable && (
+                  <p className="mt-3 text-[11px] text-slate-500 bg-surface-container border border-dashed border-border-slate rounded-lg p-2.5">
+                    {t.courseSkillsUnavailable}
+                  </p>
+                )}
+                {showCourseSkills && !courseSkillsUnavailable && (
+                  <div className="mt-3 space-y-2">
+                    <p className="text-[11px] text-slate-500">{t.skillsGrantedBody}</p>
+                    <SkillPicker skills={skills} selectedIds={courseSkillIds} onToggle={toggleCourseSkill} />
+                    <div className="flex gap-2">
+                      <input
+                        value={newSkillName}
+                        onChange={(e) => setNewSkillName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            void handleCreateSkill();
+                          }
+                        }}
+                        placeholder={t.newSkillPlaceholder}
+                        className="flex-1 h-9 bg-paper-light border border-border-slate rounded-lg px-2.5 text-xs focus:border-[#00236F] outline-none"
+                        type="text"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void handleCreateSkill()}
+                        className="px-3 h-9 bg-paper-light border border-border-slate text-primary rounded-lg text-xs font-bold hover:bg-surface-container cursor-pointer whitespace-nowrap"
+                      >
+                        {t.addToTaxonomy}
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void handleSaveCourseSkills()}
+                      disabled={savingCourseSkills}
+                      className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#FE932C] hover:bg-[#E07D1E] text-white shadow-xs disabled:opacity-50 cursor-pointer"
+                    >
+                      {savingCourseSkills ? t.saving : t.saveSkills}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Inline Add Module */}
             {showAddModule && (
-              <form onSubmit={(e) => void handleCreateModule(e)} className="mb-3 p-3 bg-surface-container rounded-lg space-y-2">
+              <form onSubmit={(e) => void handleCreateModule(e)} className="mb-3.5 p-3.5 bg-paper rounded-xl border border-border-slate space-y-2.5">
                 <input
                   name="title"
                   required
                   placeholder={t.moduleTitlePlaceholder}
-                  className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-sm"
+                  className="w-full bg-surface-card border border-border-slate rounded-lg p-2 text-xs text-ink outline-none focus:border-[#00236F]"
                 />
                 <button
                   type="submit"
                   disabled={busy}
-                  className="w-full bg-cta text-on-primary py-1.5 rounded text-xs font-semibold hover:bg-cta-hover"
+                  className="w-full bg-[#FE932C] hover:bg-[#E07D1E] text-white py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-xs"
                 >
                   {t.createModule}
                 </button>
               </form>
             )}
 
-            <div className="space-y-2 flex-1 overflow-y-auto pr-1 custom-scrollbar">
+            <div className="space-y-2 flex-1 overflow-y-auto pr-1">
               {!selectedCourseId ? (
-                <p className="text-xs text-on-surface-variant p-4 text-center">{t.selectCourseToViewModules}</p>
+                <p className="text-xs text-slate-400 p-4 text-center">{t.selectCourseToViewModules}</p>
               ) : modules.length === 0 ? (
-                <p className="text-xs text-on-surface-variant p-4 text-center">{t.noModulesYet}</p>
+                <p className="text-xs text-slate-400 p-4 text-center">{t.noModulesYet}</p>
               ) : (
                 modules.map((m) => {
                   const isSelected = m.id === selectedModuleId;
@@ -604,16 +840,16 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                     <div
                       key={m.id}
                       onClick={() => void handleSelectModule(m.id)}
-                      className={`p-3 rounded-lg cursor-pointer transition-colors relative group border ${
+                      className={`p-3.5 rounded-xl cursor-pointer transition-all relative group border ${
                         isSelected
-                          ? "bg-surface-container border-primary"
-                          : "bg-surface-container-lowest border-transparent hover:border-outline-variant"
+                          ? "bg-amber-50/80 border-amber-300 shadow-xs"
+                          : "bg-paper-light border-border-slate/60 hover:bg-paper hover:border-border-slate"
                       }`}
                     >
-                      <div className="font-label-md text-label-md font-bold text-primary mb-1 line-clamp-2">
+                      <div className="font-bold text-xs text-primary mb-0.5 line-clamp-2">
                         {m.title}
                       </div>
-                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-primary opacity-0 group-hover:opacity-100 transition-opacity text-[18px]">
+                      <span className="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[#D97706] opacity-0 group-hover:opacity-100 transition-opacity text-[18px]">
                         chevron_right
                       </span>
                     </div>
@@ -626,13 +862,13 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
 
         {/* Panel 3: Lessons & Details (Col 7-12) */}
         <div className="lg:col-span-6 flex flex-col gap-6">
-          <div className="bg-surface-card border border-outline-variant rounded-xl shadow-sm overflow-hidden flex flex-col min-h-[520px]">
-            <div className="p-4 border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
+          <div className="bg-surface-card border border-border-slate rounded-2xl shadow-xs overflow-hidden flex flex-col min-h-[540px]">
+            <div className="p-5 border-b border-border-slate/60 bg-paper flex justify-between items-center">
               <div>
-                <h3 className="font-headline-sm text-headline-sm font-semibold m-0 text-primary">
+                <h3 className="font-display text-base font-bold m-0 text-primary">
                   {t.lessonsAndAssessments}
                 </h3>
-                <div className="font-label-sm text-label-sm text-on-surface-variant truncate max-w-sm">
+                <div className="text-xs text-slate-500 truncate max-w-sm font-medium mt-0.5">
                   {selectedModule ? t.inContext(selectedModule.title) : t.selectAModule}
                 </div>
               </div>
@@ -641,9 +877,9 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                 <button
                   type="button"
                   onClick={() => setShowAddLesson(!showAddLesson)}
-                  className="h-touch-target px-4 bg-cta text-on-primary font-label-md text-label-md rounded hover:bg-cta-hover transition-colors flex items-center gap-2 shadow-sm"
+                  className="h-9 px-4 bg-[#FE932C] hover:bg-[#E07D1E] text-white text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
                 >
-                  <span className="material-symbols-outlined text-[18px]">
+                  <span className="material-symbols-outlined text-[16px]">
                     {showAddLesson ? "close" : "add"}
                   </span>
                   {showAddLesson ? t.cancel : t.addItem}
@@ -655,20 +891,20 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
             {showAddLesson && selectedModuleId && (
               <form
                 onSubmit={(e) => void handleCreateLesson(e)}
-                className="p-4 bg-surface-container-low border-b border-outline-variant space-y-3"
+                className="p-4 bg-paper-light border-b border-border-slate/60 space-y-3"
               >
-                <h4 className="font-headline-sm text-[16px] m-0 text-primary">{t.createNewLesson}</h4>
+                <h4 className="font-bold text-xs m-0 text-primary">{t.createNewLesson}</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input
                     name="title"
                     required
                     placeholder={t.lessonTitlePlaceholder}
-                    className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-sm"
+                    className="w-full bg-surface-card border border-border-slate rounded-xl p-2.5 text-xs text-ink outline-none focus:border-[#00236F]"
                   />
                   <select
                     name="content_type"
                     defaultValue="video"
-                    className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-sm"
+                    className="w-full bg-surface-card border border-border-slate rounded-xl p-2.5 text-xs text-ink outline-none focus:border-[#00236F] cursor-pointer"
                   >
                     <option value="video">{t.contentTypeVideo}</option>
                     <option value="pdf">{t.contentTypePdf}</option>
@@ -679,13 +915,13 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                 <input
                   name="video_id"
                   placeholder={t.youtubeIdOptionalPlaceholder}
-                  className="w-full bg-surface-container-lowest border border-outline-variant rounded p-2 text-sm"
+                  className="w-full bg-surface-card border border-border-slate rounded-xl p-2.5 text-xs text-ink outline-none focus:border-[#00236F]"
                 />
                 <div className="flex justify-end">
                   <button
                     disabled={busy}
                     type="submit"
-                    className="px-4 py-2 bg-cta text-on-primary rounded text-xs font-semibold hover:bg-cta-hover"
+                    className="px-4 py-2 bg-[#FE932C] hover:bg-[#E07D1E] text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-xs"
                   >
                     {t.saveLesson}
                   </button>
@@ -694,66 +930,112 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
             )}
 
             {/* Lessons List */}
-            <div className="p-4 space-y-4 flex-1 overflow-y-auto custom-scrollbar">
+            <div className="p-5 space-y-4 flex-1 overflow-y-auto">
               {!selectedModuleId ? (
-                <div className="flex flex-col items-center justify-center p-8 text-center text-on-surface-variant">
-                  <span className="material-symbols-outlined text-[48px] text-outline opacity-40 mb-2">
+                <div className="flex flex-col items-center justify-center p-8 text-center text-slate-400">
+                  <span className="material-symbols-outlined text-[48px] opacity-40 mb-2">
                     menu_book
                   </span>
-                  <p className="font-body-md">{t.selectModuleToView}</p>
+                  <p className="text-xs">{t.selectModuleToView}</p>
                 </div>
               ) : lessons.length === 0 ? (
-                <p className="text-sm text-on-surface-variant p-4 text-center">{t.noLessonsYet}</p>
+                <p className="text-xs text-slate-400 p-4 text-center">{t.noLessonsYet}</p>
               ) : (
                 lessons.map((lesson) => (
                   <div
                     key={lesson.id}
-                    className="border border-outline-variant rounded-lg p-4 bg-surface-container-lowest shadow-xs space-y-3"
+                    className="border border-border-slate rounded-xl p-4 bg-paper-light shadow-xs space-y-3 hover:border-[#FE932C]/40 transition-all"
                   >
                     <div className="flex justify-between items-start gap-2">
                       <div className="flex items-center gap-3">
                         <span
-                          className={`material-symbols-outlined p-2 rounded-full text-[20px] ${
+                          className={`material-symbols-outlined p-2 rounded-xl text-[20px] ${
                             lesson.content_type === "video"
-                              ? "text-secondary-container bg-secondary-container/10"
-                              : "text-primary-container bg-primary-container/10"
+                              ? "text-[#D97706] bg-amber-100"
+                              : "text-primary bg-blue-100"
                           }`}
                         >
                           {lesson.content_type === "video" ? "play_circle" : "description"}
                         </span>
                         <div>
-                          <h4 className="font-body-md font-semibold text-primary m-0">{lesson.title}</h4>
-                          <p className="font-label-sm text-label-sm text-on-surface-variant m-0 flex items-center gap-2 mt-0.5">
+                          <h4 className="font-bold text-xs text-primary m-0">{lesson.title}</h4>
+                          <p className="text-[11px] text-slate-500 m-0 flex items-center gap-2 mt-0.5">
                             <span className="uppercase font-bold">
                               {t.contentType[lesson.content_type] ?? lesson.content_type}
                             </span>
                             {lesson.video_id && (
-                              <span className="text-cta font-mono">{t.ytPrefix(lesson.video_id)}</span>
+                              <span className="text-[#D97706] font-metric-mono font-bold">{t.ytPrefix(lesson.video_id)}</span>
                             )}
                           </p>
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setActiveLessonId(activeLessonId === lesson.id ? null : lesson.id)}
-                        className="text-xs text-cta hover:underline font-semibold"
-                      >
-                        {activeLessonId === lesson.id ? t.hideDetails : t.manage}
-                      </button>
+                      <div className="flex items-center gap-3 shrink-0">
+                        {(lesson.content_type === "video" ||
+                          lesson.content_type === "pdf" ||
+                          lesson.content_type === "slides") && (
+                          <button
+                            type="button"
+                            onClick={() => void handleTogglePreview(lesson)}
+                            className="text-xs text-primary hover:text-[#FE932C] hover:underline font-bold cursor-pointer"
+                          >
+                            {previewLessonId === lesson.id ? t.hidePreview : t.preview}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setActiveLessonId(activeLessonId === lesson.id ? null : lesson.id)}
+                          className="text-xs text-primary hover:text-[#FE932C] hover:underline font-bold cursor-pointer"
+                        >
+                          {activeLessonId === lesson.id ? t.hideDetails : t.manage}
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Content Preview (When toggled) */}
+                    {previewLessonId === lesson.id && (
+                      <div className="pt-3 border-t border-border-slate/50">
+                        {previewLoading ? (
+                          <p className="text-xs text-slate-500">{t.loadingPreview}</p>
+                        ) : lesson.content_type === "video" ? (
+                          lesson.video_id ? (
+                            <YouTubeVideoPlayer videoId={lesson.video_id} />
+                          ) : (
+                            <SelfHostedVideoPlayer url={previewUrl} />
+                          )
+                        ) : previewUrl ? (
+                          canInlinePreview(lesson.storage_path) ? (
+                            <iframe
+                              src={previewUrl}
+                              title={lesson.title}
+                              className="w-full h-96 rounded-xl border border-border-slate bg-white"
+                            />
+                          ) : (
+                            <p className="text-xs text-slate-500">
+                              {t.cannotPreviewInline}{" "}
+                              <a
+                                href={previewUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-primary hover:underline font-bold"
+                              >
+                                {t.openInNewTab}
+                              </a>
+                            </p>
+                          )
+                        ) : (
+                          <p className="text-xs text-slate-500">{t.noContentYet}</p>
+                        )}
+                      </div>
+                    )}
 
                     {/* Extended Controls (When expanded) */}
                     {activeLessonId === lesson.id && (
-                      <div className="pt-3 border-t border-outline-variant/40 space-y-3 text-xs">
-                        {/* File Upload (PDF/slides) — fires immediately on file
-                            selection, same as the video upload below; there is
-                            no separate Save button by design. The uploading/
-                            attached indicators exist so that's visible instead
-                            of looking like nothing happened. */}
+                      <div className="pt-3 border-t border-border-slate/50 space-y-3 text-xs">
+                        {/* File Upload (PDF/slides) */}
                         {lesson.content_type !== "video" && (
                           <div className="flex items-center gap-2">
-                            <label className="font-label-sm text-on-surface-variant uppercase">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                               {t.attachFile}
                             </label>
                             <input
@@ -763,28 +1045,22 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                                 const file = e.target.files?.[0];
                                 if (file) void handleUpload(lesson.id, file);
                               }}
-                              className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-surface-container-high disabled:opacity-50"
+                              className="text-xs file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:bg-surface-card file:text-primary file:font-semibold disabled:opacity-50"
                             />
                             {fileUploading[lesson.id] === true && (
-                              <span className="text-on-surface-variant font-semibold">{t.uploading}</span>
+                              <span className="text-slate-500 font-semibold">{t.uploading}</span>
                             )}
                             {fileUploading[lesson.id] !== true && lesson.storage_path && (
-                              <span className="text-status-shortlisted font-semibold">{t.fileAttached}</span>
+                              <span className="text-emerald-700 font-bold">{t.fileAttached}</span>
                             )}
                           </div>
                         )}
 
-                        {/* Video File Upload — an alternative to the YouTube
-                            ID below, not required alongside it: a lesson
-                            with a video_id renders via YouTube on the
-                            trainee side regardless of whether a file was
-                            also uploaded here (see TraineeLearnLessons.tsx).
-                            Uploading here overwrites any previous
-                            self-hosted video for this lesson. */}
+                        {/* Video File Upload */}
                         {lesson.content_type === "video" && (
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2">
-                              <label className="font-label-sm text-on-surface-variant uppercase">
+                              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                 {t.uploadVideoFile}
                               </label>
                               <input
@@ -795,18 +1071,18 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                                   const file = e.target.files?.[0];
                                   if (file) void handleVideoUpload(lesson.id, file);
                                 }}
-                                className="text-xs file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-surface-container-high disabled:opacity-50"
+                                className="text-xs file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:bg-surface-card file:text-primary file:font-semibold disabled:opacity-50"
                               />
                               {lesson.storage_path && videoUploadProgress[lesson.id] === undefined && (
-                                <span className="text-status-shortlisted font-semibold">
+                                <span className="text-emerald-700 font-bold">
                                   {t.selfHostedVideoAttached}
                                 </span>
                               )}
                             </div>
                             {videoUploadProgress[lesson.id] !== undefined && (
-                              <div className="h-1.5 w-full max-w-xs rounded-full bg-surface-container-high overflow-hidden">
+                              <div className="h-1.5 w-full max-w-xs rounded-full bg-slate-200 overflow-hidden">
                                 <div
-                                  className="h-full bg-cta transition-all"
+                                  className="h-full bg-[#FE932C] transition-all"
                                   style={{ width: `${Math.round(videoUploadProgress[lesson.id] * 100)}%` }}
                                 />
                               </div>
@@ -816,27 +1092,27 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
 
                         {/* YouTube ID Updater */}
                         <div className="flex items-center gap-2">
-                          <label className="font-label-sm text-on-surface-variant uppercase">{t.youtubeIdLabel}</label>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{t.youtubeIdLabel}</label>
                           <input
                             value={youtubeInputs[lesson.id] ?? ""}
                             onChange={(e) =>
                               setYoutubeInputs((prev) => ({ ...prev, [lesson.id]: e.target.value }))
                             }
                             placeholder="e.g. dQw4w9WgXcQ"
-                            className="border border-outline-variant rounded px-2 py-1 flex-1 text-xs"
+                            className="bg-surface-card border border-border-slate rounded-lg px-2.5 py-1 flex-1 text-xs text-ink outline-none"
                           />
                           <button
                             type="button"
                             onClick={() => void handleAttachYoutube(lesson.id)}
-                            className="px-2 py-1 bg-primary text-on-primary rounded text-xs"
+                            className="px-3 py-1 bg-[#00236F] hover:bg-[#001b54] text-white rounded-lg text-xs font-bold cursor-pointer"
                           >
                             {t.setId}
                           </button>
                         </div>
 
                         {/* Locale Translation */}
-                        <div className="p-2 bg-surface-container-low rounded space-y-2">
-                          <span className="font-label-sm uppercase font-bold text-on-surface-variant">
+                        <div className="p-3 bg-paper rounded-xl border border-border-slate space-y-2">
+                          <span className="text-[10px] uppercase font-bold tracking-wider text-[#D97706] block">
                             {t.addUpdateTranslation}
                           </span>
                           <div className="grid grid-cols-2 gap-2">
@@ -851,7 +1127,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                                   },
                                 }))
                               }
-                              className="border border-outline-variant rounded p-1 text-xs"
+                              className="bg-surface-card border border-border-slate rounded-lg p-1.5 text-xs text-ink outline-none"
                             >
                               <option value="">{t.selectLanguage}</option>
                               {SUGGESTED_LOCALES.map((l) => (
@@ -872,7 +1148,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                                 }))
                               }
                               placeholder={t.localizedTitlePlaceholder}
-                              className="border border-outline-variant rounded p-1 text-xs"
+                              className="bg-surface-card border border-border-slate rounded-lg p-1.5 text-xs text-ink outline-none"
                             />
                           </div>
                           <textarea
@@ -888,12 +1164,12 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
                             }
                             placeholder={t.localizedBodyPlaceholder}
                             rows={2}
-                            className="w-full border border-outline-variant rounded p-1 text-xs"
+                            className="w-full bg-surface-card border border-border-slate rounded-lg p-2 text-xs text-ink outline-none"
                           />
                           <button
                             type="button"
                             onClick={() => void handleSaveTranslation(lesson.id)}
-                            className="px-3 py-1 bg-secondary-container text-on-secondary-container rounded font-bold text-xs"
+                            className="px-3.5 py-1.5 bg-[#FE932C] hover:bg-[#E07D1E] text-white rounded-lg font-bold text-xs cursor-pointer shadow-xs"
                           >
                             {t.saveTranslation}
                           </button>
@@ -906,12 +1182,24 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
 
               {/* Assessment Builder Panel */}
               {selectedCourseId && selectedModuleId && (
-                <div className="mt-6 pt-4 border-t border-outline-variant">
-                  <h4 className="font-headline-sm text-[16px] text-primary mb-3 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-secondary">quiz</span>
+                <div className="mt-6 pt-5 border-t border-border-slate/60">
+                  <h4 className="font-display text-base font-bold text-primary mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#D97706]">quiz</span>
                     {t.moduleAssessments}
                   </h4>
                   <AssessmentBuilder accessToken={accessToken} moduleId={selectedModuleId} />
+                </div>
+              )}
+
+              {/* Course Gradebook — every roster trainee's best marks per
+                  graded module test in the selected course. */}
+              {selectedCourseId && (
+                <div className="mt-6 pt-5 border-t border-border-slate/60">
+                  <h4 className="font-display text-base font-bold text-primary mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#D97706]">grading</span>
+                    {t.courseGradebook}
+                  </h4>
+                  <CourseGradebook key={selectedCourseId} accessToken={accessToken} courseId={selectedCourseId} />
                 </div>
               )}
             </div>

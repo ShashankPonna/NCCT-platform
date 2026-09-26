@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="730" viewBox="0 0 1080 730">
+<rect width="1080" height="730" fill="#ffffff"/>
+<rect x="28" y="52" width="372" height="112" rx="11" fill="#f8ead0" stroke="#d9ae6a" stroke-width="1.5"/>
+<text x="44" y="72" font-family="Arial, Helvetica, sans-serif" font-size="10.5" font-weight="normal" fill="#9c6206" text-anchor="start" letter-spacing="1.3">KIOSK HARDWARE · ON SITE</text>
+<rect x="44" y="82" width="172" height="68" rx="8" fill="#ffffff" stroke="#9c6206" stroke-width="1.5"/>
+<text x="130" y="107" font-family="Arial, Helvetica, sans-serif" font-size="13.5" font-weight="bold" fill="#101816" text-anchor="middle">ESP32 DevKit</text>
+<text x="130" y="124" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">RC522 · OLED</text>
+<text x="130" y="138" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">buzzer · button</text>
+<rect x="228" y="82" width="156" height="68" rx="8" fill="#ffffff" stroke="#9c6206" stroke-width="1.5"/>
+<text x="306" y="107" font-family="Arial, Helvetica, sans-serif" font-size="13.5" font-weight="bold" fill="#101816" text-anchor="middle">ESP32-CAM</text>
+<text x="306" y="124" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">serves JPEG</text>
+<text x="306" y="138" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">over LAN WiFi</text>
+<line x1="130" y1="150" x2="130" y2="199" stroke="#9c6206" stroke-width="1.8"/>
+<polygon points="125,199 135,199 130,208" fill="#9c6206"/>
+<line x1="306" y1="150" x2="306" y2="199" stroke="#9c6206" stroke-width="1.8"/>
+<polygon points="301,199 311,199 306,208" fill="#9c6206"/>
+<text x="139" y="176" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#9c6206" text-anchor="start">USB cable</text>
+<text x="139" y="190" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#9c6206" text-anchor="start">Web Serial</text>
+<text x="297" y="176" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#9c6206" text-anchor="end">HTTP GET</text>
+<text x="297" y="190" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#9c6206" text-anchor="end">/capture</text>
+<text x="430" y="72" font-family="Arial, Helvetica, sans-serif" font-size="10.5" font-weight="normal" fill="#0f5f52" text-anchor="start" letter-spacing="1.3">CLIENTS</text>
+<rect x="44" y="214" width="340" height="80" rx="9" fill="#ffffff" stroke="#0f5f52" stroke-width="2"/>
+<text x="214" y="241" font-family="Arial, Helvetica, sans-serif" font-size="13.5" font-weight="bold" fill="#101816" text-anchor="middle">Kiosk Terminal</text>
+<text x="214" y="259" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">Chrome · Web Serial · @vladmandic/human</text>
+<text x="214" y="276" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#9c6206" text-anchor="middle">must be served from http://localhost</text>
+<rect x="430" y="82" width="244" height="80" rx="9" fill="#ffffff" stroke="#ccd6d3" stroke-width="1.5"/>
+<text x="552" y="110" font-family="Arial, Helvetica, sans-serif" font-size="13.5" font-weight="bold" fill="#101816" text-anchor="middle">Web App</text>
+<text x="552" y="129" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">React 19 + Vite + TypeScript</text>
+<text x="552" y="146" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">admin · trainer · employer</text>
+<rect x="696" y="82" width="244" height="80" rx="9" fill="#ffffff" stroke="#ccd6d3" stroke-width="1.5"/>
+<text x="818" y="110" font-family="Arial, Helvetica, sans-serif" font-size="13.5" font-weight="bold" fill="#101816" text-anchor="middle">Mobile App</text>
+<text x="818" y="129" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">Capacitor → native Android</text>
+<text x="818" y="146" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">wraps the same web build</text>
+<line x1="214" y1="294" x2="214" y2="343" stroke="#596764" stroke-width="1.6"/>
+<polygon points="209,343 219,343 214,352" fill="#596764"/>
+<line x1="552" y1="162" x2="552" y2="343" stroke="#596764" stroke-width="1.6"/>
+<polygon points="547,343 557,343 552,352" fill="#596764"/>
+<line x1="818" y1="162" x2="818" y2="343" stroke="#596764" stroke-width="1.6"/>
+<polygon points="813,343 823,343 818,352" fill="#596764"/>
+<text x="223" y="328" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="start">HTTPS · JWT</text>
+<text x="561" y="250" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="start">HTTPS · JSON</text>
+<text x="561" y="264" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="start">Bearer JWT</text>
+<text x="827" y="250" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="start">HTTPS · JSON</text>
+<text x="827" y="264" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="start">Bearer JWT</text>
+<rect x="28" y="356" width="912" height="150" rx="12" fill="#f4f7f6" stroke="#ccd6d3" stroke-width="1.5"/>
+<text x="46" y="380" font-family="Arial, Helvetica, sans-serif" font-size="10.5" font-weight="normal" fill="#0f5f52" text-anchor="start" letter-spacing="1.3">EXPRESS API · ONE BACKEND FOR EVERY CLIENT</text>
+<rect x="46" y="396" width="206" height="92" rx="8" fill="#ffffff" stroke="#ccd6d3" stroke-width="1.5"/>
+<text x="149" y="425" font-family="Arial, Helvetica, sans-serif" font-size="13.5" font-weight="bold" fill="#101816" text-anchor="middle">Auth middleware</text>
+<text x="149" y="444" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">verify Supabase JWT</text>
+<text x="149" y="461" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">+ requireRole(...)</text>
+<rect x="268" y="396" width="206" height="92" rx="8" fill="#ffffff" stroke="#ccd6d3" stroke-width="1.5"/>
+<text x="371" y="425" font-family="Arial, Helvetica, sans-serif" font-size="13.5" font-weight="bold" fill="#101816" text-anchor="middle">34 route modules</text>
+<text x="371" y="444" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">programmes · lessons</text>
+<text x="371" y="461" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">attendance · jobs · kiosk</text>
+<rect x="490" y="396" width="432" height="92" rx="8" fill="#ffffff" stroke="#ccd6d3" stroke-width="1.5"/>
+<text x="706" y="425" font-family="Arial, Helvetica, sans-serif" font-size="13.5" font-weight="bold" fill="#101816" text-anchor="middle">Services</text>
+<text x="706" y="444" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">certificate PDF+QR · chatbot RAG · face verify</text>
+<text x="706" y="461" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">analytics · skill-gap · job matching</text>
+<line x1="148" y1="506" x2="148" y2="553" stroke="#596764" stroke-width="1.6"/>
+<polygon points="143,553 153,553 148,562" fill="#596764"/>
+<line x1="339" y1="506" x2="339" y2="553" stroke="#596764" stroke-width="1.6"/>
+<polygon points="334,553 344,553 339,562" fill="#596764"/>
+<line x1="499" y1="506" x2="499" y2="553" stroke="#596764" stroke-width="1.6"/>
+<polygon points="494,553 504,553 499,562" fill="#596764"/>
+<line x1="706" y1="506" x2="706" y2="553" stroke="#596764" stroke-width="1.6"/>
+<polygon points="701,553 711,553 706,562" fill="#596764"/>
+<line x1="860" y1="506" x2="860" y2="553" stroke="#596764" stroke-width="1.6"/>
+<polygon points="855,553 865,553 860,562" fill="#596764"/>
+<text x="157" y="538" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="start">SQL + pgvector</text>
+<text x="348" y="538" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="start">verify token</text>
+<text x="508" y="538" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="start">signed URL</text>
+<text x="715" y="538" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="start">context + query</text>
+<text x="869" y="538" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="start">presigned</text>
+<rect x="28" y="566" width="560" height="124" rx="12" fill="#f4f7f6" stroke="#ccd6d3" stroke-width="1.5"/>
+<text x="46" y="590" font-family="Arial, Helvetica, sans-serif" font-size="10.5" font-weight="normal" fill="#0f5f52" text-anchor="start" letter-spacing="1.3">SUPABASE</text>
+<rect x="44" y="602" width="208" height="72" rx="8" fill="#ffffff" stroke="#ccd6d3" stroke-width="1.5"/>
+<text x="148" y="630" font-family="Arial, Helvetica, sans-serif" font-size="13.5" font-weight="bold" fill="#101816" text-anchor="middle">Postgres + pgvector</text>
+<text x="148" y="650" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">23 tables · RLS policies</text>
+<rect x="264" y="602" width="150" height="72" rx="8" fill="#ffffff" stroke="#ccd6d3" stroke-width="1.5"/>
+<text x="339" y="630" font-family="Arial, Helvetica, sans-serif" font-size="13.5" font-weight="bold" fill="#101816" text-anchor="middle">Auth</text>
+<text x="339" y="650" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">JWT issuer</text>
+<rect x="426" y="602" width="146" height="72" rx="8" fill="#ffffff" stroke="#ccd6d3" stroke-width="1.5"/>
+<text x="499" y="630" font-family="Arial, Helvetica, sans-serif" font-size="13.5" font-weight="bold" fill="#101816" text-anchor="middle">Storage</text>
+<text x="499" y="650" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">PDFs · images</text>
+<rect x="612" y="566" width="328" height="124" rx="12" fill="#f4f7f6" stroke="#ccd6d3" stroke-width="1.5"/>
+<text x="630" y="590" font-family="Arial, Helvetica, sans-serif" font-size="10.5" font-weight="normal" fill="#0f5f52" text-anchor="start" letter-spacing="1.3">EXTERNAL</text>
+<rect x="628" y="602" width="156" height="72" rx="8" fill="#ffffff" stroke="#ccd6d3" stroke-width="1.5"/>
+<text x="706" y="630" font-family="Arial, Helvetica, sans-serif" font-size="13.5" font-weight="bold" fill="#101816" text-anchor="middle">Gemini API</text>
+<text x="706" y="650" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">3.1-flash-lite</text>
+<rect x="796" y="602" width="128" height="72" rx="8" fill="#ffffff" stroke="#ccd6d3" stroke-width="1.5"/>
+<text x="860" y="630" font-family="Arial, Helvetica, sans-serif" font-size="13.5" font-weight="bold" fill="#101816" text-anchor="middle">Backblaze B2</text>
+<text x="860" y="650" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="middle">lesson video</text>
+<path d="M940,122 H986 V630 H961" fill="none" stroke="#596764" stroke-width="1.4" stroke-dasharray="4 5" opacity="0.75"/>
+<polygon points="961,625 961,635 952,630" fill="#596764" opacity="0.75"/>
+<line x1="980" y1="370" x2="992" y2="382" stroke="#596764" stroke-width="1.8"/>
+<line x1="992" y1="370" x2="980" y2="382" stroke="#596764" stroke-width="1.8"/>
+<text x="998" y="366" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="start">no client</text>
+<text x="998" y="379" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="start">reaches the</text>
+<text x="998" y="392" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" fill="#596764" text-anchor="start">DB directly</text>
+</svg>

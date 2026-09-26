@@ -12,6 +12,17 @@ apps/web/dist/
 .env.local
 *.env.local
 
+# Firmware WiFi credentials — same reasoning as .env above, applied to the
+# Arduino sketches under ESP32-CONTROLLER/ and ESP32-CAM/: real values live
+# in a gitignored wifi_credentials.h next to each .ino, with a committed
+# wifi_credentials.h.example as the template. Scoped to the two real sketch
+# folders specifically (not a bare `wifi_credentials.h` filename match) —
+# ESP32-CONTROLLER/test/stubs/wifi_credentials.h is a different file, a
+# harmless placeholder the logic harness needs committed so it still
+# compiles on a fresh clone that's never been set up for real flashing.
+ESP32-CONTROLLER/arduino/kiosk_controller/wifi_credentials.h
+ESP32-CAM/arduino/kiosk_capture_server/wifi_credentials.h
+
 # Logs
 *.log
 npm-debug.log*
@@ -27,3 +38,4 @@ pnpm-debug.log*
 
 # Firmware logic-harness build output (ESP32-CONTROLLER/test)
 ESP32-CONTROLLER/test/simtest
+ESP32-CONTROLLER/test/simtest.exe

@@ -10,8 +10,12 @@ const {
   jobsMock,
   jobSkillsMock,
   programmeSkillsMock,
+  courseSkillsMock,
+  coursesMock,
+  programmeTrainersMock,
   fromMock,
   getSkillGapMock,
+  getSkillGapAcrossJobsMock,
   embedJobBestEffortMock,
 } = vi.hoisted(() => {
     function createTableMock() {
@@ -30,12 +34,18 @@ const {
     const jobsMock = createTableMock();
     const jobSkillsMock = createTableMock();
     const programmeSkillsMock = createTableMock();
+    const courseSkillsMock = createTableMock();
+    const coursesMock = createTableMock();
+    const programmeTrainersMock = createTableMock();
     const tables: Record<string, ReturnType<typeof createTableMock>> = {
       profiles: profilesMock,
       skills: skillsMock,
       jobs: jobsMock,
       job_skills: jobSkillsMock,
       programme_skills: programmeSkillsMock,
+      course_skills: courseSkillsMock,
+      courses: coursesMock,
+      programme_trainers: programmeTrainersMock,
     };
     const fromMock = vi.fn((table: string) => tables[table].builder);
     return {
@@ -45,8 +55,12 @@ const {
       jobsMock,
       jobSkillsMock,
       programmeSkillsMock,
+      courseSkillsMock,
+      coursesMock,
+      programmeTrainersMock,
       fromMock,
       getSkillGapMock: vi.fn(),
+      getSkillGapAcrossJobsMock: vi.fn(),
       embedJobBestEffortMock: vi.fn(),
     };
   });
@@ -56,7 +70,10 @@ vi.mock("../supabaseClient.js", () => ({
   getSupabaseForUser: () => ({ from: fromMock }),
 }));
 
-vi.mock("../skillGapService.js", () => ({ getSkillGap: getSkillGapMock }));
+vi.mock("../skillGapService.js", () => ({
+  getSkillGap: getSkillGapMock,
+  getSkillGapAcrossJobs: getSkillGapAcrossJobsMock,
+}));
 
 // Never load the real embedding model from a job-skills PUT in tests —
 // same reasoning as jobs.test.ts.
@@ -78,8 +95,18 @@ function authenticateAs(userId: string, role: string) {
 beforeEach(() => {
   getUserMock.mockReset();
   getSkillGapMock.mockReset();
+  getSkillGapAcrossJobsMock.mockReset();
   embedJobBestEffortMock.mockReset();
-  for (const mock of [profilesMock, skillsMock, jobsMock, jobSkillsMock, programmeSkillsMock]) {
+  for (const mock of [
+    profilesMock,
+    skillsMock,
+    jobsMock,
+    jobSkillsMock,
+    programmeSkillsMock,
+    courseSkillsMock,
+    coursesMock,
+    programmeTrainersMock,
+  ]) {
     mock.result.data = null;
     mock.result.error = null;
     for (const key of Object.keys(mock.builder)) {
@@ -249,13 +276,127 @@ describe("PUT /api/programmes/:id/skills", () => {
     ]);
   });
 
-  it("replaces the granted set for a trainer", async () => {
+  it("returns 403 for a trainer not assigned to the programme", async () => {
     authenticateAs("trainer-1", "trainer");
+    programmeTrainersMock.result.data = null;
+    const res = await request(buildApp())
+      .put(`/api/programmes/${PROGRAMME_ID}/skills`)
+      .set("Authorization", "Bearer token")
+      .send({ skill_ids: [] });
+    expect(res.status).toBe(403);
+  });
+
+  it("replaces the granted set for a trainer assigned to the programme", async () => {
+    authenticateAs("trainer-1", "trainer");
+    programmeTrainersMock.result.data = { trainer_id: "trainer-1" };
     const res = await request(buildApp())
       .put(`/api/programmes/${PROGRAMME_ID}/skills`)
       .set("Authorization", "Bearer token")
       .send({ skill_ids: [] });
     expect(res.status).toBe(204);
+  });
+});
+
+const COURSE_ID = "55555555-5555-5555-5555-555555555555";
+
+describe("GET /api/courses/:id/skills", () => {
+  it("returns 401 with no bearer token", async () => {
+    const res = await request(buildApp()).get(`/api/courses/${COURSE_ID}/skills`);
+    expect(res.status).toBe(401);
+  });
+
+  it("returns the course's granted skills", async () => {
+    authenticateAs("trainee-1", "trainee");
+    courseSkillsMock.result.data = [
+      { skill_id: SKILL_ID, skills: { id: SKILL_ID, name: "Bookkeeping", category: null } },
+    ];
+    const res = await request(buildApp())
+      .get(`/api/courses/${COURSE_ID}/skills`)
+      .set("Authorization", "Bearer token");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([{ id: SKILL_ID, name: "Bookkeeping", category: null }]);
+  });
+});
+
+describe("PUT /api/courses/:id/skills", () => {
+  it("returns 401 with no bearer token", async () => {
+    const res = await request(buildApp()).put(`/api/courses/${COURSE_ID}/skills`).send({ skill_ids: [] });
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 403 for a trainee", async () => {
+    authenticateAs("trainee-1", "trainee");
+    const res = await request(buildApp())
+      .put(`/api/courses/${COURSE_ID}/skills`)
+      .set("Authorization", "Bearer token")
+      .send({ skill_ids: [] });
+    expect(res.status).toBe(403);
+  });
+
+  it("replaces the granted set for an admin", async () => {
+    authenticateAs("admin-1", "admin");
+    const res = await request(buildApp())
+      .put(`/api/courses/${COURSE_ID}/skills`)
+      .set("Authorization", "Bearer token")
+      .send({ skill_ids: [SKILL_ID] });
+    expect(res.status).toBe(204);
+    expect(courseSkillsMock.builder.delete).toHaveBeenCalled();
+    expect(courseSkillsMock.builder.insert).toHaveBeenCalledWith([{ course_id: COURSE_ID, skill_id: SKILL_ID }]);
+  });
+
+  it("returns 403 for a trainer not assigned to the course's programme", async () => {
+    authenticateAs("trainer-1", "trainer");
+    coursesMock.result.data = { programme_id: PROGRAMME_ID };
+    programmeTrainersMock.result.data = null;
+    const res = await request(buildApp())
+      .put(`/api/courses/${COURSE_ID}/skills`)
+      .set("Authorization", "Bearer token")
+      .send({ skill_ids: [] });
+    expect(res.status).toBe(403);
+  });
+
+  it("replaces the granted set for a trainer assigned to the course's programme", async () => {
+    authenticateAs("trainer-1", "trainer");
+    coursesMock.result.data = { programme_id: PROGRAMME_ID };
+    programmeTrainersMock.result.data = { trainer_id: "trainer-1" };
+    const res = await request(buildApp())
+      .put(`/api/courses/${COURSE_ID}/skills`)
+      .set("Authorization", "Bearer token")
+      .send({ skill_ids: [] });
+    expect(res.status).toBe(204);
+  });
+});
+
+describe("GET /api/skill-gap/mine", () => {
+  it("returns 401 with no bearer token", async () => {
+    const res = await request(buildApp()).get("/api/skill-gap/mine");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 403 for a non-trainee", async () => {
+    authenticateAs("employer-1", "employer");
+    const res = await request(buildApp()).get("/api/skill-gap/mine").set("Authorization", "Bearer token");
+    expect(res.status).toBe(403);
+  });
+
+  it("returns the computed multi-job summary for a trainee, never mistaken for a job id", async () => {
+    authenticateAs("trainee-1", "trainee");
+    const payload = { jobs: [], gap_summary: [], hasProfileSignal: false };
+    getSkillGapAcrossJobsMock.mockResolvedValue(payload);
+    const res = await request(buildApp()).get("/api/skill-gap/mine").set("Authorization", "Bearer token");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(payload);
+    expect(getSkillGapAcrossJobsMock).toHaveBeenCalledWith("trainee-1");
+    // The single-job route below must never be the one that actually
+    // handled this request — that would mean "mine" was captured as :jobId.
+    expect(getSkillGapMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when the service throws", async () => {
+    authenticateAs("trainee-1", "trainee");
+    getSkillGapAcrossJobsMock.mockRejectedValue(new Error("boom"));
+    const res = await request(buildApp()).get("/api/skill-gap/mine").set("Authorization", "Bearer token");
+    expect(res.status).toBe(400);
   });
 });
 

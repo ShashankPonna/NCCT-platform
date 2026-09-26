@@ -24,7 +24,7 @@ careerCounsellorRouter.post(
       res.json(result);
     } catch (err) {
       // Same reasoning as chatbot.ts: the likeliest failure in a fresh
-      // environment is a missing GEMINI_API_KEY — a config problem, not a
+      // environment is a missing GROQ_API_KEY — a config problem, not a
       // bad request.
       res.status(503).json({ error: `Career counsellor unavailable: ${(err as Error).message}` });
     }

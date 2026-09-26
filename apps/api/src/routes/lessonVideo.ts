@@ -4,7 +4,8 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Router } from "express";
 import { z } from "zod";
 import { requireAuth, requireRole } from "../middleware/auth.js";
-import { getB2BucketName, getB2Client } from "../b2Client.js";
+import { getB2BucketName, getB2Client, getVideoCdnBaseUrl } from "../b2Client.js";
+import { getProgrammeIdForLesson, requireProgrammeAccess } from "../programmeAccess.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
 export const lessonVideoRouter = Router();
@@ -40,6 +41,7 @@ lessonVideoRouter.post(
   "/lessons/:id/video-upload-url",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForLesson(req.params.id)),
   async (req, res) => {
     const parsed = requestUploadUrlSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -83,7 +85,7 @@ lessonVideoRouter.post(
     } catch (err) {
       // Most likely cause in a fresh environment: B2_* env vars unset — a
       // deployment/config problem, not a bad request, same reasoning as
-      // chatbot.ts's 503 on a missing GEMINI_API_KEY.
+      // chatbot.ts's 503 on a missing GROQ_API_KEY.
       res.status(503).json({ error: `Video storage unavailable: ${(err as Error).message}` });
       return;
     }
@@ -114,6 +116,21 @@ lessonVideoRouter.get("/lessons/:id/video-url", requireAuth, async (req, res) =>
   }
   if (lesson.content_type !== "video" || !lesson.storage_path) {
     res.json({ url: null });
+    return;
+  }
+
+  // A CDN can only cache a URL that stays the same across requests — a
+  // signed URL that re-mints (and re-expires) on every call can never be
+  // cached, since it's never the same URL twice. When VIDEO_CDN_BASE_URL is
+  // configured, skip signing entirely and hand back the stable CDN URL
+  // instead; each path segment is percent-encoded separately so a filename
+  // with spaces or other reserved characters in it (storage_path is
+  // `${lessonId}/${timestamp}-${originalFilename}`) still produces a valid
+  // URL. See DECISIONS.md #49 for the security tradeoff this accepts.
+  const cdnBaseUrl = getVideoCdnBaseUrl();
+  if (cdnBaseUrl) {
+    const encodedPath = lesson.storage_path.split("/").map(encodeURIComponent).join("/");
+    res.json({ url: `${cdnBaseUrl}/${encodedPath}` });
     return;
   }
 

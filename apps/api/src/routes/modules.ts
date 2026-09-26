@@ -1,6 +1,11 @@
 import { createModuleSchema, updateModuleSchema } from "@ncct/validation";
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import {
+  getProgrammeIdForCourse,
+  getProgrammeIdForModule,
+  requireProgrammeAccess,
+} from "../programmeAccess.js";
 import { supabaseAdmin } from "../supabaseClient.js";
 
 export const modulesRouter = Router();
@@ -9,6 +14,7 @@ modulesRouter.post(
   "/courses/:id/modules",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForCourse(req.params.id)),
   async (req, res) => {
     const parsed = createModuleSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -66,6 +72,7 @@ modulesRouter.patch(
   "/modules/:id",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForModule(req.params.id)),
   async (req, res) => {
     const parsed = updateModuleSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -96,6 +103,7 @@ modulesRouter.delete(
   "/modules/:id",
   requireAuth,
   requireRole("admin", "trainer"),
+  requireProgrammeAccess((req) => getProgrammeIdForModule(req.params.id)),
   async (req, res) => {
     const { data, error } = await supabaseAdmin
       .from("modules")

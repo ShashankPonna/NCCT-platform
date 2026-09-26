@@ -7,9 +7,9 @@ export type ManagementTab =
   | "dashboard"
   | "users"
   | "programmes"
+  | "courses"
   | "content"
   | "attendance"
-  | "kiosk"
   | "terminal"
   | "chatbot"
   | "profile"
@@ -25,13 +25,13 @@ interface NavItem {
 const ALL_NAV_ITEMS: NavItem[] = [
   { id: "dashboard", labelKey: "dashboard", icon: "dashboard", roles: ["admin"] },
   { id: "users", labelKey: "users", icon: "domain", roles: ["admin"] },
-  { id: "programmes", labelKey: "programmes", icon: "school", roles: ["admin"] },
+  { id: "programmes", labelKey: "programmes", icon: "school", roles: ["admin", "trainer"] },
+  { id: "courses", labelKey: "courses", icon: "menu_book", roles: ["trainer"] },
   { id: "content", labelKey: "content", icon: "description", roles: ["admin", "trainer"] },
   { id: "attendance", labelKey: "attendance", icon: "calendar_today", roles: ["admin", "trainer"] },
-  { id: "kiosk", labelKey: "kiosk", icon: "nfc", roles: ["admin", "trainer"] },
   { id: "terminal", labelKey: "terminal", icon: "point_of_sale", roles: ["admin", "trainer"] },
   { id: "chatbot", labelKey: "chatbot", icon: "smart_toy", roles: ["admin", "trainer"] },
-  { id: "employer", labelKey: "employer", icon: "work", roles: ["employer"] },
+  { id: "employer", labelKey: "employer", icon: "person_search", roles: ["employer"] },
   { id: "profile", labelKey: "profile", icon: "person", roles: ["admin", "trainer", "employer"] },
 ];
 
@@ -40,14 +40,17 @@ interface ManagementShellText {
     dashboard: string;
     users: string;
     programmes: string;
+    courses: string;
     content: string;
     attendance: string;
-    kiosk: string;
     terminal: string;
     chatbot: string;
     employer: string;
     profile: string;
   };
+  // One-word labels for the phone bottom bar — the full labels above don't
+  // fit its ~60px slots, and cutting them at the first space gave "My".
+  navShort: ManagementShellText["nav"];
   roles: {
     admin: string;
     trainer: string;
@@ -63,15 +66,10 @@ interface ManagementShellText {
   lightMode: string;
   darkMode: string;
   highContrast: string;
-  searchPlaceholder: string;
   toggleTheme: string;
-  notifications: string;
   myProfile: string;
   signOut: string;
   footerCopyright: string;
-  footerPrivacy: string;
-  footerTerms: string;
-  footerSupport: string;
 }
 
 const content: Record<Locale, ManagementShellText> = {
@@ -80,13 +78,25 @@ const content: Record<Locale, ManagementShellText> = {
       dashboard: "Dashboard",
       users: "Users & Institutions",
       programmes: "Programmes",
+      courses: "My Courses",
       content: "Content",
       attendance: "Attendance",
-      kiosk: "NFC Kiosk",
       terminal: "Kiosk Terminal",
       chatbot: "Chatbot Knowledge Base",
-      employer: "Jobs & Candidates",
+      employer: "Trainee Search & Talent Pool",
       profile: "My Profile",
+    },
+    navShort: {
+      dashboard: "Dashboard",
+      users: "Users",
+      programmes: "Programmes",
+      courses: "Courses",
+      content: "Content",
+      attendance: "Attendance",
+      terminal: "Kiosk",
+      chatbot: "Chatbot",
+      employer: "Talent",
+      profile: "Profile",
     },
     roles: {
       admin: "Administrator",
@@ -103,28 +113,35 @@ const content: Record<Locale, ManagementShellText> = {
     lightMode: "Switch to Light Mode",
     darkMode: "Switch to Dark Mode",
     highContrast: "High Contrast Toggle",
-    searchPlaceholder: "Search Programmes, Content, Users...",
     toggleTheme: "Toggle Theme",
-    notifications: "Notifications",
     myProfile: "My profile",
     signOut: "Sign Out",
     footerCopyright: "2026 EduDisha. All rights reserved.",
-    footerPrivacy: "Privacy Policy",
-    footerTerms: "Terms of Service",
-    footerSupport: "Support",
   },
   hi: {
     nav: {
       dashboard: "डैशबोर्ड",
       users: "उपयोगकर्ता एवं संस्थान",
       programmes: "कार्यक्रम",
+      courses: "मेरे पाठ्यक्रम",
       content: "सामग्री",
       attendance: "उपस्थिति",
-      kiosk: "NFC कियोस्क",
       terminal: "कियोस्क टर्मिनल",
       chatbot: "चैटबॉट ज्ञान आधार",
-      employer: "नौकरियां एवं उम्मीदवार",
+      employer: "प्रशिक्षणार्थी खोज एवं शॉर्टलिस्ट",
       profile: "मेरी प्रोफ़ाइल",
+    },
+    navShort: {
+      dashboard: "डैशबोर्ड",
+      users: "उपयोगकर्ता",
+      programmes: "कार्यक्रम",
+      courses: "पाठ्यक्रम",
+      content: "सामग्री",
+      attendance: "उपस्थिति",
+      terminal: "कियोस्क",
+      chatbot: "चैटबॉट",
+      employer: "खोज",
+      profile: "प्रोफ़ाइल",
     },
     roles: {
       admin: "प्रशासक",
@@ -141,15 +158,10 @@ const content: Record<Locale, ManagementShellText> = {
     lightMode: "लाइट मोड में बदलें",
     darkMode: "डार्क मोड में बदलें",
     highContrast: "उच्च कंट्रास्ट टॉगल",
-    searchPlaceholder: "कार्यक्रम, सामग्री, उपयोगकर्ता खोजें...",
     toggleTheme: "थीम टॉगल करें",
-    notifications: "सूचनाएं",
     myProfile: "मेरी प्रोफ़ाइल",
     signOut: "साइन आउट",
     footerCopyright: "2026 EduDisha। सर्वाधिकार सुरक्षित।",
-    footerPrivacy: "गोपनीयता नीति",
-    footerTerms: "सेवा की शर्तें",
-    footerSupport: "सहायता",
   },
 };
 
@@ -158,6 +170,9 @@ interface ManagementShellProps {
   fullName: string | null;
   activeTab: ManagementTab;
   onNavigate: (tab: ManagementTab) => void;
+  // The real notification bell (docs/DECISIONS.md #65), passed in by the
+  // caller since the shell itself has no access token.
+  notificationBell?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -166,11 +181,11 @@ export function ManagementShell({
   fullName,
   activeTab,
   onNavigate,
+  notificationBell,
   children,
 }: ManagementShellProps) {
   const { locale } = useLocale();
   const t = content[locale];
-  const [searchQuery, setSearchQuery] = useState("");
   const [contrastHigh, setContrastHigh] = useState(false);
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
@@ -323,32 +338,15 @@ export function ManagementShell({
               onClick={() => onNavigate(roleNavItems[0]?.id ?? "profile")}
               className="flex items-center gap-2 text-left transition-opacity hover:opacity-90 cursor-pointer md:gap-3"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-container text-on-primary shadow-xs md:h-10 md:w-10">
-                <span className="material-symbols-outlined text-[20px] md:text-[22px]">school</span>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary-container text-primary font-bold shadow-xs md:h-10 md:w-10">
+                <span className="material-symbols-outlined text-[22px]">account_balance</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-headline text-headline-sm font-bold leading-tight text-on-surface">
+                <span className="font-headline-sm text-headline-sm font-bold leading-tight text-primary tracking-tight">
                   EduDisha
-                </span>
-                <span className="hidden text-[11px] font-medium leading-tight text-on-surface-variant md:block">
-                  {t.tagline}
                 </span>
               </div>
             </button>
-          </div>
-
-          {/* Search Bar (Desktop) */}
-          <div className="relative group mx-auto hidden max-w-md flex-1 lg:block">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-outline transition-colors group-focus-within:text-interactive">
-              search
-            </span>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t.searchPlaceholder}
-              className="h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest pl-9 pr-4 text-sm text-on-surface transition-all outline-none focus:border-interactive focus:ring-1 focus:ring-interactive placeholder:text-on-surface-variant/60"
-            />
           </div>
 
           {/* Actions & Profile. Icon buttons trimmed from 36px to 32px and
@@ -362,28 +360,19 @@ export function ManagementShell({
               onClick={toggleTheme}
               title={isDark ? t.lightMode : t.darkMode}
               aria-label={t.toggleTheme}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container cursor-pointer md:h-9 md:w-9"
+              className="hidden h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container cursor-pointer md:flex md:h-9 md:w-9"
             >
               <span className="material-symbols-outlined text-[18px] md:text-[20px]">
                 {isDark ? "light_mode" : "dark_mode"}
               </span>
             </button>
 
-            {/* Hidden below md: — the header still overflowed 375px by
-                ~28px even after every other trim here, and this button
-                isn't wired to a real notification system yet (the red dot
-                is unconditional, not driven by actual state), making it the
-                lowest-cost thing left to drop on the smallest screens. */}
-            <button
-              type="button"
-              aria-label={t.notifications}
-              className="relative hidden h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container cursor-pointer md:flex md:h-9 md:w-9"
-            >
-              <span className="material-symbols-outlined text-[18px] md:text-[20px]">
-                notifications
-              </span>
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-cta" />
-            </button>
+            {/* Real notifications (docs/DECISIONS.md #65) — shown at every
+                width. To keep the 375px header from overflowing, the theme
+                toggle just above is hidden below md: instead; the
+                accessibility strip at the top of the page has its own theme
+                toggle at every width. */}
+            {notificationBell}
 
             <button
               type="button"
@@ -436,10 +425,10 @@ export function ManagementShell({
                   key={item.id}
                   type="button"
                   onClick={() => onNavigate(item.id)}
-                  className={`relative flex h-11 items-center gap-2 text-label-md font-semibold transition-colors shrink-0 cursor-pointer ${
+                  className={`relative flex h-11 items-center gap-2 font-label-md text-label-md font-semibold transition-colors shrink-0 cursor-pointer ${
                     isActive
-                      ? "text-interactive after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-interactive"
-                      : "text-on-surface-variant hover:text-on-surface"
+                      ? "text-primary font-bold after:absolute after:bottom-0 after:left-0 after:h-[3px] after:w-full after:bg-secondary-container"
+                      : "text-on-surface-variant hover:text-primary"
                   }`}
                 >
                   <span
@@ -471,17 +460,6 @@ export function ManagementShell({
             <span className="material-symbols-outlined text-sm">copyright</span>
             <span className="text-label-sm">{t.footerCopyright}</span>
           </div>
-          <div className="flex gap-6 text-label-sm text-interactive">
-            <a href="#" className="hover:underline">
-              {t.footerPrivacy}
-            </a>
-            <a href="#" className="hover:underline">
-              {t.footerTerms}
-            </a>
-            <a href="#" className="hover:underline">
-              {t.footerSupport}
-            </a>
-          </div>
         </div>
       </footer>
 
@@ -489,13 +467,13 @@ export function ManagementShell({
       <nav className="fixed bottom-0 left-0 z-50 flex h-14 w-full items-center justify-around border-t border-outline-variant bg-surface-card px-2 shadow-lg md:hidden transition-colors overflow-x-auto">
         {roleNavItems.map((item) => {
           const isActive = activeTab === item.id;
-          const label = t.nav[item.labelKey];
+          const label = t.navShort[item.labelKey];
           return (
             <button
               key={item.id}
               type="button"
               onClick={() => onNavigate(item.id)}
-              className={`relative flex h-full flex-1 flex-col items-center justify-center gap-1 transition-transform active:scale-90 ${
+              className={`relative flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1 px-0.5 transition-transform active:scale-90 ${
                 isActive ? "text-secondary" : "text-on-surface-variant"
               }`}
             >
@@ -506,8 +484,8 @@ export function ManagementShell({
               >
                 {item.icon}
               </span>
-              <span className="text-[10px] font-medium leading-tight truncate max-w-[60px]">
-                {label.split(" ")[0]}
+              <span className="text-[10px] font-medium leading-tight truncate max-w-full">
+                {label}
               </span>
             </button>
           );

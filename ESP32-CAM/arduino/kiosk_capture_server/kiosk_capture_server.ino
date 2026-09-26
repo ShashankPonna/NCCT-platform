@@ -21,14 +21,30 @@
 // Wiring: none needed beyond the ESP32-CAM-MB programmer's own 4-pin
 // header (5V/GND/U0R/U0T) — the camera ribbon is already attached to the
 // board from the factory.
+//
+// Address: this board advertises itself via mDNS as
+// http://ncct-kiosk-cam.local (see MDNS_HOSTNAME below) — the Kiosk
+// Terminal's Camera field defaults to exactly this, so on most networks
+// nothing needs to be typed in at all. DHCP can still hand it a different
+// numeric IP on every reboot or every network, same as before; that's
+// exactly the problem the hostname is there to route around. Falls back to
+// the raw IP (still printed to Serial at boot) only if mDNS is blocked on a
+// given network. Running more than one camera on the same network needs a
+// distinct MDNS_HOSTNAME per board — two boards both claiming
+// "ncct-kiosk-cam.local" is exactly the kind of collision mDNS can't
+// resolve for you.
 
 #include "esp_camera.h"
 #include <WiFi.h>
 #include <WebServer.h>
+#include <ESPmDNS.h>
 
-// ---- Edit these before flashing ----
-const char* ssid = "YOUR_WIFI_NAME";
-const char* password = "YOUR_WIFI_PASSWORD";
+// ---- WiFi credentials ----
+// Real values live in wifi_credentials.h, gitignored — never commit an
+// actual WiFi password. Copy wifi_credentials.h.example to
+// wifi_credentials.h (same folder) and fill it in before flashing.
+#include "wifi_credentials.h"
+#define MDNS_HOSTNAME "ncct-kiosk-cam"
 
 // ---- AI-Thinker ESP32-CAM pin map (fixed by the board, do not edit) ----
 #define PWDN_GPIO_NUM     32
@@ -159,6 +175,15 @@ void setup() {
   Serial.print("Camera ready. IP address: ");
   Serial.println(WiFi.localIP());
   Serial.println("Frame endpoint: http://" + WiFi.localIP().toString() + "/capture");
+
+  // Non-fatal if it fails — the numeric IP printed above still works either
+  // way, this just saves having to look it up and retype it every time.
+  if (MDNS.begin(MDNS_HOSTNAME)) {
+    MDNS.addService("http", "tcp", 80);
+    Serial.println("mDNS ready: http://" MDNS_HOSTNAME ".local/capture");
+  } else {
+    Serial.println("mDNS.begin() failed — use the numeric IP above instead");
+  }
 
   server.on("/", handleRoot);
   server.on("/capture", handleCapture);

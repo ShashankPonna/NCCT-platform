@@ -17,7 +17,7 @@ import type {
   Module,
   Nomination,
 } from "@ncct/shared-types";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocale, type Locale } from "../i18n/LocaleContext.js";
 import { MatchingExercise } from "../MatchingExercise.js";
 import {
@@ -27,14 +27,22 @@ import {
   isLessonDownloaded,
   isOfflineCapable,
 } from "../offline/downloadManager.js";
-import { enqueueWrite, useAutoSync } from "../offline/syncManager.js";
-import { QuizTaker } from "../QuizTaker.js";
+import { getDownloadManifest } from "../offline/storage.js";
+import { enqueueWrite } from "../offline/syncManager.js";
+import type { DownloadedLesson } from "../offline/types.js";
+import { QuizAssessmentList, QuizTestDetail, useQuizTaker } from "../QuizTaker.js";
+import { CourseMarksTally } from "./CourseMarksTally.js";
 import { SelfHostedVideoPlayer } from "../SelfHostedVideoPlayer.js";
 import { YouTubeVideoPlayer } from "../YouTubeVideoPlayer.js";
 import { ErrorBanner } from "./pieces.js";
 
 interface TraineeLearnLessonsProps {
   accessToken: string;
+  /** Lifted to TraineeApp so the write-queue flush runs regardless of which
+   * tab is active — this screen now only owns the banner that displays
+   * them, not the sync trigger itself. */
+  online: boolean;
+  pendingCount: number;
 }
 
 type MyNomination = Nomination & { programmes: { title: string; mode: string } | null };
@@ -45,6 +53,10 @@ interface TraineeLearnLessonsText {
   noApprovedProgramme: string;
   offlineNotice: string;
   syncing: (count: number) => string;
+  offlineLibraryTitle: string;
+  offlineLibraryEmpty: string;
+  play: string;
+  closePlayback: string;
   courses: string;
   modules: string;
   lessons: string;
@@ -73,6 +85,10 @@ const content: Record<Locale, TraineeLearnLessonsText> = {
     programmeUuidPlaceholder: "paste a programme UUID",
     noApprovedProgramme: "No approved programme yet — nominate for one first, or paste a programme ID directly.",
     offlineNotice: "You're offline — downloaded lessons still work; progress will sync once you're back online.",
+    offlineLibraryTitle: "Downloaded for offline",
+    offlineLibraryEmpty: "Nothing downloaded yet — download a video lesson below to watch it here, with no internet needed.",
+    play: "Play",
+    closePlayback: "Close",
     syncing: (count) => `Syncing ${count} pending ${count === 1 ? "update" : "updates"}…`,
     courses: "Courses",
     modules: "Modules",
@@ -100,6 +116,10 @@ const content: Record<Locale, TraineeLearnLessonsText> = {
     programmeUuidPlaceholder: "कार्यक्रम UUID पेस्ट करें",
     noApprovedProgramme: "अभी तक कोई स्वीकृत कार्यक्रम नहीं — पहले किसी के लिए नामांकन करें, या सीधे कार्यक्रम आईडी पेस्ट करें।",
     offlineNotice: "आप ऑफ़लाइन हैं — डाउनलोड किए गए पाठ अभी भी काम करते हैं; ऑनलाइन आते ही प्रगति सिंक हो जाएगी।",
+    offlineLibraryTitle: "ऑफ़लाइन के लिए डाउनलोड किए गए",
+    offlineLibraryEmpty: "अभी तक कुछ भी डाउनलोड नहीं किया गया — यहां बिना इंटरनेट के देखने के लिए नीचे कोई वीडियो पाठ डाउनलोड करें।",
+    play: "चलाएं",
+    closePlayback: "बंद करें",
     syncing: (count) => `${count} लंबित अपडेट सिंक हो रहे हैं…`,
     courses: "पाठ्यक्रम",
     modules: "मॉड्यूल",
@@ -132,7 +152,7 @@ const content: Record<Locale, TraineeLearnLessonsText> = {
 // data already used elsewhere in this portal, so this now offers those as a
 // dropdown; the manual UUID field stays as a fallback for anything not
 // covered by an approved nomination (e.g. before F2 gains real browsing).
-export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
+export function TraineeLearnLessons({ accessToken, online, pendingCount }: TraineeLearnLessonsProps) {
   const { locale: uiLocale } = useLocale();
   const t = content[uiLocale];
   const [myProgrammes, setMyProgrammes] = useState<MyNomination[]>([]);
@@ -146,21 +166,56 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
   const [progress, setProgress] = useState<LessonProgress | null>(null);
   const [translations, setTranslations] = useState<ContentTranslation[]>([]);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  // True only while a self-hosted video's signed URL is actually in flight
+  // — distinct from `videoUrl === null`, which was previously also true for
+  // a lesson that genuinely has no video, making the two indistinguishable
+  // to SelfHostedVideoPlayer (it showed "No video available" during every
+  // load, not just a real absence).
+  const [videoLoading, setVideoLoading] = useState(false);
   // Content-translation locale (e.g. a lesson's own Hindi/English text
   // variant) — a different axis from `uiLocale` above (the app chrome's
   // language), which is why this keeps its own name and default.
   const [contentLocale, setContentLocale] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
 
-  const { online, pendingCount } = useAutoSync(accessToken);
+  const quiz = useQuizTaker(accessToken, selectedModuleId);
+
   const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set());
   const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({});
   // Distinct from `progress.completed_at` (server-confirmed) — a lesson
   // marked complete while offline is genuinely pending, not done yet, and
   // the UI says so rather than pretending it already synced.
   const [pendingCompletions, setPendingCompletions] = useState<Set<string>>(new Set());
+  // A trainee's downloaded lessons, read directly from local storage
+  // (`getDownloadManifest()`) rather than derived from `lessons` above —
+  // `lessons` only populates after a live GET /lessons call succeeds, which
+  // is exactly what's unavailable in the situation this list exists for
+  // (no network at all, possibly right after a fresh cold launch with no
+  // course/module tree ever loaded into memory). This is what answers
+  // "where do I find what I downloaded" and "there's no offline section" —
+  // a real gap a device test surfaced: the download/queue machinery worked,
+  // but nothing let a trainee reach a downloaded lesson without first
+  // browsing to it through screens that themselves require connectivity.
+  const [downloadManifest, setDownloadManifest] = useState<Record<string, DownloadedLesson>>({});
+  const [offlinePlaybackId, setOfflinePlaybackId] = useState<string | null>(null);
+  const [offlinePlaybackUri, setOfflinePlaybackUri] = useState<string | null>(null);
+
+  // Which lesson's video-URL fetch is the "current" one — read inside the
+  // fetch's own .then/.finally so a slower, superseded request (the trainee
+  // clicked a second lesson before the first one's signed URL came back)
+  // can't overwrite state for the lesson actually on screen now.
+  const videoFetchLessonIdRef = useRef<string | null>(null);
 
   const activeTranslation = translations.find((tr) => tr.locale === contentLocale) ?? null;
+
+  async function refreshDownloadManifest() {
+    if (!isOfflineCapable()) return;
+    setDownloadManifest(await getDownloadManifest());
+  }
+
+  useEffect(() => {
+    void refreshDownloadManifest();
+  }, []);
 
   useEffect(() => {
     if (!isOfflineCapable() || lessons.length === 0) return;
@@ -168,6 +223,45 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
       (results) => setDownloadedIds(new Set(results.filter(([, done]) => done).map(([id]) => id))),
     );
   }, [lessons]);
+
+  async function playOffline(entry: DownloadedLesson) {
+    setOfflinePlaybackId(entry.lessonId);
+    setOfflinePlaybackUri(await getLocalLessonUri(entry.lessonId));
+  }
+
+  function closeOfflinePlayback() {
+    setOfflinePlaybackId(null);
+    setOfflinePlaybackUri(null);
+  }
+
+  // Mirrors markComplete() below exactly (online -> real call, offline ->
+  // queue it) — this view has no full `Lesson` object to work with (the
+  // download manifest only ever stores the handful of fields needed to
+  // play a file back, not the whole row), but `lesson_progress` writes only
+  // ever need the lesson id, which the manifest does have.
+  async function markOfflineComplete(lessonId: string) {
+    const completedAt = new Date().toISOString();
+    if (!online) {
+      await enqueueWrite({
+        type: "lesson_progress",
+        queuedAt: completedAt,
+        lessonId,
+        body: { progress_percent: 100, completed_at: completedAt },
+      });
+      setPendingCompletions((prev) => new Set(prev).add(lessonId));
+      return;
+    }
+    try {
+      await updateLessonProgress(accessToken, lessonId, { progress_percent: 100, completed_at: completedAt });
+      setPendingCompletions((prev) => {
+        const next = new Set(prev);
+        next.delete(lessonId);
+        return next;
+      });
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
 
   useEffect(() => {
     getMyNominations(accessToken)
@@ -189,8 +283,10 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
       setCourses(await getCourses(accessToken, id));
       setSelectedCourseId(null);
       setModules([]);
+      setSelectedModuleId(null);
       setLessons([]);
       setSelectedLesson(null);
+      quiz.closeAssessment();
     } catch (err) {
       setError((err as Error).message);
     }
@@ -221,12 +317,34 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
   }
 
   async function selectLesson(lesson: Lesson) {
+    quiz.closeAssessment();
     setSelectedLesson(lesson);
     setContentLocale("");
     setVideoUrl(null);
+    setVideoLoading(false);
     setError(null);
+    videoFetchLessonIdRef.current = lesson.id;
 
     const needsVideoUrl = lesson.content_type === "video" && !lesson.video_id;
+
+    // Prefer a downloaded copy whenever one exists — online or offline.
+    // Previously this only happened in the `!online` branch below, so a
+    // lesson you'd already downloaded was silently ignored while online and
+    // re-streamed live from B2 every single time instead: slower (a fresh
+    // signed-URL round trip through Express plus B2, not an instant local
+    // file open) and pointless, since the whole reason to download it was
+    // to avoid exactly that. This is also what a real device test surfaced
+    // as "the video won't render" — it wasn't a broken download, it was a
+    // live stream never actually using the file that had just been saved.
+    const localUri = needsVideoUrl && downloadedIds.has(lesson.id) ? await getLocalLessonUri(lesson.id) : null;
+    if (localUri) {
+      setVideoUrl(localUri);
+      // Progress/translations still need the network — that's fine even
+      // for a downloaded lesson; only video playback benefits from the
+      // local copy. Fall through to the online/offline handling below for
+      // those, but skip fetching a video URL again since we already have
+      // one.
+    }
 
     if (!online) {
       // Offline: every one of these calls would just fail — the only thing
@@ -236,24 +354,43 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
       // looking more current than it is.
       setProgress(null);
       setTranslations([]);
-      if (needsVideoUrl) {
+      if (needsVideoUrl && !localUri) {
         setVideoUrl(await getLocalLessonUri(lesson.id));
       }
       return;
     }
 
+    // The video-URL fetch is deliberately NOT part of the Promise.all below
+    // — it used to be, which meant `setVideoUrl` only ever fired once
+    // progress *and* translations had also finished, so a slow (or merely
+    // unlucky) one of those two calls delayed the one thing the trainee is
+    // actually staring at a blank player waiting for. Firing it separately
+    // means it updates the screen the moment it — and only it — resolves.
+    // `videoFetchLessonIdRef` guards against a second, faster lesson click
+    // landing first: if the trainee has already moved on by the time this
+    // resolves, its result is simply dropped rather than overwriting what's
+    // now on screen.
+    if (needsVideoUrl && !localUri) {
+      setVideoLoading(true);
+      getLessonVideoUrl(accessToken, lesson.id)
+        .then((video) => {
+          if (videoFetchLessonIdRef.current === lesson.id && video?.url) setVideoUrl(video.url);
+        })
+        .catch((err) => {
+          if (videoFetchLessonIdRef.current === lesson.id) setError((err as Error).message);
+        })
+        .finally(() => {
+          if (videoFetchLessonIdRef.current === lesson.id) setVideoLoading(false);
+        });
+    }
+
     try {
-      // Only fetch a playback URL for a video lesson with no YouTube ID —
-      // one with a video_id renders via YouTubeVideoPlayer instead, and the
-      // route itself would just return { url: null } for a non-video lesson.
-      const [lessonProgress, lessonTranslations, video] = await Promise.all([
+      const [lessonProgress, lessonTranslations] = await Promise.all([
         getLessonProgress(accessToken, lesson.id),
         getLessonTranslations(accessToken, lesson.id),
-        needsVideoUrl ? getLessonVideoUrl(accessToken, lesson.id) : Promise.resolve(null),
       ]);
       setProgress(lessonProgress);
       setTranslations(lessonTranslations);
-      setVideoUrl(video?.url ?? null);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -267,6 +404,7 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
         setDownloadProgress((prev) => ({ ...prev, [lesson.id]: fraction })),
       );
       setDownloadedIds((prev) => new Set(prev).add(lesson.id));
+      await refreshDownloadManifest();
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -285,6 +423,8 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
       next.delete(lessonId);
       return next;
     });
+    if (offlinePlaybackId === lessonId) closeOfflinePlayback();
+    await refreshDownloadManifest();
   }
 
   async function openContent() {
@@ -338,7 +478,11 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
           {myProgrammes.length > 0 ? (
             <select
               value={programmeId}
-              onChange={(e) => e.target.value && loadCourses(e.target.value)}
+              onChange={(e) => {
+                const id = e.target.value;
+                setProgrammeId(id);
+                if (id) void loadCourses(id);
+              }}
               className="min-h-touch-target w-full rounded border border-border-low-contrast bg-surface-container-lowest px-4 py-3 text-body-md focus:outline-none focus:ring-2 focus:ring-interactive"
             >
               {myProgrammes.map((nom) => (
@@ -372,6 +516,78 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
           <div className="flex items-center gap-2 rounded-lg border border-interactive/30 bg-interactive/10 p-3 text-label-md text-interactive">
             <span className="material-symbols-outlined animate-spin text-[18px]">sync</span>
             {t.syncing(pendingCount)}
+          </div>
+        )}
+
+        {/* Sourced entirely from local storage (getDownloadManifest()), not
+            the network-dependent `lessons` list above — this is what makes
+            it reachable with zero connectivity, including on a cold app
+            launch before any course/module tree has ever loaded. Shown
+            regardless of online/offline status so it also answers "where
+            do I find what I already downloaded" while online. */}
+        {isOfflineCapable() && (
+          <div className="overflow-hidden rounded-xl border border-border-low-contrast bg-surface-card">
+            <div className="border-b border-border-low-contrast bg-surface-container-low p-4">
+              <h2 className="font-headline text-headline-md text-primary">{t.offlineLibraryTitle}</h2>
+            </div>
+            {Object.keys(downloadManifest).length === 0 ? (
+              <p className="p-4 text-label-md text-on-surface-variant">{t.offlineLibraryEmpty}</p>
+            ) : (
+              <ul className="flex flex-col">
+                {Object.values(downloadManifest).map((entry) => (
+                  <li
+                    key={entry.lessonId}
+                    className="flex items-center justify-between gap-2 border-b border-border-low-contrast p-4 last:border-b-0"
+                  >
+                    <span className="text-label-md text-on-background">{entry.title}</span>
+                    <div className="flex shrink-0 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => playOffline(entry)}
+                        className="min-h-touch-target rounded-full bg-primary px-3 py-1.5 text-label-sm text-on-primary"
+                      >
+                        {t.play}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveDownload(entry.lessonId)}
+                        className="min-h-touch-target rounded-full border border-border-low-contrast px-3 py-1.5 text-label-sm text-on-surface-variant"
+                      >
+                        {t.remove}
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {offlinePlaybackId && (
+              <div className="border-t border-border-low-contrast p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-label-md text-on-surface-variant">
+                    {downloadManifest[offlinePlaybackId]?.title}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={closeOfflinePlayback}
+                    className="text-label-sm text-interactive underline"
+                  >
+                    {t.closePlayback}
+                  </button>
+                </div>
+                <SelfHostedVideoPlayer url={offlinePlaybackUri} />
+                {pendingCompletions.has(offlinePlaybackId) ? (
+                  <p className="mt-3 text-label-md text-status-pending">{t.pendingSync}</p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => markOfflineComplete(offlinePlaybackId)}
+                    className="mt-3 min-h-touch-target rounded-full bg-primary px-4 py-2 text-label-md text-on-primary"
+                  >
+                    {t.markComplete}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -464,13 +680,21 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
           </div>
         )}
 
-        {selectedModuleId && (
-          <QuizTaker key={selectedModuleId} accessToken={accessToken} moduleId={selectedModuleId} />
+        {selectedCourseId && (
+          <CourseMarksTally
+            key={selectedCourseId}
+            accessToken={accessToken}
+            courseId={selectedCourseId}
+          />
         )}
+
+        {selectedModuleId && <QuizAssessmentList quiz={quiz} />}
       </div>
 
       <div className="md:col-span-8">
-        {selectedLesson ? (
+        {quiz.selectedAssessment ? (
+          <QuizTestDetail quiz={quiz} />
+        ) : selectedLesson ? (
           <div className="flex h-full min-h-[500px] flex-col rounded-xl border border-border-low-contrast bg-surface-card p-6">
             <div className="mb-4 flex items-center justify-between gap-2">
               <h1 className="font-headline text-headline-lg-mobile text-primary md:text-headline-lg">
@@ -506,7 +730,7 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
                 (selectedLesson.video_id ? (
                   <YouTubeVideoPlayer videoId={selectedLesson.video_id} />
                 ) : (
-                  <SelfHostedVideoPlayer url={videoUrl} />
+                  <SelfHostedVideoPlayer url={videoUrl} loading={videoLoading} />
                 ))}
               {selectedLesson.content_type === "video" &&
                 !selectedLesson.video_id &&
@@ -588,7 +812,7 @@ export function TraineeLearnLessons({ accessToken }: TraineeLearnLessonsProps) {
                 <button
                   type="button"
                   onClick={markComplete}
-                  className="flex min-h-touch-target items-center gap-2 rounded bg-cta px-6 py-2 font-bold text-white transition-colors hover:bg-cta-hover"
+                  className="flex min-h-touch-target items-center gap-2 rounded-lg bg-secondary hover:bg-secondary-dark px-6 py-2.5 font-bold text-white shadow-sm transition-colors"
                 >
                   <span className="material-symbols-outlined">check_circle</span>
                   {t.markComplete}
