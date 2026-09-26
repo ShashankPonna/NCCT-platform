@@ -94,7 +94,7 @@ const content: Record<Locale, ManagementShellText> = {
       employer: "Employer",
       trainee: "Trainee",
     },
-    portalTag: "NCCT PORTAL",
+    portalTag: "EDUDISHA PORTAL",
     tagline: "Cooperative Training & Certification",
     skipToContent: "Skip To Main Content",
     decreaseText: "Decrease text size",
@@ -108,7 +108,7 @@ const content: Record<Locale, ManagementShellText> = {
     notifications: "Notifications",
     myProfile: "My profile",
     signOut: "Sign Out",
-    footerCopyright: "2026 National Council for Cooperative Training. All rights reserved.",
+    footerCopyright: "2026 EduDisha. All rights reserved.",
     footerPrivacy: "Privacy Policy",
     footerTerms: "Terms of Service",
     footerSupport: "Support",
@@ -132,7 +132,7 @@ const content: Record<Locale, ManagementShellText> = {
       employer: "नियोक्ता",
       trainee: "प्रशिक्षणार्थी",
     },
-    portalTag: "NCCT पोर्टल",
+    portalTag: "EduDisha पोर्टल",
     tagline: "सहकारी प्रशिक्षण एवं प्रमाणन",
     skipToContent: "मुख्य सामग्री पर जाएं",
     decreaseText: "फ़ॉन्ट आकार घटाएं",
@@ -146,7 +146,7 @@ const content: Record<Locale, ManagementShellText> = {
     notifications: "सूचनाएं",
     myProfile: "मेरी प्रोफ़ाइल",
     signOut: "साइन आउट",
-    footerCopyright: "2026 राष्ट्रीय सहकारी प्रशिक्षण परिषद। सर्वाधिकार सुरक्षित।",
+    footerCopyright: "2026 EduDisha। सर्वाधिकार सुरक्षित।",
     footerPrivacy: "गोपनीयता नीति",
     footerTerms: "सेवा की शर्तें",
     footerSupport: "सहायता",
@@ -328,7 +328,7 @@ export function ManagementShell({
               </div>
               <div className="flex flex-col">
                 <span className="font-headline text-headline-sm font-bold leading-tight text-on-surface">
-                  NCCT Platform
+                  EduDisha
                 </span>
                 <span className="hidden text-[11px] font-medium leading-tight text-on-surface-variant md:block">
                   {t.tagline}

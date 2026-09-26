@@ -130,7 +130,7 @@ interface HomePageText {
 const content: Record<"en" | "hi", HomePageText> = {
   en: {
     header: {
-      tagline: "National Council for Cooperative Training",
+      tagline: "Cooperative Training & Certification",
       navAbout: "About",
       navEcosystem: "Ecosystem",
       navFeatures: "Key Features",
@@ -142,7 +142,7 @@ const content: Record<"en" | "hi", HomePageText> = {
       headline: "A digital ecosystem for cooperative training, certification, and employment.",
       subheadlinePrefix:
         "Empowering rural youth, PACS staff, and cooperative workers across India through specialized programmes from ",
-      subheadlineOrgs: "NCCT, VAMNICOM, RICMs, and ICMs",
+      subheadlineOrgs: "VAMNICOM, RICMs, and ICMs",
       subheadlineSuffix: " — bridging classroom training to verified career opportunities.",
       ctaSignIn: "Sign In to Dashboard",
       ctaVerify: "Verify a Certificate",
@@ -170,7 +170,7 @@ const content: Record<"en" | "hi", HomePageText> = {
     about: {
       eyebrow: "About",
       heading: "A statutory mandate to train India's cooperative workforce.",
-      body: "The National Council for Cooperative Training (NCCT) is an autonomous society dedicated to organizing cooperative education, research, and leadership programmes across apex, regional, and grassroots cooperative enterprises — delivered through VAMNICOM, RICMs, and ICMs nationwide.",
+      body: "EduDisha is a unified digital platform dedicated to organizing cooperative education, research, and leadership programmes across apex, regional, and grassroots cooperative enterprises — delivered in partnership with VAMNICOM, RICMs, and ICMs nationwide.",
       address: "3, Siri Institutional Area, August Kranti Marg, New Delhi - 110016",
       point1Title: "Centralized ERP",
       point1Body:
@@ -252,26 +252,26 @@ const content: Record<"en" | "hi", HomePageText> = {
     },
     verify: {
       badge: "Zero-Login Public Credential Audit",
-      heading: "Verify any NCCT certificate instantly without signing in.",
+      heading: "Verify any EduDisha certificate instantly without signing in.",
       body: "Employers, banks, and inspectors can authenticate certificates directly by entering the unique credential code or scanning the printed QR code. Zero login, zero friction, 100% authoritative.",
       formLabel: "Certificate ID or Roll Number",
-      placeholder: "e.g. NCCT-2024-8A9X",
+      placeholder: "e.g. EDU-2024-8A9X",
       verifyBtn: "Verify",
       registryNote: "Connected to Central Registry of Cooperative Training",
     },
     ctaBanner: {
       heading: "Ready to access your training dashboard?",
       body: "Sign in with your registered email or institutional credentials to continue your certified learning path.",
-      signIn: "Sign In to NCCT Platform",
+      signIn: "Sign In to EduDisha",
       help: "Help & Registration Support",
     },
     footer: {
       about:
-        "National Council for Cooperative Training (NCCT) is an autonomous society dedicated to organizing cooperative education, research, and leadership programmes across apex, regional, and grassroots cooperative enterprises.",
+        "EduDisha is a unified digital platform dedicated to organizing cooperative education, research, and leadership programmes across apex, regional, and grassroots cooperative enterprises.",
       hq: "Headquarters:",
       address: "3, Siri Institutional Area, August Kranti Marg, New Delhi - 110016",
       quickLinks: "Quick Links",
-      linkAbout: "About NCCT",
+      linkAbout: "About EduDisha",
       linkProgrammes: "Programmes & Syllabus",
       linkVerify: "Certificate Verification",
       linkNetwork: "RICM & ICM Network",
@@ -282,7 +282,7 @@ const content: Record<"en" | "hi", HomePageText> = {
       linkBiometric: "Biometric Consent Policy",
       linkHelp: "Help Center & FAQs",
       linkContact: "Contact Nodal Officer",
-      copyright: "© 2024 National Council for Cooperative Training (NCCT). All rights reserved.",
+      copyright: "© 2024 EduDisha. All rights reserved.",
       version: "Version 2.4.0",
     },
   },
@@ -299,7 +299,7 @@ const content: Record<"en" | "hi", HomePageText> = {
       badge: "राष्ट्रीय सहकारी प्रशिक्षण एवं कौशल उन्नयन पहल",
       headline: "सहकारी प्रशिक्षण, प्रमाणन और रोज़गार के लिए एक डिजिटल पारिस्थितिकी तंत्र।",
       subheadlinePrefix: "भारत भर में ग्रामीण युवाओं, पैक्स कर्मचारियों और सहकारी श्रमिकों को ",
-      subheadlineOrgs: "NCCT, VAMNICOM, RICM और ICM",
+      subheadlineOrgs: "VAMNICOM, RICM और ICM",
       subheadlineSuffix:
         " के विशेष कार्यक्रमों के माध्यम से सशक्त बनाना — कक्षा प्रशिक्षण को सत्यापित करियर अवसरों से जोड़ते हुए।",
       ctaSignIn: "डैशबोर्ड में साइन इन करें",
@@ -328,7 +328,7 @@ const content: Record<"en" | "hi", HomePageText> = {
     about: {
       eyebrow: "परिचय",
       heading: "भारत के सहकारी कार्यबल को प्रशिक्षित करने का सांविधिक जनादेश।",
-      body: "राष्ट्रीय सहकारी प्रशिक्षण परिषद (NCCT) एक स्वायत्त सोसाइटी है जो शीर्ष, क्षेत्रीय और जमीनी स्तर के सहकारी उद्यमों में सहकारी शिक्षा, अनुसंधान और नेतृत्व कार्यक्रमों के आयोजन हेतु समर्पित है — जिसे VAMNICOM, RICM और ICM के माध्यम से देशभर में क्रियान्वित किया जाता है।",
+      body: "EduDisha एक एकीकृत डिजिटल प्लेटफ़ॉर्म है जो शीर्ष, क्षेत्रीय और जमीनी स्तर के सहकारी उद्यमों में सहकारी शिक्षा, अनुसंधान और नेतृत्व कार्यक्रमों के आयोजन हेतु समर्पित है — जिसे VAMNICOM, RICM और ICM के सहयोग से देशभर में क्रियान्वित किया जाता है।",
       address: "3, सिरी इंस्टीट्यूशनल एरिया, अगस्त क्रांति मार्ग, नई दिल्ली - 110016",
       point1Title: "केंद्रीकृत ERP",
       point1Body: "सभी संबद्ध संस्थानों में कार्यक्रम पंजीकरण, नामांकन और प्रशिक्षणार्थी रिकॉर्ड के लिए एक ही प्रणाली।",
@@ -409,26 +409,26 @@ const content: Record<"en" | "hi", HomePageText> = {
     },
     verify: {
       badge: "बिना लॉगिन सार्वजनिक प्रमाणपत्र ऑडिट",
-      heading: "बिना साइन इन किए तुरंत किसी भी NCCT प्रमाणपत्र को सत्यापित करें।",
+      heading: "बिना साइन इन किए तुरंत किसी भी EduDisha प्रमाणपत्र को सत्यापित करें।",
       body: "नियोक्ता, बैंक और निरीक्षक अद्वितीय क्रेडेंशियल कोड दर्ज करके या मुद्रित QR कोड को स्कैन करके सीधे प्रमाणपत्रों को प्रामाणित कर सकते हैं। शून्य लॉगिन, शून्य बाधा, 100% प्रामाणिक।",
       formLabel: "प्रमाणपत्र आईडी या रोल नंबर",
-      placeholder: "उदा. NCCT-2024-8A9X",
+      placeholder: "उदा. EDU-2024-8A9X",
       verifyBtn: "सत्यापित करें",
       registryNote: "राष्ट्रीय सहकारी प्रशिक्षण केंद्रीय रजिस्ट्री से जुड़ा हुआ",
     },
     ctaBanner: {
       heading: "अपने प्रशिक्षण डैशबोर्ड तक पहुंचने के लिए तैयार हैं?",
       body: "अपनी प्रमाणित शिक्षण यात्रा जारी रखने के लिए अपने पंजीकृत ईमेल या संस्थागत क्रेडेंशियल से साइन इन करें।",
-      signIn: "NCCT प्लेटफ़ॉर्म में साइन इन करें",
+      signIn: "EduDisha में साइन इन करें",
       help: "सहायता एवं पंजीकरण सहायता",
     },
     footer: {
       about:
-        "राष्ट्रीय सहकारी प्रशिक्षण परिषद (NCCT) एक स्वायत्त सोसाइटी है जो शीर्ष, क्षेत्रीय और जमीनी स्तर के सहकारी उद्यमों में सहकारी शिक्षा, अनुसंधान और नेतृत्व कार्यक्रमों के आयोजन हेतु समर्पित है।",
+        "EduDisha एक एकीकृत डिजिटल प्लेटफ़ॉर्म है जो शीर्ष, क्षेत्रीय और जमीनी स्तर के सहकारी उद्यमों में सहकारी शिक्षा, अनुसंधान और नेतृत्व कार्यक्रमों के आयोजन हेतु समर्पित है।",
       hq: "मुख्यालय:",
       address: "3, सिरी इंस्टीट्यूशनल एरिया, अगस्त क्रांति मार्ग, नई दिल्ली - 110016",
       quickLinks: "त्वरित लिंक",
-      linkAbout: "NCCT के बारे में",
+      linkAbout: "EduDisha के बारे में",
       linkProgrammes: "कार्यक्रम एवं पाठ्यक्रम",
       linkVerify: "प्रमाणपत्र सत्यापन",
       linkNetwork: "RICM एवं ICM नेटवर्क",
@@ -439,7 +439,7 @@ const content: Record<"en" | "hi", HomePageText> = {
       linkBiometric: "बायोमेट्रिक सहमति नीति",
       linkHelp: "सहायता केंद्र एवं सामान्य प्रश्न",
       linkContact: "नोडल अधिकारी से संपर्क करें",
-      copyright: "© 2024 राष्ट्रीय सहकारी प्रशिक्षण परिषद (NCCT)। सर्वाधिकार सुरक्षित।",
+      copyright: "© 2024 EduDisha। सर्वाधिकार सुरक्षित।",
       version: "संस्करण 2.4.0",
     },
   },

@@ -58,7 +58,7 @@ const content: Record<Locale, TraineeShellText> = {
       attendance: "Attendance",
       career: "Career",
     },
-    portalTag: "NCCT PORTAL",
+    portalTag: "EDUDISHA PORTAL",
     tagline: "Cooperative Training & Certification",
     skipToContent: "Skip To Main Content",
     decreaseText: "Decrease text size",
@@ -91,7 +91,7 @@ const content: Record<Locale, TraineeShellText> = {
       faqTitle: "Programme FAQ",
       faqDesc: "Official guidelines and curriculum chatbot",
     },
-    footerCopyright: "2026 National Council for Cooperative Training. All rights reserved.",
+    footerCopyright: "2026 EduDisha. All rights reserved.",
     footerPrivacy: "Privacy Policy",
     footerTerms: "Terms of Service",
     footerSupport: "Support",
@@ -103,7 +103,7 @@ const content: Record<Locale, TraineeShellText> = {
       attendance: "उपस्थिति",
       career: "करियर",
     },
-    portalTag: "NCCT पोर्टल",
+    portalTag: "EduDisha पोर्टल",
     tagline: "सहकारी प्रशिक्षण एवं प्रमाणन",
     skipToContent: "मुख्य सामग्री पर जाएं",
     decreaseText: "फ़ॉन्ट आकार घटाएं",
@@ -136,7 +136,7 @@ const content: Record<Locale, TraineeShellText> = {
       faqTitle: "कार्यक्रम सामान्य प्रश्न",
       faqDesc: "आधिकारिक दिशानिर्देश एवं पाठ्यक्रम चैटबॉट",
     },
-    footerCopyright: "2026 राष्ट्रीय सहकारी प्रशिक्षण परिषद। सर्वाधिकार सुरक्षित।",
+    footerCopyright: "2026 EduDisha। सर्वाधिकार सुरक्षित।",
     footerPrivacy: "गोपनीयता नीति",
     footerTerms: "सेवा की शर्तें",
     footerSupport: "सहायता",
@@ -299,7 +299,7 @@ export function TraineeShell({ active, onNavigate, fullName, children }: Trainee
               </div>
               <div className="flex flex-col">
                 <span className="font-headline text-headline-sm font-bold leading-tight text-on-surface">
-                  NCCT Platform
+                  EduDisha
                 </span>
                 <span className="hidden text-[11px] font-medium leading-tight text-on-surface-variant md:block">
                   {t.tagline}

@@ -33,13 +33,13 @@ export function LoginPage({ error, onBack }: LoginPageProps) {
 
       {/* Main Centered Authentication Column */}
       <main className="w-full flex-1 flex flex-col items-center justify-center my-6">
-        {/* Centered Brand Lockup: exactly 36px rounded square (8px radius) in navy #0f172a with white 'school' icon, next to bold 'NCCT Platform' */}
+        {/* Centered Brand Lockup: exactly 36px rounded square (8px radius) in navy #0f172a with white 'school' icon, next to bold 'EduDisha' */}
         <div className="flex items-center justify-center gap-3 mb-8">
           <div className="w-[36px] h-[36px] rounded-[8px] bg-[#0f172a] flex items-center justify-center text-white shadow-xs flex-shrink-0">
             <span className="material-symbols-outlined text-[22px]">school</span>
           </div>
           <span className="font-heading font-bold text-[22px] tracking-tight text-brand-primary">
-            NCCT Platform
+            EduDisha
           </span>
         </div>
 
@@ -59,7 +59,7 @@ export function LoginPage({ error, onBack }: LoginPageProps) {
       {/* Clean, minimal footer */}
       <footer className="w-full max-w-5xl mx-auto py-4 text-center text-xs text-brand-muted flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-slate-100">
         <div>
-          © 2025 National Council for Cooperative Training. All rights reserved.
+          © 2025 EduDisha. All rights reserved.
         </div>
         <div className="flex items-center gap-4 text-[11px]">
           <a className="hover:text-brand-primary transition-colors" href="#help">
