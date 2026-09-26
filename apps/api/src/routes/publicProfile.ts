@@ -14,7 +14,7 @@ const UNIQUE_VIOLATION = "23505";
 // long enough that guessing one is computationally infeasible even without
 // rate limiting. See docs/DECISIONS.md #30.
 function generatePublicProfileCode(): string {
-  return `NCCT-${generateCode(16)}`;
+  return `EDU-${generateCode(16)}`;
 }
 
 interface CertRow {

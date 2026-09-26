@@ -34,7 +34,7 @@ const content: Record<Locale, ChatbotCorpusManagerText> = {
     subheading: "Author and manage verified training materials used for RAG responses.",
     guardrailsTitle: "RAG Guardrails & Constraints",
     guardrailsBody:
-      "The NCCT Chatbot relies exclusively on the verified chunks in this knowledge base. It will not hallucinate information outside these provided text fragments. Ensure chunks are clear, self-contained, and relevant to trainee inquiries.",
+      "The EduDisha Chatbot relies exclusively on the verified chunks in this knowledge base. It will not hallucinate information outside these provided text fragments. Ensure chunks are clear, self-contained, and relevant to trainee inquiries.",
     addNewChunk: "Add New Chunk",
     sourceType: "Source Type",
     sourceTypeProgramme: "Programme Detail",
@@ -55,7 +55,7 @@ const content: Record<Locale, ChatbotCorpusManagerText> = {
     subheading: "RAG प्रतिक्रियाओं के लिए उपयोग की जाने वाली सत्यापित प्रशिक्षण सामग्री लिखें और प्रबंधित करें।",
     guardrailsTitle: "RAG गार्डरेल्स एवं सीमाएं",
     guardrailsBody:
-      "NCCT चैटबॉट पूरी तरह से इस ज्ञान आधार के सत्यापित अंशों पर निर्भर करता है। यह इन दिए गए टेक्स्ट अंशों के बाहर की जानकारी नहीं गढ़ेगा। सुनिश्चित करें कि अंश स्पष्ट, स्वतः-पूर्ण, और प्रशिक्षणार्थी प्रश्नों के लिए प्रासंगिक हों।",
+      "EduDisha चैटबॉट पूरी तरह से इस ज्ञान आधार के सत्यापित अंशों पर निर्भर करता है। यह इन दिए गए टेक्स्ट अंशों के बाहर की जानकारी नहीं गढ़ेगा। सुनिश्चित करें कि अंश स्पष्ट, स्वतः-पूर्ण, और प्रशिक्षणार्थी प्रश्नों के लिए प्रासंगिक हों।",
     addNewChunk: "नया अंश जोड़ें",
     sourceType: "स्रोत प्रकार",
     sourceTypeProgramme: "कार्यक्रम विवरण",

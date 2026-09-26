@@ -15,7 +15,7 @@ const CERTIFICATE_BUCKET = "certificates";
 const FONTS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "assets", "fonts");
 
 function generateCertificateCode(): string {
-  return `NCCT-${generateCode(8)}`;
+  return `EDU-${generateCode(8)}`;
 }
 
 /**
@@ -297,7 +297,7 @@ export async function rerenderCertificate(
     traineeName: traineeName || "Trainee",
     courseTitle: courseTitle ?? "Course",
     programmeTitle: programmeTitle ?? "Programme",
-    institutionName: institutionName ?? "NCCT",
+    institutionName: institutionName ?? "EduDisha",
     certificateCode: cert.certificate_code,
     issuedAt: new Date(cert.issued_at),
     marks:
@@ -625,7 +625,7 @@ export function renderCertificatePdf(params: RenderCertificateParams): Promise<B
     // ---- 1. HEADER ----
     drawEmblem(doc, left, top);
     const idX = left + px(56) + px(16);
-    drawRun(doc, "NATIONAL COUNCIL FOR COOPERATIVE TRAINING", idX, top + px(4), {
+    drawRun(doc, "EDUDISHA", idX, top + px(4), {
       font: "BodyBold",
       size: px(13),
       color: NAVY,
@@ -670,7 +670,7 @@ export function renderCertificatePdf(params: RenderCertificateParams): Promise<B
       doc,
       [
         {
-          text: "COOP-NET",
+          text: "EduDisha",
           style: { font: "BodyBold", size: px(16), color: NAVY, characterSpacing: px(16) * 0.05 },
         },
       ],
@@ -681,9 +681,9 @@ export function renderCertificatePdf(params: RenderCertificateParams): Promise<B
     drawRuns(
       doc,
       [
-        { text: "सहकार उत्कर्ष", style: { font: "Devanagari", size: px(11), color: SLATE_500 } },
+        { text: "सत्यापित डिजिटल प्रमाणपत्र", style: { font: "Devanagari", size: px(11), color: SLATE_500 } },
         {
-          text: " • Sahakar Utkarsh",
+          text: " • Verified Digital Credential",
           style: { font: "BodyMedium", size: px(11), color: SLATE_500, oblique: true },
         },
       ],
@@ -1061,7 +1061,7 @@ export function renderCertificatePdf(params: RenderCertificateParams): Promise<B
       doc,
       [
         {
-          text: "Director / Secretary, NCCT",
+          text: "Director / Secretary, EduDisha",
           style: { font: "BodyMedium", size: px(9), color: SLATE_500 },
         },
       ],

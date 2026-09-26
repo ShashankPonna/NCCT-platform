@@ -353,7 +353,7 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
                 id="search-input"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="e.g. Asha, Financial Record-Keeping, NCCT-JU3E8VT3"
+                placeholder="e.g. Asha, Financial Record-Keeping, EDU-JU3E8VT3"
                 type="text"
                 className="w-full min-h-[48px] pl-10 pr-space-md bg-paper-light text-on-surface rounded-xl font-body-sm text-body-sm focus:outline-none focus:bg-surface-card focus:ring-2 focus:ring-secondary-container border border-border-slate/60"
               />
@@ -496,7 +496,7 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
                                   {cand.certificateCount > 0 && (
                                     <span
                                       className="material-symbols-outlined text-[16px] text-on-tertiary-container shrink-0"
-                                      title={`Holds ${cand.certificateCount} NCCT certificate${cand.certificateCount === 1 ? "" : "s"} — each can be checked on the public verification page`}
+                                      title={`Holds ${cand.certificateCount} EduDisha certificate${cand.certificateCount === 1 ? "" : "s"} — each can be checked on the public verification page`}
                                     >
                                       verified
                                     </span>
@@ -689,7 +689,7 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
                 <div>
                   <h3 className="font-headline-sm text-headline-sm text-primary font-bold">Post New Job Opening</h3>
                   <span className="font-label-sm text-label-sm text-on-surface-variant">
-                    Target NCCT Certified Cooperative Candidates
+                    Target EduDisha Certified Cooperative Candidates
                   </span>
                 </div>
               </div>

@@ -285,7 +285,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                 Users & Institutions Management
               </h1>
               <p className="font-body text-sm text-slate-600 max-w-4xl mt-1">
-                Provision verified user accounts across NCCT apex institutes, govern cooperative employer partnerships,
+                Provision verified user accounts across EduDisha apex institutes, govern cooperative employer partnerships,
                 and configure regional training center mandates.
               </p>
             </div>
@@ -705,7 +705,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                     Institution Profiles
                   </h2>
                   <p className="font-body text-xs text-slate-600 mt-0.5">
-                    Governed NCCT national apex institutes, Regional Institutes (RICM), and ICM centers.
+                    Governed EduDisha national apex institutes, Regional Institutes (RICM), and ICM centers.
                   </p>
                 </div>
               </div>
@@ -938,7 +938,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                   <span>{showCsvTextarea ? "Hide Text Paste" : "Paste CSV Raw Text Instead"}</span>
                 </button>
                 <span className="text-xs text-slate-500 font-metric-mono">
-                  v2.1 NCCT Standard
+                  v2.1 EduDisha Standard
                 </span>
               </div>
 

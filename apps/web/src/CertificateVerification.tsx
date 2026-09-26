@@ -73,7 +73,7 @@ export function CertificateVerification({ code }: CertificateVerificationProps) 
               Official Certificate Verified
             </h1>
             <p className="font-label-sm text-on-surface-variant m-0 uppercase font-bold">
-              National Council for Cooperative Training
+              EduDisha
             </p>
           </div>
         </div>
@@ -112,7 +112,7 @@ export function CertificateVerification({ code }: CertificateVerificationProps) 
                 Issuing Institution
               </span>
               <span className="font-body-sm text-on-surface font-semibold">
-                {certificate.institution_name ?? "NCCT / VAMNICOM / RICM / ICM"}
+                {certificate.institution_name ?? "EduDisha / VAMNICOM / RICM / ICM"}
               </span>
             </div>
             <div>
@@ -149,7 +149,7 @@ export function CertificateVerification({ code }: CertificateVerificationProps) 
 
         <div className="mt-8 pt-4 border-t border-outline-variant flex justify-between items-center">
           <a href="/" className="text-on-surface-variant hover:text-primary font-label-md text-sm">
-            NCCT Portal Home
+            EduDisha Home
           </a>
           {certificate.pdf_url && (
             <a

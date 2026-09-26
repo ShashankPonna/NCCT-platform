@@ -180,7 +180,7 @@ export async function buildGradebookWorkbook(
 ): Promise<Buffer> {
   const t = LABELS[options.locale];
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = options.preparedBy ?? "NCCT Platform";
+  workbook.creator = options.preparedBy ?? "EduDisha";
   workbook.created = options.generatedAt;
 
   const moduleTests = gradebook.assessments.filter((a) => a.kind === "module_test");

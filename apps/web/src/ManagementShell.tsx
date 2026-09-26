@@ -1,5 +1,6 @@
 import type { Role } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import logo from "./assets/logo-badge.png";
 import { LocaleToggle, useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { supabase } from "./supabaseClient.js";
 
@@ -338,9 +339,11 @@ export function ManagementShell({
               onClick={() => onNavigate(roleNavItems[0]?.id ?? "profile")}
               className="flex items-center gap-2 text-left transition-opacity hover:opacity-90 cursor-pointer md:gap-3"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary-container text-primary font-bold shadow-xs md:h-10 md:w-10">
-                <span className="material-symbols-outlined text-[22px]">account_balance</span>
-              </div>
+              <img
+                src={logo}
+                alt="EduDisha"
+                className="h-9 w-9 shrink-0 rounded-xl object-cover shadow-xs md:h-10 md:w-10"
+              />
               <div className="flex flex-col">
                 <span className="font-headline-sm text-headline-sm font-bold leading-tight text-primary tracking-tight">
                   EduDisha

@@ -74,7 +74,7 @@ const TRAINEE_ID = "11111111-1111-1111-1111-111111111111";
 describe("GET /api/certificates/:code", () => {
   it("requires no authentication at all", async () => {
     certificatesMock.result.data = null;
-    const res = await request(buildApp()).get("/api/certificates/NCCT-DOESNOTEXIST");
+    const res = await request(buildApp()).get("/api/certificates/EDU-DOESNOTEXIST");
     // No Authorization header sent, and still gets a real (404, not 401)
     // response — confirms this route never calls requireAuth.
     expect(res.status).toBe(404);
@@ -82,38 +82,38 @@ describe("GET /api/certificates/:code", () => {
 
   it("returns 404 for an unknown code", async () => {
     certificatesMock.result.data = null;
-    const res = await request(buildApp()).get("/api/certificates/NCCT-UNKNOWN1");
+    const res = await request(buildApp()).get("/api/certificates/EDU-UNKNOWN1");
     expect(res.status).toBe(404);
   });
 
   it("returns certificate details with a public PDF url and denormalized names", async () => {
     certificatesMock.result.data = {
       id: "cert-1",
-      certificate_code: "NCCT-ABC12345",
+      certificate_code: "EDU-ABC12345",
       trainee_id: "trainee-1",
       course_id: "course-1",
       programme_id: "prog-1",
       issuing_institution_id: "inst-1",
-      pdf_storage_path: "NCCT-ABC12345.pdf",
+      pdf_storage_path: "EDU-ABC12345.pdf",
       profiles: { full_name: "Asha Patil" },
       courses: { title: "Intro to Cooperative Banking" },
       programmes: { title: "Cooperative Management Basics" },
       institutions: { name: "VAMNICOM" },
     };
     getPublicUrlMock.mockReturnValue({
-      data: { publicUrl: "https://example.com/certificates/NCCT-ABC12345.pdf" },
+      data: { publicUrl: "https://example.com/certificates/EDU-ABC12345.pdf" },
     });
 
-    const res = await request(buildApp()).get("/api/certificates/NCCT-ABC12345");
+    const res = await request(buildApp()).get("/api/certificates/EDU-ABC12345");
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
-      certificate_code: "NCCT-ABC12345",
+      certificate_code: "EDU-ABC12345",
       trainee_name: "Asha Patil",
       course_title: "Intro to Cooperative Banking",
       programme_title: "Cooperative Management Basics",
       institution_name: "VAMNICOM",
-      pdf_url: "https://example.com/certificates/NCCT-ABC12345.pdf",
+      pdf_url: "https://example.com/certificates/EDU-ABC12345.pdf",
     });
     // Raw join objects shouldn't leak into the response shape.
     expect(res.body.profiles).toBeUndefined();
@@ -148,12 +148,12 @@ describe("GET /api/certificates/mine", () => {
     certificatesMock.result.data = [
       {
         id: "cert-1",
-        certificate_code: "NCCT-ABC12345",
+        certificate_code: "EDU-ABC12345",
         trainee_id: TRAINEE_ID,
         course_id: "course-1",
         programme_id: "prog-1",
         issuing_institution_id: "inst-1",
-        pdf_storage_path: "NCCT-ABC12345.pdf",
+        pdf_storage_path: "EDU-ABC12345.pdf",
         issued_at: "2026-09-01T00:00:00.000Z",
         courses: { title: "Intro to Cooperative Banking" },
         programmes: { title: "Cooperative Management Basics" },
@@ -161,7 +161,7 @@ describe("GET /api/certificates/mine", () => {
       },
     ];
     getPublicUrlMock.mockReturnValue({
-      data: { publicUrl: "https://example.com/certificates/NCCT-ABC12345.pdf" },
+      data: { publicUrl: "https://example.com/certificates/EDU-ABC12345.pdf" },
     });
 
     const res = await request(buildApp())
@@ -171,11 +171,11 @@ describe("GET /api/certificates/mine", () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(1);
     expect(res.body[0]).toMatchObject({
-      certificate_code: "NCCT-ABC12345",
+      certificate_code: "EDU-ABC12345",
       course_title: "Intro to Cooperative Banking",
       programme_title: "Cooperative Management Basics",
       institution_name: "VAMNICOM",
-      pdf_url: "https://example.com/certificates/NCCT-ABC12345.pdf",
+      pdf_url: "https://example.com/certificates/EDU-ABC12345.pdf",
     });
     expect(res.body[0].programmes).toBeUndefined();
     // Ownership must come from the token, never the request — assert the

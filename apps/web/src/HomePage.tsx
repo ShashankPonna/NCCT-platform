@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import logo from "./assets/logo-badge.png";
 
 export interface HomePageProps {
   onSignIn: () => void;
@@ -253,7 +254,7 @@ const content: Record<"en" | "hi", HomePageText> = {
       heading: "Verify any EduDisha certificate instantly without signing in.",
       body: "Employers, banks, and inspectors can authenticate certificates directly by entering the unique credential code or scanning the printed QR code. Zero login, zero friction, 100% authoritative.",
       formLabel: "Certificate ID or Roll Number",
-      placeholder: "e.g. EDU-2024-8A9X",
+      placeholder: "EDU-2024-8A9X",
       verifyBtn: "Verify",
       registryNote: "Connected to Central Registry of Cooperative Training",
     },
@@ -409,7 +410,7 @@ const content: Record<"en" | "hi", HomePageText> = {
       heading: "बिना साइन इन किए तुरंत किसी भी EduDisha प्रमाणपत्र को सत्यापित करें।",
       body: "नियोक्ता, बैंक और निरीक्षक अद्वितीय क्रेडेंशियल कोड दर्ज करके या मुद्रित QR कोड को स्कैन करके सीधे प्रमाणपत्रों को प्रामाणित कर सकते हैं। शून्य लॉगिन, शून्य बाधा, 100% प्रामाणिक।",
       formLabel: "प्रमाणपत्र आईडी या रोल नंबर",
-      placeholder: "उदा. EDU-2024-8A9X",
+      placeholder: "EDU-2024-8A9X",
       verifyBtn: "सत्यापित करें",
       registryNote: "राष्ट्रीय सहकारी प्रशिक्षण केंद्रीय रजिस्ट्री से जुड़ा हुआ",
     },
@@ -492,12 +493,14 @@ export function HomePage({ onSignIn, onVerify }: HomePageProps) {
         <div className="max-w-[1280px] mx-auto px-4 sm:px-8 md:px-16 h-20 flex items-center justify-between">
           {/* Left: Logo & Wordmark */}
           <a href="/" className="flex items-center gap-3.5 group">
-            <div className="w-11 h-11 rounded-std bg-primary flex items-center justify-center text-on-primary shadow-xs group-hover:bg-primary-container transition-colors">
-              <span className="material-symbols-outlined text-[26px]">school</span>
-            </div>
+            <img
+              src={logo}
+              alt="EduDisha"
+              className="w-11 h-11 rounded-std object-cover shadow-xs transition-opacity group-hover:opacity-90"
+            />
             <div className="flex flex-col">
               <span className="font-heading font-extrabold text-xl md:text-2xl text-primary leading-tight tracking-tight">
-                NCCT Platform
+                EduDisha
               </span>
               <span className="text-[11px] font-medium text-on-surface-variant hidden sm:block">
                 {t.header.tagline}
@@ -641,7 +644,7 @@ export function HomePage({ onSignIn, onVerify }: HomePageProps) {
                     }}
                     className="mt-2 w-full bg-white rounded p-2.5 border border-border-low-contrast flex items-center justify-between text-xs hover:bg-gray-50 cursor-pointer"
                   >
-                    <span className="font-mono text-gray-600">NCCT-XXXXXXXX</span>
+                    <span className="font-mono text-gray-600">EDU-XXXXXXXX</span>
                     <span className="inline-flex items-center gap-1 text-[11px] font-bold text-primary">
                       <span className="material-symbols-outlined text-sm">search</span>
                       {t.hero.valid}
@@ -740,7 +743,7 @@ export function HomePage({ onSignIn, onVerify }: HomePageProps) {
         </div>
       </section>
 
-      {/* About NCCT Section */}
+      {/* About EduDisha Section */}
       <section id="about" className="scroll-mt-20 py-16 md:py-24 bg-surface-card border-b border-border-low-contrast">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-8 md:px-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
@@ -1003,26 +1006,28 @@ export function HomePage({ onSignIn, onVerify }: HomePageProps) {
             {/* Verification Quick Input Box */}
             <form
               onSubmit={handleVerifySubmit}
-              className="w-full lg:w-[420px] bg-surface-card rounded-std p-5 text-on-background shadow-xl"
+              className="w-full lg:w-[500px] bg-surface-card rounded-std p-5 text-on-background shadow-xl"
             >
               <label htmlFor="cert-id" className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">
                 {t.verify.formLabel}
               </label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <span className="material-symbols-outlined absolute left-3 top-3 text-gray-400 text-lg">search</span>
+              <div className="flex flex-col gap-2.5">
+                <div className="relative">
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
+                    search
+                  </span>
                   <input
                     id="cert-id"
                     type="text"
                     placeholder={t.verify.placeholder}
                     value={certInput}
                     onChange={(e) => setCertInput(e.target.value)}
-                    className="w-full h-11 pl-9 pr-3 rounded-std border border-border-low-contrast text-sm focus:outline-hidden focus:border-primary font-mono text-primary"
+                    className="w-full min-w-[15ch] h-14 pl-11 pr-3 rounded-std border border-border-low-contrast text-lg focus:outline-hidden focus:border-primary font-mono text-primary"
                   />
                 </div>
                 <button
                   type="submit"
-                  className="h-11 px-5 rounded-full bg-cta hover:bg-cta-hover text-white text-xs font-bold flex items-center justify-center transition-colors cursor-pointer"
+                  className="w-full h-11 px-5 rounded-full bg-cta hover:bg-cta-hover text-white text-xs font-bold flex items-center justify-center transition-colors cursor-pointer"
                 >
                   {t.verify.verifyBtn}
                 </button>
@@ -1072,10 +1077,8 @@ export function HomePage({ onSignIn, onVerify }: HomePageProps) {
             {/* Col 1: Brand & Autonomous Society Info */}
             <div className="md:col-span-2 pr-4">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-std bg-primary flex items-center justify-center text-on-primary">
-                  <span className="material-symbols-outlined text-xl">school</span>
-                </div>
-                <span className="font-heading font-extrabold text-xl text-primary tracking-tight">NCCT Platform</span>
+                <img src={logo} alt="EduDisha" className="w-9 h-9 rounded-std object-cover shadow-xs" />
+                <span className="font-heading font-extrabold text-xl text-primary tracking-tight">EduDisha</span>
               </div>
               <p className="text-xs sm:text-sm text-on-surface-variant leading-relaxed mb-4 max-w-md">
                 {t.footer.about}

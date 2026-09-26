@@ -257,7 +257,7 @@ describe("POST /api/assessments/:id/attempts", () => {
       score_percent: 100,
       passed: true,
     };
-    issueCertificateMock.mockResolvedValue({ certificate_code: "NCCT-ABC12345" });
+    issueCertificateMock.mockResolvedValue({ certificate_code: "EDU-ABC12345" });
 
     const res = await request(buildApp())
       .post("/api/assessments/assess-1/attempts")
@@ -280,7 +280,7 @@ describe("POST /api/assessments/:id/attempts", () => {
       score_percent: 50,
       passed: true,
     };
-    issueCertificateMock.mockResolvedValue({ certificate_code: "NCCT-ABC12345" });
+    issueCertificateMock.mockResolvedValue({ certificate_code: "EDU-ABC12345" });
 
     const res = await request(buildApp())
       .post("/api/assessments/assess-1/attempts")
@@ -288,7 +288,7 @@ describe("POST /api/assessments/:id/attempts", () => {
       .send({ answers: { "q-1": "a", "q-2": "wrong" } });
 
     expect(res.status).toBe(201);
-    expect(res.body.certificate).toMatchObject({ certificate_code: "NCCT-ABC12345" });
+    expect(res.body.certificate).toMatchObject({ certificate_code: "EDU-ABC12345" });
     expect(issueCertificateMock).toHaveBeenCalledWith({
       assessmentId: "assess-1",
       traineeId: "trainee-1",

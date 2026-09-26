@@ -56,7 +56,7 @@ const gradebook: CourseGradebook = {
         module_tests_passed: 1,
         module_tests_total: 1,
       },
-      certificate_code: "NCCT-ABC12345",
+      certificate_code: "EDU-ABC12345",
     },
     {
       trainee_id: "priya",
@@ -170,7 +170,7 @@ describe("buildGradebookWorkbook", () => {
     expect(asha.getCell(8).value).toBe(100);
     expect(asha.getCell(9).value).toBe("1 / 1");
     expect(asha.getCell(10).value).toBe("Certified");
-    expect(asha.getCell(11).value).toBe("NCCT-ABC12345");
+    expect(asha.getCell(11).value).toBe("EDU-ABC12345");
     expect(priya.getCell(10).value).toBe("Not yet passed");
     expect(amit.getCell(10).value).toBe("Not started");
   });

@@ -63,7 +63,7 @@ export function PublicProfile({ code }: PublicProfileProps) {
             {profile.full_name}
           </h1>
           <p className="font-label-sm text-on-surface-variant m-0 mt-1 uppercase tracking-wide font-bold">
-            NCCT Verified Trainee
+            EduDisha Verified Trainee
           </p>
         </div>
 
@@ -107,7 +107,7 @@ export function PublicProfile({ code }: PublicProfileProps) {
                       {cert.course_title ?? cert.programme_title ?? "Cooperative Training Course"}
                     </p>
                     <p className="font-body-sm text-on-surface-variant m-0">
-                      {cert.institution_name ?? "NCCT"} ·{" "}
+                      {cert.institution_name ?? "EduDisha"} ·{" "}
                       {new Date(cert.issued_at).toLocaleDateString()}
                     </p>
                   </div>
@@ -118,7 +118,7 @@ export function PublicProfile({ code }: PublicProfileProps) {
         </div>
 
         <p className="text-center font-label-sm text-on-surface-variant mt-2">
-          National Council for Cooperative Training
+          EduDisha
         </p>
       </div>
     </div>

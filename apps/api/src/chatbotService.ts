@@ -82,7 +82,7 @@ export async function retrieveRelevantChunks(question: string): Promise<Retrieve
 // grounding rules and the advice-refusal rule below are what keep this
 // feature on the MVP side of that line, so they aren't stylistic prompt
 // polish — changing them changes the feature's scope.
-const SYSTEM_PROMPT = `You answer questions about the NCCT cooperative training platform for trainees and prospective trainees.
+const SYSTEM_PROMPT = `You answer questions about the EduDisha cooperative training platform for trainees and prospective trainees.
 
 Rules:
 - Answer ONLY from the reference material given in the user message. It is the single source of truth.

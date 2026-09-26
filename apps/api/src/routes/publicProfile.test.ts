@@ -101,20 +101,20 @@ const TRAINEE_ID = "11111111-1111-1111-1111-111111111111";
 
 describe("GET /api/public-profiles/:code", () => {
   it("requires no authentication at all", async () => {
-    const res = await request(buildApp()).get("/api/public-profiles/NCCT-DOESNOTEXIST");
+    const res = await request(buildApp()).get("/api/public-profiles/EDU-DOESNOTEXIST");
     expect(res.status).toBe(404);
   });
 
   it("returns 404 for an unknown code", async () => {
     profilesMock.result.data = null;
-    const res = await request(buildApp()).get("/api/public-profiles/NCCT-UNKNOWN");
+    const res = await request(buildApp()).get("/api/public-profiles/EDU-UNKNOWN");
     expect(res.status).toBe(404);
   });
 
   it("returns 404 when the trainee has never opted in (no visibility_settings row)", async () => {
     profilesMock.result.data = { id: TRAINEE_ID, full_name: "Asha Patil" };
     visibilityMock.result.data = null;
-    const res = await request(buildApp()).get("/api/public-profiles/NCCT-ABC");
+    const res = await request(buildApp()).get("/api/public-profiles/EDU-ABC");
     expect(res.status).toBe(404);
   });
 
@@ -123,7 +123,7 @@ describe("GET /api/public-profiles/:code", () => {
     // indistinguishable so neither leaks which codes are real.
     profilesMock.result.data = { id: TRAINEE_ID, full_name: "Asha Patil" };
     visibilityMock.result.data = { public_profile_enabled: false };
-    const res = await request(buildApp()).get("/api/public-profiles/NCCT-ABC");
+    const res = await request(buildApp()).get("/api/public-profiles/EDU-ABC");
     expect(res.status).toBe(404);
   });
 
@@ -132,7 +132,7 @@ describe("GET /api/public-profiles/:code", () => {
     visibilityMock.result.data = { public_profile_enabled: true };
     certificatesMock.result.data = [
       {
-        certificate_code: "NCCT-ABC12345",
+        certificate_code: "EDU-ABC12345",
         issued_at: "2026-07-01T00:00:00.000Z",
         courses: { title: "Intro to Cooperative Banking" },
         programmes: { title: "Cooperative Banking Operations" },
@@ -140,7 +140,7 @@ describe("GET /api/public-profiles/:code", () => {
       },
     ];
 
-    const res = await request(buildApp()).get("/api/public-profiles/NCCT-A7K2M9QXB4H8W2FD");
+    const res = await request(buildApp()).get("/api/public-profiles/EDU-A7K2M9QXB4H8W2FD");
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
@@ -148,7 +148,7 @@ describe("GET /api/public-profiles/:code", () => {
       skills: ["Cooperative Banking Operations"],
       certificates: [
         {
-          certificate_code: "NCCT-ABC12345",
+          certificate_code: "EDU-ABC12345",
           course_title: "Intro to Cooperative Banking",
           programme_title: "Cooperative Banking Operations",
           institution_name: "VAMNICOM",
@@ -174,7 +174,7 @@ describe("POST /api/profiles/me/card", () => {
 
   it("mints a code scoped to the caller's own id, never the request body", async () => {
     authenticateAs(TRAINEE_ID, "trainee");
-    profilesMock.result.data = { public_profile_code: "NCCT-GENERATEDCODE1" };
+    profilesMock.result.data = { public_profile_code: "EDU-GENERATEDCODE1" };
 
     const res = await request(buildApp())
       .post("/api/profiles/me/card")
@@ -182,7 +182,7 @@ describe("POST /api/profiles/me/card", () => {
       .send({ trainee_id: "someone-elses-id" });
 
     expect(res.status).toBe(200);
-    expect(res.body.public_profile_code).toMatch(/^NCCT-/);
+    expect(res.body.public_profile_code).toMatch(/^EDU-/);
     expect(profilesMock.builder.eq).toHaveBeenCalledWith("id", TRAINEE_ID);
   });
 });

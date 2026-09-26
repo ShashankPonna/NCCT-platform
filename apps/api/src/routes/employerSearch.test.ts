@@ -125,7 +125,7 @@ describe("GET /api/employer/trainees", () => {
     certificatesMock.result.data = [
       {
         trainee_id: "trainee-1",
-        certificate_code: "NCCT-ABC12345",
+        certificate_code: "EDU-ABC12345",
         issued_at: "2026-09-01T00:00:00.000Z",
         programmes: { title: "Dairy Cooperative Management" },
         institutions: { name: "VAMNICOM", location: "Pune" },
@@ -143,7 +143,7 @@ describe("GET /api/employer/trainees", () => {
         full_name: "Asha Patil",
         certificates: [
           {
-            certificate_code: "NCCT-ABC12345",
+            certificate_code: "EDU-ABC12345",
             programme_title: "Dairy Cooperative Management",
             institution_name: "VAMNICOM",
             institution_location: "Pune",
@@ -162,7 +162,7 @@ describe("GET /api/employer/trainees", () => {
     certificatesMock.result.data = [
       {
         trainee_id: "trainee-1",
-        certificate_code: "NCCT-ABC12345",
+        certificate_code: "EDU-ABC12345",
         issued_at: "2026-09-01T00:00:00.000Z",
         programmes: { title: "Dairy Cooperative Management" },
         institutions: { name: "VAMNICOM", location: "Pune" },
@@ -184,7 +184,7 @@ describe("GET /api/employer/trainees", () => {
     certificatesMock.result.data = [
       {
         trainee_id: "trainee-1",
-        certificate_code: "NCCT-ABC12345",
+        certificate_code: "EDU-ABC12345",
         issued_at: "2026-09-01T00:00:00.000Z",
         programmes: { title: "Dairy Cooperative Management" },
         institutions: { name: "VAMNICOM", location: "Pune" },
@@ -210,7 +210,7 @@ describe("GET /api/employer/trainees", () => {
     certificatesMock.result.data = [
       {
         trainee_id: "trainee-1",
-        certificate_code: "NCCT-ABC12345",
+        certificate_code: "EDU-ABC12345",
         issued_at: "2026-09-01T00:00:00.000Z",
         programme_id: "programme-1",
         course_id: "course-1",
@@ -246,7 +246,7 @@ describe("GET /api/employer/trainees", () => {
     certificatesMock.result.data = [
       {
         trainee_id: "trainee-1",
-        certificate_code: "NCCT-ABC12345",
+        certificate_code: "EDU-ABC12345",
         issued_at: "2026-09-01T00:00:00.000Z",
         programme_id: "programme-1",
         course_id: null,
@@ -255,7 +255,7 @@ describe("GET /api/employer/trainees", () => {
       },
       {
         trainee_id: "trainee-2",
-        certificate_code: "NCCT-XYZ98765",
+        certificate_code: "EDU-XYZ98765",
         issued_at: "2026-09-01T00:00:00.000Z",
         programme_id: "programme-2",
         course_id: null,
@@ -281,7 +281,7 @@ describe("GET /api/employer/trainees", () => {
     certificatesMock.result.data = [
       {
         trainee_id: "trainee-1",
-        certificate_code: "NCCT-ABC12345",
+        certificate_code: "EDU-ABC12345",
         issued_at: "2026-09-01T00:00:00.000Z",
         programme_id: "programme-1",
         course_id: null,
@@ -307,7 +307,7 @@ describe("GET /api/employer/trainees", () => {
     certificatesMock.result.data = [
       {
         trainee_id: "trainee-1",
-        certificate_code: "NCCT-ABC12345",
+        certificate_code: "EDU-ABC12345",
         issued_at: "2026-09-01T00:00:00.000Z",
         programme_id: "programme-1",
         course_id: "course-1",

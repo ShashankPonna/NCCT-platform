@@ -29,7 +29,7 @@ const CHUNKS: SeedChunk[] = [
   {
     source_type: "faq",
     content:
-      "This platform is run by NCCT (National Council for Cooperative Training) and its regional institutions (VAMNICOM, RICMs, ICMs). It combines training programme enrollment, e-learning with certification, and an employment exchange connecting trained rural youth and cooperative-sector workers with employers.",
+      "This platform is EduDisha, run in partnership with cooperative training institutions (VAMNICOM, RICMs, ICMs). It combines training programme enrollment, e-learning with certification, and an employment exchange connecting trained rural youth and cooperative-sector workers with employers.",
   },
   {
     source_type: "faq",

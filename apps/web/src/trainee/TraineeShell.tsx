@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import logo from "../assets/logo-badge.png";
 import { LocaleToggle, useLocale, type Locale } from "../i18n/LocaleContext.js";
 import { useOnlineStatus } from "../offline/network.js";
 import { supabase } from "../supabaseClient.js";
@@ -282,9 +283,11 @@ export function TraineeShell({ active, onNavigate, fullName, notificationBell, c
               onClick={() => onNavigate("home")}
               className="flex items-center gap-2 text-left transition-opacity hover:opacity-90 md:gap-3"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-white shadow-xs md:h-10 md:w-10">
-                <span className="material-symbols-outlined text-[20px] md:text-[22px]">account_balance</span>
-              </div>
+              <img
+                src={logo}
+                alt="EduDisha"
+                className="h-9 w-9 shrink-0 rounded-lg object-cover shadow-xs md:h-10 md:w-10"
+              />
               <div className="flex flex-col">
                 <span className="font-headline text-headline-sm font-bold leading-tight text-on-surface">
                   EduDisha

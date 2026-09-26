@@ -196,7 +196,7 @@ describe("GET /api/courses/:id/gradebook/export", () => {
         full_name: "Asha Patil",
         cells: { t1: { best_marks_obtained: 30, best_total_marks: 30, best_score_percent: 100, passed: true, attempts: 1 } },
         totals: { marks_obtained: 30, total_marks: 30, score_percent: 100, module_tests_passed: 1, module_tests_total: 1 },
-        certificate_code: "NCCT-ABC12345",
+        certificate_code: "EDU-ABC12345",
       },
     ],
   };

@@ -97,12 +97,12 @@ function queueIssuanceLookups() {
   queue("profiles", { full_name: "Asha Patil" });
   queue("certificates", {
     id: "cert-1",
-    certificate_code: "NCCT-XXXXXXXX",
+    certificate_code: "EDU-XXXXXXXX",
     course_id: "course-1",
     trainee_id: "trainee-1",
     programme_id: "prog-1",
     issuing_institution_id: "inst-1",
-    pdf_storage_path: "NCCT-XXXXXXXX.pdf",
+    pdf_storage_path: "EDU-XXXXXXXX.pdf",
   });
 }
 
@@ -235,7 +235,7 @@ describe("checkAndIssueCourseCertificate", () => {
     expect(result).toMatchObject({ id: "cert-1", course_id: "course-1" });
     expect(uploadMock).toHaveBeenCalledTimes(1);
     const [path, buffer, options] = uploadMock.mock.calls[0];
-    expect(path).toMatch(/^NCCT-[A-Z0-9]{8}\.pdf$/);
+    expect(path).toMatch(/^EDU-[A-Z0-9]{8}\.pdf$/);
     expect(Buffer.isBuffer(buffer)).toBe(true);
     // A real PDF was actually rendered, not mocked away.
     expect(buffer.length).toBeGreaterThan(100);
@@ -251,7 +251,7 @@ describe("checkAndIssueCourseCertificate", () => {
       "certificate_issued",
       expect.objectContaining({
         programme_id: "prog-1",
-        certificate_code: expect.stringMatching(/^NCCT-/),
+        certificate_code: expect.stringMatching(/^EDU-/),
       }),
     );
   }, 15000);
@@ -372,14 +372,14 @@ function pdfFacts(pdf: Buffer) {
 
 const RENDER_BASE = {
   institutionName: "VAMNICOM, Pune",
-  certificateCode: "NCCT-YVUPNFME",
+  certificateCode: "EDU-YVUPNFME",
   issuedAt: new Date("2026-09-25T10:00:00Z"),
   // A 1×1 PNG — the QR's pixels don't matter to layout.
   qrPng: Buffer.from(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
     "base64",
   ),
-  verificationUrl: "https://ncct-platform-1.onrender.com/?verify=NCCT-YVUPNFME",
+  verificationUrl: "https://ncct-platform-1.onrender.com/?verify=EDU-YVUPNFME",
 };
 
 describe("renderCertificatePdf (DECISIONS.md #69 design)", () => {
@@ -427,9 +427,9 @@ describe("rerenderCertificate", () => {
     score_percent: number | null;
   }) {
     queue("certificates", {
-      certificate_code: "NCCT-ABCDEFGH",
+      certificate_code: "EDU-ABCDEFGH",
       issued_at: "2026-09-25T10:00:00Z",
-      pdf_storage_path: "NCCT-ABCDEFGH.pdf",
+      pdf_storage_path: "EDU-ABCDEFGH.pdf",
       trainee_id: "trainee-1",
       course_id: "course-1",
       programme_id: "prog-1",
@@ -447,8 +447,8 @@ describe("rerenderCertificate", () => {
 
     const result = await rerenderCertificate("cert-1");
 
-    expect(result.oldPath).toBe("NCCT-ABCDEFGH.pdf");
-    expect(result.newPath).toMatch(/^NCCT-ABCDEFGH-[a-z0-9]+\.pdf$/);
+    expect(result.oldPath).toBe("EDU-ABCDEFGH.pdf");
+    expect(result.newPath).toMatch(/^EDU-ABCDEFGH-[a-z0-9]+\.pdf$/);
     expect(uploadMock).toHaveBeenCalledTimes(1);
     const [path, buffer, options] = uploadMock.mock.calls[0];
     expect(path).toBe(result.newPath);
@@ -464,7 +464,7 @@ describe("rerenderCertificate", () => {
   it("re-renders a certificate that has no marks (lesson-only course)", async () => {
     queueRerenderLookups({ marks_obtained: null, total_marks: null, score_percent: null });
     const result = await rerenderCertificate("cert-2");
-    expect(result.newPath).toMatch(/^NCCT-ABCDEFGH-/);
+    expect(result.newPath).toMatch(/^EDU-ABCDEFGH-/);
     expect(uploadMock).toHaveBeenCalledTimes(1);
   }, 15000);
 

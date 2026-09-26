@@ -13,7 +13,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 // the native project — `webDir` itself is never built directly here.
 const config: CapacitorConfig = {
   appId: "com.ncct.app",
-  appName: "NCCT Platform",
+  appName: "EduDisha",
   webDir: "../web/dist",
 };
 

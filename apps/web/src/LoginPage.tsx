@@ -1,4 +1,5 @@
 import { useState } from "react";
+import logo from "./assets/logo-badge.png";
 import { ForgotPasswordForm } from "./ForgotPasswordForm.js";
 import { LoginForm } from "./LoginForm.js";
 
@@ -33,11 +34,9 @@ export function LoginPage({ error, onBack }: LoginPageProps) {
 
       {/* Main Centered Authentication Column */}
       <main className="w-full flex-1 flex flex-col items-center justify-center my-6">
-        {/* Centered Brand Lockup: exactly 36px rounded square (8px radius) in navy #0f172a with white 'school' icon, next to bold 'EduDisha' */}
+        {/* Centered Brand Lockup: 36px rounded-square logo next to bold 'EduDisha' */}
         <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="w-[36px] h-[36px] rounded-[8px] bg-[#0f172a] flex items-center justify-center text-white shadow-xs flex-shrink-0">
-            <span className="material-symbols-outlined text-[22px]">school</span>
-          </div>
+          <img src={logo} alt="EduDisha" className="w-[36px] h-[36px] rounded-[8px] object-cover shadow-xs flex-shrink-0" />
           <span className="font-heading font-bold text-[22px] tracking-tight text-brand-primary">
             EduDisha
           </span>
