@@ -2,11 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
-import {
-  loadCourseStructure,
-  summarizeCourseMarks,
-  type AttemptRow,
-} from "./assessmentScoring.js";
+import { loadCourseStructure, summarizeCourseMarks, type AttemptRow } from "./assessmentScoring.js";
 import { generateCode } from "./codeGenerator.js";
 import { notify } from "./notificationService.js";
 import { supabaseAdmin } from "./supabaseClient.js";
@@ -201,19 +197,13 @@ async function issueCertificateForCourse({
   if (traineeError) throw new Error(traineeError.message);
 
   const certificateCode = generateCertificateCode();
-  const publicWebUrl = process.env.PUBLIC_WEB_URL ?? "http://localhost:5173";
-  const verificationUrl = `${publicWebUrl}/?verify=${certificateCode}`;
-
-  const qrPng = await QRCode.toBuffer(verificationUrl, { type: "png", width: 240, margin: 0 });
-  const pdfBuffer = await renderCertificatePdf({
+  const pdfBuffer = await buildCertificatePdf({
     traineeName: trainee.full_name || "Trainee",
     programmeTitle: programme.title,
     institutionName: institution.name,
     courseTitle: course.title,
     certificateCode,
     issuedAt: new Date(),
-    qrPng,
-    verificationUrl,
     marks,
   });
 
@@ -250,6 +240,91 @@ async function issueCertificateForCourse({
   return certificate;
 }
 
+function verificationUrlFor(certificateCode: string): string {
+  const publicWebUrl = process.env.PUBLIC_WEB_URL ?? "http://localhost:5173";
+  return `${publicWebUrl}/?verify=${certificateCode}`;
+}
+
+/** QR + PDF for one certificate — shared by first issue and re-rendering. */
+async function buildCertificatePdf(
+  params: Omit<RenderCertificateParams, "qrPng" | "verificationUrl">,
+): Promise<Buffer> {
+  const verificationUrl = verificationUrlFor(params.certificateCode);
+  const qrPng = await QRCode.toBuffer(verificationUrl, { type: "png", width: 240, margin: 0 });
+  return renderCertificatePdf({ ...params, qrPng, verificationUrl });
+}
+
+/**
+ * Re-renders an already-issued certificate in the current design
+ * (DECISIONS.md #69) without changing anything it certifies: same code,
+ * same issue date, same frozen marks, same QR target. The new PDF goes to a
+ * fresh versioned path rather than overwriting — public Storage URLs are
+ * CDN-cached, so an overwrite could keep serving the old design for up to an
+ * hour, and leaving the previous file in place doubles as a backup. Names
+ * are read as they are now (e.g. a corrected spelling is picked up).
+ */
+export async function rerenderCertificate(
+  certificateId: string,
+): Promise<{ oldPath: string; newPath: string }> {
+  const { data: cert, error } = await supabaseAdmin
+    .from("certificates")
+    .select(
+      "certificate_code, issued_at, marks_obtained, total_marks, score_percent, pdf_storage_path, trainee_id, course_id, programme_id, issuing_institution_id",
+    )
+    .eq("id", certificateId)
+    .single();
+  if (error) throw new Error(error.message);
+
+  const lookup = async (table: string, column: string, id: string | null) => {
+    if (!id) return null;
+    const { data, error: lookupError } = await supabaseAdmin
+      .from(table)
+      .select(column)
+      .eq("id", id)
+      .maybeSingle();
+    if (lookupError) throw new Error(lookupError.message);
+    return (data as Record<string, string | null> | null)?.[column] ?? null;
+  };
+
+  const [traineeName, courseTitle, programmeTitle, institutionName] = await Promise.all([
+    lookup("profiles", "full_name", cert.trainee_id),
+    lookup("courses", "title", cert.course_id),
+    lookup("programmes", "title", cert.programme_id),
+    lookup("institutions", "name", cert.issuing_institution_id),
+  ]);
+
+  const pdfBuffer = await buildCertificatePdf({
+    traineeName: traineeName || "Trainee",
+    courseTitle: courseTitle ?? "Course",
+    programmeTitle: programmeTitle ?? "Programme",
+    institutionName: institutionName ?? "NCCT",
+    certificateCode: cert.certificate_code,
+    issuedAt: new Date(cert.issued_at),
+    marks:
+      cert.marks_obtained !== null && cert.total_marks !== null && cert.score_percent !== null
+        ? {
+            marksObtained: cert.marks_obtained,
+            totalMarks: cert.total_marks,
+            scorePercent: cert.score_percent,
+          }
+        : null,
+  });
+
+  const newPath = `${cert.certificate_code}-${Date.now().toString(36)}.pdf`;
+  const { error: uploadError } = await supabaseAdmin.storage
+    .from(CERTIFICATE_BUCKET)
+    .upload(newPath, pdfBuffer, { contentType: "application/pdf", upsert: false });
+  if (uploadError) throw new Error(uploadError.message);
+
+  const { error: updateError } = await supabaseAdmin
+    .from("certificates")
+    .update({ pdf_storage_path: newPath })
+    .eq("id", certificateId);
+  if (updateError) throw new Error(updateError.message);
+
+  return { oldPath: cert.pdf_storage_path, newPath };
+}
+
 interface RenderCertificateParams {
   traineeName: string;
   programmeTitle: string;
@@ -262,304 +337,271 @@ interface RenderCertificateParams {
   marks: CertificateMarks | null;
 }
 
-// Palette matches the approved certificate design
-// (docs/Certification Web REf/code.html): deep navy ink on white, with a
-// single cooperative-sector orange accent. Kept as named constants so the
-// draw helpers below read like the design spec rather than hex soup.
+// Implements the approved Stitch design
+// (`stitch_coop_net_certificate_of_completion (1)/code.html` + `screen.png` at
+// the repo root — DECISIONS.md #69).
+// The design is authored at 1123×794 CSS px (A4 landscape at 96 dpi); an A4
+// landscape PDF page is 842×595 pt, so every measurement below is the
+// design's px value × 0.75 (see `px()`), keeping this file checkable against
+// the reference rather than hand-tuned.
 const NAVY = "#0f172a";
 const ORANGE = "#f26522";
-const SLATE_400 = "#94a3b8";
-const SLATE_500 = "#64748b";
-const SLATE_600 = "#475569";
+const CREAM = "#fdf6ee";
+const SLATE_800 = "#1e293b";
 const SLATE_700 = "#334155";
+const SLATE_600 = "#475569";
+const SLATE_500 = "#64748b";
+const SLATE_400 = "#94a3b8";
 const SLATE_300 = "#cbd5e1";
 const SLATE_200 = "#e2e8f0";
 const SLATE_100 = "#f1f5f9";
 const SLATE_50 = "#f8fafc";
 const WHITE = "#ffffff";
 
+const px = (value: number) => value * 0.75;
+
 function registerFonts(doc: PDFKit.PDFDocument) {
-  doc.registerFont("Title", path.join(FONTS_DIR, "Cinzel-ExtraBold.ttf"));
-  doc.registerFont("TitleAlt", path.join(FONTS_DIR, "Cinzel-Bold.ttf"));
+  doc.registerFont("Title", path.join(FONTS_DIR, "Cinzel-Bold.ttf"));
   doc.registerFont("Name", path.join(FONTS_DIR, "PlayfairDisplay-Bold.ttf"));
-  doc.registerFont("NameLight", path.join(FONTS_DIR, "PlayfairDisplay-SemiBold.ttf"));
   doc.registerFont("Body", path.join(FONTS_DIR, "Roboto-Regular.ttf"));
   doc.registerFont("BodyMedium", path.join(FONTS_DIR, "Roboto-Medium.ttf"));
   doc.registerFont("BodyBold", path.join(FONTS_DIR, "Roboto-Bold.ttf"));
+  doc.registerFont("Mono", path.join(FONTS_DIR, "JetBrainsMono-SemiBold.ttf"));
+  // Devanagari needs its own font (Roboto has no Devanagari glyphs); PDFKit's
+  // fontkit layout applies the OpenType shaping conjuncts like "र्ष" need.
+  doc.registerFont("Devanagari", path.join(FONTS_DIR, "NotoSansDevanagari-Medium.ttf"));
 }
 
-/** Faint diagonal cross-hatch across the whole page — the "guilloche /
- * security background" texture from the reference design, simulated with
- * plain strokes rather than an actual anti-counterfeiting pattern. */
-function drawSecurityPattern(doc: PDFKit.PDFDocument, pageW: number, pageH: number) {
-  const step = 14;
-  doc.save();
-  doc.opacity(0.05).lineWidth(0.5);
-  for (let x = -pageH; x < pageW; x += step) {
-    doc
-      .moveTo(x, 0)
-      .lineTo(x + pageH, pageH)
-      .stroke(ORANGE);
-  }
-  for (let x = 0; x < pageW + pageH; x += step) {
-    doc
-      .moveTo(x, 0)
-      .lineTo(x - pageH, pageH)
-      .stroke(NAVY);
-  }
-  doc.restore();
+interface RunStyle {
+  font: string;
+  size: number;
+  color: string;
+  characterSpacing?: number;
+  oblique?: boolean;
 }
 
-function drawBorderFrame(doc: PDFKit.PDFDocument, pageW: number, pageH: number) {
+/** Width of a single-line run, including letter-spacing. */
+function runWidth(doc: PDFKit.PDFDocument, text: string, style: RunStyle): number {
+  doc.font(style.font).fontSize(style.size);
+  return doc.widthOfString(text, { characterSpacing: style.characterSpacing ?? 0 });
+}
+
+/** Draws one unwrapped run at (x, y) and returns the x where it ends. */
+function drawRun(
+  doc: PDFKit.PDFDocument,
+  text: string,
+  x: number,
+  y: number,
+  style: RunStyle,
+): number {
+  const width = runWidth(doc, text, style);
+  doc.fillColor(style.color).text(text, x, y, {
+    lineBreak: false,
+    characterSpacing: style.characterSpacing ?? 0,
+    oblique: style.oblique ?? false,
+  });
+  return x + width;
+}
+
+/** Lays out several differently-styled runs as one line, aligned to an anchor. */
+function drawRuns(
+  doc: PDFKit.PDFDocument,
+  runs: { text: string; style: RunStyle }[],
+  anchorX: number,
+  y: number,
+  align: "left" | "center" | "right",
+): number {
+  const total = runs.reduce((sum, run) => sum + runWidth(doc, run.text, run.style), 0);
+  let x = align === "left" ? anchorX : align === "center" ? anchorX - total / 2 : anchorX - total;
+  for (const run of runs) x = drawRun(doc, run.text, x, y, run.style);
+  return total;
+}
+
+/** Shrinks a one-line run's font size until it fits, then ellipsises as a last resort. */
+function fitRun(
+  doc: PDFKit.PDFDocument,
+  text: string,
+  style: RunStyle,
+  maxWidth: number,
+  minSize: number,
+) {
+  let size = style.size;
+  while (size > minSize && runWidth(doc, text, { ...style, size }) > maxWidth) size -= 0.25;
+  let fitted = text;
+  while (fitted.length > 1 && runWidth(doc, fitted, { ...style, size }) > maxWidth) {
+    fitted = `${fitted.slice(0, -2)}…`;
+  }
+  return { text: fitted, style: { ...style, size } };
+}
+
+function drawBorder(doc: PDFKit.PDFDocument, pageW: number, pageH: number) {
   doc.save();
   doc
-    .lineWidth(2)
-    .rect(18, 18, pageW - 36, pageH - 36)
+    .lineWidth(px(2))
+    .rect(px(20), px(20), pageW - px(40), pageH - px(40))
     .stroke(NAVY);
   doc
-    .opacity(0.4)
-    .lineWidth(1)
-    .rect(26, 26, pageW - 52, pageH - 52)
+    .lineWidth(px(1))
+    .rect(px(26), px(26), pageW - px(52), pageH - px(52))
     .stroke(ORANGE);
-  doc
-    .opacity(0.3)
-    .lineWidth(0.75)
-    .rect(32, 32, pageW - 64, pageH - 64)
-    .stroke(NAVY);
   doc.restore();
 
-  const size = 26;
-  const inset = 24;
-  const lw = 2;
-  doc.save().lineWidth(lw).strokeColor(ORANGE);
-  // top-left
+  // Rangoli-style corner tiles — the design's 36×36 SVG, one diagonal
+  // direction per corner.
+  const tile = px(36);
+  const corners: { x: number; y: number; diagonal: [number, number, number, number] }[] = [
+    { x: px(21), y: px(21), diagonal: [2, 2, 34, 34] },
+    { x: pageW - px(21) - tile, y: px(21), diagonal: [34, 2, 2, 34] },
+    { x: px(21), y: pageH - px(21) - tile, diagonal: [2, 34, 34, 2] },
+    { x: pageW - px(21) - tile, y: pageH - px(21) - tile, diagonal: [2, 2, 34, 34] },
+  ];
+  for (const { x, y, diagonal } of corners) {
+    const at = (vx: number, vy: number): [number, number] => [x + px(vx), y + px(vy)];
+    doc.save();
+    doc
+      .lineWidth(px(1))
+      .rect(...at(2, 2), px(32), px(32))
+      .fillAndStroke(WHITE, ORANGE);
+    const [x1, y1] = at(diagonal[0], diagonal[1]);
+    const [x2, y2] = at(diagonal[2], diagonal[3]);
+    doc.lineWidth(px(1.5)).moveTo(x1, y1).lineTo(x2, y2).stroke(NAVY);
+    doc.lineWidth(px(1)).polygon(at(2, 18), at(18, 2), at(34, 18), at(18, 34)).stroke(NAVY);
+    doc.circle(...at(18, 18), px(4)).fill(NAVY);
+    doc.restore();
+  }
+}
+
+/** The design's faint "joined cooperative circles" watermark (200×200 viewBox, 420px, 4.5%). */
+function drawWatermark(doc: PDFKit.PDFDocument, cx: number, cy: number) {
+  const scale = px(420) / 200;
+  const at = (vx: number, vy: number): [number, number] => [
+    cx + (vx - 100) * scale,
+    cy + (vy - 100) * scale,
+  ];
+  doc.save();
+  doc.opacity(0.045).strokeColor(NAVY).fillColor(NAVY);
+  doc.dash(6 * scale, { space: 3 * scale });
   doc
-    .moveTo(inset, inset + size)
-    .lineTo(inset, inset)
-    .lineTo(inset + size, inset)
+    .lineWidth(4 * scale)
+    .circle(...at(80, 100), 48 * scale)
     .stroke();
-  // top-right
+  doc.circle(...at(120, 100), 48 * scale).stroke();
+  doc.undash();
+  const [lx, ly] = at(100, 68);
+  const [bx, by] = at(100, 132);
   doc
-    .moveTo(pageW - inset - size, inset)
-    .lineTo(pageW - inset, inset)
-    .lineTo(pageW - inset, inset + size)
-    .stroke();
-  // bottom-left
+    .moveTo(lx, ly)
+    .bezierCurveTo(...at(114, 80), ...at(114, 120), bx, by)
+    .bezierCurveTo(...at(86, 120), ...at(86, 80), lx, ly)
+    .fill();
   doc
-    .moveTo(inset, pageH - inset - size)
-    .lineTo(inset, pageH - inset)
-    .lineTo(inset + size, pageH - inset)
+    .lineWidth(3 * scale)
+    .circle(...at(100, 100), 16 * scale)
     .stroke();
-  // bottom-right
+  doc.circle(...at(80, 100), 4 * scale).fill();
+  doc.circle(...at(120, 100), 4 * scale).fill();
+  doc.dash(2 * scale, { space: 4 * scale }).lineWidth(1.5 * scale);
   doc
-    .moveTo(pageW - inset - size, pageH - inset)
-    .lineTo(pageW - inset, pageH - inset)
-    .lineTo(pageW - inset, pageH - inset - size)
+    .moveTo(...at(60, 70))
+    .lineTo(...at(140, 130))
     .stroke();
+  doc
+    .moveTo(...at(60, 130))
+    .lineTo(...at(140, 70))
+    .stroke();
+  doc.undash();
   doc.restore();
 }
 
-/** The large, near-invisible central emblem behind the body text. */
-function drawWatermark(doc: PDFKit.PDFDocument, cx: number, cy: number, diameter: number) {
-  const scale = diameter / 200; // reference viewBox was 200x200, r=92 outer
+/** The navy tile with the abstract cooperative emblem (48×48 viewBox). */
+function drawEmblem(doc: PDFKit.PDFDocument, x: number, y: number) {
+  const size = px(56);
   doc.save();
-  doc.opacity(0.04);
-
+  doc.roundedRect(x, y, size, size, px(4)).fill(NAVY);
+  const inner = size - px(10) * 2;
+  const scale = inner / 48;
+  const at = (vx: number, vy: number): [number, number] => [
+    x + px(10) + vx * scale,
+    y + px(10) + vy * scale,
+  ];
   doc
     .lineWidth(2 * scale)
-    .circle(cx, cy, 92 * scale)
-    .stroke(NAVY);
-  doc.dash(3 * scale, { space: 3 * scale });
-  doc
-    .lineWidth(1 * scale)
-    .circle(cx, cy, 84 * scale)
+    .circle(...at(24, 24), 21 * scale)
     .stroke(ORANGE);
-  doc.undash();
+  doc.lineWidth(1.5 * scale);
   doc
-    .lineWidth(1.5 * scale)
-    .circle(cx, cy, 68 * scale)
-    .stroke(NAVY);
-
-  const starPoints: [number, number][] = [
-    [100, 28],
-    [118, 78],
-    [172, 78],
-    [128, 110],
-    [145, 162],
-    [100, 130],
-    [55, 162],
-    [72, 110],
-    [28, 78],
-    [82, 78],
-  ];
-  const mapped: [number, number][] = starPoints.map(([px, py]) => [
-    cx + (px - 100) * scale,
-    cy + (py - 100) * scale,
-  ]);
-  doc
-    .lineWidth(1.5 * scale)
-    .polygon(...mapped)
-    .stroke(NAVY);
-
-  doc
-    .lineWidth(1.5 * scale)
-    .circle(cx, cy, 28 * scale)
-    .stroke(NAVY);
-  doc.restore();
-}
-
-/** The small circular institutional crest shown beside the letterhead text. */
-function drawCrest(doc: PDFKit.PDFDocument, cx: number, cy: number, diameter: number) {
-  const scale = diameter / 100; // reference viewBox was 100x100
-  const map = (px: number, py: number): [number, number] => [
-    cx + (px - 50) * scale,
-    cy + (py - 50) * scale,
-  ];
-
-  doc.save();
-  doc
-    .circle(cx, cy, diameter / 2)
-    .lineWidth(1.5)
-    .stroke(SLATE_700)
-    .fill(WHITE);
-
-  doc
-    .lineWidth(2 * scale)
-    .circle(cx, cy, 44 * scale)
-    .stroke(NAVY);
-  doc.dash(2 * scale, { space: 2 * scale });
-  doc
-    .lineWidth(1.5 * scale)
-    .circle(cx, cy, 39 * scale)
+    .moveTo(...at(24, 8))
+    .lineTo(...at(24, 40))
     .stroke(ORANGE);
-  doc.undash();
   doc
-    .lineWidth(2.5 * scale)
-    .circle(cx, cy, 16 * scale)
-    .stroke(NAVY);
-  doc.circle(cx, cy, 6 * scale).fill(ORANGE);
-
-  // 4 full-diameter lines through the centre = 8 spokes
-  const spokes: [number, number, number, number][] = [
-    [50, 6, 50, 94],
-    [6, 50, 94, 50],
-    [19, 19, 81, 81],
-    [19, 81, 81, 19],
-  ];
-  doc.lineWidth(1.2 * scale).strokeColor(NAVY);
-  for (const [x1, y1, x2, y2] of spokes) {
-    const [mx1, my1] = map(x1, y1);
-    const [mx2, my2] = map(x2, y2);
-    doc.moveTo(mx1, my1).lineTo(mx2, my2).stroke();
-  }
-
-  // wheat / leaf garland hints
-  doc
-    .lineWidth(1.8 * scale)
-    .strokeColor(ORANGE)
-    .lineCap("round");
-  const [lx0, ly0] = map(22, 65);
-  const [lc1x, lc1y] = map(18, 50);
-  const [lc2x, lc2y] = map(22, 35);
-  const [lx1, ly1] = map(32, 25);
-  doc.moveTo(lx0, ly0).bezierCurveTo(lc1x, lc1y, lc2x, lc2y, lx1, ly1).stroke();
-  const [rx0, ry0] = map(78, 65);
-  const [rc1x, rc1y] = map(82, 50);
-  const [rc2x, rc2y] = map(78, 35);
-  const [rx1, ry1] = map(68, 25);
-  doc.moveTo(rx0, ry0).bezierCurveTo(rc1x, rc1y, rc2x, rc2y, rx1, ry1).stroke();
+    .moveTo(...at(8, 24))
+    .lineTo(...at(40, 24))
+    .stroke(ORANGE);
+  doc.circle(...at(24, 24), 8 * scale).fillAndStroke(CREAM, WHITE);
+  doc.polygon(at(24, 12), at(28, 24), at(24, 36), at(20, 24)).fill(ORANGE);
+  doc.circle(...at(24, 24), 3 * scale).fill(NAVY);
   doc.restore();
 }
 
-function drawRibbonDivider(doc: PDFKit.PDFDocument, cx: number, cy: number, width: number) {
-  doc.save();
-  doc.lineWidth(1).strokeColor(SLATE_300);
-  doc
-    .moveTo(cx - width, cy)
-    .lineTo(cx - 6, cy)
-    .stroke();
-  doc
-    .moveTo(cx + 6, cy)
-    .lineTo(cx + width, cy)
-    .stroke();
-  doc.save();
-  doc.translate(cx, cy).rotate(45);
-  doc.rect(-3, -3, 6, 6).fill(ORANGE);
-  doc.restore();
-  doc.restore();
-}
-
-/** A stylised fountain-pen signature flourish (no real individual is
- * depicted — this is a generic authorised-signatory mark, matching the
- * approved design). */
-function drawSignatureFlourish(doc: PDFKit.PDFDocument, x: number, y: number, width: number) {
-  const scale = width / 160; // reference viewBox was 160x50
-  const map = (px: number, py: number): [number, number] => [x + px * scale, y + py * scale];
+/** A generic signature flourish (160×40 viewBox) — deliberately no real person's signature. */
+function drawSignature(doc: PDFKit.PDFDocument, x: number, y: number, width: number) {
+  const scale = width / 160;
+  const at = (vx: number, vy: number): [number, number] => [x + vx * scale, y + vy * scale];
   doc.save();
   doc
-    .opacity(0.85)
-    .lineWidth(1.8 * scale)
-    .strokeColor(SLATE_700)
+    .lineWidth(1.3 * scale)
+    .strokeColor(NAVY)
     .lineCap("round")
     .lineJoin("round");
-  const pts = [
-    [15, 35],
-    [30, 20, 25, 10, 40, 18],
-    [55, 26, 45, 42, 60, 30],
-    [75, 18, 70, 38, 85, 24],
-    [100, 10, 95, 32, 110, 26],
-    [120, 22, 135, 15, 145, 28],
-  ];
-  const [startX, startY] = map(pts[0][0], pts[0][1]);
-  doc.moveTo(startX, startY);
-  for (let i = 1; i < pts.length; i++) {
-    const [c1x, c1y, c2x, c2y, ex, ey] = pts[i];
-    const [mc1x, mc1y] = map(c1x, c1y);
-    const [mc2x, mc2y] = map(c2x, c2y);
-    const [mex, mey] = map(ex, ey);
-    doc.bezierCurveTo(mc1x, mc1y, mc2x, mc2y, mex, mey);
-  }
-  doc.stroke();
-  const [ux1, uy1] = map(45, 28);
-  const [ux2, uy2] = map(140, 28);
-  doc.moveTo(ux1, uy1).lineTo(ux2, uy2).stroke();
+  doc
+    .moveTo(...at(10, 28))
+    .bezierCurveTo(...at(30, 10), ...at(45, 32), ...at(60, 18))
+    .bezierCurveTo(...at(70, 8), ...at(85, 24), ...at(100, 20))
+    .bezierCurveTo(...at(115, 16), ...at(125, 32), ...at(148, 14))
+    .stroke();
+  doc
+    .moveTo(...at(42, 16))
+    .bezierCurveTo(...at(50, 35), ...at(58, 5), ...at(68, 25))
+    .stroke();
+  doc
+    .moveTo(...at(85, 26))
+    .bezierCurveTo(...at(95, 38), ...at(120, 34), ...at(138, 28))
+    .stroke();
   doc.restore();
 }
 
-function drawSeal(doc: PDFKit.PDFDocument, cx: number, cy: number, diameter: number) {
-  doc.save();
-  doc.opacity(0.9);
-  doc.dash(3, { space: 2 });
-  doc
-    .lineWidth(1.5)
-    .circle(cx, cy, diameter / 2)
-    .stroke(ORANGE);
-  doc.undash();
-  doc
-    .lineWidth(1)
-    .circle(cx, cy, diameter / 2 - 5)
-    .stroke(SLATE_400);
-
-  doc.font("BodyBold").fontSize(6.5).fillColor(NAVY);
-  doc.text("NCCT", cx - diameter / 2, cy - 10, { width: diameter, align: "center" });
-  doc.font("BodyBold").fontSize(6).fillColor(ORANGE);
-  doc.text("★ SEAL ★", cx - diameter / 2, cy - 1, { width: diameter, align: "center" });
-  doc.font("BodyBold").fontSize(6.5).fillColor(NAVY);
-  doc.text("OFFICIAL", cx - diameter / 2, cy + 8, { width: diameter, align: "center" });
-  doc.restore();
+/** Measures a centred, wrapping block (name / course / programme). */
+function blockHeight(
+  doc: PDFKit.PDFDocument,
+  text: string,
+  font: string,
+  size: number,
+  width: number,
+  lineGap = 0,
+) {
+  doc.font(font).fontSize(size);
+  return doc.heightOfString(text, { width, align: "center", lineGap });
 }
 
-function renderCertificatePdf(params: RenderCertificateParams): Promise<Buffer> {
+/** Largest size in [min, max] at which `text` fits on one line of `width`; `min` if none does. */
+function fitSize(
+  doc: PDFKit.PDFDocument,
+  text: string,
+  font: string,
+  max: number,
+  min: number,
+  width: number,
+) {
+  let size = max;
+  while (size > min && runWidth(doc, text, { font, size, color: NAVY }) > width) size -= 0.5;
+  return size;
+}
+
+export function renderCertificatePdf(params: RenderCertificateParams): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({
-      size: "A4",
-      layout: "landscape",
-      margins: { top: 50, bottom: 30, left: 76, right: 76 },
-    });
+    const doc = new PDFDocument({ size: "A4", layout: "landscape", margin: 0 });
     const pageW = doc.page.width;
     const pageH = doc.page.height;
-    const contentX = 76;
-    const contentWidth = pageW - contentX * 2;
 
     const chunks: Buffer[] = [];
     doc.on("data", (chunk: Buffer) => chunks.push(chunk));
@@ -568,276 +610,491 @@ function renderCertificatePdf(params: RenderCertificateParams): Promise<Buffer> 
 
     registerFonts(doc);
 
-    // Background + security layers first, so all text/shapes draw on top.
     doc.rect(0, 0, pageW, pageH).fill(WHITE);
-    drawSecurityPattern(doc, pageW, pageH);
-    drawWatermark(doc, pageW / 2, pageH / 2, 300);
-    drawBorderFrame(doc, pageW, pageH);
+    drawWatermark(doc, pageW / 2, pageH / 2);
+    drawBorder(doc, pageW, pageH);
 
-    // ---- HEADER ----
-    const crestDiameter = 56;
-    const headerTopY = 40;
+    // Inner content box: sheet padding 40px + inner px-10 / pt-4 / pb-2.
+    const left = px(80);
+    const right = pageW - px(80);
+    const width = right - left;
+    const cx = pageW / 2;
+    const top = px(56);
+    const bottom = pageH - px(48);
 
-    doc.font("BodyBold").fontSize(8);
-    const topLine = "NATIONAL COUNCIL FOR COOPERATIVE TRAINING (NCCT)";
-    doc.font("BodyBold").fontSize(13);
-    const nameLineWidth = Math.min(doc.widthOfString(params.institutionName.toUpperCase()), 460);
-    const topLineWidth = Math.min(doc.font("BodyBold").fontSize(8).widthOfString(topLine), 460);
-    const subLine1 =
-      "AN AUTONOMOUS INSTITUTION PROMOTED BY MINISTRY OF COOPERATION, GOVT. OF INDIA";
-    doc.font("Body").fontSize(7);
-    const subLineWidth = Math.min(doc.widthOfString(subLine1), 460);
-
-    const textBlockWidth = Math.max(nameLineWidth, topLineWidth, subLineWidth, 260);
-    const gap = 16;
-    const groupWidth = crestDiameter + gap + textBlockWidth;
-    const groupStartX = pageW / 2 - groupWidth / 2;
-    const crestCx = groupStartX + crestDiameter / 2;
-    const crestCy = headerTopY + crestDiameter / 2;
-    const textBlockX = groupStartX + crestDiameter + gap;
-
-    drawCrest(doc, crestCx, crestCy, crestDiameter);
-
-    let ty = headerTopY;
-    doc
-      .font("BodyBold")
-      .fontSize(8)
-      .fillColor(SLATE_500)
-      .text(topLine, textBlockX, ty, { width: textBlockWidth, characterSpacing: 1 });
-    ty += 13;
-    doc
-      .font("BodyBold")
-      .fontSize(14)
-      .fillColor(NAVY)
-      .text(params.institutionName.toUpperCase(), textBlockX, ty, { width: textBlockWidth });
-    ty = doc.y + 2;
-    doc
-      .font("Body")
-      .fontSize(7)
-      .fillColor(SLATE_600)
-      .text(subLine1 + "  ", textBlockX, ty, { width: textBlockWidth, continued: true })
-      .font("BodyBold")
-      .fillColor(ORANGE)
-      .text("• RICM / ICM NETWORK");
-
-    const headerBottomY = Math.max(doc.y, crestCy + crestDiameter / 2) + 10;
-    drawRibbonDivider(doc, pageW / 2, headerBottomY, 90);
-
-    doc
-      .font("Title")
-      .fontSize(26)
-      .fillColor(NAVY)
-      .text("CERTIFICATE OF COMPLETION", contentX, headerBottomY + 10, {
-        width: contentWidth,
-        align: "center",
-        characterSpacing: 3,
-      });
-
-    // ---- BODY ----
-    let by = doc.y + 18;
-    doc
-      .font("BodyMedium")
-      .fontSize(11)
-      .fillColor(SLATE_600)
-      .text("THIS CERTIFIES THAT", contentX, by, {
-        width: contentWidth,
-        align: "center",
-        characterSpacing: 1.5,
-      });
-
-    by = doc.y + 10;
-    doc
-      .font("Name")
-      .fontSize(34)
-      .fillColor(NAVY)
-      .text(params.traineeName.toUpperCase(), contentX, by, {
-        width: contentWidth,
-        align: "center",
-      });
-    by = doc.y + 8;
-    drawRibbonDivider(doc, pageW / 2, by, 70);
-
-    by += 20;
-    doc.font("Body").fontSize(11).fillColor(SLATE_700);
-    doc.text("has successfully completed the course", contentX, by, {
-      width: contentWidth,
-      align: "center",
+    // ---- 1. HEADER ----
+    drawEmblem(doc, left, top);
+    const idX = left + px(56) + px(16);
+    drawRun(doc, "NATIONAL COUNCIL FOR COOPERATIVE TRAINING", idX, top + px(4), {
+      font: "BodyBold",
+      size: px(13),
+      color: NAVY,
+      characterSpacing: px(13) * 0.08,
     });
-    doc
-      .font("BodyBold")
-      .fillColor(NAVY)
-      .text(params.courseTitle, contentX, doc.y, { width: contentWidth, align: "center" });
-    doc
-      .font("Body")
-      .fillColor(SLATE_700)
-      .text("in the programme", contentX, doc.y + 4, {
-        width: contentWidth,
-        align: "center",
-      });
-    doc
-      .font("BodyMedium")
-      .fillColor(NAVY)
-      .text(params.programmeTitle, contentX, doc.y, { width: contentWidth, align: "center" });
+    const institution = fitRun(
+      doc,
+      params.institutionName,
+      { font: "BodyMedium", size: px(14), color: ORANGE, characterSpacing: px(14) * 0.025 },
+      px(560),
+      px(10),
+    );
+    drawRun(doc, institution.text, idX, top + px(23), institution.style);
+    drawRun(doc, "UNDER MINISTRY OF COOPERATION • RICM / ICM NETWORK", idX, top + px(43), {
+      font: "BodyMedium",
+      size: px(9.5),
+      color: SLATE_500,
+      characterSpacing: px(9.5) * 0.14,
+    });
 
-    const badgeY = doc.y + 14;
-    const badgeLabel = params.marks
-      ? `Credential Status: COURSE COMPLETED  •  Marks Obtained: ${params.marks.marksObtained} / ${params.marks.totalMarks} (${params.marks.scorePercent}%)`
-      : "Credential Status: COURSE COMPLETED";
-    doc.font("BodyBold").fontSize(9);
-    // widthOfString ignores characterSpacing, so the render call below must
-    // not use it either — otherwise the box is sized too small and the
-    // label wraps to a second line (caught by rendering and inspecting a
-    // real PDF, not just asserting a byte count).
-    const badgeTextWidth = doc.widthOfString(badgeLabel.toUpperCase());
-    const badgeWidth = badgeTextWidth + 56;
-    const badgeX = pageW / 2 - badgeWidth / 2;
-    doc.roundedRect(badgeX, badgeY, badgeWidth, 22, 4).fillAndStroke(SLATE_50, SLATE_200);
-    doc.circle(badgeX + 16, badgeY + 11, 3).fill(ORANGE);
-    doc
-      .font("BodyBold")
-      .fontSize(9)
-      .fillColor(NAVY)
-      .text(badgeLabel.toUpperCase(), badgeX + 26, badgeY + 6, {
-        width: badgeWidth - 40,
-        lineBreak: false,
-      });
-
-    // ---- FOOTER ----
-    // Every y-coordinate below is an explicit fixed offset from colY, not a
-    // chained doc.y — chaining across three side-by-side columns previously
-    // let the centre column's accumulated height push the last line (and
-    // everything drawn after it, in later columns) past the bottom margin,
-    // which silently spilled onto a second page. Caught by actually
-    // rendering the PDF and looking at it, not by the byte-length test.
-    // The whole footer (column row + legal footnote) is laid out as one
-    // stack measured from colY downward, rather than two blocks each
-    // independently anchored to the bottom margin — that previously let the
-    // footnote's full-width divider land at a fixed distance from the
-    // bottom that, for a given colY, cut straight through the certificate
-    // code text above it. Caught by rendering a real PDF and looking at it.
-    const colW = contentWidth / 3;
-    const colY = pageH - 40 - 105;
-    const footerDividerY = colY - 14;
-    const footnoteDividerY = colY + 91;
-    const footnoteY = footnoteDividerY + 6;
+    // Right: platform brand mark.
+    const pill = { font: "BodyBold", size: px(10), color: ORANGE, characterSpacing: px(10) * 0.05 };
+    const pillW = runWidth(doc, "LMS", pill) + px(12);
+    const pillH = px(17);
+    const pillX = right - pillW;
     doc
       .save()
-      .lineWidth(0.75)
-      .moveTo(contentX, footerDividerY)
-      .lineTo(pageW - contentX, footerDividerY)
+      .lineWidth(px(1))
+      .roundedRect(pillX, top + px(1), pillW, pillH, px(4))
+      .fillOpacity(1)
+      .fill(CREAM)
+      .restore();
+    doc
+      .save()
+      .strokeOpacity(0.3)
+      .lineWidth(px(1))
+      .roundedRect(pillX, top + px(1), pillW, pillH, px(4))
+      .stroke(ORANGE)
+      .restore();
+    drawRun(doc, "LMS", pillX + px(6), top + px(4), pill);
+    drawRuns(
+      doc,
+      [
+        {
+          text: "COOP-NET",
+          style: { font: "BodyBold", size: px(16), color: NAVY, characterSpacing: px(16) * 0.05 },
+        },
+      ],
+      pillX - px(6),
+      top - px(1),
+      "right",
+    );
+    drawRuns(
+      doc,
+      [
+        { text: "सहकार उत्कर्ष", style: { font: "Devanagari", size: px(11), color: SLATE_500 } },
+        {
+          text: " • Sahakar Utkarsh",
+          style: { font: "BodyMedium", size: px(11), color: SLATE_500, oblique: true },
+        },
+      ],
+      right,
+      top + px(20),
+      "right",
+    );
+    drawRuns(
+      doc,
+      [
+        {
+          text: "NATIONAL DIGITAL TRAINING INITIATIVE",
+          style: { font: "Mono", size: px(9), color: SLATE_400, characterSpacing: px(9) * 0.05 },
+        },
+      ],
+      right,
+      top + px(40),
+      "right",
+    );
+
+    const headerRuleY = top + px(56) + px(16);
+    doc
+      .save()
+      .lineWidth(px(1))
+      .moveTo(left, headerRuleY)
+      .lineTo(right, headerRuleY)
       .stroke(SLATE_200)
       .restore();
 
-    // Left column: QR + verification info
-    const qrSize = 52;
-    doc.image(params.qrPng, contentX, colY, { width: qrSize, height: qrSize });
-    const leftTextX = contentX + qrSize + 12;
-    const leftTextWidth = colW - qrSize - 12;
-    doc
-      .font("BodyBold")
-      .fontSize(8)
-      .fillColor(NAVY)
-      .text("SCAN TO VERIFY", leftTextX, colY + 2, { width: leftTextWidth, characterSpacing: 0.5 });
-    doc
-      .font("Body")
-      .fontSize(7)
-      .fillColor(SLATE_500)
-      .text("Public verification portal", leftTextX, colY + 15, { width: leftTextWidth });
-    doc
-      .font("BodyMedium")
-      .fontSize(6.5)
-      .fillColor(ORANGE)
-      .text(
-        new URL(params.verificationUrl).host + new URL(params.verificationUrl).pathname,
-        leftTextX,
-        colY + 26,
+    // ---- 2. TITLE ----
+    const titleY = headerRuleY + px(12);
+    drawRuns(
+      doc,
+      [
         {
-          width: leftTextWidth,
+          text: "CERTIFICATE OF COMPLETION",
+          style: { font: "Title", size: px(26), color: NAVY, characterSpacing: px(26) * 0.25 },
         },
-      );
+      ],
+      cx,
+      titleY,
+      "center",
+    );
+    const accentY = titleY + px(26) * 1.35 + px(6);
+    doc.save();
+    doc.lineWidth(px(1)).strokeColor(SLATE_300);
+    doc
+      .moveTo(cx - px(32) - px(8) - px(48), accentY)
+      .lineTo(cx - px(32) - px(8), accentY)
+      .stroke();
+    doc
+      .moveTo(cx + px(32) + px(8), accentY)
+      .lineTo(cx + px(32) + px(8) + px(48), accentY)
+      .stroke();
+    doc.rect(cx - px(32), accentY - px(1.25), px(64), px(2.5)).fill(ORANGE);
+    doc.restore();
 
-    // Centre column: seal + certificate ID + issue date
-    const centerCx = contentX + colW + colW / 2;
-    drawSeal(doc, centerCx, colY + 20, 40);
+    // ---- 5. FOOTER (laid out bottom-up, so the body can centre in what's left) ----
+    const disclaimerY = bottom - px(12);
+    const stripY = disclaimerY - px(6);
+    const rowH = px(72);
+    const rowTop = stripY - px(12) - rowH;
+    const footerRuleY = rowTop - px(12);
+
+    // ---- 3 + 4. BODY, centred between the title accent and the footer ----
+    const bodyWidth = px(768);
+    const textWidth = px(672) - px(32);
+    const nameSize = fitSize(doc, params.traineeName, "Name", px(34), px(24), bodyWidth);
+    const courseSize =
+      blockHeight(doc, params.courseTitle, "BodyBold", px(18), textWidth) > px(18) * 1.4 * 2
+        ? px(15)
+        : px(18);
+    const gap = px(6);
+    const heights = {
+      certifies: px(12) * 1.3,
+      name: blockHeight(doc, params.traineeName, "Name", nameSize, bodyWidth) + px(2),
+      underline: px(4) + px(4),
+      completed: px(12) * 1.3,
+      course: blockHeight(doc, params.courseTitle, "BodyBold", courseSize, textWidth, px(3)),
+      inProgramme: px(11.5) * 1.3,
+      programme: blockHeight(doc, params.programmeTitle, "BodyMedium", px(14), textWidth),
+      badge: px(8) + px(30),
+    };
+    const bodyHeight = Object.values(heights).reduce((a, b) => a + b, 0) + gap * 6;
+    let y = (accentY + footerRuleY) / 2 - bodyHeight / 2;
+
+    drawRuns(
+      doc,
+      [
+        {
+          text: "THIS CERTIFIES THAT",
+          style: {
+            font: "BodyMedium",
+            size: px(12),
+            color: SLATE_500,
+            characterSpacing: px(12) * 0.18,
+          },
+        },
+      ],
+      cx,
+      y,
+      "center",
+    );
+    y += heights.certifies + gap;
     doc
-      .font("BodyMedium")
-      .fontSize(7.5)
-      .fillColor(SLATE_500)
-      .text("Certificate ID", contentX + colW, colY + 48, { width: colW, align: "center" });
-    doc
-      .font("BodyBold")
-      .fontSize(8.5)
+      .font("Name")
+      .fontSize(nameSize)
       .fillColor(NAVY)
-      .text(params.certificateCode, contentX + colW, colY + 59, { width: colW, align: "center" });
-    doc
-      .font("Body")
-      .fontSize(7)
-      .fillColor(SLATE_500)
-      .text(
-        `Issued ${params.issuedAt.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`,
-        contentX + colW,
-        colY + 73,
-        { width: colW, align: "center" },
-      );
-
-    // Right column: signature
-    const rightColX = contentX + colW * 2;
-    drawSignatureFlourish(doc, rightColX + colW / 2 - 50, colY - 2, 100);
+      .text(params.traineeName, cx - bodyWidth / 2, y, {
+        width: bodyWidth,
+        align: "center",
+      });
+    y += heights.name;
     doc
       .save()
-      .lineWidth(0.75)
-      .moveTo(rightColX + 8, colY + 32)
-      .lineTo(rightColX + colW - 8, colY + 32)
-      .stroke(NAVY)
+      .lineWidth(px(1))
+      .moveTo(cx - px(88), y + px(4))
+      .lineTo(cx + px(88), y + px(4))
+      .stroke(SLATE_200)
+      .restore();
+    y += heights.underline + gap;
+
+    drawRuns(
+      doc,
+      [
+        {
+          text: "has successfully completed the course",
+          style: {
+            font: "BodyMedium",
+            size: px(12),
+            color: SLATE_600,
+            characterSpacing: px(12) * 0.12,
+          },
+        },
+      ],
+      cx,
+      y,
+      "center",
+    );
+    y += heights.completed + gap;
+    doc
+      .font("BodyBold")
+      .fontSize(courseSize)
+      .fillColor(NAVY)
+      .text(params.courseTitle, cx - textWidth / 2, y, {
+        width: textWidth,
+        align: "center",
+        lineGap: px(3),
+      });
+    y += heights.course + gap;
+    drawRuns(
+      doc,
+      [
+        {
+          text: "in the programme",
+          style: {
+            font: "BodyMedium",
+            size: px(11.5),
+            color: SLATE_500,
+            characterSpacing: px(11.5) * 0.1,
+          },
+        },
+      ],
+      cx,
+      y,
+      "center",
+    );
+    y += heights.inProgramme + gap;
+    doc
+      .font("BodyMedium")
+      .fontSize(px(14))
+      .fillColor(SLATE_800)
+      .text(params.programmeTitle, cx - textWidth / 2, y, {
+        width: textWidth,
+        align: "center",
+        characterSpacing: px(14) * 0.025,
+      });
+    y += heights.programme + gap + px(8);
+
+    // Result badge: graded variant shows the marks; ungraded is just "COURSE COMPLETED".
+    const badgeText: RunStyle = {
+      font: "BodyBold",
+      size: px(11),
+      color: NAVY,
+      characterSpacing: px(11) * 0.05,
+    };
+    const marksStyle: RunStyle = {
+      font: "BodyMedium",
+      size: px(11),
+      color: SLATE_700,
+      characterSpacing: px(11) * 0.025,
+    };
+    const badgeRuns: { text: string; style: RunStyle }[] = [
+      { text: "COURSE COMPLETED", style: badgeText },
+    ];
+    if (params.marks) {
+      badgeRuns.push(
+        { text: "   |   ", style: { ...marksStyle, color: SLATE_300 } },
+        { text: "Marks Obtained: ", style: marksStyle },
+        {
+          text: String(params.marks.marksObtained),
+          style: { ...marksStyle, font: "BodyBold", color: NAVY },
+        },
+        { text: ` / ${params.marks.totalMarks} (`, style: marksStyle },
+        {
+          text: `${params.marks.scorePercent}%`,
+          style: { ...marksStyle, font: "BodyBold", color: ORANGE },
+        },
+        { text: ")", style: marksStyle },
+      );
+    }
+    const dotGap = px(8) + px(10);
+    const runsW = badgeRuns.reduce((sum, run) => sum + runWidth(doc, run.text, run.style), 0);
+    const badgeW = px(16) + dotGap + runsW + px(16);
+    const badgeH = px(30);
+    const badgeX = cx - badgeW / 2;
+    doc
+      .save()
+      .roundedRect(badgeX, y, badgeW, badgeH, badgeH / 2)
+      .fill(CREAM)
       .restore();
     doc
-      .font("BodyBold")
-      .fontSize(8.5)
-      .fillColor(NAVY)
-      .text("AUTHORIZED SIGNATORY", rightColX, colY + 38, {
-        width: colW,
-        align: "center",
-        characterSpacing: 0.5,
-      });
-    doc
-      .font("Body")
-      .fontSize(7)
-      .fillColor(SLATE_500)
-      .text("Director / Secretary, NCCT", rightColX, colY + 50, { width: colW, align: "center" });
+      .save()
+      .strokeOpacity(0.4)
+      .lineWidth(px(1))
+      .roundedRect(badgeX, y, badgeW, badgeH, badgeH / 2)
+      .stroke(ORANGE)
+      .restore();
+    doc.circle(badgeX + px(16) + px(4), y + badgeH / 2, px(4)).fill(ORANGE);
+    drawRuns(doc, badgeRuns, badgeX + px(16) + dotGap, y + badgeH / 2 - px(11) * 0.62, "left");
 
-    // Legal footnote
+    // ---- 5. FOOTER ----
     doc
       .save()
-      .lineWidth(0.5)
-      .moveTo(contentX, footnoteDividerY)
-      .lineTo(pageW - contentX, footnoteDividerY)
+      .lineWidth(px(1))
+      .moveTo(left, footerRuleY)
+      .lineTo(right, footerRuleY)
+      .stroke(SLATE_200)
+      .restore();
+
+    // 12-column grid with 16px gutters: verification (4) | rule (1) | ID (3) | rule (1) | signatory (3).
+    const gutter = px(16);
+    const unit = (width - gutter * 11) / 12;
+    const span = (cols: number) => unit * cols + gutter * (cols - 1);
+    const col1X = left;
+    const rule1X = col1X + span(4) + gutter + unit / 2;
+    const col2X = col1X + span(4) + gutter + unit + gutter;
+    const rule2X = col2X + span(3) + gutter + unit / 2;
+    for (const ruleX of [rule1X, rule2X]) {
+      doc
+        .save()
+        .lineWidth(px(1))
+        .moveTo(ruleX, rowTop + (rowH - px(56)) / 2)
+        .lineTo(ruleX, rowTop + (rowH + px(56)) / 2)
+        .stroke(SLATE_200)
+        .restore();
+    }
+
+    // Column 1: QR + public verification link.
+    const qrBox = px(72);
+    doc
+      .save()
+      .lineWidth(px(1))
+      .roundedRect(col1X, rowTop, qrBox, qrBox, px(4))
+      .fillAndStroke(WHITE, SLATE_300)
+      .restore();
+    doc.image(params.qrPng, col1X + px(4), rowTop + px(4), {
+      width: qrBox - px(8),
+      height: qrBox - px(8),
+    });
+    const verifyX = col1X + qrBox + px(12);
+    const verifyW = span(4) - qrBox - px(12);
+    drawRun(doc, "SCAN TO VERIFY", verifyX, rowTop + px(17), {
+      font: "BodyBold",
+      size: px(10),
+      color: NAVY,
+      characterSpacing: px(10) * 0.14,
+    });
+    drawRun(doc, "Public verification portal", verifyX, rowTop + px(33), {
+      font: "BodyMedium",
+      size: px(9.5),
+      color: SLATE_500,
+    });
+    const url = fitRun(
+      doc,
+      params.verificationUrl.replace(/^https?:\/\//, ""),
+      { font: "Mono", size: px(8.5), color: SLATE_600 },
+      verifyW,
+      px(7),
+    );
+    drawRun(doc, url.text, verifyX, rowTop + px(49), url.style);
+
+    // Column 2: certificate ID + issue date.
+    const col2C = col2X + span(3) / 2;
+    drawRuns(
+      doc,
+      [
+        {
+          text: "CERTIFICATE ID",
+          style: {
+            font: "BodyBold",
+            size: px(9.5),
+            color: SLATE_400,
+            characterSpacing: px(9.5) * 0.15,
+          },
+        },
+      ],
+      col2C,
+      rowTop + px(9),
+      "center",
+    );
+    const codeStyle: RunStyle = {
+      font: "Mono",
+      size: px(12.5),
+      color: NAVY,
+      characterSpacing: px(12.5) * 0.05,
+    };
+    const codeW = runWidth(doc, params.certificateCode, codeStyle) + px(16);
+    const codeH = px(22);
+    const codeY = rowTop + px(25);
+    doc
+      .save()
+      .lineWidth(px(1))
+      .roundedRect(col2C - codeW / 2, codeY, codeW, codeH, px(4))
+      .fillAndStroke(SLATE_50, SLATE_200)
+      .restore();
+    drawRuns(
+      doc,
+      [{ text: params.certificateCode, style: codeStyle }],
+      col2C,
+      codeY + px(4),
+      "center",
+    );
+    const issuedOn = params.issuedAt.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "Asia/Kolkata",
+    });
+    drawRuns(
+      doc,
+      [
+        { text: "Issued: ", style: { font: "BodyMedium", size: px(9.5), color: SLATE_500 } },
+        { text: issuedOn, style: { font: "BodyBold", size: px(9.5), color: SLATE_700 } },
+      ],
+      col2C,
+      codeY + codeH + px(6),
+      "center",
+    );
+
+    // Column 3: authorised signatory, right-aligned.
+    const sigW = px(144);
+    drawSignature(doc, right - sigW, rowTop - px(2), sigW);
+    const sigLineY = rowTop + px(36);
+    doc
+      .save()
+      .lineWidth(px(1))
+      .moveTo(right - sigW, sigLineY)
+      .lineTo(right, sigLineY)
+      .stroke(SLATE_400)
+      .restore();
+    drawRuns(
+      doc,
+      [
+        {
+          text: "AUTHORIZED SIGNATORY",
+          style: { font: "BodyBold", size: px(9.5), color: NAVY, characterSpacing: px(9.5) * 0.14 },
+        },
+      ],
+      right,
+      sigLineY + px(6),
+      "right",
+    );
+    drawRuns(
+      doc,
+      [
+        {
+          text: "Director / Secretary, NCCT",
+          style: { font: "BodyMedium", size: px(9), color: SLATE_500 },
+        },
+      ],
+      right,
+      sigLineY + px(20),
+      "right",
+    );
+
+    // Disclaimer strip.
+    doc
+      .save()
+      .lineWidth(px(1))
+      .moveTo(left, stripY)
+      .lineTo(right, stripY)
       .stroke(SLATE_100)
       .restore();
-    doc
-      .font("Body")
-      .fontSize(6.5)
-      .fillColor(SLATE_400)
-      .text(
-        "National Council for Cooperative Training (NCCT) • Ministry of Cooperation, Government of India",
-        contentX,
-        footnoteY,
+    drawRuns(
+      doc,
+      [
         {
-          width: contentWidth / 2,
+          text: "Digitally issued • Verify authenticity by scanning the QR code or entering the Certificate ID on the public verification portal.",
+          style: {
+            font: "Body",
+            size: px(8.5),
+            color: SLATE_400,
+            characterSpacing: px(8.5) * 0.025,
+          },
         },
-      );
-    doc
-      .font("Body")
-      .fontSize(6.5)
-      .fillColor(SLATE_400)
-      .text(
-        "Digitally Issued • Verifiable via QR / Certificate ID",
-        contentX + contentWidth / 2,
-        footnoteY,
-        {
-          width: contentWidth / 2,
-          align: "right",
-        },
-      );
+      ],
+      cx,
+      disclaimerY,
+      "center",
+    );
 
     doc.end();
   });

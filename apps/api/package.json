@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vitest run",
-    "seed:chatbot": "tsx scripts/seedChatbotCorpus.ts"
+    "seed:chatbot": "tsx scripts/seedChatbotCorpus.ts",
+    "certificates:regenerate": "tsx scripts/regenerateCertificates.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1123.0",

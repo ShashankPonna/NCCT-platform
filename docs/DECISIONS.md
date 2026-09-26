@@ -761,3 +761,26 @@ Both files were validated (`plutil -lint`, XML parse). Web rebuilt; `npx cap syn
 - **The certificates tool returned only the programme title**, so two course certificates from one programme looked like duplicates. It now includes the course title.
 
 **Security:** `GROQ_API_KEY` is server-side only. The web app never calls Groq and must not be given the key: Vite inlines any referenced `VITE_*` variable into the public bundle.
+
+### 69. Certificate redesigned to the approved Stitch design; every existing certificate re-rendered
+
+**Decision:** The certificate PDF (`renderCertificatePdf` in `apps/api/src/certificateService.ts`) now implements the Stitch design in `stitch_coop_net_certificate_of_completion (1)/`:
+- A double navy/orange border with rangoli-style corner tiles, and a faint "joined cooperative circles" watermark.
+- **Header:** the NCCT letterhead with an emblem tile, and a COOP-NET / "सहकार उत्कर्ष • Sahakar Utkarsh" brand mark.
+- **Body:** a letter-spaced Cinzel title with an orange accent, a Playfair recipient name, then the course and programme.
+- **Result badge:** a pill with the marks, or just "COURSE COMPLETED" when the course had no graded tests.
+- **Footer:** a three-column verification / certificate ID / signatory row and a disclaimer strip.
+
+**How the design maps to the PDF:**
+- It is drawn in PDFKit, as before; there is no HTML-to-PDF step. The design's CSS px values are converted with one factor (`px()` = ×0.75, 1123×794 px → 842×595 pt), so the code can be checked against the reference.
+- **Fonts:** two new OFL fonts in `apps/api/assets/fonts/`:
+  - JetBrains Mono SemiBold, for the certificate ID and URL.
+  - Noto Sans Devanagari Medium: Roboto has no Devanagari, and PDFKit's fontkit shaping renders conjuncts such as "र्ष" correctly. Checked by rasterising the PDF.
+- **Long values:** long names shrink to fit one line (34 → 24 px) before wrapping; long course titles drop a size; the institution name and verification URL shrink, then truncate. Tests pin the graded, ungraded and very-long variants to one page with all five fonts embedded.
+- **Removed from the old design:** the "NCCT ★ SEAL ★ OFFICIAL" stamp and the "Government of India" footnote, consistent with #67 (no official-looking seals or claims the platform can't back).
+- **Issue dates:** now formatted in IST.
+
+**Existing certificates:** `rerenderCertificate()` plus `pnpm --filter api certificates:regenerate` re-render every issued certificate without changing what it certifies. The code, issue date, frozen marks (#53) and QR target stay the same; current names are used.
+- **New file, not an overwrite.** Each new PDF goes to a fresh `CODE-<version>.pdf` path and the row is repointed. Public Storage URLs are CDN-cached, so an overwrite could keep serving the old design for up to an hour, and the previous file stays as a backup.
+- **Localhost guard.** The script refuses a localhost `PUBLIC_WEB_URL`, since that value is what every QR code encodes.
+- **Result:** run on 2026-09-26, all 5 live certificates were re-rendered, 0 failed. Verified through the real `GET /certificates/mine` and the public verification endpoint.

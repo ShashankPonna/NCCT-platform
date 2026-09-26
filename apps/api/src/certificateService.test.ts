@@ -3,6 +3,8 @@ import {
   checkAndIssueCourseCertificate,
   checkAndIssueCourseCertificateForAssessment,
   checkAndIssueCourseCertificateForLesson,
+  renderCertificatePdf,
+  rerenderCertificate,
 } from "./certificateService.js";
 
 // Every .from(table) call consumes the next queued result for that table,
@@ -20,7 +22,7 @@ const { fromMock, uploadMock, storageMock, singleResults } = vi.hoisted(() => {
 
   function createTableMock(table: string) {
     const builder: Record<string, unknown> = {};
-    for (const method of ["select", "insert", "eq", "in", "not", "order"]) {
+    for (const method of ["select", "insert", "update", "eq", "in", "not", "order"]) {
       builder[method] = vi.fn(() => builder);
     }
     builder.single = vi.fn(() => Promise.resolve(nextResult(table)));
@@ -247,7 +249,10 @@ describe("checkAndIssueCourseCertificate", () => {
     expect(notificationMocks.notify).toHaveBeenCalledWith(
       ["trainee-1"],
       "certificate_issued",
-      expect.objectContaining({ programme_id: "prog-1", certificate_code: expect.stringMatching(/^NCCT-/) }),
+      expect.objectContaining({
+        programme_id: "prog-1",
+        certificate_code: expect.stringMatching(/^NCCT-/),
+      }),
     );
   }, 15000);
 
@@ -351,5 +356,121 @@ describe("checkAndIssueCourseCertificateForAssessment", () => {
     });
 
     expect(result).toBeNull();
+  });
+});
+
+// A PDF's page objects and embedded font names sit in uncompressed
+// dictionaries, so they can be checked straight off the bytes.
+function pdfFacts(pdf: Buffer) {
+  const raw = pdf.toString("latin1");
+  return {
+    header: raw.slice(0, 5),
+    pages: (raw.match(/\/Type \/Page\b/g) ?? []).length,
+    fonts: [...raw.matchAll(/\/BaseFont \/[A-Z]{6}\+([A-Za-z-]+)/g)].map((m) => m[1]),
+  };
+}
+
+const RENDER_BASE = {
+  institutionName: "VAMNICOM, Pune",
+  certificateCode: "NCCT-YVUPNFME",
+  issuedAt: new Date("2026-09-25T10:00:00Z"),
+  // A 1×1 PNG — the QR's pixels don't matter to layout.
+  qrPng: Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+    "base64",
+  ),
+  verificationUrl: "https://ncct-platform-1.onrender.com/?verify=NCCT-YVUPNFME",
+};
+
+describe("renderCertificatePdf (DECISIONS.md #69 design)", () => {
+  it("renders the graded variant as one A4 page with every design font embedded", async () => {
+    const pdf = await renderCertificatePdf({
+      ...RENDER_BASE,
+      traineeName: "Asha Patil",
+      courseTitle: "Financial Management for Cooperatives",
+      programmeTitle: "Cooperative Management Basics",
+      marks: { marksObtained: 30, totalMarks: 40, scorePercent: 75 },
+    });
+    const facts = pdfFacts(pdf);
+    expect(facts.header).toBe("%PDF-");
+    expect(facts.pages).toBe(1);
+    for (const font of [
+      "Cinzel",
+      "PlayfairDisplay",
+      "Roboto",
+      "JetBrainsMono",
+      "NotoSansDevanagari",
+    ]) {
+      expect(facts.fonts.some((name) => name.startsWith(font))).toBe(true);
+    }
+  }, 15000);
+
+  it("keeps the ungraded variant and very long names/titles on a single page", async () => {
+    const pdf = await renderCertificatePdf({
+      ...RENDER_BASE,
+      institutionName:
+        "Regional Institute of Cooperative Management, Bengaluru — Southern Regional Campus",
+      traineeName: "Venkata Subramanya Lakshminarayana Chakravarthy Ramaswamy Iyengar",
+      courseTitle:
+        "Advanced Dairy Cooperative Operations and Supply Chain Management for Rural Producer Organisations and Federations",
+      programmeTitle: "Advanced Dairy Cooperative Operations and Value Chain Development",
+      marks: null,
+    });
+    expect(pdfFacts(pdf).pages).toBe(1);
+  }, 15000);
+});
+
+describe("rerenderCertificate", () => {
+  function queueRerenderLookups(marks: {
+    marks_obtained: number | null;
+    total_marks: number | null;
+    score_percent: number | null;
+  }) {
+    queue("certificates", {
+      certificate_code: "NCCT-ABCDEFGH",
+      issued_at: "2026-09-25T10:00:00Z",
+      pdf_storage_path: "NCCT-ABCDEFGH.pdf",
+      trainee_id: "trainee-1",
+      course_id: "course-1",
+      programme_id: "prog-1",
+      issuing_institution_id: "inst-1",
+      ...marks,
+    });
+    queue("profiles", { full_name: "Asha Patil" });
+    queue("courses", { title: "Financial Management for Cooperatives" });
+    queue("programmes", { title: "Cooperative Management Basics" });
+    queue("institutions", { name: "VAMNICOM, Pune" });
+  }
+
+  it("uploads the new design to a fresh versioned path and repoints the row, leaving the old file", async () => {
+    queueRerenderLookups({ marks_obtained: 30, total_marks: 40, score_percent: 75 });
+
+    const result = await rerenderCertificate("cert-1");
+
+    expect(result.oldPath).toBe("NCCT-ABCDEFGH.pdf");
+    expect(result.newPath).toMatch(/^NCCT-ABCDEFGH-[a-z0-9]+\.pdf$/);
+    expect(uploadMock).toHaveBeenCalledTimes(1);
+    const [path, buffer, options] = uploadMock.mock.calls[0];
+    expect(path).toBe(result.newPath);
+    expect(pdfFacts(buffer).pages).toBe(1);
+    // Never overwrites — the previous PDF stays as a backup.
+    expect(options).toMatchObject({ contentType: "application/pdf", upsert: false });
+    const builder = fromMock.mock.results.find(
+      (r) => r.value && (r.value as { update: unknown }).update,
+    )!.value as { update: ReturnType<typeof vi.fn> };
+    expect(builder.update).toHaveBeenCalledWith({ pdf_storage_path: result.newPath });
+  }, 15000);
+
+  it("re-renders a certificate that has no marks (lesson-only course)", async () => {
+    queueRerenderLookups({ marks_obtained: null, total_marks: null, score_percent: null });
+    const result = await rerenderCertificate("cert-2");
+    expect(result.newPath).toMatch(/^NCCT-ABCDEFGH-/);
+    expect(uploadMock).toHaveBeenCalledTimes(1);
+  }, 15000);
+
+  it("throws, without uploading, when the certificate doesn't exist", async () => {
+    (singleResults.certificates ??= []).push({ data: null, error: { message: "no rows" } });
+    await expect(rerenderCertificate("missing")).rejects.toThrow("no rows");
+    expect(uploadMock).not.toHaveBeenCalled();
   });
 });

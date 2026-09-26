@@ -2,7 +2,16 @@
 
 **This is a living document.** Update it whenever a significant feature, fix, or implementation change lands — see `CLAUDE.md`'s Development Workflow. It tracks _status_, not requirements or design: for what to build see [PRD.md](PRD.md), for how see [ARCHITECTURE.md](ARCHITECTURE.md)/[DATABASE.md](DATABASE.md)/[DECISIONS.md](DECISIONS.md). Nothing here duplicates their content beyond a one-line restatement per feature.
 
-Last updated: 2026-09-26 (32) (**AI Career Counsellor and skill-gap ranking moved to Groq** (DECISIONS.md #68): the counsellor had been 503 in every environment because no Gemini key existed anywhere. Now one `GROQ_API_KEY` powers the chatbot, counsellor and ranking through a shared `groqClient.ts`; `@google/genai` removed. Live-verified with demo trainee Asha Patil:
+Last updated: 2026-09-26 (33) (**Certificate redesigned** to the approved Stitch design (DECISIONS.md #69).
+- Rebuilt in PDFKit, with measurements mapped 1:1 from the design.
+- New bundled fonts: JetBrains Mono, and Noto Sans Devanagari for 'सहकार उत्कर्ष' (shaping verified by rasterising the PDF).
+- The fake seal and the 'Govt of India' footnote were removed.
+- Long names and titles are fitted to one page.
+**All 5 existing certificates re-rendered in the new design** via the new `pnpm --filter api certificates:regenerate`:
+- Same code, issue date, marks and QR link.
+- Each goes to a new versioned Storage path, so no stale CDN copy is served; the old PDFs stay in Storage and are also backed up locally.
+- Verified by downloading through the real trainee and public-verify endpoints.
+651 API tests (6 new: one-page and font checks for three variants, and re-render path/repoint/no-overwrite/error). Previous: 2026-09-26 (32) (**AI Career Counsellor and skill-gap ranking moved to Groq** (DECISIONS.md #68): the counsellor had been 503 in every environment because no Gemini key existed anywhere. Now one `GROQ_API_KEY` powers the chatbot, counsellor and ranking through a shared `groqClient.ts`; `@google/genai` removed. Live-verified with demo trainee Asha Patil:
 - A five-lookup question ('which programme next, and am I ready for any open job?') answered via 3–4 tool calls.
 - A certificates question named the real courses.
 - A Hindi question was answered in Hindi.
