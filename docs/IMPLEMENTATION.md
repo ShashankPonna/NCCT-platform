@@ -2,7 +2,11 @@
 
 **This is a living document.** Update it whenever a significant feature, fix, or implementation change lands — see `CLAUDE.md`'s Development Workflow. It tracks _status_, not requirements or design: for what to build see [PRD.md](PRD.md), for how see [ARCHITECTURE.md](ARCHITECTURE.md)/[DATABASE.md](DATABASE.md)/[DECISIONS.md](DECISIONS.md). Nothing here duplicates their content beyond a one-line restatement per feature.
 
-Last updated: 2026-09-26 (38) (**Kiosk Terminal now works from the live HTTPS site in Chrome/Edge** (DECISIONS.md #74).
+Last updated: 2026-09-26 (40) (**Timetable sessions can be tied to a course** (DECISIONS.md #76; migration `20260926000001`).
+- Optional `course_id`, validated to belong to the session's programme; reads return `course_title`.
+- Course picker in Add Session; course tags on the session list, the trainee home's upcoming session and the trainer dashboard; course named in the session notification.
+- 4 new timetable tests (659 API tests).
+- **The migration must be run in Supabase before deploying.** Previous: 2026-09-26 (39) (**Attendance gap closed** (DECISIONS.md #75): trainee self check-in (QR/code and face) and kiosk face check-in now require an approved nomination in the session's programme, as manual marking always did. Before this, anyone with the 6-digit code could check in to a programme they weren't in. Verified live: not-enrolled → 403, waitlisted → 403, approved → 201. 655 API tests. Previous: 2026-09-26 (38) (**Kiosk Terminal now works from the live HTTPS site in Chrome/Edge** (DECISIONS.md #74).
 - Board requests opt into Local Network Access (`targetAddressSpace: "local"`), so after staff click Allow on the browser prompt the plain-HTTP ESP32 boards are reachable.
 - Verified in Chrome 153 from the live origin against an mDNS `.local` stand-in board: the reader poll, command POST and camera capture all return 200. It stays blocked without the permission.
 - No firmware change needed, since both boards already send CORS headers.

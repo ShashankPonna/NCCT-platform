@@ -9,6 +9,14 @@ import { supabaseAdmin } from "../supabaseClient.js";
 export const timetableRouter = Router();
 
 const UNIQUE_VIOLATION = "23505";
+
+// Timetable reads embed the session's course (DECISIONS.md #76) and flatten it
+// to course_title, so clients can label course sessions without a second call.
+const SESSION_SELECT = "*, courses(title)";
+function withCourseTitle<T extends { courses?: { title: string } | null }>(row: T) {
+  const { courses, ...rest } = row;
+  return { ...rest, course_title: courses?.title ?? null };
+}
 const CHECK_IN_CODE_LENGTH = 6;
 const MAX_CODE_ATTEMPTS = 5;
 
@@ -34,6 +42,27 @@ timetableRouter.post(
       return;
     }
 
+    // A course-specific session must name a course from this same programme —
+    // otherwise a session could claim a course its trainees aren't taking.
+    let courseTitle: string | null = null;
+    if (parsed.data.course_id) {
+      const { data: course, error: courseError } = await supabaseAdmin
+        .from("courses")
+        .select("title")
+        .eq("id", parsed.data.course_id)
+        .eq("programme_id", req.params.id)
+        .maybeSingle();
+      if (courseError) {
+        res.status(400).json({ error: courseError.message });
+        return;
+      }
+      if (!course) {
+        res.status(400).json({ error: "That course isn't part of this programme" });
+        return;
+      }
+      courseTitle = course.title;
+    }
+
     // check_in_code is the only unique column besides the primary key here,
     // so any 23505 on this insert means a code collision — regenerate and
     // retry rather than failing the whole request over it. The keyspace
@@ -52,8 +81,14 @@ timetableRouter.post(
         .single();
 
       if (!error) {
-        void notifySessionScheduled({ programmeId: req.params.id, sessionTitle: data.title, startsAt: data.starts_at, location: data.location });
-        res.status(201).json(data);
+        void notifySessionScheduled({
+          programmeId: req.params.id,
+          sessionTitle: data.title,
+          startsAt: data.starts_at,
+          location: data.location,
+          courseTitle,
+        });
+        res.status(201).json({ ...data, course_title: courseTitle });
         return;
       }
       if (error.code !== UNIQUE_VIOLATION) {
@@ -68,7 +103,7 @@ timetableRouter.post(
 timetableRouter.get("/programmes/:id/timetable", requireAuth, async (req, res) => {
   const { data, error } = await req
     .supabase!.from("timetable_sessions")
-    .select("*")
+    .select(SESSION_SELECT)
     .eq("programme_id", req.params.id)
     .order("starts_at", { ascending: true });
 
@@ -76,7 +111,7 @@ timetableRouter.get("/programmes/:id/timetable", requireAuth, async (req, res) =
     res.status(400).json({ error: error.message });
     return;
   }
-  res.json(data);
+  res.json((data ?? []).map(withCourseTitle));
 });
 
 // Resolves a session's short check_in_code to its real id/UUID — the lookup
@@ -93,7 +128,7 @@ timetableRouter.get("/timetable-sessions/code/:code", requireAuth, async (req, r
 
   const { data, error } = await req
     .supabase!.from("timetable_sessions")
-    .select("*")
+    .select(SESSION_SELECT)
     .eq("check_in_code", req.params.code)
     .maybeSingle();
 
@@ -105,5 +140,5 @@ timetableRouter.get("/timetable-sessions/code/:code", requireAuth, async (req, r
     res.status(404).json({ error: "No session found for that code" });
     return;
   }
-  res.json(data);
+  res.json(withCourseTitle(data));
 });

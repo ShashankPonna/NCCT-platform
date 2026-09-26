@@ -188,6 +188,10 @@ export interface TimetableSession {
   location: string | null;
   check_in_code: string;
   created_at: string;
+  // Optional course the session is for (DECISIONS.md #76); null = programme-wide.
+  course_id: string | null;
+  // Denormalised by the API's timetable reads for display; absent on insert responses.
+  course_title?: string | null;
 }
 
 export interface Course {

@@ -50,7 +50,11 @@ function statusFor(programme: Programme, today: string): ProgrammeStatus {
 }
 
 function formatDate(date: string): string {
-  return new Date(`${date}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(`${date}T00:00:00`).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 function formatSession(session: TimetableSession): string {
@@ -80,7 +84,8 @@ async function loadCard(
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
   return {
     programme,
-    institutionName: institutions.find((inst) => inst.id === programme.institution_id)?.name ?? null,
+    institutionName:
+      institutions.find((inst) => inst.id === programme.institution_id)?.name ?? null,
     status: statusFor(programme, today),
     courseCount: courses.length,
     approvedTrainees: nominations.filter((nom) => nom.status === "approved").length,
@@ -108,9 +113,13 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
         // itself failed, so fall back to everything rather than hiding a
         // trainer's real work.
         const assigned = assignedIds ? new Set(assignedIds) : null;
-        const programmes = assigned ? allProgrammes.filter((p) => assigned.has(p.id)) : allProgrammes;
+        const programmes = assigned
+          ? allProgrammes.filter((p) => assigned.has(p.id))
+          : allProgrammes;
         const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD, local
-        setCards(await Promise.all(programmes.map((p) => loadCard(accessToken, p, institutions, today))));
+        setCards(
+          await Promise.all(programmes.map((p) => loadCard(accessToken, p, institutions, today))),
+        );
       } catch (err) {
         setError((err as Error).message);
         setCards([]);
@@ -128,7 +137,9 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
     return matchesQuery && (statusFilter === "all" || card.status === statusFilter);
   });
 
-  const institutionNames = [...new Set((cards ?? []).map((c) => c.institutionName).filter(Boolean))];
+  const institutionNames = [
+    ...new Set((cards ?? []).map((c) => c.institutionName).filter(Boolean)),
+  ];
   const statusTabs: ("all" | ProgrammeStatus)[] = ["all", "ongoing", "upcoming", "completed"];
 
   return (
@@ -136,9 +147,12 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
       {/* Page Header & Control Bar */}
       <section className="flex flex-col gap-space-md">
         <div className="max-w-3xl">
-          <h1 className="font-headline-lg text-headline-lg text-primary tracking-tight">Assigned Training Programmes</h1>
+          <h1 className="font-headline-lg text-headline-lg text-primary tracking-tight">
+            Assigned Training Programmes
+          </h1>
           <p className="font-body-md text-body-md text-on-surface-variant mt-space-xs">
-            The programmes you&apos;re allotted to — their courses, enrolled trainees and upcoming sessions.
+            The programmes you&apos;re allotted to — their courses, enrolled trainees and upcoming
+            sessions.
           </p>
         </div>
 
@@ -156,7 +170,9 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
             />
           </div>
           <div className="flex items-center gap-space-xs overflow-x-auto pb-space-xs md:pb-0">
-            <span className="font-label-sm text-label-sm text-on-surface-variant mr-space-xs shrink-0 font-bold">Status:</span>
+            <span className="font-label-sm text-label-sm text-on-surface-variant mr-space-xs shrink-0 font-bold">
+              Status:
+            </span>
             {statusTabs.map((tab) => (
               <button
                 key={tab}
@@ -178,8 +194,8 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
           <div className="flex flex-wrap items-center gap-space-xs text-on-surface-variant px-1 font-label-sm text-label-sm">
             <span className="material-symbols-outlined text-secondary text-[18px]">co_present</span>
             <span>
-              Showing <strong className="text-primary font-bold">{filteredCards.length}</strong> of {cards.length}{" "}
-              programme{cards.length === 1 ? "" : "s"}
+              Showing <strong className="text-primary font-bold">{filteredCards.length}</strong> of{" "}
+              {cards.length} programme{cards.length === 1 ? "" : "s"}
             </span>
             {institutionNames.length > 0 && (
               <>
@@ -199,10 +215,14 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
 
       <section className="space-y-space-lg">
         {cards === null ? (
-          <p className="text-on-surface-variant font-body-md text-body-md">Loading your programmes…</p>
+          <p className="text-on-surface-variant font-body-md text-body-md">
+            Loading your programmes…
+          </p>
         ) : filteredCards.length === 0 ? (
           <div className="p-space-xl bg-surface-container-lowest rounded-xl shadow-xs text-center border border-outline-variant/40">
-            <span className="material-symbols-outlined text-[48px] text-on-surface-variant/40">menu_book</span>
+            <span className="material-symbols-outlined text-[48px] text-on-surface-variant/40">
+              menu_book
+            </span>
             <p className="font-label-md text-label-md text-on-surface mt-2">
               {cards.length === 0
                 ? "You haven't been assigned to any programme yet. An admin assigns trainers from Programmes → Assigned Trainers."
@@ -225,7 +245,9 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
           filteredCards.map((card) => {
             const { programme } = card;
             const capacity = programme.capacity;
-            const enrolledPercent = capacity ? Math.min(100, Math.round((card.approvedTrainees / capacity) * 100)) : null;
+            const enrolledPercent = capacity
+              ? Math.min(100, Math.round((card.approvedTrainees / capacity) * 100))
+              : null;
             return (
               <div
                 key={programme.id}
@@ -244,7 +266,9 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
                         </span>
                       )}
                     </div>
-                    <h2 className="font-headline-sm text-headline-sm text-primary font-bold">{programme.title}</h2>
+                    <h2 className="font-headline-sm text-headline-sm text-primary font-bold">
+                      {programme.title}
+                    </h2>
                     {(programme.start_date || programme.end_date) && (
                       <p className="font-label-sm text-label-sm text-on-surface-variant">
                         {programme.start_date ? formatDate(programme.start_date) : "…"} –{" "}
@@ -261,7 +285,9 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
                           : "bg-surface-container text-slate-700"
                     }`}
                   >
-                    {card.status === "ongoing" && <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />}
+                    {card.status === "ongoing" && (
+                      <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    )}
                     {STATUS_LABEL[card.status]}
                   </span>
                 </div>
@@ -272,9 +298,13 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
                       <span className="material-symbols-outlined text-[20px]">layers</span>
                     </div>
                     <div className="min-w-0">
-                      <span className="font-label-sm text-label-sm text-on-surface-variant block font-semibold">Courses</span>
+                      <span className="font-label-sm text-label-sm text-on-surface-variant block font-semibold">
+                        Courses
+                      </span>
                       <span className="font-metric-mono text-primary text-label-md font-bold block mt-space-xs">
-                        {card.courseCount === 0 ? "None yet" : `${card.courseCount} course${card.courseCount === 1 ? "" : "s"}`}
+                        {card.courseCount === 0
+                          ? "None yet"
+                          : `${card.courseCount} course${card.courseCount === 1 ? "" : "s"}`}
                       </span>
                     </div>
                   </div>
@@ -285,7 +315,9 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline justify-between gap-2">
-                        <span className="font-label-sm text-label-sm text-on-surface-variant font-semibold">Enrolled</span>
+                        <span className="font-label-sm text-label-sm text-on-surface-variant font-semibold">
+                          Enrolled
+                        </span>
                         <span className="font-metric-mono text-primary text-label-md font-bold">
                           {card.approvedTrainees}
                           {capacity ? ` / ${capacity}` : ""}
@@ -293,10 +325,15 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
                       </div>
                       {enrolledPercent !== null && (
                         <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden mt-space-xs">
-                          <div className="h-full bg-primary-container rounded-full" style={{ width: `${enrolledPercent}%` }} />
+                          <div
+                            className="h-full bg-primary-container rounded-full"
+                            style={{ width: `${enrolledPercent}%` }}
+                          />
                         </div>
                       )}
-                      <p className="font-label-sm text-label-sm text-on-surface-variant mt-space-xs">Approved nominations</p>
+                      <p className="font-label-sm text-label-sm text-on-surface-variant mt-space-xs">
+                        Approved nominations
+                      </p>
                     </div>
                   </div>
 
@@ -305,15 +342,24 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
                       <span className="material-symbols-outlined text-[20px]">schedule</span>
                     </div>
                     <div className="min-w-0">
-                      <span className="font-label-sm text-label-sm text-on-surface-variant block font-semibold">Next session</span>
+                      <span className="font-label-sm text-label-sm text-on-surface-variant block font-semibold">
+                        Next session
+                      </span>
                       {card.nextSession ? (
                         <>
                           <span className="font-label-md text-label-md text-on-surface block mt-space-xs font-bold">
                             {formatSession(card.nextSession)}
                           </span>
                           <p className="font-label-sm text-label-sm text-on-surface-variant mt-space-xs truncate">
-                            {[card.nextSession.title, card.nextSession.location].filter(Boolean).join(" · ") || "—"}
-                            {card.upcomingSessionCount > 1 && ` (+${card.upcomingSessionCount - 1} more)`}
+                            {[
+                              card.nextSession.title,
+                              card.nextSession.course_title,
+                              card.nextSession.location,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ") || "—"}
+                            {card.upcomingSessionCount > 1 &&
+                              ` (+${card.upcomingSessionCount - 1} more)`}
                           </p>
                         </>
                       ) : (

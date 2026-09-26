@@ -115,6 +115,7 @@ export function describeNotification(
         title: hi ? "नया सत्र निर्धारित" : "New session scheduled",
         body: joinParts([
           str(d, "session_title") || programme,
+          str(d, "course_title"),
           formatWhen(str(d, "starts_at"), locale),
           str(d, "location"),
         ]),

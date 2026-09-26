@@ -3,8 +3,8 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { timetableRouter } from "./timetable.js";
 
-const { getUserMock, profilesMock, timetableMock, programmeTrainersMock, fromMock } = vi.hoisted(
-  () => {
+const { getUserMock, profilesMock, timetableMock, programmeTrainersMock, coursesMock, fromMock } =
+  vi.hoisted(() => {
     function createTableMock() {
       const result: { data: unknown; error: unknown } = { data: null, error: null };
       const builder: Record<string, ReturnType<typeof vi.fn>> = {};
@@ -20,16 +20,24 @@ const { getUserMock, profilesMock, timetableMock, programmeTrainersMock, fromMoc
     const profilesMock = createTableMock();
     const timetableMock = createTableMock();
     const programmeTrainersMock = createTableMock();
+    const coursesMock = createTableMock();
     const tables: Record<string, ReturnType<typeof createTableMock>> = {
       profiles: profilesMock,
       timetable_sessions: timetableMock,
       programme_trainers: programmeTrainersMock,
+      courses: coursesMock,
     };
     const fromMock = vi.fn((table: string) => tables[table].builder);
     const getUserMock = vi.fn();
-    return { getUserMock, profilesMock, timetableMock, programmeTrainersMock, fromMock };
-  },
-);
+    return {
+      getUserMock,
+      profilesMock,
+      timetableMock,
+      programmeTrainersMock,
+      coursesMock,
+      fromMock,
+    };
+  });
 
 vi.mock("../supabaseClient.js", () => ({
   supabaseAdmin: { auth: { getUser: getUserMock }, from: fromMock },
@@ -84,6 +92,9 @@ beforeEach(() => {
   timetableMock.builder.single = vi.fn(() => Promise.resolve(timetableMock.result));
   programmeTrainersMock.result.data = null;
   programmeTrainersMock.result.error = null;
+  coursesMock.result.data = null;
+  coursesMock.result.error = null;
+  coursesMock.builder.eq.mockClear();
 });
 
 describe("POST /api/programmes/:id/timetable", () => {
@@ -170,6 +181,64 @@ describe("POST /api/programmes/:id/timetable", () => {
     expect(timetableMock.builder.insert).toHaveBeenCalledWith(
       expect.objectContaining({ check_in_code: expect.stringMatching(/^\d{6}$/) }),
     );
+  });
+
+  it("creates a course-specific session when the course belongs to the programme", async () => {
+    authenticateAs("admin-1", "admin");
+    coursesMock.result.data = { title: "Digital Payments & UPI" };
+    timetableMock.result.data = {
+      id: "sess-2",
+      programme_id: "prog-1",
+      course_id: "11111111-1111-1111-1111-111111111111",
+      check_in_code: "123456",
+      ...validSession,
+    };
+
+    const res = await request(buildApp())
+      .post("/api/programmes/prog-1/timetable")
+      .set("Authorization", "Bearer token")
+      .send({ ...validSession, course_id: "11111111-1111-1111-1111-111111111111" });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({
+      course_id: "11111111-1111-1111-1111-111111111111",
+      course_title: "Digital Payments & UPI",
+    });
+    // The course is looked up within this programme, not globally.
+    expect(coursesMock.builder.eq).toHaveBeenCalledWith("programme_id", "prog-1");
+    expect(timetableMock.builder.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ course_id: "11111111-1111-1111-1111-111111111111" }),
+    );
+    expect(notificationMocks.notifySessionScheduled).toHaveBeenCalledWith(
+      expect.objectContaining({ courseTitle: "Digital Payments & UPI" }),
+    );
+  });
+
+  it("returns 400 and creates nothing when the course belongs to a different programme", async () => {
+    authenticateAs("admin-1", "admin");
+    coursesMock.result.data = null;
+
+    const res = await request(buildApp())
+      .post("/api/programmes/prog-1/timetable")
+      .set("Authorization", "Bearer token")
+      .send({ ...validSession, course_id: "22222222-2222-2222-2222-222222222222" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/isn't part of this programme/);
+    expect(timetableMock.builder.insert).not.toHaveBeenCalledWith(
+      expect.objectContaining({ course_id: "22222222-2222-2222-2222-222222222222" }),
+    );
+  });
+
+  it("returns 400 for a malformed course_id", async () => {
+    authenticateAs("admin-1", "admin");
+
+    const res = await request(buildApp())
+      .post("/api/programmes/prog-1/timetable")
+      .set("Authorization", "Bearer token")
+      .send({ ...validSession, course_id: "not-a-uuid" });
+
+    expect(res.status).toBe(400);
   });
 
   it("regenerates the code and retries on a check_in_code collision", async () => {
@@ -265,5 +334,27 @@ describe("GET /api/programmes/:id/timetable", () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(1);
+  });
+
+  it("flattens each session's embedded course into course_title", async () => {
+    authenticateAs("trainee-1", "trainee");
+    timetableMock.result.data = [
+      {
+        id: "sess-1",
+        programme_id: "prog-1",
+        course_id: "c-1",
+        courses: { title: "Digital Payments & UPI" },
+        ...validSession,
+      },
+      { id: "sess-2", programme_id: "prog-1", course_id: null, courses: null, ...validSession },
+    ];
+
+    const res = await request(buildApp())
+      .get("/api/programmes/prog-1/timetable")
+      .set("Authorization", "Bearer token");
+
+    expect(res.body[0]).toMatchObject({ course_title: "Digital Payments & UPI" });
+    expect(res.body[0]).not.toHaveProperty("courses");
+    expect(res.body[1]).toMatchObject({ course_id: null, course_title: null });
   });
 });

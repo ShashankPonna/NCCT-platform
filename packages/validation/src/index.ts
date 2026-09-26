@@ -168,6 +168,10 @@ export const createTimetableSessionSchema = z
     starts_at: z.string().datetime(),
     ends_at: z.string().datetime(),
     location: z.string().optional(),
+    // Optional: which course this session is for (DECISIONS.md #76). Null or
+    // absent = a programme-wide session. The API checks it belongs to the
+    // session's programme.
+    course_id: z.string().uuid().nullable().optional(),
   })
   .refine((session) => new Date(session.ends_at) > new Date(session.starts_at), {
     message: "ends_at must be after starts_at",
@@ -439,4 +443,3 @@ export const setSkillIdsSchema = z.object({
 export const askCareerCounsellorSchema = z.object({
   question: z.string().min(1).max(500),
 });
-

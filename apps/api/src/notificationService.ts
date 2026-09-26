@@ -159,6 +159,7 @@ export function notifySessionScheduled(input: {
   sessionTitle: string | null;
   startsAt: string;
   location: string | null;
+  courseTitle?: string | null;
 }) {
   return bestEffort("session_scheduled", async () => {
     // A session back-filled into the past (a record of a class already held)
@@ -172,6 +173,7 @@ export function notifySessionScheduled(input: {
       programme_id: input.programmeId,
       programme_title: title,
       session_title: input.sessionTitle,
+      course_title: input.courseTitle ?? null,
       starts_at: input.startsAt,
       location: input.location,
     });

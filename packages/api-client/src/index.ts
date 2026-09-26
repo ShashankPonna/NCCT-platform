@@ -119,7 +119,10 @@ async function apiFetch<T>(
 
 // Binary-download counterpart to apiFetch: same auth and error handling,
 // but returns the body as a Blob plus the server-chosen filename.
-async function apiFetchFile(path: string, accessToken: string): Promise<{ blob: Blob; fileName: string | null }> {
+async function apiFetchFile(
+  path: string,
+  accessToken: string,
+): Promise<{ blob: Blob; fileName: string | null }> {
   const res = await fetch(`${apiBaseUrl}/api${path}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -132,7 +135,10 @@ async function apiFetchFile(path: string, accessToken: string): Promise<{ blob: 
         : `Request failed: ${res.status}`,
     );
   }
-  return { blob: await res.blob(), fileName: parseContentDispositionFileName(res.headers.get("Content-Disposition")) };
+  return {
+    blob: await res.blob(),
+    fileName: parseContentDispositionFileName(res.headers.get("Content-Disposition")),
+  };
 }
 
 // Prefers RFC 5987 `filename*=UTF-8''...` (keeps non-ASCII names intact)
@@ -326,7 +332,10 @@ export function getHostels(accessToken: string, institutionId: string) {
 }
 
 export function createHostel(accessToken: string, institutionId: string, body: HostelInput) {
-  return apiFetch<Hostel>(`/institutions/${institutionId}/hostels`, accessToken, { method: "POST", body });
+  return apiFetch<Hostel>(`/institutions/${institutionId}/hostels`, accessToken, {
+    method: "POST",
+    body,
+  });
 }
 
 export function updateHostel(accessToken: string, hostelId: string, body: Partial<HostelInput>) {
@@ -341,7 +350,11 @@ export function createHostelRoom(accessToken: string, hostelId: string, body: Ho
   return apiFetch<HostelRoom>(`/hostels/${hostelId}/rooms`, accessToken, { method: "POST", body });
 }
 
-export function updateHostelRoom(accessToken: string, roomId: string, body: Partial<HostelRoomInput>) {
+export function updateHostelRoom(
+  accessToken: string,
+  roomId: string,
+  body: Partial<HostelRoomInput>,
+) {
   return apiFetch<HostelRoom>(`/hostel-rooms/${roomId}`, accessToken, { method: "PATCH", body });
 }
 
@@ -377,7 +390,11 @@ export function getMyHostelAssignments(accessToken: string) {
 // what actually matters (every content/attendance write route now checks
 // it), these just back the admin assignment UI and a trainer's own "which
 // programmes am I on" filter.
-export function assignProgrammeTrainer(accessToken: string, programmeId: string, trainerId: string) {
+export function assignProgrammeTrainer(
+  accessToken: string,
+  programmeId: string,
+  trainerId: string,
+) {
   return apiFetch<ProgrammeTrainerRow>(`/programmes/${programmeId}/trainers`, accessToken, {
     method: "POST",
     body: { trainer_id: trainerId },
@@ -388,7 +405,11 @@ export function getProgrammeTrainers(accessToken: string, programmeId: string) {
   return apiFetch<ProgrammeTrainerRow[]>(`/programmes/${programmeId}/trainers`, accessToken);
 }
 
-export function unassignProgrammeTrainer(accessToken: string, programmeId: string, trainerId: string) {
+export function unassignProgrammeTrainer(
+  accessToken: string,
+  programmeId: string,
+  trainerId: string,
+) {
   return apiFetch<void>(`/programmes/${programmeId}/trainers/${trainerId}`, accessToken, {
     method: "DELETE",
   });
@@ -404,7 +425,13 @@ export function getMyAssignedProgrammes(accessToken: string) {
 export function createTimetableSession(
   accessToken: string,
   programmeId: string,
-  body: { title?: string; starts_at: string; ends_at: string; location?: string },
+  body: {
+    title?: string;
+    starts_at: string;
+    ends_at: string;
+    location?: string;
+    course_id?: string | null;
+  },
 ) {
   return apiFetch<TimetableSession>(`/programmes/${programmeId}/timetable`, accessToken, {
     method: "POST",
@@ -731,10 +758,14 @@ export function bulkCreateAssessmentQuestions(
   assessmentId: string,
   questions: QuestionInput[],
 ) {
-  return apiFetch<AssessmentQuestion[]>(`/assessments/${assessmentId}/questions/bulk`, accessToken, {
-    method: "POST",
-    body: { questions },
-  });
+  return apiFetch<AssessmentQuestion[]>(
+    `/assessments/${assessmentId}/questions/bulk`,
+    accessToken,
+    {
+      method: "POST",
+      body: { questions },
+    },
+  );
 }
 
 export function updateAssessmentQuestion(
@@ -884,9 +915,13 @@ export function getSessionRoster(accessToken: string, sessionId: string) {
 // an already-present trainee, any method, is a no-op); unmarkAttendance
 // removes whatever row exists regardless of how it originally got there.
 export function markAttendance(accessToken: string, sessionId: string, traineeId: string) {
-  return apiFetch<AttendanceRecord>(`/timetable/${sessionId}/attendance/${traineeId}`, accessToken, {
-    method: "PUT",
-  });
+  return apiFetch<AttendanceRecord>(
+    `/timetable/${sessionId}/attendance/${traineeId}`,
+    accessToken,
+    {
+      method: "PUT",
+    },
+  );
 }
 
 export function unmarkAttendance(accessToken: string, sessionId: string, traineeId: string) {
@@ -1144,7 +1179,10 @@ export function getJobMatches(accessToken: string) {
 
 // In-app notifications (docs/DECISIONS.md #65) — any role, own rows only.
 export function getMyNotifications(accessToken: string, limit?: number) {
-  return apiFetch<NotificationsPage>(`/notifications/mine${limit ? `?limit=${limit}` : ""}`, accessToken);
+  return apiFetch<NotificationsPage>(
+    `/notifications/mine${limit ? `?limit=${limit}` : ""}`,
+    accessToken,
+  );
 }
 
 export function getUnreadNotificationCount(accessToken: string) {
@@ -1162,6 +1200,10 @@ export function markAllNotificationsRead(accessToken: string) {
 // Gradebook as a structured Excel workbook (docs/DECISIONS.md #66). Same
 // access rule as getCourseGradebook — admin, or a trainer assigned to the
 // course's programme. `locale` only changes the sheet's labels.
-export function downloadCourseGradebookExcel(accessToken: string, courseId: string, locale: "en" | "hi" = "en") {
+export function downloadCourseGradebookExcel(
+  accessToken: string,
+  courseId: string,
+  locale: "en" | "hi" = "en",
+) {
   return apiFetchFile(`/courses/${courseId}/gradebook/export?lang=${locale}`, accessToken);
 }

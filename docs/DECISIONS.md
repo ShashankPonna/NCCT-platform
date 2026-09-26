@@ -861,3 +861,32 @@ Both firmwares already send `Access-Control-Allow-Origin: *`, so no reflashing i
 **Limits:**
 - Firefox and Safari don't implement Local Network Access, so there the kiosk still needs `http://localhost`.
 - The phone app's WebView can't show the prompt, so the kiosk remains a desktop-browser screen.
+
+### 75. Every attendance check-in requires an approved nomination in the session's programme
+
+**Problem:** Staff manual marking (`PUT /timetable/:sessionId/attendance/:traineeId`) always required the trainee to have an *approved* nomination in the session's programme. The trainee self check-in (`POST /attendance`, QR/code and face) and the staff kiosk face check-in (`POST /timetable/:sessionId/kiosk-face-checkin`) did not. Any trainee who knew a session's 6-digit code, and any trainee put in front of the kiosk, could be recorded as present for a programme they weren't enrolled in, including pending, waitlisted and rejected nominees.
+
+**Decision:** All three paths now use one shared `isApprovedNominee(programmeId, traineeId)` check (in `routes/attendance.ts`), against the session's own programme:
+- **Self check-in:** a non-enrolled trainee gets 403 with a plain-language message.
+- **Kiosk:** a non-enrolled trainee gets 404, the same wording as manual marking.
+
+Nothing is written in either case.
+
+**Verified live:** a not-enrolled and a waitlisted trainee were refused, and an approved trainee checked in; the test session was removed afterwards. 4 new request tests.
+
+### 76. Timetable sessions can name the course they're for
+
+**Problem:** Sessions belonged only to a programme, so a programme with several courses couldn't show which course a class was for.
+
+**Decision:** `timetable_sessions` gains a nullable `course_id` (migration `20260926000001`, `on delete set null`).
+- Programme-wide sessions (orientation, reviews, field visits) keep it null.
+- Course sessions name one course, which the API requires to belong to the session's own programme (400 otherwise).
+
+**Where it shows:**
+- Timetable reads (`GET /programmes/:id/timetable`, `GET /timetable-sessions/code/:code`) return `course_title`.
+- The admin/trainer "Add Session" form has a Course picker, defaulting to "Whole programme".
+- The session list tags each session with its course.
+- The trainee home's upcoming session and the trainer dashboard's next session show the course.
+- The "new session" notification includes the course title.
+
+**Deploy order:** the migration must be applied before the API that selects `courses(title)` goes live.

@@ -6,7 +6,14 @@ import {
   getProgrammeProgress,
   getTimetableSessions,
 } from "@ncct/api-client";
-import type { Certificate, JobInterest, JobMatch, Nomination, NominationStatus, TimetableSession } from "@ncct/shared-types";
+import type {
+  Certificate,
+  JobInterest,
+  JobMatch,
+  Nomination,
+  NominationStatus,
+  TimetableSession,
+} from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "../i18n/LocaleContext.js";
 import { ErrorBanner } from "./pieces.js";
@@ -37,7 +44,13 @@ interface TraineeHomeText {
   continueLearning: string;
   browseProgrammes: string;
   pathwayTitle: string;
-  steps: { nominated: string; approved: string; learning: string; certified: string; shortlisted: string };
+  steps: {
+    nominated: string;
+    approved: string;
+    learning: string;
+    certified: string;
+    shortlisted: string;
+  };
   myProgrammes: string;
   nominationStatus: Record<NominationStatus, string>;
   noNominations: string;
@@ -69,7 +82,8 @@ const content: Record<Locale, TraineeHomeText> = {
     yourProgress: "Your progress",
     lessonsOf: (done, total) => `${done} of ${total} lessons completed`,
     noProgrammeTitle: "You're not enrolled in a programme yet",
-    noProgrammeBody: "Browse the open programmes and nominate yourself — an admin reviews every nomination.",
+    noProgrammeBody:
+      "Browse the open programmes and nominate yourself — an admin reviews every nomination.",
     continueLearning: "Continue learning",
     browseProgrammes: "Browse programmes",
     pathwayTitle: "Your pathway",
@@ -81,18 +95,25 @@ const content: Record<Locale, TraineeHomeText> = {
       shortlisted: "Shortlisted",
     },
     myProgrammes: "My programmes",
-    nominationStatus: { pending: "Pending", approved: "Approved", waitlisted: "Waitlisted", rejected: "Not approved" },
+    nominationStatus: {
+      pending: "Pending",
+      approved: "Approved",
+      waitlisted: "Waitlisted",
+      rejected: "Not approved",
+    },
     noNominations: "No nominations yet.",
     openLearn: "Open",
     upcomingSession: "Upcoming session",
-    noSessionBody: "Nothing is scheduled for your programme yet — sessions appear here as soon as they're added.",
+    noSessionBody:
+      "Nothing is scheduled for your programme yet — sessions appear here as soon as they're added.",
     checkIn: "Check in",
     checkInHint: "Check-in opens when the session starts.",
     scanQr: "QR / session code",
     faceCheckIn: "Face check-in",
     jobMatchesTitle: "Best job matches for you",
     jobMatchesSubtitle: "Ranked against your certificates and skills.",
-    lowSignal: "Earn a certificate to get more accurate matches — these are ranked on limited information.",
+    lowSignal:
+      "Earn a certificate to get more accurate matches — these are ranked on limited information.",
     noJobs: "No open job postings right now.",
     match: (percent) => `${percent}% match`,
     viewJobs: "View all jobs",
@@ -109,7 +130,8 @@ const content: Record<Locale, TraineeHomeText> = {
     yourProgress: "आपकी प्रगति",
     lessonsOf: (done, total) => `${total} में से ${done} पाठ पूरे`,
     noProgrammeTitle: "आप अभी किसी कार्यक्रम में नामांकित नहीं हैं",
-    noProgrammeBody: "खुले कार्यक्रम देखें और स्वयं को नामांकित करें — हर नामांकन की समीक्षा व्यवस्थापक करते हैं।",
+    noProgrammeBody:
+      "खुले कार्यक्रम देखें और स्वयं को नामांकित करें — हर नामांकन की समीक्षा व्यवस्थापक करते हैं।",
     continueLearning: "सीखना जारी रखें",
     browseProgrammes: "कार्यक्रम देखें",
     pathwayTitle: "आपकी यात्रा",
@@ -121,11 +143,17 @@ const content: Record<Locale, TraineeHomeText> = {
       shortlisted: "शॉर्टलिस्टेड",
     },
     myProgrammes: "मेरे कार्यक्रम",
-    nominationStatus: { pending: "लंबित", approved: "स्वीकृत", waitlisted: "प्रतीक्षा सूची में", rejected: "स्वीकृत नहीं" },
+    nominationStatus: {
+      pending: "लंबित",
+      approved: "स्वीकृत",
+      waitlisted: "प्रतीक्षा सूची में",
+      rejected: "स्वीकृत नहीं",
+    },
     noNominations: "अभी तक कोई नामांकन नहीं।",
     openLearn: "खोलें",
     upcomingSession: "आगामी सत्र",
-    noSessionBody: "आपके कार्यक्रम के लिए अभी कोई सत्र निर्धारित नहीं है — जुड़ते ही सत्र यहाँ दिखेंगे।",
+    noSessionBody:
+      "आपके कार्यक्रम के लिए अभी कोई सत्र निर्धारित नहीं है — जुड़ते ही सत्र यहाँ दिखेंगे।",
     checkIn: "उपस्थिति दर्ज करें",
     checkInHint: "सत्र शुरू होने पर उपस्थिति खुलती है।",
     scanQr: "QR / सत्र कोड",
@@ -201,7 +229,9 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
           .filter((s) => new Date(s.ends_at).getTime() > now)
           .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
         setNextSession(upcoming[0] ?? null);
-        setNextSessionStarted(upcoming[0] ? new Date(upcoming[0].starts_at).getTime() <= now : false);
+        setNextSessionStarted(
+          upcoming[0] ? new Date(upcoming[0].starts_at).getTime() <= now : false,
+        );
       })
       .catch((err: Error) => setError(err.message));
   }, [accessToken, currentProgrammeId]);
@@ -211,33 +241,76 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
   const strokeOffset = circleCircumference - (percent / 100) * circleCircumference;
 
   const formatDateTime = (iso: string) =>
-    new Date(iso).toLocaleString(dateLocale, { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
-  const formatDate = (iso: string) => new Date(iso).toLocaleDateString(dateLocale, { day: "numeric", month: "short", year: "numeric" });
+    new Date(iso).toLocaleString(dateLocale, {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString(dateLocale, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
 
   // Each step is reached (or not) from real records, and dated from them.
-  const firstNomination = [...(nominations ?? [])].sort((a, b) => a.nominated_at.localeCompare(b.nominated_at))[0];
-  const latestCertificate = [...certificates].sort((a, b) => b.issued_at.localeCompare(a.issued_at))[0];
+  const firstNomination = [...(nominations ?? [])].sort((a, b) =>
+    a.nominated_at.localeCompare(b.nominated_at),
+  )[0];
+  const latestCertificate = [...certificates].sort((a, b) =>
+    b.issued_at.localeCompare(a.issued_at),
+  )[0];
   const firstShortlist = [...interests].sort((a, b) => a.created_at.localeCompare(b.created_at))[0];
   const steps = [
-    { key: "nominated", icon: "how_to_reg", done: Boolean(firstNomination), detail: firstNomination ? formatDate(firstNomination.nominated_at) : null },
+    {
+      key: "nominated",
+      icon: "how_to_reg",
+      done: Boolean(firstNomination),
+      detail: firstNomination ? formatDate(firstNomination.nominated_at) : null,
+    },
     {
       key: "approved",
       icon: "verified",
       done: Boolean(currentProgramme),
       detail: currentProgramme?.decided_at ? formatDate(currentProgramme.decided_at) : null,
     },
-    { key: "learning", icon: "play_circle", done: percent >= 100, detail: currentProgramme ? `${percent}%` : null },
-    { key: "certified", icon: "workspace_premium", done: certificates.length > 0, detail: latestCertificate ? formatDate(latestCertificate.issued_at) : null },
-    { key: "shortlisted", icon: "handshake", done: interests.length > 0, detail: firstShortlist ? formatDate(firstShortlist.created_at) : null },
+    {
+      key: "learning",
+      icon: "play_circle",
+      done: percent >= 100,
+      detail: currentProgramme ? `${percent}%` : null,
+    },
+    {
+      key: "certified",
+      icon: "workspace_premium",
+      done: certificates.length > 0,
+      detail: latestCertificate ? formatDate(latestCertificate.issued_at) : null,
+    },
+    {
+      key: "shortlisted",
+      icon: "handshake",
+      done: interests.length > 0,
+      detail: firstShortlist ? formatDate(firstShortlist.created_at) : null,
+    },
   ] as const;
   const reachedCount = steps.filter((s) => s.done).length;
   const lineFill = reachedCount <= 1 ? 0 : ((reachedCount - 1) / (steps.length - 1)) * 100;
 
   const statChips = [
     { icon: "workspace_premium", value: String(certificates.length), label: t.certificates },
-    { icon: "menu_book", value: progress ? `${progress.completed_lessons}/${progress.total_lessons}` : "—", label: t.lessonsDone },
+    {
+      icon: "menu_book",
+      value: progress ? `${progress.completed_lessons}/${progress.total_lessons}` : "—",
+      label: t.lessonsDone,
+    },
     { icon: "star", value: String(interests.length), label: t.shortlists },
-    { icon: "event", value: nextSession ? formatDateTime(nextSession.starts_at) : t.noneScheduled, label: t.nextSession },
+    {
+      icon: "event",
+      value: nextSession ? formatDateTime(nextSession.starts_at) : t.noneScheduled,
+      label: t.nextSession,
+    },
   ];
 
   return (
@@ -268,10 +341,16 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
                   key={chip.label}
                   className="flex items-center gap-2 bg-surface-container-lowest px-3 py-1.5 rounded-lg shadow-xs border border-border-slate"
                 >
-                  <span className="material-symbols-outlined text-secondary text-[20px]">{chip.icon}</span>
+                  <span className="material-symbols-outlined text-secondary text-[20px]">
+                    {chip.icon}
+                  </span>
                   <div className="flex flex-col">
-                    <span className="font-label-md text-xs font-bold text-ink leading-none">{chip.value}</span>
-                    <span className="font-metric-mono text-[10px] text-slate-500">{chip.label}</span>
+                    <span className="font-label-md text-xs font-bold text-ink leading-none">
+                      {chip.value}
+                    </span>
+                    <span className="font-metric-mono text-[10px] text-slate-500">
+                      {chip.label}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -281,11 +360,21 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
           <div className="w-full xl:w-[400px] shrink-0 bg-surface-container-lowest p-5 rounded-xl shadow-sm flex flex-col gap-3 border border-border-slate">
             {currentProgramme ? (
               <>
-                <span className="font-label-md text-xs font-bold text-ink uppercase tracking-wider">{t.yourProgress}</span>
+                <span className="font-label-md text-xs font-bold text-ink uppercase tracking-wider">
+                  {t.yourProgress}
+                </span>
                 <div className="flex items-center gap-4 my-1">
                   <div className="relative w-18 h-18 shrink-0 flex items-center justify-center">
                     <svg className="w-18 h-18 transform -rotate-90" viewBox="0 0 72 72">
-                      <circle className="text-slate-200" cx="36" cy="36" fill="none" r="30" stroke="currentColor" strokeWidth="6" />
+                      <circle
+                        className="text-slate-200"
+                        cx="36"
+                        cy="36"
+                        fill="none"
+                        r="30"
+                        stroke="currentColor"
+                        strokeWidth="6"
+                      />
                       <circle
                         className="text-secondary transition-all duration-1000 ease-out"
                         cx="36"
@@ -299,7 +388,9 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
                         strokeLinecap="round"
                       />
                     </svg>
-                    <span className="absolute font-headline text-lg font-bold text-primary">{progress ? `${percent}%` : "…"}</span>
+                    <span className="absolute font-headline text-lg font-bold text-primary">
+                      {progress ? `${percent}%` : "…"}
+                    </span>
                   </div>
                   <div className="flex flex-col min-w-0">
                     <h2 className="font-headline text-sm md:text-base font-bold text-ink truncate">
@@ -323,7 +414,9 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
               </>
             ) : (
               <>
-                <h2 className="font-headline text-sm md:text-base font-bold text-ink">{t.noProgrammeTitle}</h2>
+                <h2 className="font-headline text-sm md:text-base font-bold text-ink">
+                  {t.noProgrammeTitle}
+                </h2>
                 <p className="font-body text-xs text-slate-600">{t.noProgrammeBody}</p>
                 <button
                   type="button"
@@ -350,18 +443,29 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
               style={{ width: `calc((100% - 4rem) * ${lineFill / 100})` }}
             />
             {steps.map((step) => (
-              <div key={step.key} className="relative z-10 flex flex-col items-center w-24 text-center">
+              <div
+                key={step.key}
+                className="relative z-10 flex flex-col items-center w-24 text-center"
+              >
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center shadow-xs ${
-                    step.done ? "bg-primary text-white" : "bg-paper text-slate-500 border border-border-slate"
+                    step.done
+                      ? "bg-primary text-white"
+                      : "bg-paper text-slate-500 border border-border-slate"
                   }`}
                 >
-                  <span className="material-symbols-outlined text-[20px]">{step.done ? "check" : step.icon}</span>
+                  <span className="material-symbols-outlined text-[20px]">
+                    {step.done ? "check" : step.icon}
+                  </span>
                 </div>
-                <span className={`font-label-md text-xs font-bold mt-2 ${step.done ? "text-ink" : "text-slate-500"}`}>
+                <span
+                  className={`font-label-md text-xs font-bold mt-2 ${step.done ? "text-ink" : "text-slate-500"}`}
+                >
                   {t.steps[step.key]}
                 </span>
-                {step.detail && <span className="font-metric-mono text-[11px] text-slate-500">{step.detail}</span>}
+                {step.detail && (
+                  <span className="font-metric-mono text-[11px] text-slate-500">{step.detail}</span>
+                )}
               </div>
             ))}
           </div>
@@ -373,7 +477,9 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
         <div className="lg:col-span-7 flex flex-col gap-4">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-primary text-[22px]">menu_book</span>
-            <h2 className="font-headline text-lg md:text-xl text-ink font-bold">{t.myProgrammes}</h2>
+            <h2 className="font-headline text-lg md:text-xl text-ink font-bold">
+              {t.myProgrammes}
+            </h2>
           </div>
           <div className="w-full bg-surface-container-lowest rounded-2xl shadow-xs border border-border-slate divide-y divide-border-slate/60">
             {nominations === null ? (
@@ -397,7 +503,9 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
                       {nom.programmes?.title ?? "—"}
                     </span>
                     <span className="font-metric-mono text-[11px] text-slate-500 capitalize">
-                      {[nom.programmes?.mode, formatDate(nom.nominated_at)].filter(Boolean).join(" · ")}
+                      {[nom.programmes?.mode, formatDate(nom.nominated_at)]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -424,8 +532,12 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
 
         <div className="lg:col-span-5 flex flex-col gap-4">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-secondary text-[22px]">event_available</span>
-            <h2 className="font-headline text-lg md:text-xl text-ink font-bold">{t.upcomingSession}</h2>
+            <span className="material-symbols-outlined text-secondary text-[22px]">
+              event_available
+            </span>
+            <h2 className="font-headline text-lg md:text-xl text-ink font-bold">
+              {t.upcomingSession}
+            </h2>
           </div>
           <div className="w-full bg-surface-container-lowest rounded-2xl shadow-xs p-5 md:p-6 flex flex-col gap-4 border border-border-slate">
             {nextSession ? (
@@ -437,23 +549,37 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
                   <h3 className="font-headline text-base md:text-lg text-ink font-bold">
                     {nextSession.title ?? currentProgramme?.programmes?.title}
                   </h3>
+                  {nextSession.course_title && (
+                    <span className="font-body text-sm text-slate-600 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[16px] text-primary">
+                        menu_book
+                      </span>
+                      {nextSession.course_title}
+                    </span>
+                  )}
                   {nextSession.location && (
                     <span className="font-body text-sm text-slate-600 flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[16px] text-primary">location_on</span>
+                      <span className="material-symbols-outlined text-[16px] text-primary">
+                        location_on
+                      </span>
                       {nextSession.location}
                     </span>
                   )}
                 </div>
                 <div className="p-4 rounded-xl bg-paper border border-border-slate flex flex-col gap-2.5">
                   <span className="font-label-md text-sm font-bold text-ink">{t.checkIn}</span>
-                  {!nextSessionStarted && <p className="font-body text-xs text-slate-600">{t.checkInHint}</p>}
+                  {!nextSessionStarted && (
+                    <p className="font-body text-xs text-slate-600">{t.checkInHint}</p>
+                  )}
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => onNavigate("attendance")}
                       className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-surface-container-lowest border border-border-slate text-ink font-label-md text-xs font-bold hover:bg-surface-container"
                     >
-                      <span className="material-symbols-outlined text-[17px] text-accent">qr_code_scanner</span>
+                      <span className="material-symbols-outlined text-[17px] text-accent">
+                        qr_code_scanner
+                      </span>
                       <span>{t.scanQr}</span>
                     </button>
                     <button
@@ -479,7 +605,9 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <h2 className="font-headline text-xl md:text-2xl text-ink font-bold">{t.jobMatchesTitle}</h2>
+              <h2 className="font-headline text-xl md:text-2xl text-ink font-bold">
+                {t.jobMatchesTitle}
+              </h2>
               {interests.length > 0 && (
                 <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-metric-mono text-xs font-bold border border-emerald-200">
                   {t.shortlistedBadge(interests.length)}
@@ -511,7 +639,9 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
                 className="bg-surface-container-lowest p-5 rounded-2xl shadow-xs border border-border-slate flex flex-col justify-between gap-3"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-headline text-sm font-bold text-ink leading-tight">{job.title}</h3>
+                  <h3 className="font-headline text-sm font-bold text-ink leading-tight">
+                    {job.title}
+                  </h3>
                   <span className="shrink-0 px-2.5 py-0.5 rounded-full bg-blue-50 text-primary border border-blue-200 font-metric-mono text-xs font-bold">
                     {t.match(Math.round(job.similarity * 100))}
                   </span>
@@ -525,7 +655,10 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
                 {job.required_skills && job.required_skills.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {job.required_skills.slice(0, 4).map((skill) => (
-                      <span key={skill} className="px-2 py-0.5 rounded bg-paper border border-border-slate text-[11px] text-ink">
+                      <span
+                        key={skill}
+                        className="px-2 py-0.5 rounded bg-paper border border-border-slate text-[11px] text-ink"
+                      >
                         {skill}
                       </span>
                     ))}
