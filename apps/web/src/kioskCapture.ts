@@ -48,6 +48,18 @@ export function normalizeCamBase(camUrl: string): string {
  * the caller decides whether to retry.
  */
 /**
+ * Fetch options for every request to a kiosk board. `targetAddressSpace:
+ * "local"` is Chrome/Edge's Local Network Access opt-in: after the user
+ * clicks "Allow" on the browser's local-network prompt, it lets this HTTPS
+ * site reach the boards' plain-HTTP `.local` addresses, which mixed-content
+ * rules otherwise block outright. Verified in Chrome 153 against a
+ * `.local` name advertised over mDNS on a 192.168.x address, the same way
+ * the ESP32 boards advertise themselves. Browsers without Local Network
+ * Access ignore the unknown field.
+ */
+export const KIOSK_FETCH_INIT = { targetAddressSpace: "local" } as RequestInit;
+
+/**
  * True when this page is HTTPS but the kiosk boards speak plain HTTP (an
  * ESP32 can't do TLS): browsers silently block that as mixed content, so the
  * boards can never be reached from the deployed site. See useKioskReader.ts.
@@ -63,7 +75,7 @@ export function kioskBlockedByHttps(boardUrl: string): boolean {
 export function kioskUnreachableMessage(device: "reader" | "camera", boardUrl: string): string {
   const name = device === "reader" ? "NFC reader" : "camera";
   if (kioskBlockedByHttps(boardUrl)) {
-    return `The browser blocked the ${name}: this page is open over HTTPS, and the ${name} only speaks plain HTTP. Open the kiosk on the kiosk computer at http://localhost:5173 instead.`;
+    return `Can't reach the ${name}. Make sure it's switched on and on the same Wi-Fi as this computer, and that this site is allowed to access your local network (in Chrome or Edge: click the icon left of the address bar → Local network access → Allow, then reload).`;
   }
   const host = boardUrl.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
   return `Can't reach the ${name} at ${host}. Check it's switched on and connected to the same Wi-Fi as this computer.`;
@@ -78,6 +90,7 @@ export async function captureFrame(
   let res: Response;
   try {
     res = await fetch(`${normalizeCamBase(camUrl)}/capture`, {
+      ...KIOSK_FETCH_INIT,
       cache: "no-store",
       signal: controller.signal,
     });

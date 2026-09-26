@@ -841,3 +841,23 @@ These values are 0 on Android, which gets real margins instead, so nothing is ad
 **Other fixes:**
 - **Chat button:** the trainee chat button and panel sit above the phone tab bar instead of covering the Career tab.
 - **Wide tables:** a shared `.stack-on-phone` style (in `index.css`) shows each table row as a card below 768 px, with each cell's column name from its `data-label`. Applied to the admin user directory and the employer trainee search, whose email, role, action and shortlist columns were previously off-screen. Desktop is unchanged.
+
+### 74. Kiosk Terminal works from the deployed HTTPS site via Chrome/Edge Local Network Access (amends #40 and the http://localhost-only constraint in useKioskReader.ts)
+
+**Problem:** The ESP32 reader and camera serve plain HTTP, so the Kiosk Terminal could only run from `http://localhost` on the kiosk PC. From the deployed `https://` site, the browser blocked every board request as mixed content ("Failed to fetch").
+
+**Decision:** Every kiosk-board request now carries `targetAddressSpace: "local"` (`KIOSK_FETCH_INIT` in `kioskCapture.ts`). That is Chrome/Edge's Local Network Access opt-in: after the user clicks "Allow" on the browser's local-network prompt, a secure page may reach plain-HTTP private-network `.local` hosts.
+
+**Verified** in Chrome 153 from the live site's origin against a stand-in board, advertised over mDNS as `edutest-board.local` → `192.168.1.19`, the same way the ESP32s advertise themselves:
+- `GET /events` → 200
+- `POST /command` → 200
+- `GET /capture` → 200
+- Without the permission, the same request is blocked.
+
+Both firmwares already send `Access-Control-Allow-Origin: *`, so no reflashing is needed.
+
+**Screen guidance:** the Kiosk screen tells staff to use Chrome or Edge on the boards' Wi-Fi and to click Allow; the unreachable-board error says how to re-enable the permission if it was dismissed.
+
+**Limits:**
+- Firefox and Safari don't implement Local Network Access, so there the kiosk still needs `http://localhost`.
+- The phone app's WebView can't show the prompt, so the kiosk remains a desktop-browser screen.

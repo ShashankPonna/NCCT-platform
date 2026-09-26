@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { kioskUnreachableMessage } from "./kioskCapture.js";
+import { KIOSK_FETCH_INIT, kioskUnreachableMessage } from "./kioskCapture.js";
 
 // HTTP-polling replacement for the old Web Serial connection (useKioskSerial.ts,
 // removed). The DevKit no longer has a USB cable to the kiosk PC at all — it
@@ -68,7 +68,11 @@ export function useKioskReader(readerUrl: string, onLine: (line: string) => void
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), POLL_TIMEOUT_MS);
       try {
-        const res = await fetch(`${base}/events`, { cache: "no-store", signal: controller.signal });
+        const res = await fetch(`${base}/events`, {
+          ...KIOSK_FETCH_INIT,
+          cache: "no-store",
+          signal: controller.signal,
+        });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const text = (await res.text()).trim();
         setError(null);
@@ -120,7 +124,7 @@ export function useKioskReader(readerUrl: string, onLine: (line: string) => void
     const base = normalizeBase(urlRef.current);
     if (!base) return;
     try {
-      const res = await fetch(`${base}/command`, { method: "POST", body: line });
+      const res = await fetch(`${base}/command`, { ...KIOSK_FETCH_INIT, method: "POST", body: line });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
     } catch (err) {
       setError(

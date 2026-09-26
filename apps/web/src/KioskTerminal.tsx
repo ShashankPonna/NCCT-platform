@@ -257,16 +257,17 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
         </p>
       </div>
 
-      {/* Shown up front, before Start: from an HTTPS page (the deployed site,
-          or the phone app) the browser blocks the plain-HTTP boards outright,
-          so this screen can only work when opened locally on the kiosk PC. */}
+      {/* Shown up front on HTTPS (the deployed site): the plain-HTTP boards are
+          reachable only through Chrome/Edge's Local Network Access permission
+          (see KIOSK_FETCH_INIT), so staff need to know to click "Allow". */}
       {kioskBlockedByHttps(READER_URL) && (
         <div className="bg-status-pending/10 text-on-surface p-4 rounded-xl flex items-start gap-3 border border-status-pending/40">
-          <span className="material-symbols-outlined text-status-pending">warning</span>
+          <span className="material-symbols-outlined text-status-pending">info</span>
           <p className="font-body-md text-body-md m-0">
-            The kiosk can't work from this address. The NFC reader and camera only speak plain HTTP, which the
-            browser blocks on a secure (https://) page. On the kiosk computer, run the web app locally and open{" "}
-            <strong>http://localhost:5173</strong>, on the same Wi-Fi as the reader and camera.
+            Use <strong>Chrome or Edge</strong> on a computer connected to the <strong>same Wi-Fi</strong> as the
+            NFC reader and camera. When you press Start, the browser asks to let this site access devices on your
+            local network: click <strong>Allow</strong>. If you dismissed that prompt, click the icon left of the
+            address bar → Local network access → Allow, then reload.
           </p>
         </div>
       )}

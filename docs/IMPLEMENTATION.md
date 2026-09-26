@@ -2,7 +2,11 @@
 
 **This is a living document.** Update it whenever a significant feature, fix, or implementation change lands — see `CLAUDE.md`'s Development Workflow. It tracks _status_, not requirements or design: for what to build see [PRD.md](PRD.md), for how see [ARCHITECTURE.md](ARCHITECTURE.md)/[DATABASE.md](DATABASE.md)/[DECISIONS.md](DECISIONS.md). Nothing here duplicates their content beyond a one-line restatement per feature.
 
-Last updated: 2026-09-26 (37) (**Kiosk Terminal: clear errors instead of 'Failed to fetch'.**
+Last updated: 2026-09-26 (38) (**Kiosk Terminal now works from the live HTTPS site in Chrome/Edge** (DECISIONS.md #74).
+- Board requests opt into Local Network Access (`targetAddressSpace: "local"`), so after staff click Allow on the browser prompt the plain-HTTP ESP32 boards are reachable.
+- Verified in Chrome 153 from the live origin against an mDNS `.local` stand-in board: the reader poll, command POST and camera capture all return 200. It stays blocked without the permission.
+- No firmware change needed, since both boards already send CORS headers.
+- Kiosk-screen guidance updated to match. Previous: 2026-09-26 (37) (**Kiosk Terminal: clear errors instead of 'Failed to fetch'.**
 - **Why it happens:** the ESP32 reader and camera speak plain HTTP, so from any HTTPS page (the deployed site, or the phone app's https://localhost) the browser blocks them as mixed content (the long-standing constraint noted in `useKioskReader.ts`). On a network without the boards, the `.local` lookup times out.
 - **Up-front warning:** the screen now warns before Start when opened over HTTPS, and says to use `http://localhost:5173` on the kiosk PC.
 - **Clearer errors:** timeouts and network failures now read "Can't reach the NFC reader/camera at <host>. Check it's switched on and on the same Wi-Fi".
