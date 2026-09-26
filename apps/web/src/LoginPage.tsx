@@ -55,24 +55,11 @@ export function LoginPage({ error, onBack }: LoginPageProps) {
         </div>
       </main>
 
-      {/* Clean, minimal footer */}
-      <footer className="w-full max-w-5xl mx-auto py-4 text-center text-xs text-brand-muted flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-slate-100">
-        <div>
-          © 2025 EduDisha. All rights reserved.
-        </div>
-        <div className="flex items-center gap-4 text-[11px]">
-          <a className="hover:text-brand-primary transition-colors" href="#help">
-            Security Policy
-          </a>
-          <span className="text-slate-300">•</span>
-          <a className="hover:text-brand-primary transition-colors" href="#help">
-            Help &amp; Support
-          </a>
-          <span className="text-slate-300">•</span>
-          <a className="hover:text-brand-primary transition-colors" href="#help">
-            Privacy Notice
-          </a>
-        </div>
+      {/* Clean, minimal footer. The Security Policy / Help / Privacy links
+          that used to sit here all pointed at "#help" and went nowhere, so
+          they were removed (same rule as DECISIONS.md #67). */}
+      <footer className="w-full max-w-5xl mx-auto py-4 text-center text-xs text-brand-muted border-t border-slate-100">
+        © {new Date().getFullYear()} EduDisha. All rights reserved.
       </footer>
     </div>
   );

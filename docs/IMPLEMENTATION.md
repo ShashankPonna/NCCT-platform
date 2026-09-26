@@ -2,7 +2,16 @@
 
 **This is a living document.** Update it whenever a significant feature, fix, or implementation change lands — see `CLAUDE.md`'s Development Workflow. It tracks _status_, not requirements or design: for what to build see [PRD.md](PRD.md), for how see [ARCHITECTURE.md](ARCHITECTURE.md)/[DATABASE.md](DATABASE.md)/[DECISIONS.md](DECISIONS.md). Nothing here duplicates their content beyond a one-line restatement per feature.
 
-Last updated: 2026-09-26 (33) (**Certificate redesigned** to the approved Stitch design (DECISIONS.md #69).
+Last updated: 2026-09-26 (34) (EduDisha brand verification + fresh dataset).
+- **Database wiped and reseeded** at the user's request: backed up first; 25 people created through the real API (2 admins, 4 trainers, 4 employers, 15 trainees including Soham Patil and Shashank Ponna); 5 programmes; real verified YouTube lessons replacing the old `dQw4w9WgXcQ` placeholder; 8 genuine certificates.
+- **Brand check:**
+  - Every screen for all four roles, plus the public home, verify, profile and login pages, was swept in headless Chrome at desktop and phone sizes in both themes, looking for 'COOP-NET' / 'Sahakar Utkarsh' text and a visible 'EduDisha'. All clean.
+  - A live certificate PDF shows EduDisha branding and `EDU-` codes.
+  - README title and root package name were renamed; seeded demo emails moved to `@edudisha.test`.
+  - The stale mobile bundles were rebuilt and re-synced, and the APK was rebuilt (0 old-brand strings).
+- **Login page:** removed three dead footer links (all pointed at `#help`); the copyright year is no longer hardcoded as 2025.
+- **Known, not changed:** the Render domain `ncct-platform-1.onrender.com` is still the old service name, and it's printed on certificates and QR codes. Renaming it needs a Render-side change plus `PUBLIC_WEB_URL`.
+Previous: 2026-09-26 (33) (**Certificate redesigned** to the approved Stitch design (DECISIONS.md #69).
 - Rebuilt in PDFKit, with measurements mapped 1:1 from the design.
 - New bundled fonts: JetBrains Mono, and Noto Sans Devanagari for 'सहकार उत्कर्ष' (shaping verified by rasterising the PDF).
 - The fake seal and the 'Govt of India' footnote were removed.

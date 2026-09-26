@@ -1,4 +1,4 @@
-# COOP-NET · NCCT Cooperative Training Platform
+# EduDisha · Cooperative Training & Employment Platform
 
 An AI-enabled digital ecosystem for cooperative training institutions (NCCT / VAMNICOM / RICM / ICM): a **training ERP + e-learning platform** for trainers and trainees, plus a **skill-certification and employment exchange** that connects trained rural youth with cooperative employers.
 

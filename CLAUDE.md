@@ -4,7 +4,7 @@ Persistent instructions for Claude Code working in this repository. Keep this fi
 
 ## Project Overview
 
-An AI-enabled digital ecosystem for cooperative training institutions (NCCT / VAMNICOM / RICM / ICM): a training ERP + e-learning platform for trainers/trainees, plus a skill-certification and employment exchange for trained rural youth. Full detail: [docs/PRD.md](docs/PRD.md).
+**EduDisha** (the product's public name — see [docs/DECISIONS.md](docs/DECISIONS.md) #70): an AI-enabled digital ecosystem for cooperative training institutions (NCCT / VAMNICOM / RICM / ICM): a training ERP + e-learning platform for trainers/trainees, plus a skill-certification and employment exchange for trained rural youth. Full detail: [docs/PRD.md](docs/PRD.md).
 
 ## Tech Stack
 
