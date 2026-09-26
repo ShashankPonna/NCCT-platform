@@ -25,7 +25,11 @@ const MAX_TOOL_TURNS = 6;
 // tool is implicitly scoped to whoever is asking. Job/programme ids are
 // not sensitive (the catalog is browsable to any authenticated user
 // already, per programmes_read_authenticated / jobs_public_read).
-const TOOL_DECLARATIONS: { name: string; description: string; parametersJsonSchema: Record<string, unknown> }[] = [
+const TOOL_DECLARATIONS: {
+  name: string;
+  description: string;
+  parametersJsonSchema: Record<string, unknown>;
+}[] = [
   {
     name: "get_my_profile",
     description: "The caller's own name and cooperative/PACS affiliation.",
@@ -33,12 +37,14 @@ const TOOL_DECLARATIONS: { name: string; description: string; parametersJsonSche
   },
   {
     name: "list_my_certificates",
-    description: "Certificates the caller has already earned — one per completed course — with the course, programme and institution each came from.",
+    description:
+      "Certificates the caller has already earned — one per completed course — with the course, programme and institution each came from.",
     parametersJsonSchema: { type: "object", properties: {} },
   },
   {
     name: "list_my_nominations",
-    description: "Programmes the caller has been nominated/enrolled for and each nomination's status (pending/approved/waitlisted/rejected).",
+    description:
+      "Programmes the caller has been nominated/enrolled for and each nomination's status (pending/approved/waitlisted/rejected).",
     parametersJsonSchema: { type: "object", properties: {} },
   },
   {
@@ -47,7 +53,11 @@ const TOOL_DECLARATIONS: { name: string; description: string; parametersJsonSche
     parametersJsonSchema: {
       type: "object",
       properties: {
-        mode: { type: "string", enum: ["online", "offline", "hybrid"], description: "Optional delivery mode filter." },
+        mode: {
+          type: "string",
+          enum: ["online", "offline", "hybrid"],
+          description: "Optional delivery mode filter.",
+        },
       },
     },
   },
@@ -67,7 +77,9 @@ const TOOL_DECLARATIONS: { name: string; description: string; parametersJsonSche
       "For one job (by id, from list_open_jobs), which of its required skills the caller already has vs. still needs.",
     parametersJsonSchema: {
       type: "object",
-      properties: { job_id: { type: "string", description: "A job id returned by list_open_jobs." } },
+      properties: {
+        job_id: { type: "string", description: "A job id returned by list_open_jobs." },
+      },
       required: ["job_id"],
     },
   },
@@ -75,7 +87,11 @@ const TOOL_DECLARATIONS: { name: string; description: string; parametersJsonSche
 
 const TOOLS: GroqTool[] = TOOL_DECLARATIONS.map((tool) => ({
   type: "function",
-  function: { name: tool.name, description: tool.description, parameters: tool.parametersJsonSchema },
+  function: {
+    name: tool.name,
+    description: tool.description,
+    parameters: tool.parametersJsonSchema,
+  },
 }));
 
 const LIST_LIMIT = 20;
@@ -98,7 +114,9 @@ async function executeTool(
     case "list_my_certificates": {
       const { data, error } = await supabaseAdmin
         .from("certificates")
-        .select("certificate_code, issued_at, courses(title), programmes(title), institutions(name)")
+        .select(
+          "certificate_code, issued_at, courses(title), programmes(title), institutions(name)",
+        )
         .eq("trainee_id", traineeId)
         .order("issued_at", { ascending: false })
         .limit(LIST_LIMIT);

@@ -26,7 +26,10 @@ vi.mock("./skillGapService.js", () => ({ getSkillGap: getSkillGapMock }));
 const TRAINEE_ID = "trainee-1";
 
 beforeEach(() => {
-  tableData.profiles = { data: { full_name: "Test Trainee", cooperative_affiliation: null }, error: null };
+  tableData.profiles = {
+    data: { full_name: "Test Trainee", cooperative_affiliation: null },
+    error: null,
+  };
   tableData.certificates = { data: [], error: null };
   tableData.nominations = { data: [], error: null };
   tableData.programmes = { data: [], error: null };
@@ -93,7 +96,10 @@ describe("askCareerCounsellor", () => {
       chat: chatMock,
     });
 
-    expect(result.toolCalls.map((c) => c.tool)).toEqual(["list_my_certificates", "list_my_nominations"]);
+    expect(result.toolCalls.map((c) => c.tool)).toEqual([
+      "list_my_certificates",
+      "list_my_nominations",
+    ]);
   });
 
   it("routes get_my_skill_gap_for_job through skillGapService.getSkillGap", async () => {
@@ -101,7 +107,9 @@ describe("askCareerCounsellor", () => {
     const chatMock = vi
       .fn()
       .mockResolvedValueOnce(
-        toolCallResponse([{ id: "c1", name: "get_my_skill_gap_for_job", args: { job_id: "job-1" } }]),
+        toolCallResponse([
+          { id: "c1", name: "get_my_skill_gap_for_job", args: { job_id: "job-1" } },
+        ]),
       )
       .mockResolvedValueOnce(textResponse("You're missing one skill."));
 
@@ -151,7 +159,9 @@ describe("askCareerCounsellor", () => {
     expect(chatMock).toHaveBeenCalledTimes(7);
     expect(result.toolCalls).toHaveLength(6);
     // The forced call tells the model tools are exhausted.
-    const finalMessages = (chatMock.mock.calls[6][0] as { messages: { role: string; content: string }[] }).messages;
+    const finalMessages = (
+      chatMock.mock.calls[6][0] as { messages: { role: string; content: string }[] }
+    ).messages;
     expect(finalMessages.at(-1)).toMatchObject({ role: "user" });
     expect(finalMessages.at(-1)?.content).toContain("No more tools");
   });
@@ -160,7 +170,9 @@ describe("askCareerCounsellor", () => {
     const chatMock = vi.fn((params: { tools?: unknown }) =>
       params.tools
         ? Promise.resolve(toolCallResponse([{ id: "loop", name: "get_my_profile", args: {} }]))
-        : Promise.reject(new Error("Groq API error 400: Tool choice is none, but model called a tool")),
+        : Promise.reject(
+            new Error("Groq API error 400: Tool choice is none, but model called a tool"),
+          ),
     );
 
     const result = await askCareerCounsellor(TRAINEE_ID, "keep asking", { chat: chatMock });
@@ -188,7 +200,9 @@ describe("askCareerCounsellor", () => {
 
     await askCareerCounsellor(TRAINEE_ID, "who am I?", { chat: chatMock });
 
-    const secondTurn = chatMock.mock.calls[1][0] as { messages: { role: string; tool_call_id?: string; content: string }[] };
+    const secondTurn = chatMock.mock.calls[1][0] as {
+      messages: { role: string; tool_call_id?: string; content: string }[];
+    };
     const toolMessage = secondTurn.messages.find((m) => m.role === "tool");
     expect(toolMessage?.tool_call_id).toBe("call-9");
     expect(JSON.parse(toolMessage!.content)).toEqual({
@@ -201,13 +215,22 @@ describe("askCareerCounsellor", () => {
       .fn()
       .mockResolvedValueOnce({
         content: null,
-        tool_calls: [{ id: "c1", type: "function", function: { name: "get_my_skill_gap_for_job", arguments: "{not json" } }],
+        tool_calls: [
+          {
+            id: "c1",
+            type: "function",
+            function: { name: "get_my_skill_gap_for_job", arguments: "{not json" },
+          },
+        ],
       })
       .mockResolvedValueOnce(textResponse("Which job?"));
 
     const result = await askCareerCounsellor(TRAINEE_ID, "am I ready?", { chat: chatMock });
 
-    expect(result).toEqual({ answer: "Which job?", toolCalls: [{ tool: "get_my_skill_gap_for_job", args: {} }] });
+    expect(result).toEqual({
+      answer: "Which job?",
+      toolCalls: [{ tool: "get_my_skill_gap_for_job", args: {} }],
+    });
     expect(getSkillGapMock).not.toHaveBeenCalled();
   });
 });

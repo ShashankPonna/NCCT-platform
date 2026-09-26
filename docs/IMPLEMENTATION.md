@@ -2,7 +2,21 @@
 
 **This is a living document.** Update it whenever a significant feature, fix, or implementation change lands — see `CLAUDE.md`'s Development Workflow. It tracks _status_, not requirements or design: for what to build see [PRD.md](PRD.md), for how see [ARCHITECTURE.md](ARCHITECTURE.md)/[DATABASE.md](DATABASE.md)/[DECISIONS.md](DECISIONS.md). Nothing here duplicates their content beyond a one-line restatement per feature.
 
-Last updated: 2026-09-26 (31) (SIH-submission readiness pass. **Live end-to-end API walkthrough, 46/46 checks passed** against the real API and database on throwaway accounts that the run then deleted: every feature as every role, plus 401/403 gates, answer-key hiding, server-side re-grading of a tampered score, attempt limits, duplicate-nomination/check-in 409s, early check-in 400, the hidden-trainee employer 403, the public-profile opt-in 404, Excel/PDF byte checks and notification fan-out. **Headless-Chrome sweep** (CDP, nothing installed) of every nav tab for admin/trainer/employer/trainee plus the public landing and verify pages, at desktop and phone sizes in both themes, checking for JS exceptions, failed API calls, error text, horizontal overflow and low text contrast. It found and fixed:
+Last updated: 2026-09-26 (32) (**AI Career Counsellor and skill-gap ranking moved to Groq** (DECISIONS.md #68): the counsellor had been 503 in every environment because no Gemini key existed anywhere. Now one `GROQ_API_KEY` powers the chatbot, counsellor and ranking through a shared `groqClient.ts`; `@google/genai` removed. Live-verified with demo trainee Asha Patil:
+- A five-lookup question ('which programme next, and am I ready for any open job?') answered via 3–4 tool calls.
+- A certificates question named the real courses.
+- A Hindi question was answered in Hindi.
+- The ranking returned valid JSON on gpt-oss-20b.
+Fixes found during the live check:
+- The tool-turn cap was raised from 4 to 6.
+- The forced final answer can no longer 400.
+- A single retry after a short 429.
+- The course title added to the certificates tool.
+646 API tests (13 new: groqClient unit tests, tool-message round-trip, malformed tool args, forced-call fallback, JSON-mode and model checks). Also: **trainee 'My Marks' card redesigned** (`trainee/CourseMarksTally.tsx`):
+- Score ring, lesson and module-test progress bars.
+- Per-test cards with a status pill, a score bar with a pass-mark tick, and attempts used out of the maximum.
+- Themed for light and dark; checked in headless Chrome at desktop and phone sizes.
+- Fixed a contradiction: the card used to say 'Complete all lessons… to earn the certificate' next to 'Certificate issued' when tests were added after issuance. An issued certificate now takes precedence, and otherwise the card says exactly how many lessons and tests remain. Previous: 2026-09-26 (31) (SIH-submission readiness pass. **Live end-to-end API walkthrough, 46/46 checks passed** against the real API and database on throwaway accounts that the run then deleted: every feature as every role, plus 401/403 gates, answer-key hiding, server-side re-grading of a tampered score, attempt limits, duplicate-nomination/check-in 409s, early check-in 400, the hidden-trainee employer 403, the public-profile opt-in 404, Excel/PDF byte checks and notification fan-out. **Headless-Chrome sweep** (CDP, nothing installed) of every nav tab for admin/trainer/employer/trainee plus the public landing and verify pages, at desktop and phone sizes in both themes, checking for JS exceptions, failed API calls, error text, horizontal overflow and low text contrast. It found and fixed:
 - Four more fake admin-dashboard trend lines ("+12% vs last period" and so on); they now show real facts from the same payload (mode split, issued this month, certified of approved, employer shortlists). Extends DECISIONS.md #67.
 - Broken dark mode on the admin/trainer management screens: hardcoded `bg-white` cards and `#00236F` navy text rendered as white blocks and unreadable headings. Swapped for theme tokens (`bg-surface-card`, `text-primary`, `hover:bg-surface-container`) across 10 files, keeping the QR-code panel and PDF preview white on purpose.
 - An invisible "Sort by" select on the employer screen, and a near-black "online" mode colour.

@@ -743,3 +743,21 @@ Verified live against the real database, as each role, that every API call the r
 Both files were validated (`plutil -lint`, XML parse). Web rebuilt; `npx cap sync android` and `npx cap copy ios` run (iOS `sync`'s CocoaPods step needs full Xcode, which this machine lacks — `copy` delivers the same web assets). A check of the synced bundles in both platforms confirmed the new UI strings are present and every removed fake is absent. The only match, "98765 43210", is the input placeholder showing the phone-number format in two forms, not a claim. Not verified on a device or emulator.
 
 **Addendum (2026-09-26, SIH readiness sweep):** a later headless-browser pass found four more #67-class fakes that the first audit missed: the admin dashboard's stat-tile footers ("+12% / +5.4% / +24% vs last period", "Stable vs last period") were hardcoded strings. There is no period-over-period data behind them, and computing a real trend would need history the analytics payload doesn't carry. So they were replaced, under the same rule, with real facts from the payload the tiles already receive: programmes by mode, certificates issued this calendar month, certified out of approved trainees, and total employer shortlist actions.
+
+### 68. AI Career Counsellor and skill-gap ranking moved from Gemini to Groq — one AI key for the whole platform (amends #27)
+
+**Decision:** F12's career counsellor (tool-calling loop) and P1's "what to learn first" ranking now call Groq, like F7's chatbot already did since #35. All three share one helper, `apps/api/src/groqClient.ts`: a single fetch to Groq's OpenAI-compatible endpoint, with model, defaults and error handling in one place. The `@google/genai` dependency and `GEMINI_API_KEY` are gone.
+
+**Why:** No Gemini key was configured anywhere, locally or on Render, so the counsellor returned 503 in every environment and the ranking silently never appeared. Groq was already provisioned and working for the chatbot. Running a second provider for the same capability doubled the setup burden for no benefit.
+
+**How:**
+- The counsellor keeps its six read-only tools, still always scoped to the server-verified caller, and its grounding rules. It moved from Gemini function calling to OpenAI-style `tools` / `tool_calls` / `role: "tool"` messages on `openai/gpt-oss-120b`.
+- The ranking uses JSON mode (`response_format: json_object`) with the shape pinned in the prompt. The existing validation still drops any invented `skill_id`.
+
+**Found live, not assumed:**
+- **The 4-turn tool cap was too small.** gpt-oss requests one tool per turn, and a broad question ("what next, and am I job-ready?") needs about five lookups, so the cap is now 6.
+- **The forced final answer could fail.** Once the cap was hit, the model could still attempt a tool call, which Groq rejects with a 400 ("Tool choice is none, but model called a tool"). The model is now told plainly that tools are finished, and a failure there returns the fallback answer instead of a 503.
+- **Groq's free tier caps gpt-oss-120b at 8,000 tokens/minute**, which back-to-back counsellor questions exhaust. `groqChat` now retries once after a 429 when the `retry-after` wait is at most 10 s. The ranking moved to `openai/gpt-oss-20b`, which has its own per-model budget, so it doesn't compete with the chatbot and counsellor.
+- **The certificates tool returned only the programme title**, so two course certificates from one programme looked like duplicates. It now includes the course title.
+
+**Security:** `GROQ_API_KEY` is server-side only. The web app never calls Groq and must not be given the key: Vite inlines any referenced `VITE_*` variable into the public bundle.

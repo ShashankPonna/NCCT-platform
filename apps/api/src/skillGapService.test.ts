@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { findRelatedSkills, getSkillGap, getSkillGapAcrossJobs, rankMissingSkills } from "./skillGapService.js";
+import {
+  findRelatedSkills,
+  getSkillGap,
+  getSkillGapAcrossJobs,
+  rankMissingSkills,
+} from "./skillGapService.js";
 
 const { fromMock, tableData, embedTextMock, matchJobsForTraineeMock } = vi.hoisted(() => {
   const tableData: Record<string, { data: unknown; error: unknown }> = {};
@@ -33,6 +38,7 @@ vi.mock("./supabaseClient.js", () => ({ supabaseAdmin: { from: fromMock } }));
 // chatbotService.test.ts's comment on mocking @huggingface/transformers
 // already flags for the embedding model.
 vi.mock("./groqClient.js", () => ({
+  GROQ_SMALL_MODEL: "openai/gpt-oss-20b",
   groqChat: vi.fn().mockRejectedValue(new Error("no API key in test env")),
 }));
 
@@ -74,7 +80,10 @@ describe("getSkillGap", () => {
   });
 
   it("splits required skills into acquired vs. gap based on certified programmes", async () => {
-    tableData.certificates = { data: [{ programme_id: "programme-1", course_id: null }], error: null };
+    tableData.certificates = {
+      data: [{ programme_id: "programme-1", course_id: null }],
+      error: null,
+    };
     tableData.programme_skills = { data: [{ skill_id: SKILL_A.id, skills: SKILL_A }], error: null };
     tableData.job_skills = {
       data: [
@@ -112,9 +121,15 @@ describe("getSkillGap", () => {
     // is the real state of any project that hasn't applied migration
     // 20260901000017 yet — the already-shipped programme-level gap check
     // must keep working exactly as before, not start failing.
-    tableData.certificates = { data: [{ programme_id: "programme-1", course_id: "course-1" }], error: null };
+    tableData.certificates = {
+      data: [{ programme_id: "programme-1", course_id: "course-1" }],
+      error: null,
+    };
     tableData.programme_skills = { data: [{ skill_id: SKILL_A.id, skills: SKILL_A }], error: null };
-    tableData.course_skills = { data: null, error: { code: "PGRST205", message: "table not found" } };
+    tableData.course_skills = {
+      data: null,
+      error: { code: "PGRST205", message: "table not found" },
+    };
     tableData.job_skills = {
       data: [
         { skill_id: SKILL_A.id, skills: SKILL_A },
@@ -130,8 +145,14 @@ describe("getSkillGap", () => {
   });
 
   it("still propagates a genuine course_skills query error (not the missing-table case)", async () => {
-    tableData.certificates = { data: [{ programme_id: "programme-1", course_id: "course-1" }], error: null };
-    tableData.course_skills = { data: null, error: { code: "42501", message: "permission denied" } };
+    tableData.certificates = {
+      data: [{ programme_id: "programme-1", course_id: "course-1" }],
+      error: null,
+    };
+    tableData.course_skills = {
+      data: null,
+      error: { code: "42501", message: "permission denied" },
+    };
     await expect(getSkillGap("trainee-1", "job-1")).rejects.toThrow("permission denied");
   });
 });
@@ -161,7 +182,12 @@ describe("rankMissingSkills", () => {
     });
 
     expect(result).toEqual([
-      { rank: 1, skill_id: SKILL_B.id, skill_name: SKILL_B.name, reason: "Needed before Bookkeeping" },
+      {
+        rank: 1,
+        skill_id: SKILL_B.id,
+        skill_name: SKILL_B.name,
+        reason: "Needed before Bookkeeping",
+      },
       { rank: 2, skill_id: SKILL_A.id, skill_name: SKILL_A.name, reason: "Builds on Tally" },
     ]);
   });
@@ -178,6 +204,7 @@ describe("rankMissingSkills", () => {
     const chatMock = vi.fn().mockResolvedValue({ content: JSON.stringify({ ranking: [] }) });
     await rankMissingSkills([SKILL_A], { chat: chatMock });
     expect(chatMock.mock.calls[0][0].response_format).toEqual({ type: "json_object" });
+    expect(chatMock.mock.calls[0][0].model).toBe("openai/gpt-oss-20b");
   });
 
   it("degrades to null when the JSON has no ranking array", async () => {
@@ -208,7 +235,9 @@ describe("rankMissingSkills", () => {
       chat: chatMock,
     });
 
-    expect(result).toEqual([{ rank: 1, skill_id: SKILL_A.id, skill_name: SKILL_A.name, reason: "real" }]);
+    expect(result).toEqual([
+      { rank: 1, skill_id: SKILL_A.id, skill_name: SKILL_A.name, reason: "real" },
+    ]);
   });
 });
 
@@ -261,7 +290,10 @@ describe("findRelatedSkills", () => {
   });
 
   it("never reclassifies a related gap skill as acquired — it's an annotation, not a promotion", async () => {
-    tableData.certificates = { data: [{ programme_id: "programme-1", course_id: null }], error: null };
+    tableData.certificates = {
+      data: [{ programme_id: "programme-1", course_id: null }],
+      error: null,
+    };
     tableData.programme_skills = { data: [{ skill_id: SKILL_A.id, skills: SKILL_A }], error: null };
     tableData.job_skills = { data: [{ skill_id: SKILL_B.id, skills: SKILL_B }], error: null };
     embedTextMock.mockImplementation(fakeEmbed);
@@ -286,7 +318,10 @@ describe("findRelatedSkills", () => {
 describe("getSkillGapAcrossJobs", () => {
   it("uses F13's top-match jobs when there's a profile signal", async () => {
     matchJobsForTraineeMock.mockResolvedValue({
-      matches: [{ id: "job-1", title: "Job One" }, { id: "job-2", title: "Job Two" }],
+      matches: [
+        { id: "job-1", title: "Job One" },
+        { id: "job-2", title: "Job Two" },
+      ],
       hasProfileSignal: true,
     });
     tableData.job_skills = {
@@ -301,25 +336,49 @@ describe("getSkillGapAcrossJobs", () => {
     const result = await getSkillGapAcrossJobs("trainee-1");
 
     expect(result.hasProfileSignal).toBe(true);
-    expect(result.jobs).toEqual([{ id: "job-1", title: "Job One" }, { id: "job-2", title: "Job Two" }]);
+    expect(result.jobs).toEqual([
+      { id: "job-1", title: "Job One" },
+      { id: "job-2", title: "Job Two" },
+    ]);
     // Skill A is needed by both jobs, skill B only by one — A ranks first.
     expect(result.gap_summary).toEqual([
-      { skill_id: SKILL_A.id, skill_name: SKILL_A.name, category: null, jobs_needing_it: 2, job_ids: ["job-1", "job-2"] },
-      { skill_id: SKILL_B.id, skill_name: SKILL_B.name, category: null, jobs_needing_it: 1, job_ids: ["job-2"] },
+      {
+        skill_id: SKILL_A.id,
+        skill_name: SKILL_A.name,
+        category: null,
+        jobs_needing_it: 2,
+        job_ids: ["job-1", "job-2"],
+      },
+      {
+        skill_id: SKILL_B.id,
+        skill_name: SKILL_B.name,
+        category: null,
+        jobs_needing_it: 1,
+        job_ids: ["job-2"],
+      },
     ]);
   });
 
   it("falls back to the newest open postings with no profile signal, and never calls that a failure", async () => {
     matchJobsForTraineeMock.mockResolvedValue({ matches: [], hasProfileSignal: false });
     tableData.jobs = { data: [{ id: "job-9", title: "Newest Job" }], error: null };
-    tableData.job_skills = { data: [{ job_id: "job-9", skill_id: SKILL_A.id, skills: SKILL_A }], error: null };
+    tableData.job_skills = {
+      data: [{ job_id: "job-9", skill_id: SKILL_A.id, skills: SKILL_A }],
+      error: null,
+    };
 
     const result = await getSkillGapAcrossJobs("trainee-1");
 
     expect(result.hasProfileSignal).toBe(false);
     expect(result.jobs).toEqual([{ id: "job-9", title: "Newest Job" }]);
     expect(result.gap_summary).toEqual([
-      { skill_id: SKILL_A.id, skill_name: SKILL_A.name, category: null, jobs_needing_it: 1, job_ids: ["job-9"] },
+      {
+        skill_id: SKILL_A.id,
+        skill_name: SKILL_A.name,
+        category: null,
+        jobs_needing_it: 1,
+        job_ids: ["job-9"],
+      },
     ]);
   });
 
@@ -328,9 +387,15 @@ describe("getSkillGapAcrossJobs", () => {
       matches: [{ id: "job-1", title: "Job One" }],
       hasProfileSignal: true,
     });
-    tableData.certificates = { data: [{ programme_id: "programme-1", course_id: null }], error: null };
+    tableData.certificates = {
+      data: [{ programme_id: "programme-1", course_id: null }],
+      error: null,
+    };
     tableData.programme_skills = { data: [{ skill_id: SKILL_A.id, skills: SKILL_A }], error: null };
-    tableData.job_skills = { data: [{ job_id: "job-1", skill_id: SKILL_A.id, skills: SKILL_A }], error: null };
+    tableData.job_skills = {
+      data: [{ job_id: "job-1", skill_id: SKILL_A.id, skills: SKILL_A }],
+      error: null,
+    };
 
     const result = await getSkillGapAcrossJobs("trainee-1");
 

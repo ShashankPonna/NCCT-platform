@@ -48,7 +48,7 @@ docs/           PRD, architecture, database, decisions log, implementation track
 
 - **Supabase**: Postgres + Auth + Storage + pgvector. Clients never query Supabase directly. Every read and write goes through the API, which enforces role checks on top of row-level security.
 - **Face recognition**: `@vladmandic/human`, with matching done server-side.
-- **Chatbot**: Groq for generation; embeddings run locally.
+- **AI**: Groq for generation (FAQ chatbot, tool-calling career counsellor, skill-gap ranking); embeddings run locally.
 
 Details: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/DATABASE.md`](docs/DATABASE.md) · [`docs/DECISIONS.md`](docs/DECISIONS.md)
 
@@ -68,7 +68,7 @@ pnpm dev:web    # web app on http://localhost:5173
 
 - `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`: from Supabase → Project Settings → API. The service-role key is a secret; never commit it.
 - `PUBLIC_WEB_URL`: the web app's URL, embedded in certificate QR codes.
-- `GROQ_API_KEY` (FAQ chatbot) and `GEMINI_API_KEY` (career counsellor): each feature returns a clear "unavailable" message without its key, and everything else still works.
+- `GROQ_API_KEY`: the only AI key. It powers the FAQ chatbot, the career counsellor and the skill-gap ranking. Without it those features show a clear "unavailable" message and everything else still works.
 - `B2_*`: optional. Only needed for self-hosted video uploads; YouTube lessons need nothing.
 
 **`apps/web/.env`**: `VITE_API_URL`, `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. The web app uses Supabase only for login.

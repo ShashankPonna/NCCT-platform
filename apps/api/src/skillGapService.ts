@@ -7,7 +7,7 @@ import type {
   SkillGapResult,
 } from "@ncct/shared-types";
 import { embedText } from "./chatbotService.js";
-import { groqChat, type GroqChat } from "./groqClient.js";
+import { GROQ_SMALL_MODEL, groqChat, type GroqChat } from "./groqClient.js";
 import { matchJobsForTrainee } from "./jobMatchingService.js";
 import { cosineSimilarity } from "./routes/attendance.js";
 import { supabaseAdmin } from "./supabaseClient.js";
@@ -67,7 +67,9 @@ async function getAcquiredSkills(traineeId: string): Promise<Skill[]> {
 
   const certRows = (certs ?? []) as CertRow[];
   const programmeIds = [...new Set(certRows.map((c) => c.programme_id))];
-  const courseIds = [...new Set(certRows.map((c) => c.course_id).filter((id): id is string => id != null))];
+  const courseIds = [
+    ...new Set(certRows.map((c) => c.course_id).filter((id): id is string => id != null)),
+  ];
   if (programmeIds.length === 0 && courseIds.length === 0) return [];
 
   const [programmeResult, courseResult] = await Promise.all([
@@ -108,7 +110,10 @@ async function getAcquiredSkills(traineeId: string): Promise<Skill[]> {
  */
 export async function getSkillGap(traineeId: string, jobId: string): Promise<SkillGapResult> {
   const [{ data: jobSkillRows, error: jobSkillsError }, acquiredSkills] = await Promise.all([
-    supabaseAdmin.from("job_skills").select("skill_id, skills(id, name, category)").eq("job_id", jobId),
+    supabaseAdmin
+      .from("job_skills")
+      .select("skill_id, skills(id, name, category)")
+      .eq("job_id", jobId),
     getAcquiredSkills(traineeId),
   ]);
   if (jobSkillsError) throw new Error(jobSkillsError.message);
@@ -246,7 +251,9 @@ export async function getSkillGapAcrossJobs(traineeId: string): Promise<SkillGap
       jobs_needing_it: needingJobIds.size,
       job_ids: [...needingJobIds],
     }))
-    .sort((a, b) => b.jobs_needing_it - a.jobs_needing_it || a.skill_name.localeCompare(b.skill_name));
+    .sort(
+      (a, b) => b.jobs_needing_it - a.jobs_needing_it || a.skill_name.localeCompare(b.skill_name),
+    );
 
   return { jobs, gap_summary, hasProfileSignal };
 }
@@ -278,6 +285,7 @@ export async function rankMissingSkills(
     // JSON mode guarantees syntactically valid JSON but not the shape, so
     // the prompt pins it and the parsing below still validates every item.
     const response = await chat({
+      model: GROQ_SMALL_MODEL,
       messages: [
         {
           role: "system",
@@ -307,7 +315,12 @@ export async function rankMissingSkills(
     for (const item of parsed) {
       const skill = skillById.get(item.skill_id);
       if (!skill || typeof item.reason !== "string") continue;
-      ranked.push({ rank: rank++, skill_id: skill.id, skill_name: skill.name, reason: item.reason });
+      ranked.push({
+        rank: rank++,
+        skill_id: skill.id,
+        skill_name: skill.name,
+        reason: item.reason,
+      });
     }
 
     return ranked.length > 0 ? ranked : null;

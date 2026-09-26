@@ -12,6 +12,17 @@
 // on hidden reasoning, returning EMPTY content — so that's the default here.
 const GROQ_CHAT_COMPLETIONS_URL = "https://api.groq.com/openai/v1/chat/completions";
 export const GROQ_MODEL = "openai/gpt-oss-120b";
+// Smaller sibling for simple structured tasks (the skill-gap ranking). Groq's
+// free tier rate-limits each model separately (gpt-oss-120b: 8,000 tokens
+// per minute, measured live), so routing the ranking — which runs on every
+// skill-gap page load — here keeps it from eating the chatbot's and
+// counsellor's budget.
+export const GROQ_SMALL_MODEL = "openai/gpt-oss-20b";
+
+// On a 429, Groq says how long to wait (retry-after, in seconds). One retry
+// within this cap turns a back-to-back-questions demo hiccup into a short
+// pause; anything longer is surfaced as the error it is.
+const MAX_RETRY_WAIT_MS = 10_000;
 
 export interface GroqToolCall {
   id: string;
@@ -30,6 +41,7 @@ export interface GroqTool {
 }
 
 export interface GroqChatRequest {
+  model?: string;
   messages: GroqMessage[];
   tools?: GroqTool[];
   max_tokens?: number;
@@ -48,26 +60,43 @@ interface GroqChatCompletionResponse {
   choices?: { message?: GroqAssistantMessage }[];
 }
 
+function retryDelayMs(res: Response): number | null {
+  const seconds = Number(res.headers.get("retry-after"));
+  if (!Number.isFinite(seconds) || seconds < 0) return null;
+  const ms = Math.ceil(seconds * 1000);
+  return ms <= MAX_RETRY_WAIT_MS ? ms : null;
+}
+
 export const groqChat: GroqChat = async (request) => {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     throw new Error("GROQ_API_KEY is not set");
   }
 
-  const res = await fetch(GROQ_CHAT_COMPLETIONS_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: GROQ_MODEL,
-      max_tokens: 1024,
-      temperature: 0.2,
-      reasoning_effort: "low",
-      ...request,
-    }),
-  });
+  const send = () =>
+    fetch(GROQ_CHAT_COMPLETIONS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        max_tokens: 1024,
+        temperature: 0.2,
+        reasoning_effort: "low",
+        ...request,
+      }),
+    });
+
+  let res = await send();
+  if (res.status === 429) {
+    const delay = retryDelayMs(res);
+    if (delay !== null) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      res = await send();
+    }
+  }
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
