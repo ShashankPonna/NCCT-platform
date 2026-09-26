@@ -133,7 +133,7 @@ export function TraineeApp({
         <div
           role="dialog"
           aria-label="Programme chatbot"
-          className="fixed bottom-24 right-4 z-50 flex max-h-[70vh] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-outline-variant bg-surface-card shadow-2xl md:right-6"
+          className="fixed bottom-[calc(9rem+env(safe-area-inset-bottom))] md:bottom-24 right-4 z-50 flex max-h-[70vh] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-outline-variant bg-surface-card shadow-2xl md:right-6"
         >
           <div className="flex items-center justify-between border-b border-outline-variant px-4 py-3">
             <span className="text-label-lg font-semibold text-on-surface">Programme Chatbot</span>
@@ -156,7 +156,7 @@ export function TraineeApp({
         type="button"
         onClick={() => setChatOpen((open) => !open)}
         aria-label={chatOpen ? "Close chatbot" : "Open chatbot"}
-        className="fixed bottom-6 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-on-primary shadow-lg transition-transform hover:scale-105 md:right-6"
+        className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-6 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-on-primary shadow-lg transition-transform hover:scale-105 md:right-6"
       >
         <span className="material-symbols-outlined text-2xl">{chatOpen ? "close" : "chat"}</span>
       </button>

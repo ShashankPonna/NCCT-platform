@@ -824,3 +824,20 @@ Both files were validated (`plutil -lint`, XML parse). Web rebuilt; `npx cap syn
 - **Certificate PDF:** the symbol replaces the design's placeholder emblem tile and the watermark. All 8 issued certificates were re-rendered, with codes, dates and marks unchanged.
 
 **Icon script fix:** the generator used to flatten sources with `.convert("RGB")`, which turned the new transparent background black on the iOS icon. It now trims on the alpha channel and keeps transparency.
+
+### 73. Mobile app layout: system-bar insets and phone table layout
+
+**Decision:** The Capacitor app sets `android.adjustMarginsForEdgeToEdge: "force"` in `apps/mobile/capacitor.config.ts`, and the Android theme puts white bars with dark icons behind the status and navigation bars.
+
+**Why:** On Android 15 (which draws every app edge-to-edge), testing on an emulator found the WebView drawn under both system bars. The top utility bar printed over the clock and signal icons, and the gesture bar cut through the bottom tab labels.
+
+**iPhones and notched screens:** the page reserves the safe areas through CSS `env(safe-area-inset-*)` (with `viewport-fit=cover`):
+- padding at the top and sides of the page;
+- extra height on the bottom tab bars;
+- footer padding sized to clear the fixed tab bar.
+
+These values are 0 on Android, which gets real margins instead, so nothing is added twice.
+
+**Other fixes:**
+- **Chat button:** the trainee chat button and panel sit above the phone tab bar instead of covering the Career tab.
+- **Wide tables:** a shared `.stack-on-phone` style (in `index.css`) shows each table row as a card below 768 px, with each cell's column name from its `data-label`. Applied to the admin user directory and the employer trainee search, whose email, role, action and shortlist columns were previously off-screen. Desktop is unchanged.

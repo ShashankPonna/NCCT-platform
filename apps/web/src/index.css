@@ -342,6 +342,11 @@
 body {
   margin: 0;
   background: var(--bg);
+  /* Notch / rounded-corner phones (iOS; the Android app gets real margins via
+     capacitor.config.ts instead, so these are 0 there). */
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 .legacy-ui h1,
@@ -425,3 +430,39 @@ body {
   background: var(--ncct-outline);
 }
 
+
+/* Wide data tables become one card per row on phones: the header row is
+   hidden and each cell shows its column name above the value (from the
+   cell's data-label). Desktop keeps the normal table. */
+@media (max-width: 767px) {
+  .stack-on-phone thead {
+    display: none;
+  }
+  .stack-on-phone,
+  .stack-on-phone tbody,
+  .stack-on-phone tr,
+  .stack-on-phone td {
+    display: block;
+    width: 100%;
+  }
+  .stack-on-phone tr {
+    padding: 0.75rem 0;
+  }
+  .stack-on-phone td {
+    padding: 0.35rem 1rem !important;
+    text-align: left !important;
+  }
+  .stack-on-phone td > div {
+    justify-content: flex-start;
+  }
+  .stack-on-phone td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.15rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.6;
+  }
+}

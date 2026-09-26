@@ -459,7 +459,7 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
 
             {/* Trainee Candidates Table */}
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="stack-on-phone w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-paper text-on-surface-variant font-label-md text-label-md border-b border-border-slate">
                     <th className="py-space-sm px-space-md uppercase font-bold tracking-wider text-xs">Trainee</th>
@@ -508,7 +508,7 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
                               </div>
                             </div>
                           </td>
-                          <td className="py-space-md px-space-md">
+                          <td data-label="Skills" className="py-space-md px-space-md">
                             <div className="flex flex-wrap gap-1 max-w-[200px]">
                               {cand.skills.length === 0 ? (
                                 <span className="text-on-surface-variant">—</span>
@@ -524,7 +524,7 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
                               )}
                             </div>
                           </td>
-                          <td className="py-space-md px-space-md">
+                          <td data-label="Latest Certificate" className="py-space-md px-space-md">
                             <div className="flex flex-col">
                               <span className="font-label-md text-label-md text-primary font-bold">{cand.course ?? "—"}</span>
                               {cand.institute && (
@@ -532,13 +532,13 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
                               )}
                             </div>
                           </td>
-                          <td className="py-space-md px-space-md">
+                          <td data-label="Location" className="py-space-md px-space-md">
                             <div className="flex items-center gap-1 font-body-sm text-body-sm text-on-surface">
                               <span className="material-symbols-outlined text-[16px] text-on-surface-variant">place</span>
                               {cand.location ?? "—"}
                             </div>
                           </td>
-                          <td className="py-space-md px-space-md text-right">
+                          <td data-label="Shortlist" className="py-space-md px-space-md text-right">
                             <button
                               type="button"
                               onClick={() => void handleShortlist(cand.id)}

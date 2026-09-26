@@ -47,6 +47,28 @@ export function normalizeCamBase(camUrl: string): string {
  * Fetches one JPEG frame and draws it into `canvas`. Throws on any failure —
  * the caller decides whether to retry.
  */
+/**
+ * True when this page is HTTPS but the kiosk boards speak plain HTTP (an
+ * ESP32 can't do TLS): browsers silently block that as mixed content, so the
+ * boards can never be reached from the deployed site. See useKioskReader.ts.
+ */
+export function kioskBlockedByHttps(boardUrl: string): boolean {
+  return window.location.protocol === "https:" && boardUrl.trim().startsWith("http:");
+}
+
+/**
+ * What to tell staff when fetch() to a kiosk board fails at the network level
+ * (the browser only says "Failed to fetch", which explains nothing).
+ */
+export function kioskUnreachableMessage(device: "reader" | "camera", boardUrl: string): string {
+  const name = device === "reader" ? "NFC reader" : "camera";
+  if (kioskBlockedByHttps(boardUrl)) {
+    return `The browser blocked the ${name}: this page is open over HTTPS, and the ${name} only speaks plain HTTP. Open the kiosk on the kiosk computer at http://localhost:5173 instead.`;
+  }
+  const host = boardUrl.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  return `Can't reach the ${name} at ${host}. Check it's switched on and connected to the same Wi-Fi as this computer.`;
+}
+
 export async function captureFrame(
   camUrl: string,
   canvas: HTMLCanvasElement,
@@ -62,7 +84,9 @@ export async function captureFrame(
   } catch (err) {
     throw (err as Error).name === "AbortError"
       ? new Error("Camera request timed out (weak WiFi signal?)")
-      : err;
+      : (err as Error).name === "TypeError"
+        ? new Error(kioskUnreachableMessage("camera", camUrl))
+        : err;
   } finally {
     clearTimeout(timeout);
   }

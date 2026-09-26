@@ -451,13 +451,13 @@ export function ManagementShell({
       {/* 4. Main Content Area */}
       <main
         id="main-content"
-        className="mx-auto w-full max-w-container-max flex-grow px-margin-mobile pb-20 pt-4 md:px-margin-desktop md:pb-12 md:pt-6"
+        className="mx-auto w-full max-w-container-max flex-grow px-margin-mobile pb-8 pt-4 md:px-margin-desktop md:pb-12 md:pt-6"
       >
         {children}
       </main>
 
       {/* 5. Footer */}
-      <footer className="mt-auto w-full border-t border-outline-variant bg-surface-card px-margin-mobile py-8 md:px-margin-desktop transition-colors text-left">
+      <footer className="mt-auto w-full border-t border-outline-variant bg-surface-card px-margin-mobile pt-8 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8 md:px-margin-desktop transition-colors text-left">
         <div className="mx-auto flex max-w-container-max flex-col items-center justify-between gap-4 md:flex-row">
           <div className="flex items-center gap-2 text-on-surface-variant">
             <span className="material-symbols-outlined text-sm">copyright</span>
@@ -467,7 +467,7 @@ export function ManagementShell({
       </footer>
 
       {/* 6. Mobile Bottom Navigation Bar (Screens < md) */}
-      <nav className="fixed bottom-0 left-0 z-50 flex h-14 w-full items-center justify-around border-t border-outline-variant bg-surface-card px-2 shadow-lg md:hidden transition-colors overflow-x-auto">
+      <nav className="fixed bottom-0 left-0 z-50 flex h-[calc(3.5rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] w-full items-center justify-around border-t border-outline-variant bg-surface-card px-2 shadow-lg md:hidden transition-colors overflow-x-auto">
         {roleNavItems.map((item) => {
           const isActive = activeTab === item.id;
           const label = t.navShort[item.labelKey];

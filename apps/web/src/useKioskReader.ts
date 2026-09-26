@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { kioskUnreachableMessage } from "./kioskCapture.js";
 
 // HTTP-polling replacement for the old Web Serial connection (useKioskSerial.ts,
 // removed). The DevKit no longer has a USB cable to the kiosk PC at all — it
@@ -76,9 +77,12 @@ export function useKioskReader(readerUrl: string, onLine: (line: string) => void
         if (text && text !== "NONE") onLineRef.current(text);
       } catch (err) {
         setError(
-          (err as Error).name === "AbortError"
-            ? "Reader request timed out"
-            : `Could not reach the reader: ${(err as Error).message}`,
+          // A timeout (the board's .local name never resolved) and a TypeError
+          // (offline, wrong network, mixed-content block) both mean the
+          // request never got an answer — same guidance for staff.
+          (err as Error).name === "AbortError" || (err as Error).name === "TypeError"
+            ? kioskUnreachableMessage("reader", base)
+            : `Reader error: ${(err as Error).message}`,
         );
       } finally {
         clearTimeout(timeout);
@@ -119,7 +123,11 @@ export function useKioskReader(readerUrl: string, onLine: (line: string) => void
       const res = await fetch(`${base}/command`, { method: "POST", body: line });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
     } catch (err) {
-      setError(`Could not reach the reader: ${(err as Error).message}`);
+      setError(
+        (err as Error).name === "TypeError"
+          ? kioskUnreachableMessage("reader", base)
+          : `Reader error: ${(err as Error).message}`,
+      );
     }
   }, []);
 

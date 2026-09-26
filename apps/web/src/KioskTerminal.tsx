@@ -6,7 +6,7 @@ import {
   kioskNfcLookup,
 } from "@ncct/api-client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { captureFrame, extractEmbedding, withCaptureRetries } from "./kioskCapture.js";
+import { captureFrame, extractEmbedding, kioskBlockedByHttps, withCaptureRetries } from "./kioskCapture.js";
 import { useKioskReader } from "./useKioskReader.js";
 
 interface KioskTerminalProps {
@@ -256,6 +256,20 @@ export function KioskTerminal({ accessToken }: KioskTerminalProps) {
           and press the button &mdash; no action needed here per student.
         </p>
       </div>
+
+      {/* Shown up front, before Start: from an HTTPS page (the deployed site,
+          or the phone app) the browser blocks the plain-HTTP boards outright,
+          so this screen can only work when opened locally on the kiosk PC. */}
+      {kioskBlockedByHttps(READER_URL) && (
+        <div className="bg-status-pending/10 text-on-surface p-4 rounded-xl flex items-start gap-3 border border-status-pending/40">
+          <span className="material-symbols-outlined text-status-pending">warning</span>
+          <p className="font-body-md text-body-md m-0">
+            The kiosk can't work from this address. The NFC reader and camera only speak plain HTTP, which the
+            browser blocks on a secure (https://) page. On the kiosk computer, run the web app locally and open{" "}
+            <strong>http://localhost:5173</strong>, on the same Wi-Fi as the reader and camera.
+          </p>
+        </div>
+      )}
 
       {error && (
         <div className="bg-error-container text-on-error-container p-4 rounded-xl flex items-center gap-3 border border-error/20">

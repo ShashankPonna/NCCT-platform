@@ -373,7 +373,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
 
         {/* Data Table */}
         <div className="w-full overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="stack-on-phone w-full text-left border-collapse">
             <thead>
               <tr className="bg-paper text-slate-600 text-xs uppercase tracking-wider font-bold border-b border-border-slate/60">
                 <th className="py-3.5 px-6" scope="col">
@@ -450,10 +450,10 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                           </div>
                         </div>
                       </td>
-                      <td className="py-4 px-4 text-slate-700 font-metric-mono text-xs">
+                      <td data-label="Email" className="py-4 px-4 text-slate-700 font-metric-mono text-xs">
                         {row.email ?? "—"}
                       </td>
-                      <td className="py-4 px-4">
+                      <td data-label="Role" className="py-4 px-4">
                         <div className="flex items-center gap-2">
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs uppercase tracking-wider font-bold ${roleBadgeClass}`}
@@ -476,10 +476,10 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
                           )}
                         </div>
                       </td>
-                      <td className="py-4 px-4 text-slate-700 font-medium text-xs">
+                      <td data-label="Organisation / Affiliation" className="py-4 px-4 text-slate-700 font-medium text-xs">
                         {(row.role === "employer" ? row.org_name : row.cooperative_affiliation) ?? "—"}
                       </td>
-                      <td className="py-4 px-6 text-right">
+                      <td data-label="Actions" className="py-4 px-6 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
                             type="button"

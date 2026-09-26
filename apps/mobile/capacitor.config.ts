@@ -15,6 +15,10 @@ const config: CapacitorConfig = {
   appId: "com.ncct.app",
   appName: "EduDisha",
   webDir: "../web/dist",
+  // Android 15+ draws apps edge-to-edge, so the WebView went under the status
+  // bar (header text over the clock) and the gesture bar (bottom tabs cut
+  // through). "force" makes Capacitor add system-bar margins to the WebView.
+  android: { adjustMarginsForEdgeToEdge: "force" },
 };
 
 export default config;

@@ -2,7 +2,16 @@
 
 **This is a living document.** Update it whenever a significant feature, fix, or implementation change lands — see `CLAUDE.md`'s Development Workflow. It tracks _status_, not requirements or design: for what to build see [PRD.md](PRD.md), for how see [ARCHITECTURE.md](ARCHITECTURE.md)/[DATABASE.md](DATABASE.md)/[DECISIONS.md](DECISIONS.md). Nothing here duplicates their content beyond a one-line restatement per feature.
 
-Last updated: 2026-09-26 (35) (**New EduDisha logo applied everywhere** (DECISIONS.md #72).
+Last updated: 2026-09-26 (37) (**Kiosk Terminal: clear errors instead of 'Failed to fetch'.**
+- **Why it happens:** the ESP32 reader and camera speak plain HTTP, so from any HTTPS page (the deployed site, or the phone app's https://localhost) the browser blocks them as mixed content (the long-standing constraint noted in `useKioskReader.ts`). On a network without the boards, the `.local` lookup times out.
+- **Up-front warning:** the screen now warns before Start when opened over HTTPS, and says to use `http://localhost:5173` on the kiosk PC.
+- **Clearer errors:** timeouts and network failures now read "Can't reach the NFC reader/camera at <host>. Check it's switched on and on the same Wi-Fi".
+- **Real board errors unchanged:** an HTTP error from the board itself still shows as a reader error.
+- **Checked in headless Chrome** on `http://localhost` with no board present. Also confirmed from this machine that `ncct-kiosk-reader.local` doesn't resolve, so the board is currently off or on another network. Previous: 2026-09-26 (36) (**Phone app layout fixed** (DECISIONS.md #73), found by driving the installed APK on an Android 15 emulator through its WebView debugger:
+- The app no longer draws under the status and gesture bars.
+- The chat button no longer covers the Career tab.
+- The admin user list and the employer trainee list show as cards on phones instead of cut-off tables.
+Re-verified: every tab for all 4 roles in the real app, the tables fit exactly (379 px of 379), 0 JS errors. App version is now 1.2 (build 3). 651 API tests pass. Previous: 2026-09-26 (35) (**New EduDisha logo applied everywhere** (DECISIONS.md #72).
 - **Full logo:** login, certificate verification, public profile.
 - **Symbol:** app headers, homepage, favicon and apple-touch icon, Android/iOS launcher icons.
 - **Splash screens:** full logo on every Android/iOS splash (these were still Capacitor's default X).
