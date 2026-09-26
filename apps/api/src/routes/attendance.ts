@@ -66,6 +66,27 @@ function formatSessionStart(startsAt: string): string {
 // time at actual sync/insert, not the client's queued timestamp, and the
 // write-queue's existing "stop and retry the whole queue" behavior already
 // handles a still-too-early replay correctly as a transient failure.
+// Whether a trainee has an *approved* nomination in a programme — the
+// register every attendance path must respect. Staff manual marking has
+// always enforced it; the trainee self check-in and kiosk face check-in
+// didn't, so anyone holding a session's 6-digit code (or any trainee put in
+// front of the kiosk) could be recorded for a programme they aren't in.
+async function isApprovedNominee(programmeId: string, traineeId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from("nominations")
+    .select("trainee_id")
+    .eq("programme_id", programmeId)
+    .eq("trainee_id", traineeId)
+    .eq("status", "approved")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return Boolean(data);
+}
+
+const NOT_ENROLLED_SELF =
+  "You're not enrolled in this session's programme — only trainees with an approved nomination can check in.";
+const NOT_ENROLLED_STAFF = "Trainee is not an approved nominee for this session's programme";
+
 attendanceRouter.post("/attendance", requireAuth, requireRole("trainee"), async (req, res) => {
   const parsed = attendanceCheckInSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -76,7 +97,7 @@ attendanceRouter.post("/attendance", requireAuth, requireRole("trainee"), async 
 
   const { data: session, error: sessionError } = await req
     .supabase!.from("timetable_sessions")
-    .select("starts_at")
+    .select("starts_at, programme_id")
     .eq("id", checkIn.session_id)
     .maybeSingle();
   if (sessionError) {
@@ -85,6 +106,15 @@ attendanceRouter.post("/attendance", requireAuth, requireRole("trainee"), async 
   }
   if (!session) {
     res.status(404).json({ error: "Session not found" });
+    return;
+  }
+  try {
+    if (!(await isApprovedNominee(session.programme_id, req.user!.id))) {
+      res.status(403).json({ error: NOT_ENROLLED_SELF });
+      return;
+    }
+  } catch (err) {
+    res.status(400).json({ error: (err as Error).message });
     return;
   }
   if (isBeforeSessionStart(session.starts_at)) {
@@ -199,7 +229,7 @@ attendanceRouter.post(
     // it's subject to the same real-time rule, not exempt from it.
     const { data: session, error: sessionError } = await supabaseAdmin
       .from("timetable_sessions")
-      .select("starts_at")
+      .select("starts_at, programme_id")
       .eq("id", req.params.sessionId)
       .maybeSingle();
     if (sessionError) {
@@ -208,6 +238,15 @@ attendanceRouter.post(
     }
     if (!session) {
       res.status(404).json({ error: "Session not found" });
+      return;
+    }
+    try {
+      if (!(await isApprovedNominee(session.programme_id, trainee_id))) {
+        res.status(404).json({ error: NOT_ENROLLED_STAFF });
+        return;
+      }
+    } catch (err) {
+      res.status(400).json({ error: (err as Error).message });
       return;
     }
     if (isBeforeSessionStart(session.starts_at)) {
@@ -381,19 +420,13 @@ attendanceRouter.put(
       return;
     }
 
-    const { data: nomination, error: nominationError } = await supabaseAdmin
-      .from("nominations")
-      .select("trainee_id")
-      .eq("programme_id", session.programme_id)
-      .eq("trainee_id", traineeId)
-      .eq("status", "approved")
-      .maybeSingle();
-    if (nominationError) {
-      res.status(400).json({ error: nominationError.message });
-      return;
-    }
-    if (!nomination) {
-      res.status(404).json({ error: "Trainee is not an approved nominee for this session's programme" });
+    try {
+      if (!(await isApprovedNominee(session.programme_id, traineeId))) {
+        res.status(404).json({ error: NOT_ENROLLED_STAFF });
+        return;
+      }
+    } catch (err) {
+      res.status(400).json({ error: (err as Error).message });
       return;
     }
 
@@ -414,7 +447,12 @@ attendanceRouter.put(
 
     const { data, error } = await supabaseAdmin
       .from("attendance_records")
-      .insert({ session_id: sessionId, trainee_id: traineeId, method: "manual", marked_by: req.user!.id })
+      .insert({
+        session_id: sessionId,
+        trainee_id: traineeId,
+        method: "manual",
+        marked_by: req.user!.id,
+      })
       .select()
       .single();
 

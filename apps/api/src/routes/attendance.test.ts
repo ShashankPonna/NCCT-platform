@@ -28,7 +28,18 @@ const {
     const builder: Record<string, ReturnType<typeof vi.fn>> = {
       then: vi.fn((resolve: (value: typeof result) => void) => resolve(queue.shift() ?? result)),
     };
-    for (const method of ["select", "insert", "update", "delete", "upsert", "eq", "order", "limit", "single", "maybeSingle"]) {
+    for (const method of [
+      "select",
+      "insert",
+      "update",
+      "delete",
+      "upsert",
+      "eq",
+      "order",
+      "limit",
+      "single",
+      "maybeSingle",
+    ]) {
       builder[method] = vi.fn(() => builder);
     }
     return { builder, result, queue };
@@ -96,7 +107,11 @@ const FUTURE_STARTS_AT = "2099-01-01T00:00:00.000Z";
 // Defaults to an already-started session since most of these tests are
 // about role/assignment, not timing.
 function assignTrainerToSession(sessionFields: Record<string, unknown> = {}) {
-  sessionsMock.result.data = { programme_id: "prog-1", starts_at: PAST_STARTS_AT, ...sessionFields };
+  sessionsMock.result.data = {
+    programme_id: "prog-1",
+    starts_at: PAST_STARTS_AT,
+    ...sessionFields,
+  };
   programmeTrainersMock.result.data = { trainer_id: "trainer-1" };
 }
 
@@ -115,6 +130,10 @@ beforeEach(() => {
     mock.result.error = null;
     mock.queue.length = 0;
   }
+  // Every check-in path now requires an approved nomination; default to
+  // "enrolled" so tests about other rules aren't tripped by this one. The
+  // not-enrolled tests below set it back to null explicitly.
+  nominationsMock.result.data = { trainee_id: "trainee-1" };
 });
 
 describe("cosineSimilarity", () => {
@@ -188,6 +207,55 @@ describe("POST /api/attendance", () => {
       .send({ session_id: "11111111-1111-1111-1111-111111111111", method: "qr" });
 
     expect(res.status).toBe(201);
+  });
+
+  it("returns 403 and never writes a record when the trainee isn't enrolled in the session's programme", async () => {
+    authenticateAs("trainee-1", "trainee");
+    sessionsMock.result.data = { starts_at: PAST_STARTS_AT, programme_id: "prog-1" };
+    nominationsMock.result.data = null;
+
+    const res = await request(buildApp())
+      .post("/api/attendance")
+      .set("Authorization", "Bearer token")
+      .send({ session_id: "11111111-1111-1111-1111-111111111111", method: "qr" });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toMatch(/not enrolled/);
+    expect(attendanceMock.builder.insert).not.toHaveBeenCalled();
+  });
+
+  it("refuses a face check-in too when the trainee isn't enrolled", async () => {
+    authenticateAs("trainee-1", "trainee");
+    sessionsMock.result.data = { starts_at: PAST_STARTS_AT, programme_id: "prog-1" };
+    nominationsMock.result.data = null;
+    embeddingsMock.result.data = [{ embedding: embeddingOf(1) }];
+
+    const res = await request(buildApp())
+      .post("/api/attendance")
+      .set("Authorization", "Bearer token")
+      .send({
+        session_id: "11111111-1111-1111-1111-111111111111",
+        method: "face",
+        embedding: embeddingOf(1),
+      });
+
+    expect(res.status).toBe(403);
+    expect(attendanceMock.builder.insert).not.toHaveBeenCalled();
+  });
+
+  it("checks enrolment against the session's own programme and the caller's own id", async () => {
+    authenticateAs("trainee-1", "trainee");
+    sessionsMock.result.data = { starts_at: PAST_STARTS_AT, programme_id: "prog-9" };
+    attendanceMock.result.data = { id: "att-1", trainee_id: "trainee-1", method: "qr" };
+
+    await request(buildApp())
+      .post("/api/attendance")
+      .set("Authorization", "Bearer token")
+      .send({ session_id: "11111111-1111-1111-1111-111111111111", method: "qr" });
+
+    expect(nominationsMock.builder.eq).toHaveBeenCalledWith("programme_id", "prog-9");
+    expect(nominationsMock.builder.eq).toHaveBeenCalledWith("trainee_id", "trainee-1");
+    expect(nominationsMock.builder.eq).toHaveBeenCalledWith("status", "approved");
   });
 
   it("records a qr check-in", async () => {
@@ -413,6 +481,22 @@ describe("POST /api/timetable/:sessionId/kiosk-face-checkin", () => {
     expect(attendanceMock.builder.insert).not.toHaveBeenCalled();
   });
 
+  it("returns 404 and never writes a record when the named trainee isn't enrolled in the programme", async () => {
+    authenticateAs("trainer-1", "trainer");
+    assignTrainerToSession();
+    nominationsMock.result.data = null;
+    embeddingsMock.result.data = [{ embedding: embeddingOf(1) }];
+
+    const res = await request(buildApp())
+      .post(url)
+      .set("Authorization", "Bearer token")
+      .send({ trainee_id: traineeId, embedding: embeddingOf(1) });
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toMatch(/not an approved nominee/);
+    expect(attendanceMock.builder.insert).not.toHaveBeenCalled();
+  });
+
   it("records a face check-in for the named trainee_id, not the caller", async () => {
     authenticateAs("trainer-1", "trainer");
     assignTrainerToSession();
@@ -530,7 +614,9 @@ describe("GET /api/timetable/:sessionId/roster", () => {
 
   it("returns 403 for a trainee", async () => {
     authenticateAs("trainee-1", "trainee");
-    const res = await request(buildApp()).get(`${SESSION_URL}/roster`).set("Authorization", "Bearer token");
+    const res = await request(buildApp())
+      .get(`${SESSION_URL}/roster`)
+      .set("Authorization", "Bearer token");
     expect(res.status).toBe(403);
   });
 
@@ -538,7 +624,9 @@ describe("GET /api/timetable/:sessionId/roster", () => {
     authenticateAs("admin-1", "admin");
     sessionsMock.result.data = null;
 
-    const res = await request(buildApp()).get(`${SESSION_URL}/roster`).set("Authorization", "Bearer token");
+    const res = await request(buildApp())
+      .get(`${SESSION_URL}/roster`)
+      .set("Authorization", "Bearer token");
 
     expect(res.status).toBe(404);
   });
@@ -548,7 +636,9 @@ describe("GET /api/timetable/:sessionId/roster", () => {
     sessionsMock.result.data = { programme_id: "prog-1" };
     programmeTrainersMock.result.data = null;
 
-    const res = await request(buildApp()).get(`${SESSION_URL}/roster`).set("Authorization", "Bearer token");
+    const res = await request(buildApp())
+      .get(`${SESSION_URL}/roster`)
+      .set("Authorization", "Bearer token");
     expect(res.status).toBe(403);
   });
 
@@ -560,17 +650,33 @@ describe("GET /api/timetable/:sessionId/roster", () => {
       { trainee_id: "trainee-absent", profiles: { full_name: "Rakesh Kumar" } },
     ];
     attendanceMock.result.data = [
-      { id: "att-1", session_id: "s1", trainee_id: "trainee-present", method: "qr", match_score: null, recorded_at: "t" },
+      {
+        id: "att-1",
+        session_id: "s1",
+        trainee_id: "trainee-present",
+        method: "qr",
+        match_score: null,
+        recorded_at: "t",
+      },
     ];
 
-    const res = await request(buildApp()).get(`${SESSION_URL}/roster`).set("Authorization", "Bearer token");
+    const res = await request(buildApp())
+      .get(`${SESSION_URL}/roster`)
+      .set("Authorization", "Bearer token");
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual([
       {
         trainee_id: "trainee-present",
         full_name: "Asha Patil",
-        attendance: { id: "att-1", session_id: "s1", trainee_id: "trainee-present", method: "qr", match_score: null, recorded_at: "t" },
+        attendance: {
+          id: "att-1",
+          session_id: "s1",
+          trainee_id: "trainee-present",
+          method: "qr",
+          match_score: null,
+          recorded_at: "t",
+        },
       },
       { trainee_id: "trainee-absent", full_name: "Rakesh Kumar", attendance: null },
     ]);
@@ -642,7 +748,11 @@ describe("PUT /api/timetable/:sessionId/attendance/:traineeId", () => {
     const res = await request(buildApp()).put(url).set("Authorization", "Bearer token");
 
     expect(res.status).toBe(201);
-    expect(res.body).toMatchObject({ method: "manual", trainee_id: ROSTER_TRAINEE, marked_by: "admin-1" });
+    expect(res.body).toMatchObject({
+      method: "manual",
+      trainee_id: ROSTER_TRAINEE,
+      marked_by: "admin-1",
+    });
     expect(attendanceMock.builder.insert).toHaveBeenCalledWith(
       expect.objectContaining({
         session_id: "11111111-1111-1111-1111-111111111111",
@@ -747,7 +857,10 @@ describe("DELETE /api/timetable/:sessionId/attendance/:traineeId", () => {
 
     expect(res.status).toBe(204);
     expect(attendanceMock.builder.delete).toHaveBeenCalled();
-    expect(attendanceMock.builder.eq).toHaveBeenCalledWith("session_id", "11111111-1111-1111-1111-111111111111");
+    expect(attendanceMock.builder.eq).toHaveBeenCalledWith(
+      "session_id",
+      "11111111-1111-1111-1111-111111111111",
+    );
     expect(attendanceMock.builder.eq).toHaveBeenCalledWith("trainee_id", ROSTER_TRAINEE);
   });
 
