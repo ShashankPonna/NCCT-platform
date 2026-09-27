@@ -4,6 +4,7 @@ import { useAutoSync } from "../offline/syncManager.js";
 import { NotificationBell } from "../notifications/NotificationBell.js";
 import type { NotificationTarget } from "../notifications/notificationContent.js";
 import { ProfileEditor } from "../ProfileEditor.js";
+import { useProfilePhoto } from "../useProfilePhoto.js";
 import { TraineeAttendance } from "./TraineeAttendance.js";
 import { TraineeCareer, type CareerView } from "./TraineeCareer.js";
 import { TraineeHome } from "./TraineeHome.js";
@@ -31,6 +32,7 @@ export function TraineeApp({
   autoCheckInSessionId,
 }: TraineeAppProps) {
   const [tab, setTab] = useState<TraineeTab>(autoCheckInSessionId ? "attendance" : "home");
+  const photoUrl = useProfilePhoto(accessToken);
   const [learnSubView, setLearnSubView] = useState<LearnView>("lessons");
   const [careerSubView, setCareerSubView] = useState<CareerView>("jobs");
   const [chatOpen, setChatOpen] = useState(false);
@@ -85,7 +87,10 @@ export function TraineeApp({
         active={tab}
         onNavigate={handleNavigate}
         fullName={fullName}
-        notificationBell={<NotificationBell accessToken={accessToken} onNavigate={handleNotificationNavigate} />}
+        photoUrl={photoUrl}
+        notificationBell={
+          <NotificationBell accessToken={accessToken} onNavigate={handleNotificationNavigate} />
+        }
       >
         {tab === "home" && (
           <TraineeHome accessToken={accessToken} fullName={fullName} onNavigate={handleNavigate} />

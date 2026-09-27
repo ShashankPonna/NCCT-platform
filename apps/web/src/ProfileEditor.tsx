@@ -1,8 +1,9 @@
-import { getProfileDetails, updateProfile } from "@ncct/api-client";
+import { getProfileDetails, updateProfile, uploadProfilePhoto } from "@ncct/api-client";
 import type { Profile, Role } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { HostelAssignmentCard } from "./trainee/HostelAssignmentCard.js";
+import { announceProfilePhoto, useProfilePhoto } from "./useProfilePhoto.js";
 import { NfcProfileCard } from "./trainee/NfcProfileCard.js";
 
 interface ProfileEditorProps {
@@ -41,6 +42,9 @@ interface ProfileEditorText {
   sectorPlaceholder: string;
   saving: string;
   saveProfile: string;
+  changePhoto: string;
+  uploadingPhoto: string;
+  photoUpdated: string;
 }
 
 const content: Record<Locale, ProfileEditorText> = {
@@ -54,7 +58,8 @@ const content: Record<Locale, ProfileEditorText> = {
     roleValue: { admin: "admin", trainer: "trainer", employer: "employer", trainee: "trainee" },
     userFallback: "User",
     heading: "My Profile",
-    subheading: "Manage your personal information, contact credentials, and cooperative affiliations.",
+    subheading:
+      "Manage your personal information, contact credentials, and cooperative affiliations.",
     updateSuccess: "Profile details updated successfully.",
     loading: "Loading profile details...",
     profileNameFallback: "Profile Name",
@@ -76,6 +81,9 @@ const content: Record<Locale, ProfileEditorText> = {
     sectorPlaceholder: "e.g. Agri-Tech, Dairy Processing",
     saving: "Saving...",
     saveProfile: "Save Profile Details",
+    changePhoto: "Change photo",
+    uploadingPhoto: "Uploading photo...",
+    photoUpdated: "Profile photo updated.",
   },
   hi: {
     roleLabel: {
@@ -114,6 +122,9 @@ const content: Record<Locale, ProfileEditorText> = {
     sectorPlaceholder: "उदा. एग्री-टेक, डेयरी प्रोसेसिंग",
     saving: "सहेजा जा रहा है...",
     saveProfile: "प्रोफ़ाइल विवरण सहेजें",
+    changePhoto: "फ़ोटो बदलें",
+    uploadingPhoto: "फ़ोटो अपलोड हो रही है...",
+    photoUpdated: "प्रोफ़ाइल फ़ोटो अपडेट हो गई।",
   },
 };
 
@@ -124,6 +135,8 @@ export function ProfileEditor({ accessToken, role, email }: ProfileEditorProps) 
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const photoUrl = useProfilePhoto(accessToken);
 
   useEffect(() => {
     getProfileDetails(accessToken)
@@ -156,6 +169,24 @@ export function ProfileEditor({ accessToken, role, email }: ProfileEditorProps) 
     }
   }
 
+  async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setError(null);
+    setStatus(null);
+    setPhotoBusy(true);
+    try {
+      const { url } = await uploadProfilePhoto(accessToken, file);
+      announceProfilePhoto(url);
+      setStatus(t.photoUpdated);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setPhotoBusy(false);
+    }
+  }
+
   const roleLabel = t.roleLabel[role];
   const initials = (profile?.full_name ?? t.userFallback).slice(0, 2).toUpperCase();
 
@@ -167,7 +198,9 @@ export function ProfileEditor({ accessToken, role, email }: ProfileEditorProps) 
           <h1 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary m-0">
             {t.heading}
           </h1>
-          <p className="font-body-md text-body-md text-on-surface-variant mt-1 max-w-2xl">{t.subheading}</p>
+          <p className="font-body-md text-body-md text-on-surface-variant mt-1 max-w-2xl">
+            {t.subheading}
+          </p>
         </div>
         <div className="flex items-center">
           <span className="inline-flex items-center gap-2 px-4 py-2 bg-primary-container/10 text-primary-container rounded-full font-label-md text-label-md uppercase tracking-wide border border-primary-container/20 shadow-xs font-bold">
@@ -207,13 +240,33 @@ export function ProfileEditor({ accessToken, role, email }: ProfileEditorProps) 
           <div className="md:col-span-1 flex flex-col gap-6">
             <div className="bg-surface-card border border-outline-variant rounded-xl p-6 flex flex-col items-center text-center shadow-sm">
               <div className="w-28 h-28 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-headline-lg font-bold text-3xl mb-4 border-4 border-surface-container-lowest shadow-sm relative">
-                {initials}
-                <div
-                  aria-label="Account Avatar"
-                  className="absolute bottom-0 right-0 w-8 h-8 bg-cta text-on-primary rounded-full flex items-center justify-center shadow-md border-2 border-surface-card"
+                {photoUrl ? (
+                  <img
+                    src={photoUrl}
+                    alt={profile.full_name ?? t.profileNameFallback}
+                    className="h-full w-full rounded-full object-cover"
+                  />
+                ) : (
+                  initials
+                )}
+                <label
+                  title={t.changePhoto}
+                  className={`absolute bottom-0 right-0 w-8 h-8 bg-cta text-on-primary rounded-full flex items-center justify-center shadow-md border-2 border-surface-card ${
+                    photoBusy ? "opacity-60" : "cursor-pointer hover:opacity-90"
+                  }`}
                 >
-                  <span className="material-symbols-outlined text-[16px]">person</span>
-                </div>
+                  <span className="material-symbols-outlined text-[16px]">
+                    {photoBusy ? "hourglass_top" : "photo_camera"}
+                  </span>
+                  <span className="sr-only">{photoBusy ? t.uploadingPhoto : t.changePhoto}</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    disabled={photoBusy}
+                    onChange={(e) => void handlePhoto(e)}
+                  />
+                </label>
               </div>
 
               <h2 className="font-headline-sm text-headline-sm text-on-surface m-0 mb-1">

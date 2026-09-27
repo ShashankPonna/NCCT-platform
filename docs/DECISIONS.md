@@ -890,3 +890,16 @@ Nothing is written in either case.
 - The "new session" notification includes the course title.
 
 **Deploy order:** the migration must be applied before the API that selects `courses(title)` goes live.
+
+### 77. Profile photos: one private Storage object per user, no profiles column
+
+**Decision:** Every user can upload their own profile photo from Settings (the camera badge on the avatar). It shows in the app header (trainee and staff) and on the Settings avatar. Other screens (public NFC profile, employer summary) deliberately still don't show it.
+
+**How it's stored:**
+- One object per user at `profile-photos/{userId}/avatar` in a **private** bucket (2 MB, JPEG/PNG/WebP), provisioned through the Storage API like the other buckets.
+- There's no `profiles` column: "has a photo" means "the object exists". That avoided a migration, and an upload simply overwrites the object.
+- `POST /api/profile/photo` (multipart field `photo`, any logged-in role, own photo only) uploads through Express, per ARCHITECTURE.md §8. `GET /api/profile/photo` returns a 1-hour signed URL, or `{ url: null }` when there's no photo.
+
+**Why private + signed URL:** a face photo is personal data under the DPDP Act, so it isn't world-readable. It's fetched only by the logged-in owner.
+
+**Client:** `useProfilePhoto` fetches the URL. After an upload, Settings dispatches an event so the header swaps pictures without a reload. Any failure (offline, no photo) falls back to the default avatar or initials.

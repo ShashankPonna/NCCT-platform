@@ -169,6 +169,8 @@ const content: Record<Locale, ManagementShellText> = {
 interface ManagementShellProps {
   role: Role;
   fullName: string | null;
+  // Own uploaded photo (docs/DECISIONS.md #77); null shows initials.
+  photoUrl?: string | null;
   activeTab: ManagementTab;
   onNavigate: (tab: ManagementTab) => void;
   // The real notification bell (docs/DECISIONS.md #65), passed in by the
@@ -180,6 +182,7 @@ interface ManagementShellProps {
 export function ManagementShell({
   role,
   fullName,
+  photoUrl,
   activeTab,
   onNavigate,
   notificationBell,
@@ -390,9 +393,17 @@ export function ManagementShell({
             </button>
 
             <div className="ml-0.5 flex items-center gap-1.5 border-l border-outline-variant pl-1.5 md:ml-1 md:gap-2.5 md:pl-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary-fixed text-on-secondary-fixed font-bold text-xs border border-outline-variant shadow-xs md:h-9 md:w-9">
-                {(fullName || roleDisplayName).slice(0, 2).toUpperCase()}
-              </div>
+              {photoUrl ? (
+                <img
+                  src={photoUrl}
+                  alt={fullName ?? roleDisplayName}
+                  className="h-8 w-8 shrink-0 rounded-full border border-outline-variant object-cover shadow-xs md:h-9 md:w-9"
+                />
+              ) : (
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary-fixed text-on-secondary-fixed font-bold text-xs border border-outline-variant shadow-xs md:h-9 md:w-9">
+                  {(fullName || roleDisplayName).slice(0, 2).toUpperCase()}
+                </div>
+              )}
               <button
                 type="button"
                 onClick={() => onNavigate("profile")}

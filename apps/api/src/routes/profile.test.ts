@@ -8,33 +8,45 @@ import { profileRouter } from "./profile.js";
 // routes go through the caller's own RLS-scoped `req.supabase`. Both query
 // the `profiles` table, so a single shared mock would make the auth lookup
 // and the route's own query return the same row — hiding real bugs.
-const { getUserMock, authProfileMock, ownProfileMock, adminFromMock, userFromMock } = vi.hoisted(
-  () => {
-    function createTableMock() {
-      const result: { data: unknown; error: unknown } = { data: null, error: null };
-      const builder: Record<string, ReturnType<typeof vi.fn>> = {
-        then: vi.fn((resolve: (value: typeof result) => void) => resolve(result)),
-      };
-      for (const method of ["select", "update", "eq", "single", "maybeSingle"]) {
-        builder[method] = vi.fn(() => builder);
-      }
-      return { builder, result };
-    }
-
-    const authProfileMock = createTableMock();
-    const ownProfileMock = createTableMock();
-    return {
-      getUserMock: vi.fn(),
-      authProfileMock,
-      ownProfileMock,
-      adminFromMock: vi.fn(() => authProfileMock.builder),
-      userFromMock: vi.fn(() => ownProfileMock.builder),
+const {
+  getUserMock,
+  authProfileMock,
+  ownProfileMock,
+  adminFromMock,
+  userFromMock,
+  uploadMock,
+  signMock,
+} = vi.hoisted(() => {
+  function createTableMock() {
+    const result: { data: unknown; error: unknown } = { data: null, error: null };
+    const builder: Record<string, ReturnType<typeof vi.fn>> = {
+      then: vi.fn((resolve: (value: typeof result) => void) => resolve(result)),
     };
-  },
-);
+    for (const method of ["select", "update", "eq", "single", "maybeSingle"]) {
+      builder[method] = vi.fn(() => builder);
+    }
+    return { builder, result };
+  }
+
+  const authProfileMock = createTableMock();
+  const ownProfileMock = createTableMock();
+  return {
+    getUserMock: vi.fn(),
+    authProfileMock,
+    ownProfileMock,
+    adminFromMock: vi.fn(() => authProfileMock.builder),
+    userFromMock: vi.fn(() => ownProfileMock.builder),
+    uploadMock: vi.fn(),
+    signMock: vi.fn(),
+  };
+});
 
 vi.mock("../supabaseClient.js", () => ({
-  supabaseAdmin: { auth: { getUser: getUserMock }, from: adminFromMock },
+  supabaseAdmin: {
+    auth: { getUser: getUserMock },
+    from: adminFromMock,
+    storage: { from: () => ({ upload: uploadMock, createSignedUrl: signMock }) },
+  },
   getSupabaseForUser: () => ({ from: userFromMock }),
 }));
 
@@ -53,6 +65,8 @@ function authenticateAs(userId: string, role: string, fullName: string | null = 
 
 beforeEach(() => {
   getUserMock.mockReset();
+  uploadMock.mockReset();
+  signMock.mockReset();
   ownProfileMock.builder.update.mockClear();
   ownProfileMock.builder.eq.mockClear();
   for (const mock of [authProfileMock, ownProfileMock]) {
@@ -203,5 +217,101 @@ describe("PATCH /api/profile", () => {
 
     expect(res.status).toBe(200);
     expect(ownProfileMock.builder.update).toHaveBeenCalledWith({ phone: null });
+  });
+});
+
+describe("profile photo", () => {
+  const SIGNED = "https://storage.example/profile-photos/signed";
+
+  it("GET returns a signed URL when a photo exists", async () => {
+    authenticateAs(USER_ID, "trainee");
+    signMock.mockResolvedValue({ data: { signedUrl: SIGNED }, error: null });
+
+    const res = await request(buildApp())
+      .get("/api/profile/photo")
+      .set("Authorization", "Bearer good-token");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ url: SIGNED });
+    expect(signMock).toHaveBeenCalledWith(`${USER_ID}/avatar`, 3600);
+  });
+
+  it("GET returns url null when the user has no photo", async () => {
+    authenticateAs(USER_ID, "trainee");
+    signMock.mockResolvedValue({ data: null, error: new Error("Object not found") });
+
+    const res = await request(buildApp())
+      .get("/api/profile/photo")
+      .set("Authorization", "Bearer good-token");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ url: null });
+  });
+
+  it("GET requires a login", async () => {
+    const res = await request(buildApp()).get("/api/profile/photo");
+    expect(res.status).toBe(401);
+  });
+
+  it("POST stores the photo at the caller's own path and returns its URL", async () => {
+    authenticateAs(USER_ID, "admin");
+    uploadMock.mockResolvedValue({ error: null });
+    signMock.mockResolvedValue({ data: { signedUrl: SIGNED }, error: null });
+
+    const res = await request(buildApp())
+      .post("/api/profile/photo")
+      .set("Authorization", "Bearer good-token")
+      .attach("photo", Buffer.from([0xff, 0xd8, 0xff]), {
+        filename: "me.jpg",
+        contentType: "image/jpeg",
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({ url: SIGNED });
+    expect(uploadMock).toHaveBeenCalledWith(`${USER_ID}/avatar`, expect.any(Buffer), {
+      contentType: "image/jpeg",
+      upsert: true,
+    });
+  });
+
+  it("POST rejects a non-image file", async () => {
+    authenticateAs(USER_ID, "trainee");
+
+    const res = await request(buildApp())
+      .post("/api/profile/photo")
+      .set("Authorization", "Bearer good-token")
+      .attach("photo", Buffer.from("%PDF-1.4"), {
+        filename: "doc.pdf",
+        contentType: "application/pdf",
+      });
+
+    expect(res.status).toBe(400);
+    expect(uploadMock).not.toHaveBeenCalled();
+  });
+
+  it("POST rejects a photo over 2 MB", async () => {
+    authenticateAs(USER_ID, "trainee");
+
+    const res = await request(buildApp())
+      .post("/api/profile/photo")
+      .set("Authorization", "Bearer good-token")
+      .attach("photo", Buffer.alloc(2 * 1024 * 1024 + 1), {
+        filename: "big.jpg",
+        contentType: "image/jpeg",
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/2 MB/);
+    expect(uploadMock).not.toHaveBeenCalled();
+  });
+
+  it("POST without a file returns 400", async () => {
+    authenticateAs(USER_ID, "trainee");
+
+    const res = await request(buildApp())
+      .post("/api/profile/photo")
+      .set("Authorization", "Bearer good-token");
+
+    expect(res.status).toBe(400);
   });
 });

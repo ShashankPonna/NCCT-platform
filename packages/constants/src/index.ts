@@ -56,6 +56,12 @@ export const LESSON_FILE_MIME_TYPES = [
 
 export const LESSON_FILE_MAX_BYTES = 25 * 1024 * 1024;
 
+// Profile photos (DECISIONS.md #77) — the `profile-photos` Storage bucket is
+// private and set to these same MIME types and size cap.
+export const PROFILE_PHOTO_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+
+export const PROFILE_PHOTO_MAX_BYTES = 2 * 1024 * 1024;
+
 // Self-hosted lesson video (Cloudflare R2, DECISIONS.md #18 — supersedes #12).
 // Kept separate from LESSON_FILE_MIME_TYPES/_MAX_BYTES above: video uploads go
 // straight from the browser to R2 via a presigned URL, not buffered through

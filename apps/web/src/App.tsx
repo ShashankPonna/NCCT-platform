@@ -20,6 +20,7 @@ import { TraineeApp } from "./trainee/TraineeApp.js";
 import { NotificationBell } from "./notifications/NotificationBell.js";
 import { TrainerCoursesDashboard } from "./TrainerCoursesDashboard.js";
 import { usePasswordRecovery } from "./usePasswordRecovery.js";
+import { useProfilePhoto } from "./useProfilePhoto.js";
 import { useSession } from "./useSession.js";
 
 // The native (Capacitor) shell has no marketing landing page to show — its
@@ -32,6 +33,7 @@ const IS_NATIVE = Capacitor.isNativePlatform();
 function App() {
   const { session, loading, error } = useSession();
   const { isRecovery, clearRecovery } = usePasswordRecovery();
+  const photoUrl = useProfilePhoto(session?.accessToken ?? null);
   const [activeTab, setActiveTab] = useState<ManagementTab | null>(null);
   const [view, setView] = useState<"home" | "login">(() =>
     IS_NATIVE ||
@@ -150,6 +152,7 @@ function App() {
     <ManagementShell
       role={session.role}
       fullName={session.fullName}
+      photoUrl={photoUrl}
       activeTab={currentTab}
       onNavigate={(tab) => setActiveTab(tab)}
       notificationBell={

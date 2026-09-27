@@ -96,9 +96,10 @@ Every other table is enabled but has no policy yet — default-deny — and gets
 
 ## Storage
 
-Two buckets, both provisioned directly via the Storage Management API (`POST /storage/v1/bucket`), not a SQL migration — Storage buckets aren't plain Postgres rows in the portable-migration sense, so there's no `supabase/migrations/*.sql` file for either; if a bucket ever needs to be recreated (e.g. a fresh project), redo it with the same API call rather than trying to derive it from a migration file. Neither bucket needs `storage.objects` RLS policies because every read/write to both goes through `supabaseAdmin` (service-role, bypasses Storage RLS same as it bypasses table RLS).
+Three buckets, all provisioned directly via the Storage Management API (`POST /storage/v1/bucket`), not a SQL migration — Storage buckets aren't plain Postgres rows in the portable-migration sense, so there's no `supabase/migrations/*.sql` file for either; if a bucket ever needs to be recreated (e.g. a fresh project), redo it with the same API call rather than trying to derive it from a migration file. Neither bucket needs `storage.objects` RLS policies because every read/write to both goes through `supabaseAdmin` (service-role, bypasses Storage RLS same as it bypasses table RLS).
 
 - `lesson-content` — **private** (`public: false`), 25 MB file size limit, MIME types restricted to `application/pdf`, `.pptx`, `.ppt`. See [DECISIONS.md](DECISIONS.md) #13 for the upload/read-via-signed-URL pattern. Object paths follow `{lesson_id}/{timestamp}-{original_filename}`.
+- `profile-photos` — **private**, 2 MB file size limit, `image/jpeg`, `image/png`, `image/webp`. One object per user at `{user_id}/avatar` (no `profiles` column; existence of the object is the flag). Read via 1-hour signed URL from `GET /api/profile/photo`. See [DECISIONS.md](DECISIONS.md) #77.
 - `certificates` — **public** (`public: true`), 5 MB file size limit, `application/pdf` only. Public is intentional here, not an oversight: the `certificates` table already has a fully public `certificates_public_read` RLS policy (PRD §6.4's "no-login verification"), so a certificate's own PDF file being equally public is consistent, not a bigger exposure than the DB row already is. Object paths are just `{certificate_code}.pdf`.
 
 ## Open Items

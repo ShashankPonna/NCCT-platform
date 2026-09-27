@@ -666,6 +666,34 @@ export async function uploadLessonContent(
   return res.json();
 }
 
+// Profile photo (DECISIONS.md #77): the URL is short-lived and signed, so
+// callers fetch it on mount rather than caching it.
+export function getProfilePhotoUrl(accessToken: string) {
+  return apiFetch<{ url: string | null }>("/profile/photo", accessToken);
+}
+
+export async function uploadProfilePhoto(
+  accessToken: string,
+  photo: File,
+): Promise<{ url: string | null }> {
+  const form = new FormData();
+  form.append("photo", photo);
+  const res = await fetch(`${apiBaseUrl}/api/profile/photo`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+    body: form,
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      typeof body === "object" && body && "error" in body
+        ? String((body as { error: unknown }).error)
+        : `Request failed: ${res.status}`,
+    );
+  }
+  return body as { url: string | null };
+}
+
 export function getLessonContentUrl(accessToken: string, lessonId: string) {
   return apiFetch<{ url: string | null; expires_in?: number }>(
     `/lessons/${lessonId}/content-url`,

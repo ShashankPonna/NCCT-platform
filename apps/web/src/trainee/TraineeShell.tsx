@@ -140,6 +140,9 @@ interface TraineeShellProps {
   active: TraineeTab;
   onNavigate: (tab: TraineeTab, subView?: string) => void;
   fullName: string | null;
+  // Own uploaded photo (docs/DECISIONS.md #77); null falls back to the
+  // default avatar.
+  photoUrl?: string | null;
   // The real notification bell (docs/DECISIONS.md #65), passed in by the
   // caller since the shell itself has no access token.
   notificationBell?: React.ReactNode;
@@ -148,7 +151,14 @@ interface TraineeShellProps {
 
 // Nav shell for the trainee portal with cohesive light & dark modes, accessibility controls,
 // sticky main header with search & profile, and desktop mega-menu navigation bar with dropdown sub-destinations.
-export function TraineeShell({ active, onNavigate, fullName, notificationBell, children }: TraineeShellProps) {
+export function TraineeShell({
+  active,
+  onNavigate,
+  fullName,
+  photoUrl,
+  notificationBell,
+  children,
+}: TraineeShellProps) {
   const { locale } = useLocale();
   const t = content[locale];
   const online = useOnlineStatus();
@@ -206,7 +216,9 @@ export function TraineeShell({ active, onNavigate, fullName, notificationBell, c
   ];
 
   return (
-    <div className={`flex min-h-screen flex-col bg-background font-body text-body-md text-on-background transition-colors duration-200 ${contrastHigh ? "contrast-125" : ""}`}>
+    <div
+      className={`flex min-h-screen flex-col bg-background font-body text-body-md text-on-background transition-colors duration-200 ${contrastHigh ? "contrast-125" : ""}`}
+    >
       {/* Top Utility Bar */}
       <div className="border-b border-outline-variant bg-surface-container-low py-1.5 text-xs transition-colors">
         <div className="mx-auto flex min-h-7 max-w-container-max flex-wrap items-center justify-between gap-y-1 px-margin-mobile md:h-7 md:px-margin-desktop">
@@ -218,7 +230,10 @@ export function TraineeShell({ active, onNavigate, fullName, notificationBell, c
             <span className="hidden text-xs text-on-surface-variant sm:inline">{t.tagline}</span>
           </div>
           <div className="flex items-center gap-4 text-xs text-on-surface-variant">
-            <a href="#main-content" className="hidden transition-colors hover:text-interactive sm:inline">
+            <a
+              href="#main-content"
+              className="hidden transition-colors hover:text-interactive sm:inline"
+            >
               {t.skipToContent}
             </a>
             <div className="hidden h-3.5 w-px bg-outline-variant sm:block" />
@@ -304,8 +319,12 @@ export function TraineeShell({ active, onNavigate, fullName, notificationBell, c
             {/* Real connectivity (the same signal the offline write-queue uses),
                 not a permanently "Online" label. */}
             <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-lowest text-on-surface shadow-xs border border-border-slate">
-              <span className={`w-2 h-2 rounded-full ${online ? "bg-accent" : "bg-status-pending"}`}></span>
-              <span className="font-metric-mono text-xs text-on-surface-variant">{online ? t.online : t.offline}</span>
+              <span
+                className={`w-2 h-2 rounded-full ${online ? "bg-accent" : "bg-status-pending"}`}
+              ></span>
+              <span className="font-metric-mono text-xs text-on-surface-variant">
+                {online ? t.online : t.offline}
+              </span>
             </div>
 
             <button
@@ -341,8 +360,8 @@ export function TraineeShell({ active, onNavigate, fullName, notificationBell, c
 
             <div className="ml-0.5 flex items-center gap-1.5 border-l border-outline-variant pl-1.5 md:ml-1 md:gap-2.5 md:pl-3">
               <img
-                src="/assets/trainee_avatar.png"
-                alt="Trainee Avatar"
+                src={photoUrl ?? "/assets/trainee_avatar.png"}
+                alt={fullName ?? "Trainee Avatar"}
                 className="h-8 w-8 shrink-0 rounded-full border border-outline-variant object-cover shadow-xs md:h-9 md:w-9"
               />
               <button
@@ -353,7 +372,9 @@ export function TraineeShell({ active, onNavigate, fullName, notificationBell, c
                 <span className="text-label-md font-bold leading-tight text-on-surface hover:text-interactive">
                   {fullName || t.trainee}
                 </span>
-                <span className="text-[11px] leading-tight text-on-surface-variant">{t.trainee}</span>
+                <span className="text-[11px] leading-tight text-on-surface-variant">
+                  {t.trainee}
+                </span>
               </button>
               <button
                 type="button"
@@ -417,7 +438,9 @@ export function TraineeShell({ active, onNavigate, fullName, notificationBell, c
                     <div className="text-label-md font-bold text-on-surface group-hover/item:text-interactive">
                       {t.learnMenu.lessonsTitle}
                     </div>
-                    <div className="text-[11px] text-on-surface-variant">{t.learnMenu.lessonsDesc}</div>
+                    <div className="text-[11px] text-on-surface-variant">
+                      {t.learnMenu.lessonsDesc}
+                    </div>
                   </div>
                 </button>
                 <button
@@ -432,7 +455,9 @@ export function TraineeShell({ active, onNavigate, fullName, notificationBell, c
                     <div className="text-label-md font-bold text-on-surface group-hover/item:text-interactive">
                       {t.learnMenu.certificatesTitle}
                     </div>
-                    <div className="text-[11px] text-on-surface-variant">{t.learnMenu.certificatesDesc}</div>
+                    <div className="text-[11px] text-on-surface-variant">
+                      {t.learnMenu.certificatesDesc}
+                    </div>
                   </div>
                 </button>
                 <button
@@ -447,7 +472,9 @@ export function TraineeShell({ active, onNavigate, fullName, notificationBell, c
                     <div className="text-label-md font-bold text-on-surface group-hover/item:text-interactive">
                       {t.learnMenu.nominateTitle}
                     </div>
-                    <div className="text-[11px] text-on-surface-variant">{t.learnMenu.nominateDesc}</div>
+                    <div className="text-[11px] text-on-surface-variant">
+                      {t.learnMenu.nominateDesc}
+                    </div>
                   </div>
                 </button>
               </div>
@@ -502,7 +529,9 @@ export function TraineeShell({ active, onNavigate, fullName, notificationBell, c
                     <div className="text-label-md font-bold text-on-surface group-hover/item:text-interactive">
                       {t.careerMenu.jobsTitle}
                     </div>
-                    <div className="text-[11px] text-on-surface-variant">{t.careerMenu.jobsDesc}</div>
+                    <div className="text-[11px] text-on-surface-variant">
+                      {t.careerMenu.jobsDesc}
+                    </div>
                   </div>
                 </button>
                 <button
@@ -517,7 +546,9 @@ export function TraineeShell({ active, onNavigate, fullName, notificationBell, c
                     <div className="text-label-md font-bold text-on-surface group-hover/item:text-interactive">
                       {t.careerMenu.skillGapTitle}
                     </div>
-                    <div className="text-[11px] text-on-surface-variant">{t.careerMenu.skillGapDesc}</div>
+                    <div className="text-[11px] text-on-surface-variant">
+                      {t.careerMenu.skillGapDesc}
+                    </div>
                   </div>
                 </button>
                 <button
@@ -532,7 +563,9 @@ export function TraineeShell({ active, onNavigate, fullName, notificationBell, c
                     <div className="text-label-md font-bold text-on-surface group-hover/item:text-interactive">
                       {t.careerMenu.askTitle}
                     </div>
-                    <div className="text-[11px] text-on-surface-variant">{t.careerMenu.askDesc}</div>
+                    <div className="text-[11px] text-on-surface-variant">
+                      {t.careerMenu.askDesc}
+                    </div>
                   </div>
                 </button>
                 <button
@@ -547,7 +580,9 @@ export function TraineeShell({ active, onNavigate, fullName, notificationBell, c
                     <div className="text-label-md font-bold text-on-surface group-hover/item:text-interactive">
                       {t.careerMenu.faqTitle}
                     </div>
-                    <div className="text-[11px] text-on-surface-variant">{t.careerMenu.faqDesc}</div>
+                    <div className="text-[11px] text-on-surface-variant">
+                      {t.careerMenu.faqDesc}
+                    </div>
                   </div>
                 </button>
               </div>
@@ -557,7 +592,10 @@ export function TraineeShell({ active, onNavigate, fullName, notificationBell, c
       </header>
 
       {/* Main Content Area */}
-      <main id="main-content" className="mx-auto w-full max-w-container-max flex-grow px-margin-mobile pb-8 pt-4 md:px-margin-desktop md:pb-12 md:pt-6">
+      <main
+        id="main-content"
+        className="mx-auto w-full max-w-container-max flex-grow px-margin-mobile pb-8 pt-4 md:px-margin-desktop md:pb-12 md:pt-6"
+      >
         {children}
       </main>
 

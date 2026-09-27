@@ -45,6 +45,8 @@
 			</array>
 		</dict>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>EduDisha uses the camera to enrol your face and verify face check-in. Only a face descriptor is saved, never the photo.</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>armv7</string>

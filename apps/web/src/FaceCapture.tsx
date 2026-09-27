@@ -17,6 +17,8 @@ interface FaceCaptureText {
   capturing: string;
   noFaceDetected: string;
   noUsableDescriptor: string;
+  cameraDenied: string;
+  noCamera: string;
 }
 
 const content: Record<Locale, FaceCaptureText> = {
@@ -28,15 +30,22 @@ const content: Record<Locale, FaceCaptureText> = {
     noFaceDetected: "No face detected — face the camera directly in good light and try again",
     noUsableDescriptor:
       "Your face was detected but the model didn't return a usable descriptor. Please try again, or use QR check-in.",
+    cameraDenied:
+      "Camera permission was denied. Allow camera access for EduDisha (in the app or browser settings), then tap Start camera again.",
+    noCamera: "No camera was found on this device.",
   },
   hi: {
     startCamera: "कैमरा शुरू करें",
     startingCamera: "कैमरा शुरू हो रहा है...",
     loadingModel: "फेस मॉडल लोड हो रहा है...",
     capturing: "कैप्चर हो रहा है...",
-    noFaceDetected: "कोई चेहरा नहीं मिला — अच्छी रोशनी में सीधे कैमरे की ओर देखें और पुनः प्रयास करें",
+    noFaceDetected:
+      "कोई चेहरा नहीं मिला — अच्छी रोशनी में सीधे कैमरे की ओर देखें और पुनः प्रयास करें",
     noUsableDescriptor:
       "आपका चेहरा पहचाना गया लेकिन मॉडल ने उपयोग योग्य डिस्क्रिप्टर नहीं दिया। कृपया पुनः प्रयास करें, या QR चेक-इन का उपयोग करें।",
+    cameraDenied:
+      "कैमरा अनुमति नहीं दी गई। ऐप या ब्राउज़र सेटिंग्स में EduDisha के लिए कैमरा की अनुमति दें, फिर कैमरा शुरू करें दोबारा दबाएँ।",
+    noCamera: "इस डिवाइस पर कोई कैमरा नहीं मिला।",
   },
 };
 
@@ -96,7 +105,12 @@ export function FaceCapture({ actionLabel, onCapture, disabled }: FaceCapturePro
     setError(null);
     setStatus("starting-camera");
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      // facingMode "user" picks the selfie camera on phones (the APK would
+      // otherwise often open the rear one); laptops with a single webcam
+      // ignore it.
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+      });
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -118,7 +132,14 @@ export function FaceCapture({ actionLabel, onCapture, disabled }: FaceCapturePro
       await getHuman();
       setStatus("ready");
     } catch (err) {
-      setError((err as Error).message);
+      const name = (err as DOMException).name;
+      setError(
+        name === "NotAllowedError" || name === "SecurityError"
+          ? t.cameraDenied
+          : name === "NotFoundError" || name === "OverconstrainedError"
+            ? t.noCamera
+            : (err as Error).message,
+      );
       setStatus("error");
     }
   }
@@ -176,11 +197,7 @@ export function FaceCapture({ actionLabel, onCapture, disabled }: FaceCapturePro
           {t.startCamera}
         </button>
       ) : (
-        <button
-          type="button"
-          onClick={capture}
-          disabled={disabled || status !== "ready"}
-        >
+        <button type="button" onClick={capture} disabled={disabled || status !== "ready"}>
           {status === "starting-camera" && t.startingCamera}
           {status === "loading-model" && t.loadingModel}
           {status === "ready" && actionLabel}
