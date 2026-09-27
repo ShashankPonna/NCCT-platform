@@ -3,7 +3,7 @@ import type { Profile, Role } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { HostelAssignmentCard } from "./trainee/HostelAssignmentCard.js";
-import { announceProfilePhoto, useProfilePhoto } from "./useProfilePhoto.js";
+import { announceProfilePhoto, DEFAULT_AVATAR, useProfilePhoto } from "./useProfilePhoto.js";
 import { NfcProfileCard } from "./trainee/NfcProfileCard.js";
 
 interface ProfileEditorProps {
@@ -18,7 +18,6 @@ interface ProfileEditorProps {
 interface ProfileEditorText {
   roleLabel: Record<Role, string>;
   roleValue: Record<Role, string>;
-  userFallback: string;
   heading: string;
   subheading: string;
   updateSuccess: string;
@@ -56,7 +55,6 @@ const content: Record<Locale, ProfileEditorText> = {
       trainee: "Trainee Role",
     },
     roleValue: { admin: "admin", trainer: "trainer", employer: "employer", trainee: "trainee" },
-    userFallback: "User",
     heading: "My Profile",
     subheading:
       "Manage your personal information, contact credentials, and cooperative affiliations.",
@@ -98,7 +96,6 @@ const content: Record<Locale, ProfileEditorText> = {
       employer: "नियोक्ता",
       trainee: "प्रशिक्षणार्थी",
     },
-    userFallback: "उपयोगकर्ता",
     heading: "मेरी प्रोफ़ाइल",
     subheading: "अपनी व्यक्तिगत जानकारी, संपर्क क्रेडेंशियल और सहकारी संबद्धताओं का प्रबंधन करें।",
     updateSuccess: "प्रोफ़ाइल विवरण सफलतापूर्वक अपडेट किया गया।",
@@ -188,7 +185,6 @@ export function ProfileEditor({ accessToken, role, email }: ProfileEditorProps) 
   }
 
   const roleLabel = t.roleLabel[role];
-  const initials = (profile?.full_name ?? t.userFallback).slice(0, 2).toUpperCase();
 
   return (
     <div className="p-margin-mobile md:p-margin-desktop max-w-max-width-desktop mx-auto w-full flex flex-col gap-8 text-left">
@@ -239,16 +235,12 @@ export function ProfileEditor({ accessToken, role, email }: ProfileEditorProps) 
           {/* Avatar & Summary Card */}
           <div className="md:col-span-1 flex flex-col gap-6">
             <div className="bg-surface-card border border-outline-variant rounded-xl p-6 flex flex-col items-center text-center shadow-sm">
-              <div className="w-28 h-28 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-headline-lg font-bold text-3xl mb-4 border-4 border-surface-container-lowest shadow-sm relative">
-                {photoUrl ? (
-                  <img
-                    src={photoUrl}
-                    alt={profile.full_name ?? t.profileNameFallback}
-                    className="h-full w-full rounded-full object-cover"
-                  />
-                ) : (
-                  initials
-                )}
+              <div className="w-28 h-28 rounded-full bg-surface-container-lowest flex items-center justify-center mb-4 border-4 border-surface-container-lowest shadow-sm relative">
+                <img
+                  src={photoUrl ?? DEFAULT_AVATAR}
+                  alt={profile.full_name ?? t.profileNameFallback}
+                  className="h-full w-full rounded-full object-cover"
+                />
                 <label
                   title={t.changePhoto}
                   className={`absolute bottom-0 right-0 w-8 h-8 bg-cta text-on-primary rounded-full flex items-center justify-center shadow-md border-2 border-surface-card ${

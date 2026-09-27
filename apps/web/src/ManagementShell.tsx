@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import logo from "./assets/logo-badge.png";
 import { LocaleToggle, useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { supabase } from "./supabaseClient.js";
+import { DEFAULT_AVATAR } from "./useProfilePhoto.js";
 
 export type ManagementTab =
   | "dashboard"
@@ -169,7 +170,7 @@ const content: Record<Locale, ManagementShellText> = {
 interface ManagementShellProps {
   role: Role;
   fullName: string | null;
-  // Own uploaded photo (docs/DECISIONS.md #77); null shows initials.
+  // Own uploaded photo (docs/DECISIONS.md #77); null shows DEFAULT_AVATAR.
   photoUrl?: string | null;
   activeTab: ManagementTab;
   onNavigate: (tab: ManagementTab) => void;
@@ -393,17 +394,11 @@ export function ManagementShell({
             </button>
 
             <div className="ml-0.5 flex items-center gap-1.5 border-l border-outline-variant pl-1.5 md:ml-1 md:gap-2.5 md:pl-3">
-              {photoUrl ? (
-                <img
-                  src={photoUrl}
-                  alt={fullName ?? roleDisplayName}
-                  className="h-8 w-8 shrink-0 rounded-full border border-outline-variant object-cover shadow-xs md:h-9 md:w-9"
-                />
-              ) : (
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary-fixed text-on-secondary-fixed font-bold text-xs border border-outline-variant shadow-xs md:h-9 md:w-9">
-                  {(fullName || roleDisplayName).slice(0, 2).toUpperCase()}
-                </div>
-              )}
+              <img
+                src={photoUrl ?? DEFAULT_AVATAR}
+                alt={fullName ?? roleDisplayName}
+                className="h-8 w-8 shrink-0 rounded-full border border-outline-variant object-cover shadow-xs md:h-9 md:w-9"
+              />
               <button
                 type="button"
                 onClick={() => onNavigate("profile")}

@@ -3,6 +3,7 @@ import logo from "../assets/logo-badge.png";
 import { LocaleToggle, useLocale, type Locale } from "../i18n/LocaleContext.js";
 import { useOnlineStatus } from "../offline/network.js";
 import { supabase } from "../supabaseClient.js";
+import { DEFAULT_AVATAR } from "../useProfilePhoto.js";
 
 export type TraineeTab = "home" | "learn" | "attendance" | "career" | "profile";
 
@@ -140,8 +141,7 @@ interface TraineeShellProps {
   active: TraineeTab;
   onNavigate: (tab: TraineeTab, subView?: string) => void;
   fullName: string | null;
-  // Own uploaded photo (docs/DECISIONS.md #77); null falls back to the
-  // default avatar.
+  // Own uploaded photo (docs/DECISIONS.md #77); null shows DEFAULT_AVATAR.
   photoUrl?: string | null;
   // The real notification bell (docs/DECISIONS.md #65), passed in by the
   // caller since the shell itself has no access token.
@@ -360,7 +360,7 @@ export function TraineeShell({
 
             <div className="ml-0.5 flex items-center gap-1.5 border-l border-outline-variant pl-1.5 md:ml-1 md:gap-2.5 md:pl-3">
               <img
-                src={photoUrl ?? "/assets/trainee_avatar.png"}
+                src={photoUrl ?? DEFAULT_AVATAR}
                 alt={fullName ?? "Trainee Avatar"}
                 className="h-8 w-8 shrink-0 rounded-full border border-outline-variant object-cover shadow-xs md:h-9 md:w-9"
               />

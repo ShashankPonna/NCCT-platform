@@ -902,4 +902,4 @@ Nothing is written in either case.
 
 **Why private + signed URL:** a face photo is personal data under the DPDP Act, so it isn't world-readable. It's fetched only by the logged-in owner.
 
-**Client:** `useProfilePhoto` fetches the URL. After an upload, Settings dispatches an event so the header swaps pictures without a reload. Any failure (offline, no photo) falls back to the default avatar or initials.
+**Client:** `useProfilePhoto` fetches the URL. After an upload, Settings dispatches an event so the header swaps pictures without a reload. Any failure (offline, no photo) shows one shared default picture (`public/assets/default_avatar.png`, `DEFAULT_AVATAR`) in all three places. It replaces the old stock trainee photo and the staff initials badge.

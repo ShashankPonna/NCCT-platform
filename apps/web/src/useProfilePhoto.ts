@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 // Profile photo (docs/DECISIONS.md #77). The header and the Settings avatar
 // each call this hook; after an upload, Settings calls announceProfilePhoto
 // so the header swaps to the new picture without a reload. Any failure
-// (offline, no photo) just leaves the url null and callers fall back to their
-// default avatar.
+// (offline, no photo) just leaves the url null and callers show
+// DEFAULT_AVATAR.
 const PHOTO_EVENT = "edudisha:profile-photo";
+
+// Shown wherever a user has no uploaded photo.
+export const DEFAULT_AVATAR = "/assets/default_avatar.png";
 
 export function announceProfilePhoto(url: string | null) {
   window.dispatchEvent(new CustomEvent<string | null>(PHOTO_EVENT, { detail: url }));
