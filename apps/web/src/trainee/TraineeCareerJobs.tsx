@@ -3,6 +3,7 @@ import type { Job, JobInterest, JobMatch, VisibilitySettings } from "@ncct/share
 import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "../i18n/LocaleContext.js";
 import { ErrorBanner, StatusPill } from "./pieces.js";
+import { errorText } from "../offline/network.js";
 
 interface TraineeCareerJobsProps {
   accessToken: string;
@@ -77,19 +78,19 @@ export function TraineeCareerJobs({ accessToken }: TraineeCareerJobsProps) {
   useEffect(() => {
     getJobs()
       .then(setJobs)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
     getVisibilitySettings(accessToken)
       .then(setVisibility)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
     getMyJobInterests(accessToken)
       .then(setMyInterests)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
     getJobMatches(accessToken)
       .then((result) => {
         setMatches(result.matches);
         setHasProfileSignal(result.hasProfileSignal);
       })
-      .catch((err: Error) => setError(err.message))
+      .catch((err: Error) => setError(errorText(err)))
       .finally(() => setMatchesLoaded(true));
   }, [accessToken]);
 
@@ -98,7 +99,7 @@ export function TraineeCareerJobs({ accessToken }: TraineeCareerJobsProps) {
     try {
       setVisibility(await updateVisibilitySettings(accessToken, visible));
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 

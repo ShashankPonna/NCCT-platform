@@ -2,6 +2,7 @@ import { getMyHostelAssignments } from "@ncct/api-client";
 import type { HostelRoomType, MyHostelAssignment } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "../i18n/LocaleContext.js";
+import { errorText } from "../offline/network.js";
 
 interface HostelAssignmentCardProps {
   accessToken: string;
@@ -50,7 +51,7 @@ export function HostelAssignmentCard({ accessToken }: HostelAssignmentCardProps)
   useEffect(() => {
     getMyHostelAssignments(accessToken)
       .then(setAssignments)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
   }, [accessToken]);
 
   return (

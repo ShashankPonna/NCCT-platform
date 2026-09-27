@@ -15,6 +15,7 @@ import { ROLES } from "@ncct/constants";
 import type { AdminUserRow, BulkImportResult, Institution, Role } from "@ncct/shared-types";
 import { AdminHostelManager } from "./AdminHostelManager.js";
 import { useEffect, useRef, useState } from "react";
+import { errorText } from "./offline/network.js";
 
 interface AdminUserManagerProps {
   accessToken: string;
@@ -87,7 +88,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
     try {
       setInstitutions(await getInstitutions(accessToken));
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -108,7 +109,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
       }
       setProgrammeCountByInstitution(programmeCounts);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -121,7 +122,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
         }),
       );
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -131,7 +132,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
       await updateUser(accessToken, id, { role });
       await Promise.all([refreshUsers(), refreshTotals()]);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -144,7 +145,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
       await deleteUser(accessToken, row.id);
       await Promise.all([refreshUsers(), refreshTotals()]);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -180,7 +181,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
       setSelectedRole("trainee");
       await Promise.all([refreshUsers(), refreshTotals()]);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }
@@ -201,7 +202,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
       setStagedFileName(null);
       await Promise.all([refreshUsers(), refreshTotals()]);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }
@@ -237,7 +238,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
       setShowAddInstModal(false);
       await refreshInstitutions();
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }
@@ -251,7 +252,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
       setEditingInstId(null);
       await refreshInstitutions();
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -262,7 +263,7 @@ export function AdminUserManager({ accessToken, currentUserId }: AdminUserManage
       await deleteInstitution(accessToken, id);
       await refreshInstitutions();
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 

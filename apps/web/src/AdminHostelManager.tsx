@@ -10,6 +10,7 @@ import {
 import { HOSTEL_ROOM_TYPES } from "@ncct/constants";
 import type { HostelRoom, HostelRoomType, HostelWithRooms, Institution } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import { errorText } from "./offline/network.js";
 
 interface AdminHostelManagerProps {
   accessToken: string;
@@ -47,7 +48,7 @@ export function AdminHostelManager({ accessToken, institutions }: AdminHostelMan
     if (!activeInstitutionId) return;
     getHostels(accessToken, activeInstitutionId)
       .then(setHostels)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
   }, [accessToken, activeInstitutionId]);
 
   async function refresh() {
@@ -61,7 +62,7 @@ export function AdminHostelManager({ accessToken, institutions }: AdminHostelMan
       await action();
       await refresh();
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }

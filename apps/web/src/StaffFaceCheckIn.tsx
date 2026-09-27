@@ -3,6 +3,7 @@ import type { AttendanceCheckInResult } from "@ncct/api-client";
 import { useState } from "react";
 import { FaceCapture } from "./FaceCapture.js";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
+import { errorText } from "./offline/network.js";
 
 interface StaffFaceCheckInProps {
   accessToken: string;
@@ -89,7 +90,7 @@ export function StaffFaceCheckIn({ accessToken, sessionId }: StaffFaceCheckInPro
         setError(null);
         return;
       }
-      setError((err as Error).message);
+      setError(errorText(err));
       setStatus("error");
     }
   }

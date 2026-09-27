@@ -9,6 +9,7 @@ import type { AttendanceRosterEntry } from "@ncct/shared-types";
 import { useState } from "react";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { StaffFaceCheckIn } from "./StaffFaceCheckIn.js";
+import { errorText } from "./offline/network.js";
 
 interface AttendanceManagerProps {
   accessToken: string;
@@ -143,7 +144,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
       setCheckInUrl(result.checkInUrl);
       setCheckInCode(result.checkInCode);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }
@@ -159,7 +160,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
       const data = await getSessionRoster(accessToken, id);
       setRoster(data);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }
@@ -193,7 +194,7 @@ export function AttendanceManager({ accessToken }: AttendanceManagerProps) {
         );
       }
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setMarkingTraineeId(null);
     }

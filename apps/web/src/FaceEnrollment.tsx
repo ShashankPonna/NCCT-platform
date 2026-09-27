@@ -2,6 +2,7 @@ import { enrollFaceEmbedding, getFaceEmbeddingStatus } from "@ncct/api-client";
 import { useEffect, useState } from "react";
 import { FaceCapture } from "./FaceCapture.js";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
+import { errorText } from "./offline/network.js";
 
 interface FaceEnrollmentProps {
   accessToken: string;
@@ -48,7 +49,7 @@ export function FaceEnrollment({ accessToken, onEnrolled }: FaceEnrollmentProps)
   useEffect(() => {
     getFaceEmbeddingStatus(accessToken)
       .then((status) => setEnrolled(status.enrolled))
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
   }, [accessToken]);
 
   async function handleCapture(embedding: number[]) {
@@ -59,7 +60,7 @@ export function FaceEnrollment({ accessToken, onEnrolled }: FaceEnrollmentProps)
       setSuccess(true);
       onEnrolled?.();
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 

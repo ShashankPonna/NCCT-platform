@@ -3,6 +3,7 @@ import type { CourseGradebook as CourseGradebookData } from "@ncct/shared-types"
 import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { saveFile } from "./saveFile.js";
+import { errorText } from "./offline/network.js";
 
 interface CourseGradebookProps {
   accessToken: string;
@@ -72,7 +73,7 @@ export function CourseGradebook({ accessToken, courseId }: CourseGradebookProps)
   useEffect(() => {
     getCourseGradebook(accessToken, courseId)
       .then(setGradebook)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
   }, [accessToken, courseId]);
 
   // Excel export (docs/DECISIONS.md #66) — the server builds the workbook,
@@ -87,7 +88,7 @@ export function CourseGradebook({ accessToken, courseId }: CourseGradebookProps)
       const result = await saveFile(blob, fileName ?? `Gradebook - ${gradebook.course_title}.xlsx`);
       if (result.kind === "saved-to-documents") setExportMessage(t.savedToDocuments(result.fileName));
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setExporting(false);
     }

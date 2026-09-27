@@ -36,6 +36,7 @@ import type {
 import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { SkillPicker } from "./SkillPicker.js";
+import { errorText } from "./offline/network.js";
 
 interface AdminProgrammeManagerProps {
   accessToken: string;
@@ -387,7 +388,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
     if (!isAdmin || !selectedInstitutionId) return;
     getHostels(accessToken, selectedInstitutionId)
       .then(setHostels)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
   }, [accessToken, isAdmin, selectedInstitutionId]);
 
   const roomOptions = hostels.flatMap((hostel) =>
@@ -400,7 +401,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
   useEffect(() => {
     getInstitutions(accessToken)
       .then(setInstitutions)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
     getProgrammes(accessToken)
       .then((progs) => {
         setProgrammes(progs);
@@ -408,14 +409,14 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
           void selectProgramme(progs[0].id);
         }
       })
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
     getSkills(accessToken)
       .then(setSkills)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
     if (isAdmin) {
       listUsers(accessToken, { role: "trainer" })
         .then(setTrainerProfiles)
-        .catch((err: Error) => setError(err.message));
+        .catch((err: Error) => setError(errorText(err)));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken]);
@@ -445,7 +446,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
         setAssignedTrainers(await getProgrammeTrainers(accessToken, programmeId));
       }
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -458,7 +459,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
       setAssignedTrainers(await getProgrammeTrainers(accessToken, selectedProgrammeId));
       setTrainerToAssign("");
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setAssigningTrainer(false);
     }
@@ -471,7 +472,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
       await unassignProgrammeTrainer(accessToken, selectedProgrammeId, trainerId);
       setAssignedTrainers((prev) => prev.filter((t) => t.trainer_id !== trainerId));
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -491,7 +492,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
     try {
       await setProgrammeSkills(accessToken, selectedProgrammeId, [...programmeSkillIds]);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setSavingSkills(false);
     }
@@ -507,7 +508,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
       setProgrammeSkillIds((prev) => new Set(prev).add(skill.id));
       setNewSkillName("");
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -532,7 +533,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
       const updatedList = await refreshProgrammes();
       await selectProgramme(created.id || (updatedList[0]?.id ?? ""));
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }
@@ -552,7 +553,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
       );
       setNominations(await getProgrammeNominations(accessToken, selectedProgrammeId));
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -576,7 +577,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
         return next;
       });
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -601,7 +602,7 @@ export function AdminProgrammeManager({ accessToken, role }: AdminProgrammeManag
       setShowSessionForm(false);
       setSessions(await getTimetableSessions(accessToken, selectedProgrammeId));
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }

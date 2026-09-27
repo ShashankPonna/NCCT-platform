@@ -5,6 +5,7 @@ import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { HostelAssignmentCard } from "./trainee/HostelAssignmentCard.js";
 import { announceProfilePhoto, DEFAULT_AVATAR, useProfilePhoto } from "./useProfilePhoto.js";
 import { NfcProfileCard } from "./trainee/NfcProfileCard.js";
+import { errorText } from "./offline/network.js";
 
 interface ProfileEditorProps {
   accessToken: string;
@@ -138,7 +139,7 @@ export function ProfileEditor({ accessToken, role, email }: ProfileEditorProps) 
   useEffect(() => {
     getProfileDetails(accessToken)
       .then(setProfile)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
   }, [accessToken]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -160,7 +161,7 @@ export function ProfileEditor({ accessToken, role, email }: ProfileEditorProps) 
       setProfile(updated);
       setStatus(t.updateSuccess);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }
@@ -178,7 +179,7 @@ export function ProfileEditor({ accessToken, role, email }: ProfileEditorProps) 
       announceProfilePhoto(url);
       setStatus(t.photoUpdated);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setPhotoBusy(false);
     }

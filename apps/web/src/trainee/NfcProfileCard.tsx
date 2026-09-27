@@ -6,6 +6,7 @@ import {
 import type { VisibilitySettings } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "../i18n/LocaleContext.js";
+import { errorText } from "../offline/network.js";
 
 interface NfcProfileCardProps {
   accessToken: string;
@@ -77,7 +78,7 @@ export function NfcProfileCard({
   useEffect(() => {
     getVisibilitySettings(accessToken)
       .then(setVisibility)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
   }, [accessToken]);
 
   const enabled = visibility?.public_profile_enabled ?? false;
@@ -93,7 +94,7 @@ export function NfcProfileCard({
         setCode(result.public_profile_code);
       }
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }
@@ -120,7 +121,7 @@ export function NfcProfileCard({
       const result = await issuePublicProfileCard(accessToken);
       setCode(result.public_profile_code);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }

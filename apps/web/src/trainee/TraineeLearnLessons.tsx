@@ -35,6 +35,7 @@ import { CourseMarksTally } from "./CourseMarksTally.js";
 import { SelfHostedVideoPlayer } from "../SelfHostedVideoPlayer.js";
 import { YouTubeVideoPlayer } from "../YouTubeVideoPlayer.js";
 import { ErrorBanner } from "./pieces.js";
+import { errorText } from "../offline/network.js";
 
 interface TraineeLearnLessonsProps {
   accessToken: string;
@@ -259,7 +260,7 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
         return next;
       });
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -273,7 +274,7 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
           void loadCourses(approved[0].programme_id);
         }
       })
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken]);
 
@@ -288,7 +289,7 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
       setSelectedLesson(null);
       quiz.closeAssessment();
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -300,7 +301,7 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
       setLessons([]);
       setSelectedLesson(null);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -312,7 +313,7 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
       setSelectedLesson(null);
       setProgress(null);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -377,7 +378,7 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
           if (videoFetchLessonIdRef.current === lesson.id && video?.url) setVideoUrl(video.url);
         })
         .catch((err) => {
-          if (videoFetchLessonIdRef.current === lesson.id) setError((err as Error).message);
+          if (videoFetchLessonIdRef.current === lesson.id) setError(errorText(err));
         })
         .finally(() => {
           if (videoFetchLessonIdRef.current === lesson.id) setVideoLoading(false);
@@ -392,7 +393,7 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
       setProgress(lessonProgress);
       setTranslations(lessonTranslations);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -406,7 +407,7 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
       setDownloadedIds((prev) => new Set(prev).add(lesson.id));
       await refreshDownloadManifest();
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setDownloadProgress((prev) => {
         const next = { ...prev };
@@ -438,7 +439,7 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
         setError(t.noFileUploadedError);
       }
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -466,7 +467,7 @@ export function TraineeLearnLessons({ accessToken, online, pendingCount }: Train
         }),
       );
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 

@@ -3,6 +3,7 @@ import type { Nomination, Programme } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "../i18n/LocaleContext.js";
 import { EmptyState, ErrorBanner, StatusPill } from "./pieces.js";
+import { errorText } from "../offline/network.js";
 
 interface TraineeLearnNominateProps {
   accessToken: string;
@@ -83,10 +84,10 @@ export function TraineeLearnNominate({ accessToken }: TraineeLearnNominateProps)
   function load() {
     getProgrammes(accessToken)
       .then(setProgrammes)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
     getMyNominations(accessToken)
       .then(setNominations)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
   }
 
   async function handleNominate(programmeId: string) {
@@ -96,7 +97,7 @@ export function TraineeLearnNominate({ accessToken }: TraineeLearnNominateProps)
       await nominateSelf(accessToken, programmeId);
       load();
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setNominatingId(null);
     }

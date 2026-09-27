@@ -9,6 +9,7 @@ import {
 import type { Institution, Programme, TimetableSession } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 import type { ManagementTab } from "./ManagementShell.js";
+import { errorText } from "./offline/network.js";
 
 interface TrainerCoursesDashboardProps {
   accessToken: string;
@@ -121,7 +122,7 @@ export function TrainerCoursesDashboard({ accessToken, onNavigate }: TrainerCour
           await Promise.all(programmes.map((p) => loadCard(accessToken, p, institutions, today))),
         );
       } catch (err) {
-        setError((err as Error).message);
+        setError(errorText(err));
         setCards([]);
       }
     }

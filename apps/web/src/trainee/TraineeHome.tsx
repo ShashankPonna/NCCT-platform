@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "../i18n/LocaleContext.js";
 import { ErrorBanner } from "./pieces.js";
 import type { TraineeTab } from "./TraineeShell.js";
+import { errorText } from "../offline/network.js";
 
 interface TraineeHomeProps {
   accessToken: string;
@@ -199,13 +200,13 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
   useEffect(() => {
     getMyNominations(accessToken)
       .then(setNominations)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
     getMyJobInterests(accessToken)
       .then(setInterests)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
     getMyCertificates(accessToken)
       .then(setCertificates)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
     getJobMatches(accessToken)
       .then((result) => {
         setMatches(result.matches.slice(0, 3));
@@ -221,7 +222,7 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
     if (!currentProgrammeId) return;
     getProgrammeProgress(accessToken, currentProgrammeId)
       .then(setProgress)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
     getTimetableSessions(accessToken, currentProgrammeId)
       .then((sessions) => {
         const now = Date.now();
@@ -233,7 +234,7 @@ export function TraineeHome({ accessToken, fullName, onNavigate }: TraineeHomePr
           upcoming[0] ? new Date(upcoming[0].starts_at).getTime() <= now : false,
         );
       })
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
   }, [accessToken, currentProgrammeId]);
 
   const percent = progress?.percent ?? 0;

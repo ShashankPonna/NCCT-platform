@@ -5,6 +5,7 @@ import "./index.css";
 import { API_BASE_URL } from "./apiBaseUrl.js";
 import App from "./App.tsx";
 import { LocaleProvider } from "./i18n/LocaleContext.js";
+import { OfflineBanner } from "./offline/OfflineBanner.js";
 
 // Must run before anything renders: api-client holds the base URL in module
 // state and defaults to localhost, which is wrong everywhere except a
@@ -14,6 +15,7 @@ setApiBaseUrl(API_BASE_URL);
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <LocaleProvider>
+      <OfflineBanner />
       <App />
     </LocaleProvider>
   </StrictMode>,

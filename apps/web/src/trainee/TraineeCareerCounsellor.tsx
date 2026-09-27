@@ -2,6 +2,7 @@ import { askCareerCounsellor } from "@ncct/api-client";
 import type { CareerCounsellorAnswer } from "@ncct/shared-types";
 import { useState } from "react";
 import { useLocale, type Locale } from "../i18n/LocaleContext.js";
+import { isNetworkError } from "../offline/network.js";
 
 interface TraineeCareerCounsellorProps {
   accessToken: string;
@@ -20,12 +21,14 @@ interface TraineeCareerCounsellorText {
   contextUsed: string;
   checked: (label: string) => string;
   reviewing: string;
+  offlineReply: string;
   placeholder: string;
   disclaimer: string;
 }
 
 const content: Record<Locale, TraineeCareerCounsellorText> = {
   en: {
+    offlineReply: "You're offline. Ask again once you're connected.",
     heading: "Ask a Counsellor",
     subheading: "Live, personalized guidance based on your profile. Not a generic FAQ.",
     emptyPrompt: "Ask about your own certificates, skill gaps, or which programme to take next.",
@@ -37,6 +40,7 @@ const content: Record<Locale, TraineeCareerCounsellorText> = {
       "This is AI-assisted guidance based on your platform activity — not a substitute for professional career counselling.",
   },
   hi: {
+    offlineReply: "आप ऑफ़लाइन हैं। इंटरनेट से जुड़ने पर फिर से पूछें।",
     heading: "काउंसलर से पूछें",
     subheading: "आपकी प्रोफ़ाइल पर आधारित लाइव, व्यक्तिगत मार्गदर्शन। यह सामान्य FAQ नहीं है।",
     emptyPrompt: "अपने प्रमाणपत्रों, कौशल-अंतर, या आगे कौन-सा कार्यक्रम लें, इसके बारे में पूछें।",
@@ -98,7 +102,7 @@ export function TraineeCareerCounsellor({ accessToken }: TraineeCareerCounsellor
       const result = await askCareerCounsellor(accessToken, asked);
       setTurns((prev) => [...prev, { question: asked, result, error: null }]);
     } catch (err) {
-      setTurns((prev) => [...prev, { question: asked, result: null, error: (err as Error).message }]);
+      setTurns((prev) => [...prev, { question: asked, result: null, error: isNetworkError(err) ? t.offlineReply : (err as Error).message }]);
     } finally {
       setBusy(false);
     }

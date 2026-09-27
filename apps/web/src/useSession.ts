@@ -3,6 +3,7 @@ import type { Role } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "./apiBaseUrl.js";
 import { supabase } from "./supabaseClient.js";
+import { errorText } from "./offline/network.js";
 
 interface SessionInfo {
   accessToken: string;
@@ -126,7 +127,7 @@ export function useSession() {
       const current = data.session;
       if (current) {
         loadRole(current.access_token, current.user.id, current.user.email ?? null)
-          .catch((err: Error) => setError(err.message))
+          .catch((err: Error) => setError(errorText(err)))
           .finally(() => setLoading(false));
       } else {
         setLoading(false);
@@ -136,7 +137,7 @@ export function useSession() {
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, newSession) => {
       if (newSession) {
         loadRole(newSession.access_token, newSession.user.id, newSession.user.email ?? null).catch(
-          (err: Error) => setError(err.message),
+          (err: Error) => setError(errorText(err)),
         );
       } else {
         setSession(null);

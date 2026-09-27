@@ -3,6 +3,7 @@ import type { CourseMarksTally as CourseMarksTallyData } from "@ncct/shared-type
 import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "../i18n/LocaleContext.js";
 import { ErrorBanner } from "./pieces.js";
+import { errorText } from "../offline/network.js";
 
 interface CourseMarksTallyProps {
   accessToken: string;
@@ -156,7 +157,7 @@ export function CourseMarksTally({ accessToken, courseId }: CourseMarksTallyProp
   useEffect(() => {
     getMyCourseMarks(accessToken, courseId)
       .then(setTally)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
   }, [accessToken, courseId]);
 
   if (error) return <ErrorBanner message={error} />;

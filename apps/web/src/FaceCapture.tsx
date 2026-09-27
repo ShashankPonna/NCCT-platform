@@ -1,6 +1,7 @@
 import { FACE_EMBEDDING_DIMENSIONS } from "@ncct/constants";
 import { useEffect, useRef, useState } from "react";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
+import { errorText } from "./offline/network.js";
 
 interface FaceCaptureProps {
   actionLabel: string;
@@ -178,7 +179,7 @@ export function FaceCapture({ actionLabel, onCapture, disabled }: FaceCapturePro
       onCapture(face.embedding);
       setStatus("ready");
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
       setStatus("ready");
     }
   }

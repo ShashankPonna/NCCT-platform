@@ -17,6 +17,7 @@ import type { AssessmentKind, AssessmentQuestion, AssessmentWithTotals, GradedRe
 import { createQuestionSchema } from "@ncct/validation";
 import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
+import { errorText } from "./offline/network.js";
 
 interface AssessmentBuilderProps {
   accessToken: string;
@@ -298,7 +299,7 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
   useEffect(() => {
     getAssessments(accessToken, moduleId)
       .then(setAssessments)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
   }, [accessToken, moduleId]);
 
   async function loadAssessments() {
@@ -306,7 +307,7 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
     try {
       setAssessments(await getAssessments(accessToken, moduleId));
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -315,7 +316,7 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
     try {
       setQuestions(await getAssessmentQuestions(accessToken, assessmentId));
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -358,7 +359,7 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
       form.reset();
       await loadAssessments();
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -370,7 +371,7 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
       setEditingAssessmentId(null);
       await loadAssessments();
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -385,7 +386,7 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
       }
       await loadAssessments();
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -418,7 +419,7 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
       await loadQuestions(selectedAssessmentId);
       await loadAssessments(); // refreshes the assessment's total_marks
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -444,7 +445,7 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
       await loadQuestions(selectedAssessmentId);
       await loadAssessments();
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -456,7 +457,7 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
       await loadQuestions(selectedAssessmentId);
       await loadAssessments();
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -485,7 +486,7 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
       await loadQuestions(selectedAssessmentId);
       await loadAssessments();
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setCsvBusy(false);
     }
@@ -499,7 +500,7 @@ export function AssessmentBuilder({ accessToken, moduleId }: AssessmentBuilderPr
     try {
       setPreviewResult(await previewAssessment(accessToken, selectedAssessmentId, previewAnswers));
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setPreviewBusy(false);
     }

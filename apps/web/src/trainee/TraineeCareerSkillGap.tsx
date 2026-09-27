@@ -3,6 +3,7 @@ import type { Job, SkillGapAcrossJobsResult, SkillGapResult } from "@ncct/shared
 import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "../i18n/LocaleContext.js";
 import { ErrorBanner, SkillChip } from "./pieces.js";
+import { errorText } from "../offline/network.js";
 
 interface TraineeCareerSkillGapProps {
   accessToken: string;
@@ -131,11 +132,11 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
           setLoading(true);
           getSkillGap(accessToken, firstId)
             .then(setResult)
-            .catch((err: Error) => setError(err.message))
+            .catch((err: Error) => setError(errorText(err)))
             .finally(() => setLoading(false));
         }
       })
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
 
     getJobMatches(accessToken)
       .then((res) => {
@@ -154,7 +155,7 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
 
     getSkillGapAcrossJobs(accessToken)
       .then((summary) => setOverall(summary))
-      .catch((err: Error) => setError(err.message))
+      .catch((err: Error) => setError(errorText(err)))
       .finally(() => setOverallLoading(false));
   }, [accessToken]);
 
@@ -168,7 +169,7 @@ export function TraineeCareerSkillGap({ accessToken }: TraineeCareerSkillGapProp
     setError(null);
     getSkillGap(accessToken, jobId)
       .then(setResult)
-      .catch((err: Error) => setError(err.message))
+      .catch((err: Error) => setError(errorText(err)))
       .finally(() => setLoading(false));
   }
 

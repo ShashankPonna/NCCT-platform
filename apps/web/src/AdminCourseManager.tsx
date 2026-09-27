@@ -28,6 +28,7 @@ import { useLocale, type Locale } from "./i18n/LocaleContext.js";
 import { SelfHostedVideoPlayer } from "./SelfHostedVideoPlayer.js";
 import { SkillPicker } from "./SkillPicker.js";
 import { YouTubeVideoPlayer } from "./YouTubeVideoPlayer.js";
+import { errorText } from "./offline/network.js";
 
 interface AdminCourseManagerProps {
   accessToken: string;
@@ -313,10 +314,10 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
           void handleSelectProgramme(progs[0].id);
         }
       })
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
     getSkills(accessToken)
       .then(setSkills)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken]);
 
@@ -334,7 +335,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
         await handleSelectCourse(crs[0].id);
       }
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -352,7 +353,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
         await handleSelectModule(mods[0].id);
       }
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
 
     // Deliberately its own try/catch, not bundled into the Promise.all
@@ -385,7 +386,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
     try {
       await setCourseSkills(accessToken, selectedCourseId, [...courseSkillIds]);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setSavingCourseSkills(false);
     }
@@ -401,7 +402,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
       setCourseSkillIds((prev) => new Set(prev).add(skill.id));
       setNewSkillName("");
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -412,7 +413,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
       const ls = await getLessons(accessToken, moduleId);
       setLessons(ls);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -429,7 +430,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
       const crs = await getCourses(accessToken, programmeId);
       setCourses(crs);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }
@@ -448,7 +449,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
       const mods = await getModules(accessToken, selectedCourseId);
       setModules(mods);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }
@@ -479,7 +480,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
       const ls = await getLessons(accessToken, selectedModuleId);
       setLessons(ls);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }
@@ -494,7 +495,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
         setLessons(await getLessons(accessToken, selectedModuleId));
       }
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setFileUploading((prev) => {
         const next = { ...prev };
@@ -526,7 +527,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
         setLessons(await getLessons(accessToken, selectedModuleId));
       }
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setVideoUploadProgress((prev) => {
         const next = { ...prev };
@@ -551,7 +552,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
         setLessons(await getLessons(accessToken, selectedModuleId));
       }
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -581,7 +582,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
           : await getLessonContentUrl(accessToken, lesson.id);
       setPreviewUrl(url);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setPreviewLoading(false);
     }
@@ -609,7 +610,7 @@ export function AdminCourseManager({ accessToken }: AdminCourseManagerProps) {
         setLessons(await getLessons(accessToken, selectedModuleId));
       }
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 

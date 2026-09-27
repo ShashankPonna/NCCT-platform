@@ -2,6 +2,7 @@ import { askChatbot } from "@ncct/api-client";
 import type { ChatbotAnswer } from "@ncct/shared-types";
 import { useEffect, useId, useRef, useState } from "react";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
+import { isNetworkError } from "./offline/network.js";
 
 interface ChatbotPanelProps {
   accessToken: string;
@@ -31,10 +32,12 @@ interface ChatbotPanelText {
   thinking: string;
   ask: string;
   disclaimer: string;
+  offlineReply: string;
 }
 
 const content: Record<Locale, ChatbotPanelText> = {
   en: {
+    offlineReply: "You're offline. Ask again once you're connected.",
     heading: "Ask about programmes",
     subheading:
       "Questions about programmes, eligibility, and certification. Answers come only from the official programme material.",
@@ -57,6 +60,7 @@ const content: Record<Locale, ChatbotPanelText> = {
     disclaimer: "For questions about your own progress or career, use Ask a Counsellor.",
   },
   hi: {
+    offlineReply: "आप ऑफ़लाइन हैं। इंटरनेट से जुड़ने पर फिर से पूछें।",
     heading: "कार्यक्रमों के बारे में पूछें",
     subheading:
       "कार्यक्रमों, पात्रता और प्रमाणन के बारे में प्रश्न। उत्तर केवल आधिकारिक कार्यक्रम सामग्री से आते हैं।",
@@ -109,7 +113,11 @@ export function ChatbotPanel({ accessToken, compact = false }: ChatbotPanelProps
     } catch (err) {
       setTurns((prev) => [
         ...prev,
-        { question: asked, result: null, error: (err as Error).message },
+        {
+          question: asked,
+          result: null,
+          error: isNetworkError(err) ? t.offlineReply : (err as Error).message,
+        },
       ]);
     } finally {
       setBusy(false);

@@ -2,6 +2,7 @@ import { getDashboardAnalytics } from "@ncct/api-client";
 import type { DashboardAnalytics, DropoutRiskLevel } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
+import { errorText } from "./offline/network.js";
 
 interface AnalyticsDashboardProps {
   accessToken: string;
@@ -218,7 +219,7 @@ export function AnalyticsDashboard({ accessToken }: AnalyticsDashboardProps) {
   useEffect(() => {
     getDashboardAnalytics(accessToken)
       .then(setData)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
   }, [accessToken]);
 
   function handleExport() {

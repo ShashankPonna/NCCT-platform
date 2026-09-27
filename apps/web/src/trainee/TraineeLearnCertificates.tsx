@@ -3,6 +3,7 @@ import type { Certificate } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "../i18n/LocaleContext.js";
 import { EmptyState, ErrorBanner } from "./pieces.js";
+import { errorText } from "../offline/network.js";
 
 interface TraineeLearnCertificatesProps {
   accessToken: string;
@@ -78,7 +79,7 @@ export function TraineeLearnCertificates({ accessToken }: TraineeLearnCertificat
   useEffect(() => {
     getMyCertificates(accessToken)
       .then(setCertificates)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
   }, [accessToken]);
 
   const certCount = certificates?.length ?? 0;

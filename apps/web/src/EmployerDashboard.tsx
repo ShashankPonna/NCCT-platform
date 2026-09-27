@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { EmployerTraineeDrawer } from "./EmployerTraineeDrawer.js";
 import { saveFile } from "./saveFile.js";
 import { SkillChips, SkillPicker } from "./SkillPicker.js";
+import { errorText } from "./offline/network.js";
 
 interface EmployerDashboardProps {
   accessToken: string;
@@ -100,7 +101,7 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
     loadOwnJobs();
     getSkills(accessToken)
       .then(setSkills)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -110,7 +111,7 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
   useEffect(() => {
     getEmployerTrainees(accessToken, filterSkill !== "all" ? { skill_id: filterSkill } : {})
       .then(setResults)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
   }, [accessToken, filterSkill]);
 
   async function loadOwnJobs() {
@@ -122,7 +123,7 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
         void loadInterests(ownJobs[0].id);
       }
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -137,7 +138,7 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
       setInterests(jobInterests);
       setSelectedJobSkills(jobSkills);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -170,7 +171,7 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
       setShowPostJobModal(false);
       showToast(`Job posting "${title}" published.`);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }
@@ -195,7 +196,7 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
       setSelectedSkillIds((prev) => new Set(prev).add(skill.id));
       setNewSkillName("");
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -232,7 +233,7 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
       await shortlistTrainee(accessToken, selectedJobId, traineeId);
       await loadInterests(selectedJobId);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setPendingTraineeId(null);
     }
@@ -256,7 +257,7 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
           : `${targets.length} candidates marked as contacted — each has been notified in the app.`,
       );
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }

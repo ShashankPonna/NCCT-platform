@@ -1,6 +1,7 @@
 import { getEmployerTrainee } from "@ncct/api-client";
 import type { EmployerTraineeProfile, Skill } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import { errorText } from "./offline/network.js";
 
 interface EmployerTraineeDrawerProps {
   accessToken: string;
@@ -62,7 +63,7 @@ export function EmployerTraineeDrawer({
         if (!cancelled) setProfile(result);
       })
       .catch((err: Error) => {
-        if (!cancelled) setError(err.message);
+        if (!cancelled) setError(errorText(err));
       });
     return () => {
       cancelled = true;

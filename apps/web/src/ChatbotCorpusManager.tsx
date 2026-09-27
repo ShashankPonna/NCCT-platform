@@ -3,6 +3,7 @@ import { CHATBOT_SOURCE_TYPES } from "@ncct/constants";
 import type { ChatbotCorpusChunk, ChatbotSourceType } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
+import { errorText } from "./offline/network.js";
 
 interface ChatbotCorpusManagerProps {
   accessToken: string;
@@ -92,7 +93,7 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
     try {
       setChunks(await getCorpusChunks(accessToken));
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -106,7 +107,7 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
       setChunkContent("");
       await loadChunks();
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }
@@ -118,7 +119,7 @@ export function ChatbotCorpusManager({ accessToken }: ChatbotCorpusManagerProps)
       await deleteCorpusChunk(accessToken, id);
       await loadChunks();
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 

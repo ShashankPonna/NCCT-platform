@@ -2,7 +2,7 @@ import { checkInWithQr, getSessionByCode, type AttendanceCheckInResult } from "@
 import { useEffect, useState } from "react";
 import { FaceEnrollment } from "../FaceEnrollment.js";
 import { useLocale, type Locale } from "../i18n/LocaleContext.js";
-import { useOnlineStatus } from "../offline/network.js";
+import { errorText, useOnlineStatus } from "../offline/network.js";
 import { enqueueWrite } from "../offline/syncManager.js";
 import { ErrorBanner } from "./pieces.js";
 
@@ -104,7 +104,7 @@ export function TraineeAttendance({ accessToken, autoCheckInSessionId }: Trainee
     try {
       setResult(await checkInWithQr(accessToken, id));
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     } finally {
       setBusy(false);
     }
@@ -130,7 +130,7 @@ export function TraineeAttendance({ accessToken, autoCheckInSessionId }: Trainee
       }
       await handleQrCheckIn(session.id);
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
       setBusy(false);
     }
   }

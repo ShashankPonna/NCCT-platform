@@ -15,7 +15,7 @@ import type {
 } from "@ncct/shared-types";
 import { useEffect, useRef, useState } from "react";
 import { useLocale, type Locale } from "./i18n/LocaleContext.js";
-import { useOnlineStatus } from "./offline/network.js";
+import { errorText, useOnlineStatus } from "./offline/network.js";
 import { enqueueWrite } from "./offline/syncManager.js";
 
 interface SubmitResult {
@@ -164,7 +164,7 @@ export function useQuizTaker(accessToken: string, moduleId: string | null): Quiz
     if (!moduleId) return;
     getAssessments(accessToken, moduleId)
       .then(setAssessments)
-      .catch((err: Error) => setError(err.message));
+      .catch((err: Error) => setError(errorText(err)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken, moduleId]);
 
@@ -186,7 +186,7 @@ export function useQuizTaker(accessToken: string, moduleId: string | null): Quiz
         setAttemptLimitReached(true);
       }
     } catch (err) {
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 
@@ -218,7 +218,7 @@ export function useQuizTaker(accessToken: string, moduleId: string | null): Quiz
         setAttemptLimitReached(true);
         return;
       }
-      setError((err as Error).message);
+      setError(errorText(err));
     }
   }
 

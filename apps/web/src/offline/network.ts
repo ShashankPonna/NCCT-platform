@@ -28,3 +28,19 @@ export function useOnlineStatus(): boolean {
 
   return online;
 }
+
+// fetch() rejects with a bare TypeError when there's no connection; the
+// message differs per engine (Android WebView/Chrome, iOS WKWebView/Safari,
+// Firefox). supabase-js passes the same message through.
+const NETWORK_FAILURE = /failed to fetch|load failed|networkerror|network request failed/i;
+
+export function isNetworkError(err: unknown): boolean {
+  return err instanceof Error && NETWORK_FAILURE.test(err.message);
+}
+
+// For error banners: a lost connection isn't shown as an error, because
+// OfflineBanner already tells the user they're offline.
+export function errorText(err: unknown): string | null {
+  if (isNetworkError(err)) return null;
+  return err instanceof Error ? err.message : String(err);
+}
