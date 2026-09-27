@@ -147,7 +147,7 @@ export function TraineeApp({
             </button>
           </div>
           <div className="flex-1 overflow-y-auto px-4 py-3">
-            <ChatbotPanel accessToken={accessToken} />
+            <ChatbotPanel accessToken={accessToken} compact />
           </div>
         </div>
       )}
