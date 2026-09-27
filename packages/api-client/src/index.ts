@@ -54,6 +54,7 @@ import type {
   SkillGapResult,
   TimetableSession,
   TraineeSearchResult,
+  EmployerTraineeProfile,
   VisibilitySettings,
 } from "@ncct/shared-types";
 
@@ -972,6 +973,13 @@ export function getEmployerTrainees(
   if (filters?.skill_id) params.set("skill_id", filters.skill_id);
   const qs = params.toString();
   return apiFetch<TraineeSearchResult[]>(`/employer/trainees${qs ? `?${qs}` : ""}`, accessToken);
+}
+
+export function getEmployerTrainee(accessToken: string, traineeId: string) {
+  return apiFetch<EmployerTraineeProfile>(
+    `/employer/trainees/${encodeURIComponent(traineeId)}`,
+    accessToken,
+  );
 }
 
 export function shortlistTrainee(accessToken: string, jobId: string, traineeId: string) {

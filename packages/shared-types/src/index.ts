@@ -670,6 +670,25 @@ export interface TraineeSearchResult {
   skills: Skill[];
 }
 
+// GET /employer/trainees/:traineeId — the employer's "Trainee summary"
+// drawer. Deliberately the same fields as TraineeSearchResult (what the
+// trainee consented to via visible_to_employers), but with every
+// certificate newest-first regardless of any search filter, plus each
+// certificate's course title.
+export interface EmployerTraineeProfile {
+  trainee_id: string;
+  full_name: string;
+  certificates: {
+    certificate_code: string;
+    course_title: string | null;
+    programme_title: string | null;
+    institution_name: string | null;
+    institution_location: string | null;
+    issued_at: string;
+  }[];
+  skills: Skill[];
+}
+
 // P1 Skill-Gap Analysis (PRD §6.11, promoted from Phase-2 — see
 // DECISIONS.md #26). The skills taxonomy TraineeSearchResult's comment
 // above notes as absent — `jobs`/`programme_skills` tag against these

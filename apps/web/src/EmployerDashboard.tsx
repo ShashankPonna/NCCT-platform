@@ -12,6 +12,7 @@ import {
 } from "@ncct/api-client";
 import type { Job, JobInterest, JobInterestStatus, Skill, TraineeSearchResult } from "@ncct/shared-types";
 import { useEffect, useState } from "react";
+import { EmployerTraineeDrawer } from "./EmployerTraineeDrawer.js";
 import { saveFile } from "./saveFile.js";
 import { SkillChips, SkillPicker } from "./SkillPicker.js";
 
@@ -55,6 +56,10 @@ function toCandidate(result: TraineeSearchResult): CandidateItem {
   };
 }
 
+// The table shows this many skill chips per row, then a "+N more" chip that
+// opens the summary drawer — six stacked chips made every row very tall.
+const MAX_ROW_SKILLS = 3;
+
 const STATUS_LABEL: Record<JobInterestStatus, string> = {
   shortlisted: "Shortlisted",
   viewed: "Viewed",
@@ -82,6 +87,8 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
   const [showPostJobModal, setShowPostJobModal] = useState(false);
   const [showManageJobsModal, setShowManageJobsModal] = useState(false);
   const [contactToast, setContactToast] = useState<string | null>(null);
+  // The trainee whose summary drawer is open (EmployerTraineeDrawer.tsx).
+  const [viewTraineeId, setViewTraineeId] = useState<string | null>(null);
 
   // Skills taxonomy state
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -484,13 +491,18 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
                       return (
                         <tr key={cand.id} className="hover:bg-paper-light/60 transition-colors">
                           <td className="py-space-md px-space-md">
-                            <div className="flex items-center gap-space-sm">
+                            <button
+                              type="button"
+                              onClick={() => setViewTraineeId(cand.id)}
+                              title="View trainee summary"
+                              className="group flex items-center gap-space-sm text-left cursor-pointer"
+                            >
                               <div className="w-10 h-10 rounded-xl bg-primary-container text-on-primary flex items-center justify-center font-display text-headline-sm shrink-0 font-bold shadow-2xs">
                                 {cand.initials}
                               </div>
                               <div className="flex flex-col min-w-0">
                                 <div className="flex items-center gap-1">
-                                  <span className="font-label-lg text-label-lg text-primary truncate font-bold">
+                                  <span className="font-label-lg text-label-lg text-primary truncate font-bold group-hover:underline">
                                     {cand.name}
                                   </span>
                                   {cand.certificateCount > 0 && (
@@ -505,22 +517,38 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
                                 <span className="font-metric-mono text-label-sm text-on-surface-variant">
                                   {cand.certId ? `Cert: ${cand.certId}` : "No certificate yet"}
                                 </span>
+                                <span className="inline-flex items-center gap-0.5 font-label-sm text-label-sm text-on-surface-variant group-hover:text-primary">
+                                  View profile
+                                  <span className="material-symbols-outlined text-[14px]">chevron_right</span>
+                                </span>
                               </div>
-                            </div>
+                            </button>
                           </td>
                           <td data-label="Skills" className="py-space-md px-space-md">
                             <div className="flex flex-wrap gap-1 max-w-[200px]">
                               {cand.skills.length === 0 ? (
                                 <span className="text-on-surface-variant">—</span>
                               ) : (
-                                cand.skills.map((skill) => (
-                                  <span
-                                    key={skill}
-                                    className="px-2 py-0.5 rounded-lg bg-paper text-ink font-metric-mono text-xs border border-border-slate/50"
-                                  >
-                                    {skill}
-                                  </span>
-                                ))
+                                <>
+                                  {cand.skills.slice(0, MAX_ROW_SKILLS).map((skill) => (
+                                    <span
+                                      key={skill}
+                                      className="px-2 py-0.5 rounded-lg bg-paper text-ink font-metric-mono text-xs border border-border-slate/50"
+                                    >
+                                      {skill}
+                                    </span>
+                                  ))}
+                                  {cand.skills.length > MAX_ROW_SKILLS && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setViewTraineeId(cand.id)}
+                                      title={cand.skills.slice(MAX_ROW_SKILLS).join(", ")}
+                                      className="px-2 py-0.5 rounded-lg bg-secondary-container text-on-secondary-container font-metric-mono text-xs font-bold cursor-pointer hover:opacity-80"
+                                    >
+                                      +{cand.skills.length - MAX_ROW_SKILLS} more
+                                    </button>
+                                  )}
+                                </>
                               )}
                             </div>
                           </td>
@@ -677,6 +705,19 @@ export function EmployerDashboard({ accessToken, currentUserId }: EmployerDashbo
           </div>
         </aside>
       </div>
+      {viewTraineeId && (
+        <EmployerTraineeDrawer
+          key={viewTraineeId}
+          accessToken={accessToken}
+          traineeId={viewTraineeId}
+          onClose={() => setViewTraineeId(null)}
+          isShortlisted={shortlistedIds.has(viewTraineeId)}
+          shortlistPending={pendingTraineeId === viewTraineeId}
+          selectedJobTitle={selectedJob?.title ?? null}
+          onShortlist={() => void handleShortlist(viewTraineeId)}
+        />
+      )}
+
       {/* Post Opportunity Modal */}
       {showPostJobModal && (
         <div className="fixed inset-0 bg-primary/60 backdrop-blur-xs z-50 flex items-center justify-center p-space-md animate-fade-in">

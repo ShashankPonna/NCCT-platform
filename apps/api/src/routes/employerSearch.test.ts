@@ -87,7 +87,14 @@ function queueTraineeProfiles(profiles: unknown) {
 
 beforeEach(() => {
   getUserMock.mockReset();
-  for (const mock of [profilesTableMock, visibilityMock, certificatesMock, programmeSkillsMock, courseSkillsMock]) {
+  fromMock.mockClear();
+  for (const mock of [
+    profilesTableMock,
+    visibilityMock,
+    certificatesMock,
+    programmeSkillsMock,
+    courseSkillsMock,
+  ]) {
     mock.result.data = null;
     mock.result.error = null;
     mock.queue.length = 0;
@@ -220,7 +227,10 @@ describe("GET /api/employer/trainees", () => {
     ];
     programmeSkillsMock.result.data = [{ programme_id: "programme-1", skills: SKILL }];
     courseSkillsMock.result.data = [
-      { course_id: "course-1", skills: { id: "skill-2", name: "GST Filing", category: "Accounting" } },
+      {
+        course_id: "course-1",
+        skills: { id: "skill-2", name: "GST Filing", category: "Accounting" },
+      },
     ];
 
     const res = await request(buildApp())
@@ -229,16 +239,16 @@ describe("GET /api/employer/trainees", () => {
 
     expect(res.status).toBe(200);
     expect(res.body[0].skills).toEqual(
-      expect.arrayContaining([SKILL, { id: "skill-2", name: "GST Filing", category: "Accounting" }]),
+      expect.arrayContaining([
+        SKILL,
+        { id: "skill-2", name: "GST Filing", category: "Accounting" },
+      ]),
     );
   });
 
   it("exact-filters by skill_id, excluding a visible trainee who doesn't hold it", async () => {
     authenticateAs("employer-1", "employer");
-    visibilityMock.result.data = [
-      { trainee_id: "trainee-1" },
-      { trainee_id: "trainee-2" },
-    ];
+    visibilityMock.result.data = [{ trainee_id: "trainee-1" }, { trainee_id: "trainee-2" }];
     queueTraineeProfiles([
       { id: "trainee-1", full_name: "Asha Patil" },
       { id: "trainee-2", full_name: "Rakesh Kumar" },
@@ -326,3 +336,140 @@ describe("GET /api/employer/trainees", () => {
     expect(res.body[0].skills).toEqual([SKILL]);
   });
 });
+
+describe("GET /api/employer/trainees — certificate order", () => {
+  it("returns each trainee's certificates newest first, so certificates[0] is the latest", async () => {
+    authenticateAs("employer-1", "employer");
+    visibilityMock.result.data = [{ trainee_id: "trainee-1" }];
+    queueTraineeProfiles([{ id: "trainee-1", full_name: "Asha Patil" }]);
+    certificatesMock.result.data = [
+      {
+        trainee_id: "trainee-1",
+        certificate_code: "EDU-OLDER001",
+        issued_at: "2026-03-01T00:00:00.000Z",
+        programme_id: "programme-1",
+        course_id: null,
+        programmes: { title: "Older Programme" },
+        institutions: { name: "VAMNICOM", location: "Pune" },
+      },
+      {
+        trainee_id: "trainee-1",
+        certificate_code: "EDU-NEWER001",
+        issued_at: "2026-09-01T00:00:00.000Z",
+        programme_id: "programme-2",
+        course_id: null,
+        programmes: { title: "Newer Programme" },
+        institutions: { name: "RICM", location: "Lucknow" },
+      },
+    ];
+
+    const res = await request(buildApp())
+      .get("/api/employer/trainees")
+      .set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(200);
+    expect(
+      res.body[0].certificates.map((c: { certificate_code: string }) => c.certificate_code),
+    ).toEqual(["EDU-NEWER001", "EDU-OLDER001"]);
+  });
+});
+
+describe("GET /api/employer/trainees/:traineeId", () => {
+  it("returns 401 with no bearer token", async () => {
+    const res = await request(buildApp()).get("/api/employer/trainees/trainee-1");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 403 for a non-employer", async () => {
+    authenticateAs("trainee-1", "trainee");
+    const res = await request(buildApp())
+      .get("/api/employer/trainees/trainee-1")
+      .set("Authorization", "Bearer token");
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 404 for a trainee who hasn't opted into employer visibility", async () => {
+    authenticateAs("employer-1", "employer");
+    visibilityMock.result.data = null;
+    const res = await request(buildApp())
+      .get("/api/employer/trainees/trainee-1")
+      .set("Authorization", "Bearer token");
+    expect(res.status).toBe(404);
+    expect(fromMock).not.toHaveBeenCalledWith("certificates");
+  });
+
+  it("returns every certificate newest first with course titles, plus the union of acquired skills", async () => {
+    authenticateAs("employer-1", "employer");
+    visibilityMock.result.data = { trainee_id: "trainee-1" };
+    queueTraineeProfiles({ id: "trainee-1", full_name: "Asha Patil" });
+    certificatesMock.result.data = [
+      {
+        trainee_id: "trainee-1",
+        certificate_code: "EDU-OLDER001",
+        issued_at: "2026-03-01T00:00:00.000Z",
+        programme_id: "programme-1",
+        course_id: null,
+        courses: null,
+        programmes: { title: "Dairy Cooperative Management" },
+        institutions: { name: "VAMNICOM", location: "Pune" },
+      },
+      {
+        trainee_id: "trainee-1",
+        certificate_code: "EDU-NEWER001",
+        issued_at: "2026-09-01T00:00:00.000Z",
+        programme_id: "programme-1",
+        course_id: "course-1",
+        courses: { title: "Cooperative Accounting" },
+        programmes: { title: "Dairy Cooperative Management" },
+        institutions: { name: "VAMNICOM", location: "Pune" },
+      },
+    ];
+    programmeSkillsMock.result.data = [{ programme_id: "programme-1", skills: SKILL_A }];
+    courseSkillsMock.result.data = [{ course_id: "course-1", skills: SKILL_B }];
+
+    const res = await request(buildApp())
+      .get("/api/employer/trainees/trainee-1")
+      .set("Authorization", "Bearer token");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({
+      trainee_id: "trainee-1",
+      full_name: "Asha Patil",
+      certificates: [
+        {
+          certificate_code: "EDU-NEWER001",
+          course_title: "Cooperative Accounting",
+          programme_title: "Dairy Cooperative Management",
+          institution_name: "VAMNICOM",
+          institution_location: "Pune",
+          issued_at: "2026-09-01T00:00:00.000Z",
+        },
+        {
+          certificate_code: "EDU-OLDER001",
+          course_title: null,
+          programme_title: "Dairy Cooperative Management",
+          institution_name: "VAMNICOM",
+          institution_location: "Pune",
+          issued_at: "2026-03-01T00:00:00.000Z",
+        },
+      ],
+      skills: expect.arrayContaining([SKILL_A, SKILL_B]),
+    });
+    expect(res.body.skills).toHaveLength(2);
+  });
+
+  it("returns 400 when the certificates query fails", async () => {
+    authenticateAs("employer-1", "employer");
+    visibilityMock.result.data = { trainee_id: "trainee-1" };
+    queueTraineeProfiles({ id: "trainee-1", full_name: "Asha Patil" });
+    certificatesMock.result.error = { message: "boom" };
+    const res = await request(buildApp())
+      .get("/api/employer/trainees/trainee-1")
+      .set("Authorization", "Bearer token");
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: "boom" });
+  });
+});
+
+const SKILL_A = { id: "skill-a", name: "Tally Prime", category: "Accounting" };
+const SKILL_B = { id: "skill-b", name: "GST Filing", category: "Accounting" };
