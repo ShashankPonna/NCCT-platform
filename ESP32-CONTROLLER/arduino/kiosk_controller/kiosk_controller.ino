@@ -27,7 +27,8 @@
 //           nothing about their wiring changes.
 //
 // Libraries needed: MFRC522 (GithubCommunity) | Adafruit SSD1306 |
-//                    Adafruit GFX | WiFi + WebServer + ESPmDNS (all bundled
+//                    Adafruit GFX (its bundled Fonts/ are used for the big
+//                    headlines) | WiFi + WebServer + ESPmDNS (all bundled
 //                    with the ESP32 board package, nothing extra to install)
 //
 // Board settings (Arduino IDE): Tools -> Board -> "ESP32 Dev Module",
@@ -68,6 +69,8 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <Fonts/FreeSansBold9pt7b.h>   // ship with Adafruit GFX
+#include <Fonts/FreeSansBold12pt7b.h>
 #include <WiFi.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
@@ -129,6 +132,11 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 // also: WiFi dropped).
 // ============================================================================
 enum KioskState { IDLE, IDENTIFYING, WAITING_FOR_FACE, VERIFYING, RESULT_HOLD };
+
+// What the OLED shows. Separate from KioskState because one state can show
+// several screens (RESULT_HOLD is OK, DUP, FAIL or a warning). See setScreen().
+enum ScreenKind { SCR_SPLASH, SCR_WIFI, SCR_IDLE, SCR_BUSY, SCR_FACE, SCR_SCAN,
+                  SCR_OK, SCR_DUP, SCR_FAIL, SCR_WARN };
 KioskState state = IDLE;
 unsigned long stateEnteredAt = 0;
 
@@ -186,17 +194,271 @@ void goTo(KioskState newState) {
 }
 
 // ============================================================================
-// OLED helper — unchanged from the wired build.
+// OLED screens. Headlines use FreeSansBold (readable at arm's length and on
+// camera); details use the small built-in font. A screen is fully described
+// by (kind, title, detail, ms since shown), so loop() redraws it every frame
+// to animate it, and setScreen() draws the first frame immediately.
+//
+// Drawing is display-only: nothing here reads or changes KioskState, so the
+// state machine and wire protocol above/below are untouched by it.
 // ============================================================================
-void showMessage(String line1, String line2 = "", String line3 = "") {
+ScreenKind screenKind = SCR_SPLASH;
+String screenTitle = "";
+String screenDetail = "";
+unsigned long screenShownAt = 0;
+bool screenSettled = false;   // result screens stop redrawing once their animation ends
+unsigned long lastFrameAt = 0;
+
+// A full-frame I2C push takes ~23ms at 400kHz and blocks, so ~25fps is the
+// ceiling that still leaves loop() free to answer /events polls promptly.
+const unsigned long FRAME_MS = 40;
+const unsigned long RESULT_ANIM_MS = 600;  // icon pop + stroke, then static
+const int SMALL_CHARS = 21;                // built-in font: 128px / 6px per char
+
+float clamp01(float v) { return v < 0 ? 0 : (v > 1 ? 1 : v); }
+float easeOut(float t) { t = 1 - clamp01(t); return 1 - t * t * t; }
+float easeOutBack(float t) {  // overshoots slightly, then settles: the "pop"
+  t = clamp01(t) - 1;
+  return 1 + 2.70158f * t * t * t + 1.70158f * t * t;
+}
+// 0 -> 1 -> 0 once per period, for things that sweep back and forth.
+float pingPong(unsigned long t, unsigned long period) {
+  float p = (float)(t % period) / period;
+  return p < 0.5f ? p * 2 : 2 - p * 2;
+}
+
+String clip(const String& s, int maxChars) {
+  return (int)s.length() <= maxChars ? s : s.substring(0, maxChars - 1) + ".";
+}
+
+// Splits a detail message over two small lines at a word boundary.
+void wrapTwo(const String& s, String& first, String& second) {
+  first = s;
+  second = "";
+  if ((int)s.length() <= SMALL_CHARS) return;
+  const char* c = s.c_str();
+  int cut = SMALL_CHARS;
+  while (cut > 0 && c[cut] != ' ') cut--;
+  if (cut == 0) cut = SMALL_CHARS;
+  first = s.substring(0, cut);
+  second = clip(s.substring(c[cut] == ' ' ? cut + 1 : cut), SMALL_CHARS);
+}
+
+// Draws text with its top edge at `top`, centered in [x0, x0 + w). Custom
+// fonts position by baseline, so the bounds offset is what lets one helper
+// top-align both kinds of font. font == NULL is the built-in 6x8 font.
+void drawTextTop(const String& s, int x0, int w, int top, const GFXfont* font) {
+  int16_t bx, by;
+  uint16_t bw, bh;
+  display.setFont(font);
+  display.getTextBounds(s.c_str(), 0, 0, &bx, &by, &bw, &bh);
+  display.setCursor(x0 + (w - (int)bw) / 2 - bx, top - by);
+  display.print(s);
+  display.setFont(NULL);
+}
+
+// Largest headline font that fits: 12pt, then 9pt, then built-in.
+const GFXfont* fitFont(const String& s, int maxWidth, bool allowLarge) {
+  const GFXfont* sizes[] = { &FreeSansBold12pt7b, &FreeSansBold9pt7b };
+  for (int i = allowLarge ? 0 : 1; i < 2; i++) {
+    int16_t bx, by;
+    uint16_t bw, bh;
+    display.setFont(sizes[i]);
+    display.getTextBounds(s.c_str(), 0, 0, &bx, &by, &bw, &bh);
+    display.setFont(NULL);
+    if ((int)bw <= maxWidth) return sizes[i];
+  }
+  return NULL;
+}
+
+// A 3px-thick stroke, so ticks and crosses read from a distance.
+void thickLine(int x0, int y0, int x1, int y1, uint16_t color) {
+  for (int d = -1; d <= 1; d++) display.drawLine(x0, y0 + d, x1, y1 + d, color);
+}
+
+// Draws the first `progress` (0..1) of a polyline so a tick "writes itself".
+// pts is flat x,y pairs designed around a radius-13 icon; `scale` resizes it.
+void strokePath(const int8_t* pts, int n, float progress, int cx, int cy, float scale, uint16_t color) {
+  float total = 0;
+  for (int i = 1; i < n; i++) total += hypotf(pts[2 * i] - pts[2 * i - 2], pts[2 * i + 1] - pts[2 * i - 1]);
+  float left = total * clamp01(progress);
+  for (int i = 1; i < n && left > 0; i++) {
+    float x0 = pts[2 * i - 2], y0 = pts[2 * i - 1];
+    float dx = pts[2 * i] - x0, dy = pts[2 * i + 1] - y0;
+    float len = hypotf(dx, dy);
+    float f = left >= len ? 1 : left / len;
+    thickLine(cx + roundf(x0 * scale), cy + roundf(y0 * scale),
+              cx + roundf((x0 + dx * f) * scale), cy + roundf((y0 + dy * f) * scale), color);
+    left -= len;
+  }
+}
+
+const int8_t TICK[] = { -7, 0, -2, 5, 7, -5 };
+const int8_t CROSS_A[] = { -6, -6, 6, 6 };
+const int8_t CROSS_B[] = { 6, -6, -6, 6 };
+
+void drawResultIcon(int cx, int cy, int r, unsigned long t) {
+  int rr = (int)(r * easeOutBack(t / 220.0f));
+  float stroke = clamp01(((float)t - 200) / 300);
+  float scale = r / 13.0f;
+  switch (screenKind) {
+    case SCR_OK:    // filled disc with the tick knocked out of it
+      display.fillCircle(cx, cy, rr, SSD1306_WHITE);
+      strokePath(TICK, 3, stroke, cx, cy, scale, SSD1306_BLACK);
+      break;
+    case SCR_DUP:   // same tick, outlined: fine, but calmer than a fresh check-in
+      display.drawCircle(cx, cy, rr, SSD1306_WHITE);
+      display.drawCircle(cx, cy, rr - 1, SSD1306_WHITE);
+      strokePath(TICK, 3, stroke, cx, cy, scale, SSD1306_WHITE);
+      break;
+    case SCR_FAIL:
+      display.drawCircle(cx, cy, rr, SSD1306_WHITE);
+      display.drawCircle(cx, cy, rr - 1, SSD1306_WHITE);
+      strokePath(CROSS_A, 2, stroke * 2, cx, cy, scale, SSD1306_WHITE);
+      strokePath(CROSS_B, 2, stroke * 2 - 1, cx, cy, scale, SSD1306_WHITE);
+      break;
+    default: {      // SCR_WARN: triangle with "!"
+      int base = rr * 4 / 5;
+      display.drawTriangle(cx, cy - rr, cx - rr, cy + base, cx + rr, cy + base, SSD1306_WHITE);
+      display.drawTriangle(cx, cy - rr + 2, cx - rr + 2, cy + base - 1, cx + rr - 2, cy + base - 1, SSD1306_WHITE);
+      if (t >= 200) {
+        display.fillRect(cx - 1, cy - r / 3, 3, r / 2, SSD1306_WHITE);
+        display.fillRect(cx - 1, cy + r / 3 + 1, 3, 2, SSD1306_WHITE);
+      }
+      break;
+    }
+  }
+}
+
+void drawResult(unsigned long t) {
+  String line1, line2;
+  wrapTwo(screenDetail, line1, line2);
+  bool compact = line2.length() > 0;  // two detail lines: shrink icon + title to fit
+  drawResultIcon(64, compact ? 12 : 15, compact ? 10 : 13, t);
+  int rise = (int)((1 - easeOut(t / 300.0f)) * 6);
+  drawTextTop(screenTitle, 0, 128, (compact ? 26 : 32) + rise, fitFont(screenTitle, 124, !compact));
+  drawTextTop(line1, 0, 128, compact ? 45 : 56, NULL);
+  if (compact) drawTextTop(line2, 0, 128, 55, NULL);
+  if (t >= RESULT_ANIM_MS) screenSettled = true;
+}
+
+void drawSplash(unsigned long t) {
+  int rise = (int)((1 - easeOut(t / 400.0f)) * 12);
+  drawTextTop("EduDisha", 0, 128, 10 + rise, &FreeSansBold12pt7b);
+  int w = (int)(96 * easeOut(((float)t - 200) / 500));
+  display.fillRect(64 - w / 2, 33, w, 2, SSD1306_WHITE);
+  drawTextTop("Attendance Kiosk", 0, 128, 44, NULL);
+}
+
+void drawWifi(unsigned long t) {
+  display.fillCircle(64, 28, 2, SSD1306_WHITE);
+  int arcs = (t / 300) % 4;  // 0..3 arcs light up in turn
+  for (int i = 1; i <= arcs; i++) {
+    display.drawCircleHelper(64, 28, i * 6, 0x1 | 0x2, SSD1306_WHITE);
+    display.drawCircleHelper(64, 28, i * 6 + 1, 0x1 | 0x2, SSD1306_WHITE);
+  }
+  drawTextTop(screenTitle, 0, 128, 34, fitFont(screenTitle, 124, true));
+  drawTextTop(clip(screenDetail, SMALL_CHARS), 0, 128, 56, NULL);
+}
+
+void drawIdle(unsigned long t) {
+  // Card on the left, NFC waves pulsing out of it one ring at a time.
+  display.drawRoundRect(6, 10, 24, 36, 3, SSD1306_WHITE);
+  display.fillRoundRect(11, 16, 9, 7, 1, SSD1306_WHITE);  // chip
+  display.drawFastHLine(11, 36, 14, SSD1306_WHITE);
+  display.drawFastHLine(11, 40, 9, SSD1306_WHITE);
+  int rings = (t / 300) % 4;
+  for (int i = 1; i <= rings; i++) {
+    display.drawCircleHelper(33, 28, i * 5, 0x2 | 0x4, SSD1306_WHITE);
+    display.drawCircleHelper(33, 28, i * 5 + 1, 0x2 | 0x4, SSD1306_WHITE);
+  }
+  drawTextTop("TAP", 50, 78, 6, &FreeSansBold12pt7b);
+  drawTextTop("CARD", 50, 78, 28, &FreeSansBold12pt7b);
+  drawTextTop("EduDisha Attendance", 0, 128, 56, NULL);
+}
+
+void drawBusy(unsigned long t) {
+  // Eight-dot spinner: a leading dot with a shrinking tail behind it.
+  int head = (t / 90) % 8;
+  for (int i = 0; i < 8; i++) {
+    float a = i * 0.785398f;  // 45 degrees
+    int x = 64 + (int)roundf(11 * cosf(a));
+    int y = 16 + (int)roundf(11 * sinf(a));
+    int behind = (head - i + 8) % 8;
+    if (behind < 3) display.fillCircle(x, y, 3 - behind, SSD1306_WHITE);
+    else display.drawPixel(x, y, SSD1306_WHITE);
+  }
+  drawTextTop(screenTitle, 0, 128, 34, fitFont(screenTitle, 124, true));
+  drawTextTop(clip(screenDetail, SMALL_CHARS), 0, 128, 56, NULL);
+}
+
+void drawFace(unsigned long t) {
+  // Name banner, inverted so it reads as a header.
+  display.fillRect(0, 0, 128, 12, SSD1306_WHITE);
+  display.setTextColor(SSD1306_BLACK);
+  drawTextTop(clip("Hi, " + screenTitle, SMALL_CHARS), 0, 128, 2, NULL);
+  display.setTextColor(SSD1306_WHITE);
+
+  // The two steps take turns, each sliding in from the right.
+  const unsigned long STEP_MS = 1600;
+  bool lookStep = (t / STEP_MS) % 2 == 0;
+  int slide = (int)((1 - easeOut((t % STEP_MS) / 250.0f)) * 128);
+  drawTextTop(lookStep ? "LOOK AT" : "PRESS", slide, 128, 16, &FreeSansBold12pt7b);
+  drawTextTop(lookStep ? "CAMERA" : "BUTTON", slide, 128, 36, &FreeSansBold12pt7b);
+
+  // Time left to press the button before FACE_WINDOW_TIMEOUT_MS.
+  float left = 1 - clamp01((float)t / FACE_WINDOW_TIMEOUT_MS);
+  display.drawRect(0, 58, 128, 6, SSD1306_WHITE);
+  display.fillRect(2, 60, (int)(124 * left), 2, SSD1306_WHITE);
+}
+
+void drawScan(unsigned long t) {
+  // Face inside viewfinder corners, with a scan line sweeping over it.
+  display.drawCircle(64, 19, 12, SSD1306_WHITE);
+  display.fillCircle(60, 16, 1, SSD1306_WHITE);
+  display.fillCircle(68, 16, 1, SSD1306_WHITE);
+  display.drawCircleHelper(64, 20, 6, 0x4 | 0x8, SSD1306_WHITE);
+  const int L = 46, R = 82, T = 2, B = 36, C = 7;
+  display.drawFastHLine(L, T, C, SSD1306_WHITE);         display.drawFastVLine(L, T, C, SSD1306_WHITE);
+  display.drawFastHLine(R - C + 1, T, C, SSD1306_WHITE); display.drawFastVLine(R, T, C, SSD1306_WHITE);
+  display.drawFastHLine(L, B, C, SSD1306_WHITE);         display.drawFastVLine(L, B - C + 1, C, SSD1306_WHITE);
+  display.drawFastHLine(R - C + 1, B, C, SSD1306_WHITE); display.drawFastVLine(R, B - C + 1, C, SSD1306_WHITE);
+  int y = T + 3 + (int)(pingPong(t, 1400) * (B - T - 6));
+  display.drawFastHLine(L + 2, y, R - L - 3, SSD1306_WHITE);
+  drawTextTop(screenTitle, 0, 128, 41, fitFont(screenTitle, 124, true));
+}
+
+void drawScreen() {
+  unsigned long t = millis() - screenShownAt;
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
-  display.setCursor(0, 12);
-  display.println(line1);
-  if (line2 != "") { display.setCursor(0, 30); display.println(line2); }
-  if (line3 != "") { display.setCursor(0, 48); display.println(line3); }
+  switch (screenKind) {
+    case SCR_SPLASH: drawSplash(t); break;
+    case SCR_WIFI:   drawWifi(t); break;
+    case SCR_IDLE:   drawIdle(t); break;
+    case SCR_BUSY:   drawBusy(t); break;
+    case SCR_FACE:   drawFace(t); break;
+    case SCR_SCAN:   drawScan(t); break;
+    default:         drawResult(t); break;  // SCR_OK / SCR_DUP / SCR_FAIL / SCR_WARN
+  }
   display.display();
+  lastFrameAt = millis();
+}
+
+void setScreen(ScreenKind kind, const String& title = "", const String& detail = "") {
+  screenKind = kind;
+  screenTitle = title;
+  screenDetail = detail;
+  screenShownAt = millis();
+  screenSettled = false;
+  drawScreen();
+}
+
+// Called every loop(): advances the current screen's animation.
+void updateDisplay() {
+  if (screenSettled || millis() - lastFrameAt < FRAME_MS) return;
+  drawScreen();
 }
 
 // ============================================================================
@@ -275,7 +537,7 @@ void handleLine(String line) {
     beepStepIndex = -1;
     rfid.PICC_HaltA();
     rfid.PCD_StopCrypto1();
-    showMessage("TAP YOUR CARD");
+    setScreen(SCR_IDLE);
     goTo(IDLE);
     return;
   }
@@ -283,18 +545,18 @@ void handleLine(String line) {
   if (state == IDENTIFYING) {
     if (line.startsWith("NAME:")) {
       traineeName = line.substring(5);
-      showMessage("Hi, " + traineeName, "Look at the camera", "then press the button");
+      setScreen(SCR_FACE, traineeName);
       goTo(WAITING_FOR_FACE);
       return;
     }
     if (line == "UNKNOWN") {
-      showMessage("Card not recognized", "Ask staff for help");
+      setScreen(SCR_WARN, "UNKNOWN", "Card not recognized. Ask staff for help");
       beepError();
       goTo(RESULT_HOLD);
       return;
     }
     if (line.startsWith("ERR:")) {
-      showMessage("Error", line.substring(4));
+      setScreen(SCR_WARN, "ERROR", line.substring(4));
       beepError();
       goTo(RESULT_HOLD);
       return;
@@ -304,25 +566,25 @@ void handleLine(String line) {
 
   if (state == VERIFYING) {
     if (line == "OK") {
-      showMessage("Verified!", "Attendance marked");
+      setScreen(SCR_OK, "VERIFIED", "Attendance marked");
       beepSuccess();
       goTo(RESULT_HOLD);
       return;
     }
     if (line == "FAIL") {
-      showMessage("Not matched", "Ask staff for QR check-in");
+      setScreen(SCR_FAIL, "NO MATCH", "Ask staff for QR check-in");
       beepFail();
       goTo(RESULT_HOLD);
       return;
     }
     if (line == "DUP") {
-      showMessage("Already checked in", "You're all set");
+      setScreen(SCR_DUP, "ALL SET", "Already checked in");
       beepDup();
       goTo(RESULT_HOLD);
       return;
     }
     if (line.startsWith("ERR:")) {
-      showMessage("Error", line.substring(4));
+      setScreen(SCR_WARN, "ERROR", line.substring(4));
       beepError();
       goTo(RESULT_HOLD);
       return;
@@ -397,14 +659,14 @@ void handleIdle() {
     queueEvent("UID:" + String(uidStr));
 
     lastCardAt = millis();
-    showMessage("Identifying...", "Please wait");
+    setScreen(SCR_BUSY, "CHECKING", "Finding your record");
     goTo(IDENTIFYING);
   }
 }
 
 void handleIdentifying() {
   if (millis() - stateEnteredAt > IDENTIFY_TIMEOUT_MS) {
-    showMessage("Check the kiosk PC", "No response - retry");
+    setScreen(SCR_WARN, "NO REPLY", "Check the kiosk PC and retry");
     beepError();
     goTo(RESULT_HOLD);
   }
@@ -413,12 +675,12 @@ void handleIdentifying() {
 void handleWaitingForFace(bool pressedThisLoop) {
   if (pressedThisLoop) {
     queueEvent("BTN:CAPTURE");
-    showMessage("Checking...", "Please hold still");
+    setScreen(SCR_SCAN, "VERIFYING");
     goTo(VERIFYING);
     return;
   }
   if (millis() - stateEnteredAt > FACE_WINDOW_TIMEOUT_MS) {
-    showMessage("Timed out", "Tap your card again");
+    setScreen(SCR_WARN, "TIMED OUT", "Tap your card again");
     beepError();
     goTo(RESULT_HOLD);
   }
@@ -426,7 +688,7 @@ void handleWaitingForFace(bool pressedThisLoop) {
 
 void handleVerifying() {
   if (millis() - stateEnteredAt > VERIFY_TIMEOUT_MS) {
-    showMessage("Check the kiosk PC", "No response - retry");
+    setScreen(SCR_WARN, "NO REPLY", "Check the kiosk PC and retry");
     beepError();
     goTo(RESULT_HOLD);
   }
@@ -434,7 +696,7 @@ void handleVerifying() {
 
 void handleResultHold() {
   if (millis() - stateEnteredAt > RESULT_HOLD_MS) {
-    showMessage("TAP YOUR CARD");
+    setScreen(SCR_IDLE);
     goTo(IDLE);
   }
 }
@@ -445,7 +707,7 @@ void handleResultHold() {
 // wait here (same as ESP32-CAM's own connect loop).
 // ============================================================================
 void connectWiFi() {
-  showMessage("Connecting WiFi...", ssid);
+  setScreen(SCR_WIFI, "CONNECTING", ssid);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
 
@@ -458,13 +720,14 @@ void connectWiFi() {
 
   unsigned long startedAt = millis();
   while (WiFi.status() != WL_CONNECTED) {
-    delay(250);
+    delay(FRAME_MS);
+    drawScreen();  // keeps the WiFi icon animating while we wait
     Serial.print(".");
     if (millis() - startedAt > 20000) {
       // Didn't connect in 20s — keep retrying forever rather than giving up,
       // since a battery-powered board has no other way to signal the
       // problem than the OLED, which we update below on every retry.
-      showMessage("WiFi not found", "Retrying...", ssid);
+      setScreen(SCR_WIFI, "NO WIFI", String("Retrying ") + ssid);
       startedAt = millis();
     }
   }
@@ -486,8 +749,10 @@ void connectWiFi() {
     Serial.println("mDNS.begin() failed — use the numeric IP below instead");
   }
 
-  showMessage("WiFi connected", WiFi.localIP().toString());
-  delay(1500); // let the person setting up actually read the IP off the screen
+  setScreen(SCR_OK, "ONLINE", WiFi.localIP().toString());
+  // Let the person setting up actually read the IP off the screen (~1.6s),
+  // drawing frames meanwhile so the tick animation plays.
+  for (int i = 0; i < 40; i++) { delay(FRAME_MS); drawScreen(); }
 }
 
 // ============================================================================
@@ -510,6 +775,13 @@ void setup() {
   // Must come after begin() (it resets rotation) and before the first
   // showStatus() call, since every draw after this uses the rotated frame.
   display.setRotation(2);
+  // Headlines slide in from off-screen; without this GFX would wrap them
+  // onto the next line instead of clipping.
+  display.setTextWrap(false);
+
+  // Brief boot splash (~1.2s): fixed frame count, not a millis() wait.
+  setScreen(SCR_SPLASH);
+  for (int i = 0; i < 30; i++) { delay(FRAME_MS); drawScreen(); }
 
   // Prints the RC522's own firmware register. 0x00 or 0xFF means the reader
   // isn't actually talking over SPI — worth knowing before a card tap
@@ -527,7 +799,7 @@ void setup() {
   state = IDLE;
   stateEnteredAt = millis();
   Serial.println("STATE:IDLE");
-  showMessage("TAP YOUR CARD");
+  setScreen(SCR_IDLE);
 }
 
 void loop() {
@@ -537,15 +809,16 @@ void loop() {
   // still apply underneath this and will eventually return to IDLE on their
   // own if a transaction was in flight when the drop happened.
   if (WiFi.status() != WL_CONNECTED) {
-    showMessage("WiFi lost", "Reconnecting...");
+    setScreen(SCR_WIFI, "WIFI LOST", "Reconnecting...");
     connectWiFi();
-    showMessage("TAP YOUR CARD");
+    setScreen(SCR_IDLE);
     goTo(IDLE);
     return;
   }
 
   server.handleClient();  // serve any pending /events or /command request
   updateBeep();            // advance any in-progress beep pattern (non-blocking)
+  updateDisplay();         // next animation frame, at most every FRAME_MS
   bool pressedThisLoop = buttonPressed(); // debounced button edge, checked every loop
 
   switch (state) {

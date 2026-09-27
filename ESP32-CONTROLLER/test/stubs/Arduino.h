@@ -1,4 +1,6 @@
 #pragma once
+#include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -19,7 +21,9 @@ public:
     while (!s.empty() && (s.front()==' '||s.front()=='\t')) s.erase(s.begin());
     while (!s.empty() && (s.back()==' '||s.back()=='\t'||s.back()=='\r')) s.pop_back();
   }
+  const char* c_str() const { return s.c_str(); }
   String substring(unsigned i) const { return String(i < s.size() ? s.substr(i) : std::string()); }
+  String substring(unsigned i, unsigned j) const { return String(i < s.size() ? s.substr(i, j - i) : std::string()); }
   bool startsWith(const char* p) const { return s.rfind(p, 0) == 0; }
   bool operator==(const char* o) const { return s == o; }
   bool operator!=(const char* o) const { return s != o; }

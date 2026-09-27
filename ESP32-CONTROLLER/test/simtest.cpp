@@ -27,7 +27,6 @@ void pinMode(int,int) {}
 void digitalWrite(int,int) {}
 int digitalRead(int) { return g_button; }
 void handleLine(String line);
-void showMessage(String, String, String);
 #include "../arduino/kiosk_controller/kiosk_controller.ino"
 
 // ---- test driver ----------------------------------------------------------
@@ -44,13 +43,14 @@ void feed(const char* line) { server.argValue = line; handleCommandRoute(); adva
 std::string pollEvents() { handleEventsRoute(); return server.lastSent; }
 
 void press() { g_button = LOW; advance(60); g_button = HIGH; advance(60); }
+bool onIdleScreen() { return g_oled.find("TAP") != std::string::npos && g_oled.find("CARD") != std::string::npos; }
 void check(const char* name, bool ok) {
   std::cout << (ok ? "  PASS  " : "  FAIL  ") << name << "\n";
   if (!ok) failures++;
 }
 int main() {
   setup();
-  check("boots into IDLE showing the tap prompt", state == IDLE && g_oled == "TAP YOUR CARD");
+  check("boots into IDLE showing the tap prompt", state == IDLE && onIdleScreen());
 
   // --- happy path -----------------------------------------------------
   g_cardPresent = true; advance(2000);
@@ -63,9 +63,9 @@ int main() {
   check("button emits BTN:CAPTURE", pollEvents() == "BTN:CAPTURE");
   check("button moves to VERIFYING", state == VERIFYING);
   feed("OK");
-  check("OK shows Verified", state == RESULT_HOLD && g_oled.find("Verified!") != std::string::npos);
+  check("OK shows Verified", state == RESULT_HOLD && g_oled.find("VERIFIED") != std::string::npos);
   advance(RESULT_HOLD_MS + 50);
-  check("returns to IDLE after the hold", state == IDLE && g_oled == "TAP YOUR CARD");
+  check("returns to IDLE after the hold", state == IDLE && onIdleScreen());
 
   // --- unknown card: never reaches the camera stage --------------------
   g_cardPresent = true; advance(2000); pollEvents(); // drain the tap, same as a real browser would
@@ -93,7 +93,7 @@ int main() {
   g_cardPresent = true; advance(2000); pollEvents(); feed("NAME:Priya Sharma"); press(); pollEvents();
   check("still VERIFYING at the browser's worst case", (advance(BROWSER_WORST_CASE_MS), state == VERIFYING));
   feed("OK");
-  check("a verdict that slow is still accepted", state == RESULT_HOLD && g_oled.find("Verified!") != std::string::npos);
+  check("a verdict that slow is still accepted", state == RESULT_HOLD && g_oled.find("VERIFIED") != std::string::npos);
   advance(RESULT_HOLD_MS + 50);
 
   // --- but it does eventually give up -----------------------------------
@@ -105,7 +105,7 @@ int main() {
   // --- face window / identify timeouts ----------------------------------
   g_cardPresent = true; advance(2000); pollEvents(); feed("NAME:Priya Sharma");
   advance(FACE_WINDOW_TIMEOUT_MS + 100);
-  check("face window times out if nobody presses", state == RESULT_HOLD && g_oled.find("Timed out") != std::string::npos);
+  check("face window times out if nobody presses", state == RESULT_HOLD && g_oled.find("TIMED OUT") != std::string::npos);
   advance(RESULT_HOLD_MS + 50);
   g_cardPresent = true; advance(2000);
   advance(IDENTIFY_TIMEOUT_MS + 100);
@@ -115,11 +115,11 @@ int main() {
   // --- RESET works from anywhere ----------------------------------------
   g_cardPresent = true; advance(2000); pollEvents(); feed("NAME:Priya Sharma");
   feed("RESET");
-  check("RESET from WAITING_FOR_FACE returns to IDLE", state == IDLE && g_oled == "TAP YOUR CARD");
+  check("RESET from WAITING_FOR_FACE returns to IDLE", state == IDLE && onIdleScreen());
 
   // --- stray verdicts at idle change nothing -----------------------------
   feed("OK");
-  check("a stray OK at IDLE is ignored", state == IDLE && g_oled == "TAP YOUR CARD");
+  check("a stray OK at IDLE is ignored", state == IDLE && onIdleScreen());
   feed("WHAT:IS:THIS");
   check("an unknown line is ignored, not an error", state == IDLE);
 
